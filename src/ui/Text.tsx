@@ -1,0 +1,205 @@
+/**
+ * Text primitives.
+ *
+ * Every string in the app renders through `Txt` with a `variant`, and no screen
+ * picks a font size by hand. That is not ceremony: the difference between an
+ * instrument panel and a pile of labels is that the numbers, the units and the
+ * captions have one fixed relationship to each other, and the moment a screen
+ * freehands `fontSize: 17` the hierarchy starts to drift screen by screen.
+ *
+ * `variant` chooses face, size, weight and line height together, because those
+ * four are only correct as a set — Space Grotesk at 34 needs a tighter leading
+ * than Manrope at 34, and separating them guarantees someone gets it wrong.
+ */
+import { memo } from 'react';
+import { Text as RNText, type StyleProp, type TextProps, type TextStyle } from 'react-native';
+import { fontFamily } from '@/theme/tokens';
+import { useAppTheme, type Theme } from '@/theme/theme';
+
+/**
+ * The scale. `numeral` variants use Space Grotesk, whose figures are near
+ * tabular — which is why the metric grid reads as an instrument panel rather
+ * than text. `mono` is for values that must not reflow as digits change: the
+ * timer, live pace, anything counting.
+ */
+const VARIANTS = {
+  giant: { family: fontFamily.display, size: 58, line: 1.02 },
+  hero: { family: fontFamily.display, size: 44, line: 1.04 },
+  display: { family: fontFamily.display, size: 34, line: 1.08 },
+  headline: { family: fontFamily.display, size: 27, line: 1.12 },
+  title: { family: fontFamily.heading, size: 22, line: 1.2 },
+  subhead: { family: fontFamily.heading, size: 19, line: 1.24 },
+
+  body: { family: fontFamily.regular, size: 15, line: 1.45 },
+  bodyLg: { family: fontFamily.regular, size: 16.5, line: 1.45 },
+  strong: { family: fontFamily.semibold, size: 15, line: 1.35 },
+  label: { family: fontFamily.medium, size: 13.5, line: 1.3 },
+  caption: { family: fontFamily.medium, size: 12.5, line: 1.3 },
+  micro: { family: fontFamily.semibold, size: 11, line: 1.28 },
+
+  /** Big readouts: distance, volume, time. Tabular-ish, tight leading. */
+  numeral: { family: fontFamily.display, size: 30, line: 1.02 },
+  numeralLg: { family: fontFamily.display, size: 40, line: 1.0 },
+  numeralSm: { family: fontFamily.displayMedium, size: 20, line: 1.1 },
+  /** Values that tick: the timer, live pace. Fixed-width digits, no reflow. */
+  mono: { family: fontFamily.monoSemiBold, size: 16, line: 1.2 },
+  monoLg: { family: fontFamily.monoSemiBold, size: 26, line: 1.06 },
+  monoSm: { family: fontFamily.mono, size: 12.5, line: 1.25 },
+} as const;
+
+export type TxtVariant = keyof typeof VARIANTS;
+
+/**
+ * Token accessors for surfaces that must match this scale but cannot render `Txt`.
+ * List rows are the case: they need identical typography without a theme-context
+ * subscription, so they read the numbers here instead of freehanding a size.
+ */
+export function fontSizeOf(variant: TxtVariant): number {
+  return VARIANTS[variant].size;
+}
+
+export function lineHeightOf(variant: TxtVariant): number {
+  return VARIANTS[variant].line;
+}
+
+export function fontFamilyOf(variant: TxtVariant): string {
+  return VARIANTS[variant].family;
+}
+
+/** Semantic colours, so a screen says *why* something is muted, not which hex. */
+export type TxtTone =
+  | 'default'
+  | 'muted'
+  | 'faint'
+  | 'inverse'
+  | 'accent'
+  | 'secondary'
+  | 'danger'
+  | 'warning'
+  | 'success'
+  | 'info';
+
+function toneColor(theme: Theme, tone: TxtTone): string {
+  switch (tone) {
+    case 'default':
+      return theme.colors.text;
+    case 'muted':
+      return theme.colors.textMuted;
+    case 'faint':
+      return theme.colors.textFaint;
+    case 'inverse':
+      return theme.colors.textInverse;
+    case 'accent':
+      return theme.colors.accent;
+    case 'secondary':
+      return theme.colors.secondary;
+    case 'danger':
+      return theme.colors.danger;
+    case 'warning':
+      return theme.colors.warning;
+    case 'success':
+      return theme.colors.success;
+    case 'info':
+      return theme.colors.info;
+  }
+}
+
+export type TxtProps = Omit<TextProps, 'style'> & {
+  variant?: TxtVariant;
+  tone?: TxtTone;
+  /** Overrides the tone. For a colour that is data, e.g. an activity's tone. */
+  color?: string;
+  align?: TextStyle['textAlign'];
+  weight?: TextStyle['fontWeight'];
+  /** Letter-spacing in em-scaled points; `tracking` is for all-caps labels. */
+  tracking?: number;
+  uppercase?: boolean;
+  numberOfLines?: number;
+  style?: StyleProp<TextStyle>;
+};
+
+export const Txt = memo(function Txt({
+  variant = 'body',
+  tone = 'default',
+  color,
+  align,
+  weight,
+  tracking,
+  uppercase,
+  style,
+  ...rest
+}: TxtProps) {
+  const theme = useAppTheme();
+  const spec = VARIANTS[variant];
+  const scaled = theme.scale === 1 ? spec.size : Math.round(spec.size * theme.scale);
+
+  const combined = [
+    {
+      fontFamily: spec.family,
+      fontSize: scaled,
+      lineHeight: Math.round(scaled * spec.line),
+      // Text renderers round line heights inconsistently if they are fractional,
+      // which shows up as a two-line caption sitting 1px off its neighbours.
+      color: color ?? toneColor(theme, tone),
+      ...(align ? { textAlign: align } : null),
+      ...(weight ? { fontWeight: weight } : null),
+      ...(tracking === undefined ? null : { letterSpacing: tracking }),
+      ...(uppercase ? { textTransform: 'uppercase' as const } : null),
+    },
+    style,
+  ] as StyleProp<TextStyle>;
+
+  return <RNText {...rest} style={combined} />;
+});
+
+/**
+ * One string built from differently-styled runs — "12 **sets** · 4,820 kg".
+ *
+ * Composing these as sibling `Txt` in a `Row` breaks text layout (they cannot
+ * wrap together), so nested `Text` is the only correct RN answer. `t` is the
+ * plain-string child helper so the common case stays a one-liner.
+ */
+export function TxtRun({
+  variant = 'body',
+  tone = 'default',
+  style,
+  children,
+}: {
+  variant?: TxtVariant;
+  tone?: TxtTone;
+  style?: StyleProp<TextStyle>;
+  children: React.ReactNode;
+}) {
+  const theme = useAppTheme();
+  const spec = VARIANTS[variant];
+  return (
+    <RNText
+      style={[
+        {
+          fontFamily: spec.family,
+          fontSize: spec.size,
+          lineHeight: Math.round(spec.size * spec.line),
+          color: toneColor(theme, tone),
+        },
+        style,
+      ]}
+    >
+      {children}
+    </RNText>
+  );
+}
+
+/** A label pair: the small caption above a value. The atom of every metric. */
+export function MetricLabel({
+  label,
+  style,
+}: {
+  label: string;
+  style?: StyleProp<TextStyle>;
+}) {
+  return (
+    <Txt variant="micro" tone="faint" uppercase tracking={0.7} style={style}>
+      {label}
+    </Txt>
+  );
+}

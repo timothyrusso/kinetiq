@@ -1,25 +1,117 @@
 {
   "expo": {
-    "name": "kinetiq-app",
-    "slug": "kinetiq-app",
+    "name": "Kinetiq",
+    "slug": "kinetiq",
     "version": "1.0.0",
     "orientation": "portrait",
+    "scheme": "kinetiq",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "app.kinetiq.mobile",
+      "buildNumber": "1",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Kinetiq uses your location to map your route, distance and pace while you record a run or ride.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Kinetiq keeps mapping your route if you record an activity and leave the app.",
+        "UIBackgroundModes": [
+          "location",
+          "fetch"
+        ],
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIUserInterfaceStyle": "Automatic"
+      }
     },
     "android": {
+      "package": "app.kinetiq.mobile",
+      "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "monochromeImage": "./assets/android-icon-monochrome.png",
+        "backgroundColor": "#07090F"
       },
-      "predictiveBackGestureEnabled": false
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "POST_NOTIFICATIONS",
+        "VIBRATE",
+        "WAKE_LOCK"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": false,
+          "data": [
+            {
+              "scheme": "kinetiq"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/android-icon-monochrome.png",
+          "color": "#C6F24E",
+          "defaultChannel": "training"
+        }
+      ],
+      "expo-router",
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Kinetiq to map your route, distance and pace.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FBFBF8",
+          "image": "./assets/splash-background-light.png",
+          "resizeMode": "cover",
+          "dark": {
+            "backgroundColor": "#07090F",
+            "image": "./assets/splash-background-dark.png"
+          }
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "16.4"
+          }
+        }
+      ],
+      "expo-localization"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": false
     }
   }
 }

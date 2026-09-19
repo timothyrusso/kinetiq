@@ -1,0 +1,142 @@
+/**
+ * Raw design tokens. Both palettes are authored independently — the light theme
+ * is a warm-paper system with its own accent ramp, not an inversion of dark.
+ *
+ * Anything a component needs should be reached through the semantic `Theme`
+ * built in `theme.ts`, not through these ramps directly.
+ */
+
+export const palette = {
+  // Brand ramp
+  volt: '#C6F24E',
+  voltDeep: '#8FBF19',
+  voltInk: '#1B2405',
+  spark: '#35E8C0',
+  sparkDeep: '#0E9C7E',
+  coral: '#FF6A45',
+  coralDeep: '#D6431F',
+  azure: '#5AA8FF',
+  azureDeep: '#1D6FD1',
+  plum: '#B98CFF',
+
+  // Dark surfaces: blue-black ink, lifted with a cool cast rather than grey.
+  ink900: '#07090F',
+  ink800: '#0B0F18',
+  ink700: '#111726',
+  ink600: '#182033',
+  ink500: '#212C44',
+  ink400: '#2C3A57',
+  inkHairline: '#212B3F',
+
+  // Light surfaces: warm paper, cool neutral text.
+  paper0: '#FBFBF8',
+  paper100: '#F4F5F1',
+  paper200: '#ECEDe7',
+  paper300: '#E0E2DA',
+  paperHairline: '#DFE1D8',
+  slate900: '#0A0E18',
+  slate700: '#2A3346',
+  slate500: '#5A6478',
+  slate400: '#7C869A',
+  slate300: '#A3ABBC',
+
+  white: '#FFFFFF',
+  black: '#000000',
+} as const;
+
+/** Activity accents — stable across both themes, tuned for legibility per mode. */
+export type ActivityTone = 'volt' | 'spark' | 'azure' | 'coral' | 'plum';
+
+/**
+ * Three faces, each with a job: Space Grotesk carries display numerals and
+ * headings (its tabular-ish figures are why the metric grid reads as an
+ * instrument panel), Manrope is the reading face, and JetBrains Mono is for
+ * values that must not reflow as digits change — the timer, live pace.
+ */
+export const fontFamily = {
+  display: 'SpaceGrotesk_700Bold',
+  displayMedium: 'SpaceGrotesk_600SemiBold',
+  displaySemiBold: 'SpaceGrotesk_600SemiBold',
+  heading: 'Manrope_700Bold',
+  semibold: 'Manrope_600SemiBold',
+  medium: 'Manrope_500Medium',
+  regular: 'Manrope_400Regular',
+  mono: 'JetBrainsMono_500Medium',
+  monoSemiBold: 'JetBrainsMono_600SemiBold',
+} as const;
+
+export const spacing = {
+  xxs: 2,
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 24,
+  xxxl: 32,
+  huge: 44,
+} as const;
+
+export const radius = {
+  xs: 6,
+  sm: 10,
+  md: 14,
+  lg: 20,
+  xl: 26,
+  xxl: 32,
+  pill: 999,
+} as const;
+
+export const fontSize = {
+  micro: 11,
+  caption: 12.5,
+  label: 13.5,
+  body: 15,
+  bodyLg: 16.5,
+  subhead: 19,
+  title: 22,
+  headline: 27,
+  display: 34,
+  hero: 44,
+  giant: 58,
+} as const;
+
+export const weight = {
+  regular: '400',
+  medium: '500',
+  semibold: '600',
+  bold: '700',
+} as const;
+
+export const touchTarget = 44;
+
+/** Line heights tuned per size so Space Grotesk numerals sit tight and calm. */
+export const lineHeight = {
+  tight: 1,
+  snug: 1.1,
+  normal: 1.28,
+  relaxed: 1.45,
+  loose: 1.62,
+} as const;
+
+export const z = {
+  card: 1,
+  sticky: 10,
+  sheet: 50,
+  modal: 100,
+  toast: 200,
+} as const;
+
+export const motion = {
+  /** Durations in ms. Short enough to feel responsive, long enough to read. */
+  instant: 90,
+  fast: 160,
+  base: 240,
+  slow: 360,
+  deliberate: 520,
+  /** iOS-style deceleration: arrives quickly, settles softly. */
+  standard: [0.32, 0.72, 0, 1] as const,
+  emphasized: [0.2, 0, 0, 1] as const,
+  spring: { damping: 22, stiffness: 260, mass: 0.9 },
+  springSoft: { damping: 26, stiffness: 170, mass: 1 },
+} as const;
