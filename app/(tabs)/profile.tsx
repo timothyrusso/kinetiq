@@ -42,6 +42,7 @@ import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
 import { spacing } from '@/theme/tokens';
 import {
+  formatDistanceWithUnit,
   formatDurationCompact,
   pluralWord,
 } from '@/utils/format';
@@ -163,7 +164,7 @@ export default function ProfileScreen() {
               />
               <Stat
                 label="Distance"
-                value={totals === undefined ? '—' : formatDistanceKm(totals.distanceMeters, unitSystem)}
+                value={totals === undefined ? '—' : formatDistanceWithUnit(totals.distanceMeters, unitSystem, 1)}
                 note="run, ride, walk"
               />
               <Stat
@@ -371,12 +372,6 @@ function trainingSince(data: { totals: { workouts: number } } | undefined): stri
 
 function formatNumber(value: number | undefined): string {
   return value === undefined ? '—' : String(value);
-}
-
-function formatDistanceKm(meters: number, unitSystem: UnitSystem): string {
-  const km = meters / 1000;
-  if (unitSystem === 'imperial') return `${Math.round(km * 0.621371)} mi`;
-  return km >= 10 ? `${Math.round(km)} km` : `${km.toFixed(1)} km`;
 }
 
 function notificationsSubtitle(hapticsEnabled: boolean): string {
