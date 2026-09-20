@@ -132,10 +132,20 @@ export default function CardioScreen() {
   const [tooShort, setTooShort] = useState(false);
 
   // See `useCardio`: one second is the smallest thing the clock displays.
+  //
+  // The callback has to **render**, not merely fire. `recorder` is an external store, and
+  // `useSyncExternalStore` re-reads it only when the store notifies — which happens on a location
+  // fix or a state change, never on the wall clock. An interval with an empty body keeps a timer
+  // alive that nothing is listening to, and the displayed elapsed time sits at `00:00` for the whole
+  // run while the underlying arithmetic is perfectly correct: a freeze like that is invisible to the
+  // service's own tests, because the service was never wrong. Hence a counter here rather than a tick
+  // the store publishes: elapsed belongs to the wall clock, but *who needs it repainted* is this
+  // screen, and no other surface shows a live cardio clock.
   const live = cardio.status === 'running';
+  const [, repaintClock] = useState(0);
   useEffect(() => {
     if (!live) return undefined;
-    const id = setInterval(() => undefined, 1000);
+    const id = setInterval(() => repaintClock((n) => n + 1), 1000);
     return () => clearInterval(id);
   }, [live]);
 

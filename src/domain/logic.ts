@@ -320,11 +320,6 @@ export function toCompletedWorkout(
   };
 }
 
-/** Calories/minute used by the live session ticker. */
-export function caloriesRate(kind: ActivityKind, intensity = 1): number {
-  return (MET_BY_KIND[kind] * intensity * 74) / 60;
-}
-
 /** Pace from raw totals, guarding the zero-distance case. */
 export function paceFromDistance(durationSeconds: number, distanceMeters: number): number {
   if (distanceMeters <= 0 || durationSeconds <= 0) return 0;

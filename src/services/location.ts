@@ -50,7 +50,7 @@ import {
 import { defineTask } from 'expo-task-manager';
 import type { ActivityKind, ActivitySplit, LatLng, RoutePoint } from '@/domain/types';
 import { elevationGain, haversine, resampleRoute, splitRouteByDistance } from '@/utils/geometry';
-import { caloriesRate, paceFromDistance } from '@/domain/logic';
+import { estimateCalories, paceFromDistance } from '@/domain/logic';
 import { activityRepository, readState, writeState } from '@/persistence';
 import { clamp, localId, mean } from '@/utils/functional';
 import { isOfflineError } from '@/api';
@@ -512,7 +512,7 @@ class CardioRecorder {
         startedAt: draft.startedAt,
         durationSeconds: seconds,
         distanceMeters,
-        caloriesKcal: Math.round(caloriesRate(draft.kind) * seconds),
+        caloriesKcal: estimateCalories(draft.kind, seconds, { distanceMeters }),
         route,
         avgHeartRate: null,
         maxHeartRate: null,
@@ -781,7 +781,11 @@ class CardioRecorder {
       startedAt: draft?.startedAt ?? this.resumable?.startedAt ?? now,
       elapsedSeconds: elapsed,
       distanceMeters: distance,
-      caloriesKcal: Math.round(caloriesRate(draft?.kind ?? 'run') * elapsed),
+      // Same helper the save path and the seeder use, so the live number is the number that
+      // lands in history rather than a different model of the same run.
+      caloriesKcal: estimateCalories(draft?.kind ?? 'run', elapsed, {
+        distanceMeters: distance,
+      }),
       paceSecPerKm: paceFromDistance(elapsed, distance),
       route: draft?.route ?? [],
       position: this.position,
