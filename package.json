@@ -51,9 +51,10 @@
     "typecheck": "tsc --noEmit",
     "check:jsx": "tsx scripts/jsx-comment-check.ts",
     "check:gps": "tsx scripts/gps-check.ts",
-    "check": "npm run typecheck && npm run check:jsx && npm run check:gps",
+    "check": "npm run typecheck && npm run check:jsx && npm run check:gps && npm run check:debounce",
     "lint": "expo lint",
-    "qa": "agent-device"
+    "qa": "agent-device",
+    "check:debounce": "tsx scripts/debounce-check.ts"
   },
   "private": true
 }
