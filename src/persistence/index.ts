@@ -25,5 +25,11 @@ export {
   writeState,
 } from './settingsRepository';
 export type { SettingKey } from './settingsRepository';
-export { clearAllUserData, getDatabase, isDatabaseOpen, openDatabase } from './database';
+export {
+  clearAllUserData,
+  getDatabase,
+  isDatabaseOpen,
+  openDatabase,
+  readSchemaVersion,
+} from './database';
 export type { DatabaseOpenResult } from './database';

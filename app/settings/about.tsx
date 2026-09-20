@@ -50,7 +50,7 @@ import { IconButton } from '@/ui/Button';
 import { Txt } from '@/ui/Text';
 import { Icon } from '@/ui/icons';
 import { getExerciseProvider } from '@/api';
-import { clearAllUserData, getDatabase } from '@/persistence';
+import { clearAllUserData, readSchemaVersion } from '@/persistence';
 import { DEFAULT_SETTINGS, updateSettings, useSettings } from '@/settings';
 import { KIND_ORDER } from '@/domain/display';
 import { ACTIVITY_ICON, NavRow } from '@/ui/rows';
@@ -75,7 +75,7 @@ export default function SettingsAboutScreen() {
   const config = Constants.expoConfig;
   const version = config?.version ?? null;
   const appId = config?.ios?.bundleIdentifier ?? config?.android?.package ?? config?.slug ?? null;
-  const schema = readSchemaVersion();
+  const schema = useSchemaVersion();
 
   const theme = useAppTheme();
   const unitSystem = useSettings((s) => s.unitSystem);
@@ -370,29 +370,14 @@ function Hairline() {
 /* ----------------------------------------------------------------- helpers -- */
 
 /**
- * The version this install actually migrated to, read from `PRAGMA user_version`.
- *
- * Asked of the database rather than imported as `TARGET_SCHEMA_VERSION`, because the point of
- * printing it is to know what *this* install has been through — a constant could only ever
- * report what the code was written against, which is exactly the case that matters (a downgrade,
- * a partial migration) and the one a constant hides.
- *
- * Read synchronously in a `useState` initialiser: the database is open by the time any screen
- * mounts (bootstrap opened it before the splash came down), the pragma is sub-millisecond, and
- * an effect would flash 'reading…' on a number that was never in question. A failure returns
- * `null` and renders as 'unknown' rather than throwing in a render path.
+ * The version this install actually migrated to. The read — and why it asks the database
+ * instead of importing a constant — lives in `readSchemaVersion` (src/persistence/database.ts);
+ * this pins the answer to the first render so the row never flashes 'reading…'.
  */
-function readSchemaVersion(): number | null {
-  const [version] = useState<number | null>(() => {
-    try {
-      const row = getDatabase().getFirstSync<{ user_version?: number }>(
-        'PRAGMA user_version;',
-      );
-      return typeof row?.user_version === 'number' ? row.user_version : null;
-    } catch {
-      return null;
-    }
-  });
+function useSchemaVersion(): number | null {
+  // The read itself lives in the persistence layer (`readSchemaVersion`) — this only pins it to
+  // the first render, which is the part that is this screen's business.
+  const [version] = useState<number | null>(readSchemaVersion);
   return version;
 }
 

@@ -72,7 +72,7 @@ import { RETRY_BUDGET } from '@/query/client';
 import { useAppTheme } from '@/theme/theme';
 import { spacing } from '@/theme/tokens';
 import { haptics, setHapticsEnabled } from '@/services/haptics';
-import { clearAllUserData, getDatabase } from '@/persistence';
+import { clearAllUserData, readSchemaVersion } from '@/persistence';
 import { seedIfEmpty } from '@/seed/seed';
 import { readSettingsSnapshot } from '@/providers/bootstrap';
 import { flushSettings, hydrateSettings } from '@/settings';
@@ -557,14 +557,7 @@ function StatusLine({
  * flashes 'reading…' on a number that was never in question, and a failure returns `null`
  * instead of throwing in a render path.
  */
-function readSchemaVersion(): number | null {
-  try {
-    const row = getDatabase().getFirstSync<{ user_version?: number }>('PRAGMA user_version;');
-    return typeof row?.user_version === 'number' ? row.user_version : null;
-  } catch {
-    return null;
-  }
-}
+
 
 /**
  * How many requests one screen puts in flight at once, which is how long an outage has to last
