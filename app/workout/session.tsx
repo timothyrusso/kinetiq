@@ -714,7 +714,7 @@ export default function WorkoutSessionScreen() {
           title="Finish this workout?"
           message={
             progress.ratio < 1
-              ? `${progress.planned - progress.completed} of ${progress.planned} ${pluralWord(progress.planned - progress.completed, 'set')} left un-ticked. They will not be recorded — the workout saves what you completed.`
+              ? `${progress.planned - progress.completed} of ${progress.planned} ${pluralWord(progress.planned, 'set')} left un-ticked. Un-ticked work is not recorded — the workout saves what you completed.`
               : `All ${progress.planned} sets are done. This becomes an activity in your history.`
           }
           confirmLabel={finishing ? 'Saving…' : 'Finish and save'}
