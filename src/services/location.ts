@@ -10,10 +10,11 @@
  *    "runs" several hundred metres in ten minutes. So a fix must beat two
  *    gates to count: `accuracy <= GPS_ACCURACY_FLOOR_M`, and a segment longer
  *    than `GPS_MIN_SEGMENT_M`, which discards jitter without discarding real
- *    motion at walking pace (see the constant for the arithmetic). Fixes that
- *    fail still move the marker dot; they just don't add distance. When no fix
- *    ever passes the gates, the readout falls back to elapsed × plausible pace
- *    and says so.
+ *    motion at walking pace. Both gates, and the arithmetic justifying their
+ *    exact values, are in `./gps.ts` — this file only calls in and asks what a
+ *    fix is worth. Fixes that fail still move the marker dot; they just don't
+ *    add distance. When no fix ever passes the gates, the readout falls back to
+ *    elapsed × plausible pace and says so.
  *
  * 2. **Elapsed time must not be a tick counter.** The timer adds from wall
  *    clock (`now - lastTickAt`), so a suspended or backgrounded app loses
@@ -48,28 +49,25 @@ import {
   type LocationSubscription,
 } from 'expo-location';
 import { defineTask } from 'expo-task-manager';
-import type { ActivityKind, ActivitySplit, LatLng, RoutePoint } from '@/domain/types';
-import { elevationGain, haversine, resampleRoute, splitRouteByDistance } from '@/utils/geometry';
+import type { ActivityKind, RoutePoint } from '@/domain/types';
+import { elevationGain, haversine } from '@/utils/geometry';
 import { estimateCalories, paceFromDistance } from '@/domain/logic';
 import { activityRepository, readState, writeState } from '@/persistence';
-import { clamp, localId, mean } from '@/utils/functional';
+import { clamp, localId } from '@/utils/functional';
 import { isOfflineError } from '@/api';
+// The acceptance thresholds sit in ./gps.ts beside the arithmetic they govern, so nobody
+// can read a gate without reading what it gates. Nothing here needs them as values any
+// more: the only function that consulted them moved with them.
+import {
+  acceptedSegmentMeters,
+  buildSplits,
+  estimatedDistanceMeters,
+  trimRoute,
+} from './gps';
 
 /** Registered task name. Must be identical in every bundle, including the headless one. */
 export const CARDIO_TASK_NAME = 'kinetiq.cardio-updates';
 
-/** A fix must be this good (or better) before it contributes distance. */
-export const GPS_ACCURACY_FLOOR_M = 24;
-/**
- * Segments below this are GPS jitter. 4 m at ~2 samples/second is 8 m/s — well
- * above any human pace — so real motion passes and wobble does not. Below ~0.8
- * m/s (a slow walk) some segments get skipped, which under-reads distance by a
- * few percent; that is the correct trade, because the failure mode of a lower
- * floor is a run that reads 1.5 km longer than it was.
- */
-export const GPS_MIN_SEGMENT_M = 4;
-/** Fastest a human (or a bicycle at sprint effort) legitimately moves; faster means noise. */
-export const MAX_HUMAN_SPEED_MPS = 8;
 /** Fixes worse than this are not even used to move the marker. */
 const GPS_DISPLAY_ACCURACY_M = 60;
 /** Points closer together than this are not stored; the route would be noise. */
@@ -77,14 +75,18 @@ const GPS_MIN_POINT_DISTANCE_M = 3;
 /** How often progress is written to SQLite while recording. */
 const FLUSH_INTERVAL_MS = 12_000;
 /**
+ * How long a recording runs before the absence of any usable fix is worth saying out loud.
+ * Chosen against the flush cadence (12 s): two ticks, so the report is at most one tick late
+ * and never arrives before the first fixes plausibly could.
+ */
+const NO_SIGNAL_GRACE_SECONDS = 25;
+/**
  * How much of a crash gap counts as "you were still running". Beyond this the
  * phone was in a pocket, not on a run, and resuming the timer would invent an
  * hour of exercise.
  */
 const MAX_RECOVERY_GAP_SECONDS = 45 * 60;
 const DRAFT_KEY = 'cardio.draft';
-/** Points beyond this are resampled on save, to keep rows bounded. */
-const MAX_STORED_POINTS = 2000;
 
 export type LocationPermissionStatus =
   | 'granted'
@@ -101,7 +103,16 @@ export type CardioDegradation =
   | 'no-signal'
   | 'reduced-accuracy';
 
-export type CardioStatus = 'idle' | 'running' | 'paused' | 'finished' | 'discarded';
+/**
+ * Where a recording is. Deliberately has no `finished` / `discarded`: a recording that
+ * ended *is* idle, because there is nothing left to render or resume, and `finish()` and
+ * `discard()` are the only writers of those outcomes. Two dead states would give the screen
+ * a third thing to branch on — and since nothing ever set `idle` again, every terminal value
+ * fell through to the live panel with a null draft, so "Record another" landed on a recorder
+ * that had nothing running. Whether a save or a discard just happened is the *screen's*
+ * business, and it already tracks that locally.
+ */
+export type CardioStatus = 'idle' | 'running' | 'paused';
 
 /** The durable half of a recording: everything needed to rebuild after a kill. */
 export type CardioDraft = {
@@ -146,81 +157,8 @@ export type CardioSnapshot = {
 };
 
 // ---------------------------------------------------------------------------
-// Pure helpers. Exported for direct testing — none of this needs a device.
+// Pure helpers. Device-free by design — but for the GPS maths itself, see ./gps.ts.
 // ---------------------------------------------------------------------------
-
-/**
- * Whether a fix is trustworthy, in order of preference: the device's own speed
- * estimate (derived from Doppler, so immune to position jitter), then a pace
- * sanity check. `null` means the platform gave no speed, which is not a
- * rejection — the caller still has the segment-length floor.
- */
-export function isPlausiblePace(
-  segmentMeters: number,
-  elapsedMs: number,
-  speedMps: number | null,
-): boolean {
-  if (speedMps !== null && Number.isFinite(speedMps)) {
-    return speedMps >= 0 && speedMps <= MAX_HUMAN_SPEED_MPS;
-  }
-  if (elapsedMs <= 250) return true;
-  return segmentMeters / (elapsedMs / 1000) <= MAX_HUMAN_SPEED_MPS;
-}
-
-/**
- * Distance to add for one candidate fix, or 0 when it is rejected. This is the
- * whole anti-jitter policy in one function, so it can be reasoned about — and
- * argued with — without reading a class.
- */
-export function acceptedSegmentMeters(
-  previous: RoutePoint | null,
-  next: {
-    t: number;
-    coords: LatLng;
-    accuracy: number | null;
-    speed: number | null;
-  },
-): number {
-  if (!previous) return 0;
-  if (next.accuracy !== null && next.accuracy > GPS_ACCURACY_FLOOR_M) return 0;
-  const raw = haversine(previous.coords, next.coords);
-  if (raw < GPS_MIN_SEGMENT_M) return 0;
-  if (!isPlausiblePace(raw, next.t - previous.t, next.speed)) return 0;
-  return raw;
-}
-
-/**
- * Per-km splits from the recorded points, using timestamps rather than assuming
- * even sampling. The final split is the remainder and keeps its true length, so
- * a 5.2 km run reports six splits with the last one honestly labelled.
- */
-export function buildSplits(route: readonly RoutePoint[]): ActivitySplit[] {
-  if (route.length < 2) return [];
-  return splitRouteByDistance(route, 1000).map((segment, i) => {
-    const from = route[segment.fromIndex]!;
-    const to = route[segment.toIndex]!;
-    const durationSeconds = Math.max(1, (to.t - from.t) / 1000);
-    const beats = route
-      .slice(segment.fromIndex, segment.toIndex + 1)
-      .map((p) => p.heartRate)
-      .filter((hr): hr is number => hr !== null);
-    return {
-      index: i + 1,
-      distanceMeters: Math.round(segment.meters),
-      durationSeconds,
-      paceSecPerKm: paceFromDistance(durationSeconds, segment.meters),
-      elevationGainMeters: elevationGain(route.slice(segment.fromIndex, segment.toIndex + 1)),
-      heartRate: beats.length > 0 ? Math.round(mean(beats)) : null,
-    };
-  });
-}
-
-/** Fallback distance for a session with no usable GPS: a plausible easy effort. */
-export function estimatedDistanceMeters(kind: ActivityKind, seconds: number): number {
-  const paceSecPerKm = { run: 330, walk: 780, ride: 150, yoga: 0, lift: 0 }[kind];
-  if (paceSecPerKm <= 0) return 0;
-  return Math.round((seconds / paceSecPerKm) * 1000);
-}
 
 export function degradationMessage(reason: CardioDegradation): string {
   switch (reason) {
@@ -246,30 +184,6 @@ export function defaultActivityTitle(kind: ActivityKind): string {
   return { run: 'Morning run', ride: 'Ride', walk: 'Walk', yoga: 'Mobility', lift: 'Session' }[
     kind
   ];
-}
-
-/** Maps need `[lat, lng]` pairs; the route stores richer points. */
-export function routeCoords(route: readonly RoutePoint[]): LatLng[] {
-  return route.map((p) => p.coords);
-}
-
-/** Thinning for the map layer, which cannot draw 2000 segments at 60fps. */
-export function displayRoute(route: readonly RoutePoint[], max = 400): LatLng[] {
-  return resampleRoute(routeCoords(route), max);
-}
-
-/**
- * Ramer–Douglas-Peucker is overkill for storage; even sampling keeps the shape
- * honest and is cheaper to reason about. The endpoint is always preserved so
- * the recorded finish position is exact.
- */
-export function trimRoute(route: readonly RoutePoint[], max = MAX_STORED_POINTS): RoutePoint[] {
-  if (route.length <= max) return [...route];
-  const stride = (route.length - 1) / (max - 1);
-  const out: RoutePoint[] = [];
-  for (let i = 0; i < max; i += 1) out.push(route[Math.round(i * stride)]!);
-  out[max - 1] = route[route.length - 1]!;
-  return out;
 }
 
 /** `LocationPermissionResponse` reports accuracy inside platform-specific detail bags. */
@@ -524,7 +438,7 @@ class CardioRecorder {
       await writeState(DRAFT_KEY, { ...draft, finishedAt: Date.now() } satisfies CardioDraft);
       await writeState(DRAFT_KEY, null);
       this.draft = null;
-      this.status = 'finished';
+      this.status = 'idle';
       this.publish(true);
       return { activityId: activity.id, distanceMeters };
     } catch (error) {
@@ -543,7 +457,7 @@ class CardioRecorder {
   async discard(): Promise<void> {
     await this.stopRecording();
     this.draft = null;
-    this.status = 'discarded';
+    this.status = 'idle';
     this.position = null;
     await writeState(DRAFT_KEY, null);
     this.publish(true);
@@ -660,7 +574,7 @@ class CardioRecorder {
       draft.distanceMeters += added;
       this.lastAccepted = point;
       this.clearDegradation('no-signal');
-    } else if (draft.route.length === 0 && this.elapsedSeconds(draft, Date.now()) > 25) {
+    } else if (this.signalOverdue(draft)) {
       this.noteDegradation('no-signal');
     }
 
@@ -706,6 +620,31 @@ class CardioRecorder {
     return draft.accumulatedSeconds + live;
   }
 
+  /**
+   * Whether a running draft has gone unreasonably long without a usable fix.
+   *
+   * Checked from the flush tick, not only from fix handling. The old code raised
+   * `no-signal` from inside `applyFix`, which meant the case it exists to describe —
+   * a GPS that never delivers — was the one case that could never trigger it. A phone
+   * in a tunnel, a simulator with no feed, or a chip that simply stays silent produced a
+   * session that estimated distance from time and *never said so*: the panel showed
+   * "Waiting for a fix" forever while `degradedReason` stayed null. Same fault, two
+   * different disclosures, and the louder one was unreachable.
+   */
+  private signalOverdue(draft: CardioDraft): boolean {
+    // Only when the sky is genuinely silent. If permission is off or location
+    // services are disabled, the missing fixes already have an owner, and
+    // "waiting for a signal" is then a second, partly false description of the
+    // same fault — nothing is being waited for, because nothing can arrive. The
+    // first message is the actionable one, so it must not be doubled.
+    if (draft.degradations.includes('permission-denied')) return false;
+    if (draft.degradations.includes('services-off')) return false;
+    return (
+      draft.route.length === 0 &&
+      this.elapsedSeconds(draft, Date.now()) > NO_SIGNAL_GRACE_SECONDS
+    );
+  }
+
   /** Moves the wall-clock delta into the accumulator. Call before reading totals. */
   private settle(): void {
     const draft = this.draft;
@@ -729,6 +668,12 @@ class CardioRecorder {
     this.stopFlushTimer();
     this.flushTimer = setInterval(() => {
       this.settle();
+      // The only place a silent GPS can be noticed, because by definition nothing
+      // else is firing. Skipped while paused: a paused minute is the user stopping,
+      // not the sky failing, and it must not be reported as a fault.
+      if (this.draft?.pausedAt === null && this.signalOverdue(this.draft)) {
+        this.noteDegradation('no-signal');
+      }
       void this.persistDraft();
     }, FLUSH_INTERVAL_MS);
   }

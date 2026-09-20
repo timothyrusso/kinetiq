@@ -96,7 +96,7 @@ import {
   joinMiddleDot,
   pluralWord,
 } from '@/utils/format';
-import { displayRoute } from '@/services/location';
+import { displayRoute } from '@/services/gps';
 
 /** A chart narrower than this cannot fit its axis labels, so it is not drawn at all. */
 const MIN_CHART_WIDTH = 120;

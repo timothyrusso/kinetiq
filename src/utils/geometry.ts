@@ -149,9 +149,27 @@ export function regionForRoute(
 }
 
 /**
- * Splits a route into `count` contiguous segments with equal accumulated
- * distance, returning the index at each boundary. Used to derive per-km splits
- * from recorded GPS points without assuming uniform sampling.
+ * Cuts a route into per-`segmentMeters` splits and returns the point indices at each
+ * boundary. Used to derive per-km splits from recorded GPS points without assuming
+ * uniform sampling.
+ *
+ * Two rules make the numbers add up, and breaking either one produced a real bug:
+ *
+ * - **Boundaries are placed against an absolute cumulative target**, never a counter
+ *   restarted at zero. Restarting discarded the overshoot of the step that crossed a
+ *   kilometre, up to a whole sampling interval per split: on a 100 m-sampled route every
+ *   "kilometre" reported 1099 m, so the splits disagreed with the headline distance
+ *   printed above them. A user adds the splits up; disagreement is worse than coarseness.
+ * - **A leftover is its own split.** Once a boundary is crossed, the points after it are
+ *   a new segment. Folding a 200 m remainder into the kilometre that just closed made a
+ *   5.2 km run report *four* splits, the last one 2.2 km long and labelled as a fifth
+ *   kilometre — a pace for a distance that was never one.
+ *
+ * Consecutive splits share their boundary point, so each `meters` is the true distance
+ * between its own endpoints and the set sums to the route exactly. Individual splits sit
+ * within one sampling interval of the target, because a boundary can only land on a
+ * recorded point: at a real ~5 m between GPS fixes that means within metres of the mark,
+ * and precision there is a property of the sampling rate rather than of this function.
  */
 export function splitRouteByDistance(
   route: readonly RoutePoint[],
@@ -160,21 +178,31 @@ export function splitRouteByDistance(
   if (route.length < 2 || segmentMeters <= 0) return [];
   const segments: Array<{ fromIndex: number; toIndex: number; meters: number }> = [];
   let fromIndex = 0;
+  /** Cumulative distance from the start, and its value at `fromIndex`. */
   let acc = 0;
+  let accAtFrom = 0;
+  /** Where the next boundary must fall — advanced by one segment, never reset. */
+  let target = segmentMeters;
   for (let i = 1; i < route.length; i += 1) {
     acc += haversine(route[i - 1]!.coords, route[i]!.coords);
-    if (acc >= segmentMeters) {
-      segments.push({ fromIndex, toIndex: i, meters: acc });
+    if (acc >= target) {
+      segments.push({ fromIndex, toIndex: i, meters: acc - accAtFrom });
       fromIndex = i;
-      acc = 0;
+      accAtFrom = acc;
+      target += segmentMeters;
     }
   }
-  if (acc > 0 && segments.length > 0) {
-    const last = segments[segments.length - 1]!;
-    last.toIndex = route.length - 1;
-    last.meters += acc;
-  } else if (acc > 0) {
-    segments.push({ fromIndex: 0, toIndex: route.length - 1, meters: acc });
+  if (segments.length === 0) {
+    // Shorter than one segment: the whole route is the split, honestly labelled short
+    // rather than rounded up into a kilometre that did not happen.
+    return acc > 0 ? [{ fromIndex: 0, toIndex: route.length - 1, meters: acc }] : [];
+  }
+  if (fromIndex < route.length - 1) {
+    segments.push({
+      fromIndex,
+      toIndex: route.length - 1,
+      meters: acc - accAtFrom,
+    });
   }
   return segments;
 }

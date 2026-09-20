@@ -40,6 +40,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -48,6 +49,7 @@
     "android": "expo run:android",
     "prebuild": "expo prebuild --clean",
     "typecheck": "tsc --noEmit",
+    "check:gps": "tsx scripts/gps-check.ts",
     "lint": "expo lint",
     "qa": "agent-device"
   },
