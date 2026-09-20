@@ -543,18 +543,76 @@ function ledger(label) {
   // counters several times a run, and a full scan (bottom, then back to the top) cost more
   // than the navigation step it was there to measure. One pan past the heading is enough —
   // the group list is short and sits directly under it.
-  if (!seek((n) => /Grouped by path|Nothing sent since/.test(n.label ?? ''))) {
+  // Both copies, matched case-insensitively on purpose. The empty one is a sentence — `Request
+  // ledger — nothing sent since you opened the dev screen` — so its n is lower-case, and a
+  // capitalised pattern never matched it. The result looked like a dead harness: on a cold app
+  // that has sent nothing yet, seek scrolled for a heading that only renders when there ARE rows,
+  // gave up, and reported "ledger never came into view" for a ledger that was fine. Zero requests
+  // is a real and important state (it is the baseline every delta is measured against), so it has
+  // to be readable, not fatal.
+  if (!seek((n) => /grouped by path|nothing sent since/i.test(n.label ?? ''))) {
     return fail(`ledger never came into view (reading ${label})`);
   }
-  const found = new Set(labels());
+  // ── Read one row per a11y label: "/api/v2/x/, 3 requests" ─────────────────────────────────
+  // Two earlier versions tried to find the count and put it with the path. First by list order
+  // (wrong: iOS reports many of these nodes more than once, so the label after a path is often a
+  // duplicate of something else). Then by geometry — same y, larger x (wrong for a dumber reason:
+  // there is no count node to find. Probed on device, `×N` appeared in NO snapshot mode — not
+  // plain, not `--raw`, not `--no-limit` — while the path beside it did). Both failures showed up
+  // the same way, which is the reason this reading is strict: rows vanish silently, `total` reads
+  // LOW, and a LOW total is how a real retry loop slips under a ceiling.
+  //
+  // The count was missing for everyone, including a screen reader, so the fix is in the product
+  // (app/dev.tsx `LedgerRow`: one accessible element labelled "path, N requests"), and this reads
+  // that label. One node per row, nothing to pair, nothing to lose to a duplicate.
+  const seen = new Map();
+  const collect = () => {
+    for (const n of nodes()) {
+      const l = (n.label ?? '').trim();
+      if (!l || n.visible === false) continue;
+      if (!seen.has(l)) seen.set(l, n);
+    }
+  };
+  collect();
   panDown();
-  for (const l of labels()) found.add(l);
-  // Rows appear in mount order, path then count.
-  const t = [...found].join('  ').split(/\s{2,}/);
+  collect();
+
+  const labels_ = [...seen.keys()];
   const rows = new Map();
-  for (let i = 0; i < t.length; i += 1) {
-    // LedgerRow renders the path, then ×count as the next label (app/dev.tsx:499).
-    if (/^\//.test(t[i]) && /^×\d+$/.test(t[i + 1] ?? '')) rows.set(t[i], Number(t[i + 1].slice(1)));
+  for (const l of labels_) {
+    const m = /^(\/[^\s,]+), (\d+) requests?$/.exec(l);
+    if (!m) continue;
+    const [, path, countText] = m;
+    const count = Number(countText);
+    const prev = rows.get(path);
+    if (prev !== undefined && prev !== count) {
+      // One path showing two counts in a single read means the frame was torn mid-update, and
+      // averaging or picking either would be inventing a number.
+      fail(`the ledger shows "${path}" at both ${prev} and ${count} requests in one read — re-read it`);
+    }
+    rows.set(path, count);
+  }
+  // A path with no count anywhere is never ignorable, and with `accessible` on the row the only
+  // way to see a bare path is for that label to have regressed. Ignoring it would silently lower
+  // every total, and every ceiling in this suite is an upper bound.
+  const orphans = labels_.filter(
+    (l) => /^\/[^\s,]+$/.test(l) && !rows.has(l),
+  );
+  if (orphans.length) {
+    fail(
+      `the ledger shows ${orphans.length} path(s) with no count anywhere ` +
+        `(${[...new Set(orphans)].join(', ')}). LedgerRow is meant to expose one accessible ` +
+        'element per row ("path, N requests"); a bare path means that label is gone — so totals ' +
+        'here would be short, and a short total is how a request loop passes a ceiling.',
+    );
+  }
+  if (!rows.size && !/Nothing sent since/.test(labels_.join('\n'))) {
+    // Distinguishes "the tab genuinely sent nothing" from "I could not read this screen at all",
+    // which is the difference between a pass and a broken harness.
+    fail(
+      'the ledger produced no rows and did not say "Nothing sent since" — either the ledger ' +
+        'scrolled out of view or its labels changed shape.',
+    );
   }
   const list = [...rows.entries()];
   const total = list.reduce((n, [, c]) => n + c, 0);

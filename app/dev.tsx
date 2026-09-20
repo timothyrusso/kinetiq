@@ -76,9 +76,7 @@ import { clearAllUserData, readSchemaVersion } from '@/persistence';
 import { seedIfEmpty } from '@/seed/seed';
 import { readSettingsSnapshot } from '@/providers/bootstrap';
 import { flushSettings, hydrateSettings } from '@/settings';
-import {
-  countNoun,
-} from '@/utils/format';
+import { countNoun, pluralWord } from '@/utils/format';
 
 const BOTTOM_SPACE = 48;
 
@@ -506,7 +504,16 @@ function ActionRow({
 function LedgerRow({ path, count }: { path: string; count: number }) {
   const theme = useAppTheme();
   return (
-    <View style={styles.ledger}>
+    <View
+      style={styles.ledger}
+      // One element per row, counting in its label. The two texts read fine with eyes and badly
+      // with anything else: on device, no snapshot mode reported the `×N` beside the path, so a
+      // screen reader walking this ledger heard a list of endpoints with no numbers — and the
+      // number is the whole finding. `accessible` is what merges children in RN (there is no
+      // `accessibilityElement`; that is UIKit).
+      accessible
+      accessibilityLabel={`${path}, ${count} ${pluralWord(count, 'request')}`}
+    >
       <Txt variant="monoSm" style={styles.ledgerPath} numberOfLines={1}>
         {path}
       </Txt>
