@@ -358,10 +358,10 @@ export default function CardioScreen() {
             ) : null}
 
             <View>
-              // No eyebrow saying "waiting for a fix": that is the banner's sentence about
-              // this fault, and the empty card below says the same thing more usefully (it
-              // explains *why* a line needs two positions, and how to feed one on a simulator).
-              // A section header with nothing to eyebrow is the correct rendering here.
+              {/* No eyebrow saying "waiting for a fix": that is the banner's sentence about
+                  this fault, and the empty card below says the same thing more usefully (it
+                  explains *why* a line needs two positions, and how to feed one on a
+                  simulator). A section header with nothing to eyebrow is correct here. */}
               <SectionHeader title="Route" />
               {hasRoute ? (
                 <RouteMap

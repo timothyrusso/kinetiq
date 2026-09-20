@@ -21,7 +21,7 @@ XY=$(node -e '
   console.log(n ? Math.round(n.rect.x+n.rect.width/2)+" "+Math.round(n.rect.y+n.rect.height/2) : "");
 ')
 [ -z "$XY" ] && { echo "!! no Start button"; exit 1; }
-$AD tap $XY >/dev/null 2>&1
+$AD tap $XY 2>&1 | grep -v "^Tapped\|^Swiped\|^$" || true
 
 report() {
   $AD snapshot --json 2>/dev/null >/tmp/live.json

@@ -21,7 +21,7 @@ tap_label() {
   ' "$want")
   if [ -z "$xy" ]; then echo "  !! no element labelled '$want'"; return 1; fi
   # shellcheck disable=SC2086
-  $AD tap $xy >/dev/null 2>&1
+  $AD tap $xy 2>&1 | grep -v "^Tapped\|^Swiped\|^$" || true
 }
 
 echo "== open cardio =="

@@ -13,7 +13,7 @@ shot() {
   node scripts/metrics-probe.js /tmp/live.json
 }
 
-tap_xy() { $AD tap "$1" "$2" >/dev/null 2>&1; }
+tap_xy() { $AD tap "$1" "$2" 2>&1 | grep -v "^Tapped\|^Swiped\|^$" || true; }
 
 # Where is the primary button right now?
 find_btn() {
@@ -46,7 +46,7 @@ echo "== stop =="
 kill $FEED 2>/dev/null
 wait $FEED 2>/dev/null
 # controls live below the fold on the live panel
-$AD swipe 201 620 201 260 --pause-ms 150 >/dev/null 2>&1
+$AD swipe 201 620 201 260 --pause-ms 150 2>&1 | grep -v "^Tapped\|^Swiped\|^$" || true
 sleep 1
 $AD snapshot --json 2>/dev/null >/tmp/live.json
 XY=$(find_btn "Stop and save")

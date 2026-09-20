@@ -49,7 +49,9 @@
     "android": "expo run:android",
     "prebuild": "expo prebuild --clean",
     "typecheck": "tsc --noEmit",
+    "check:jsx": "tsx scripts/jsx-comment-check.ts",
     "check:gps": "tsx scripts/gps-check.ts",
+    "check": "npm run typecheck && npm run check:jsx && npm run check:gps",
     "lint": "expo lint",
     "qa": "agent-device"
   },
