@@ -60,35 +60,56 @@ const SEARCH_FIELD = 'Search the exercise catalog';
 const TERM_BASE = 'squat';
 
 /**
- * Zero the counters, then wait until the app is *provably idle* — zero requests over two
- * consecutive reads, three seconds apart.
+ * Zero the counters, then wait until they have STOPPED MOVING.
  *
- * Pressing Reset and reading once is a race with the app's own startup traffic, and it loses:
- * opening the Exercises tab prefetches the taxonomy (three calls), and a call that is still in
- * flight when the counters are cleared writes its row *after* the clear. The first version read
- * once, found `/api/v2/equipment/ ×1`, and reported "the Reset did not take" about a perfectly
- * functioning counter.
+ * "Zero" is the wrong requirement, and the run that proved it is worth recording: after Reset
+ * the ledger read `/equipment ×1, /muscle ×1, /category ×1` on six consecutive polls, and the
+ * obvious conclusion was "the app is still sending while idle" — a request loop, one of the
+ * defects this file exists to find. It was wrong. Those are the three taxonomy calls the
+ * Exercises tab prefetches, and their counts were `×1` every single time: a loop accumulates,
+ * and a set of counters that never increments is an app that has finished. What varied between
+ * runs was only whether those three had *landed* before the clear (an earlier run showed a
+ * clean zero) or after it — wger latency, on the order of tens of seconds, versus my wait.
  *
- * Waiting for a settled zero is also the stronger assertion, and the one the brief actually asks
- * for: an app that has finished loading and is sitting on a screen should be sending nothing. A
- * count that will not stay at zero is an uncontrolled request loop, and it is worth failing the
- * run over — before any per-fault ceiling is measured — rather than discovering it as an
- * unexplained extra request three steps later.
+ * The property that matters is *quiescence*: two reads three seconds apart with nothing in
+ * between must agree. Zero is a special case of that, and the per-fault numbers are deltas
+ * anyway, so a settled baseline of three costs the measurement nothing. A genuine loop fails
+ * here for the right reason — the counters never settle — and says so with the growth it saw.
  */
+function ledgerSettled(name) {
+  let prev = ledger(name).total;
+  for (let i = 0; i < 10; i += 1) {
+    sleep(3);
+    const now = ledger(`${name} (settle ${i + 1})`).total;
+    if (now === prev) return now;
+    prev = now;
+  }
+  return -1; // never settled
+}
+
 function resetLedger(name) {
+  // Settle FIRST, then clear. The order is the whole point: clearing a counter while requests
+  // are in flight means they are recorded after the clear, so a freshly opened tab's own traffic
+  // looks like post-reset activity. Waiting for the counters to stop moving first makes the
+  // following zero mean something — nothing was in flight when it was written, so anything that
+  // appears afterwards was started by an app that had already finished loading.
+  if (ledgerSettled(`${name} (pre-reset)`) === -1) {
+    fail(
+      `${name}: the request counters never settled over ~30 s of the app sitting on a loaded ` +
+        'screen. That is the loop/retry-storm signature the brief asks this check to rule out, ' +
+        'and every per-fault ceiling below would be noise.',
+    );
+  }
   open('dev', 'Developer');
   const reset = nodes().find((n) => (n.label ?? '').trim() === 'Reset');
   if (reset) sh(`npx agent-device press '@${reset.ref}' 2>&1`, { allowFail: true });
-  let l = ledger(`${name} (after reset)`);
-  for (let i = 0; l.total !== 0 && i < 6; i += 1) {
-    sleep(3);
-    l = ledger(`${name} (retry ${i + 1})`);
-  }
+  sleep(4);
+  const l = ledger(`${name} (after reset)`);
   if (l.total !== 0) {
     fail(
-      `${name}: the app is still sending requests while sitting idle on a loaded screen ` +
-        `(${l.rows.map(([p, n]) => `${p} ×${n}`).join(', ')}). Either a loop or a retry storm — ` +
-        'and every request ceiling below would be measuring it.',
+      `${name}: requests appeared after the counters settled and were cleared ` +
+        `(${l.rows.map(([p, n]) => `${p} ×${n}`).join(', ')}). An idle app on a loaded screen ` +
+        'should send nothing — this is a refetch with nobody asking for it.',
     );
   }
   return l;
@@ -126,11 +147,12 @@ function coldStart(terms) {
     fail(`cold start sent no exercise-list request at all (${paths.join(', ')}) — the search ` +
          'never reached the network, so nothing below can be attributed to a fault');
   }
-  if (!has('OUTDATED RESULTS') && !has('Outdated results')) {
-    fail(`the warm-up search did not leave retained rows behind — under a fault the screen ` +
-         'would show a full-screen error with no list, which is a different (and easier) case ' +
-         'than the one this check is about');
-  }
+  // Deliberately NOT asserted here: whether the screen keeps old rows under a fault. The first
+  // draft demanded the "Outdated results" badge at this point, and that was simply wrong about
+  // the app — the badge appears when a search fails while previous rows are on screen, and there
+  // is no failure yet in a healthy warm-up. Asserting it would have made a correct screen look
+  // broken, which is the failure mode this whole file has been fighting. What the case below
+  // asserts instead is the thing that matters: a failure produces an error state.
   console.log(`   cold start: ${l.total} request(s) — ${l.rows.map(([p, n]) => `${p.split('/').pop()} ×${n}`).join(', ')}`);
 }
 
