@@ -14,7 +14,7 @@
  *    it has to survive navigation, and it is what makes an offline launch after
  *    the exercise list has been browsed once still show results.
  */
-import { QueryClient, focusManager, onlineManager } from '@tanstack/react-query';
+import { MutationCache, QueryClient, focusManager, onlineManager } from '@tanstack/react-query';
 import { isApiError, type ApiError } from '@/api';
 import { attachQueryLogger } from './devLog';
 import { setupQueryAdapters, type QueryAdapters } from './adapters';
@@ -38,7 +38,7 @@ const STALE_TIME_MS = 2 * 60_000;
  * manager's job: it resumes paused mutations and refetches pending queries the
  * moment the interface comes back.
  */
-const RETRY_BUDGET: Record<ApiError['kind'], number> = {
+export const RETRY_BUDGET: Record<ApiError['kind'], number> = {
   'rate-limit': 3,
   timeout: 2,
   server: 2,
@@ -66,6 +66,20 @@ export function retryDelay(attemptIndex: number, error: Error): number {
 
 export function createQueryClient(): QueryClient {
   return new QueryClient({
+    // Every mutation in the app reports here. The default is that a rejected
+    // mutation surfaces only through the `isError` flag on whichever hook called
+    // it, and a screen that reads only `isPending` — which is to say, every screen
+    // here — shows a spinner that stops spinning and a sheet that may as well have
+    // succeeded. A failed write to disk then looks exactly like a successful one;
+    // the notes save did precisely this, and the only evidence was data the user
+    // could not see. The error is logged as an object because the stack names the
+    // call site, which a `mutationKey` would only approximate — so the ten
+    // mutations stay key-free and the log is still attributable.
+    mutationCache: new MutationCache({
+      onError: (error) => {
+        console.warn('[mutation failed]', error);
+      },
+    }),
     defaultOptions: {
       queries: {
         staleTime: STALE_TIME_MS,

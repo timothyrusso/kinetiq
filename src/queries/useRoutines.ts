@@ -33,6 +33,7 @@ import {
 } from '@/persistence';
 import type { Exercise, RoutineItem, StrengthEntry } from '@/domain/types';
 import { estimatedOneRepMax } from '@/domain/logic';
+import { repsFromRange } from '@/utils/format';
 import { localId } from '@/utils/functional';
 
 /* ------------------------------------------------------------------ reads -- */
@@ -347,7 +348,9 @@ export function usePreviousPerformance(routineId: string | null, exerciseIds: re
  *
  * Lives here rather than in the session module because it needs to know that
  * `weightKg: 0` means bodyweight and that `reps` is a string a program may have put
- * "5-8" into — i.e. it is a routine-shape concern, not a session-engine one.
+ * "5-8" into — i.e. it is a routine-shape concern, not a session-engine one. The rep number
+ * comes from `repsFromRange` so the set the session opens with holds the same number the
+ * routine screen displayed for it.
  */
 export function entriesFromItems(items: readonly RoutineItem[]): StrengthEntry[] {
   return items.map((item) => ({
@@ -365,16 +368,4 @@ export function entriesFromItems(items: readonly RoutineItem[]): StrengthEntry[]
       rpe: null,
     })),
   }));
-}
-
-/**
- * A routine's `reps` is free text ("5", "5-8", "AMRAP") because a plan is not always
- * one number. A session needs a number, so take the first integer in the string, and
- * fall back to a plain 8 rather than to zero — an empty set row reads as a bug, and
- * eight reps is the modal answer for a rep range nobody specified.
- */
-export function repsFromRange(reps: string): number {
-  const first = /(\d+)/.exec(reps)?.[1];
-  const parsed = first === undefined ? NaN : Number.parseInt(first, 10);
-  return Number.isFinite(parsed) && parsed > 0 && parsed <= 100 ? parsed : 8;
 }

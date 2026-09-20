@@ -152,9 +152,16 @@ export function useTrainingSummary(rangeWeeks: number) {
       );
       const activeDays = new Set(activities.map((a) => startOfDay(a.startedAt).getTime())).size;
 
+      // Oldest-first. `weeks.push` walks `offset` down from oldest to newest, so the loop
+      // already builds chronological order, which is what every chart wants (left to right
+      // is time) and what `slice(-6)` means. An earlier version reversed this to put "this
+      // week" at index 0; the three call sites that read it disagreed about the direction,
+      // and Home's goal ring quietly reported the oldest week in the window as the current
+      // one. So the order is oldest-first, `thisWeek` is `at(-1)`, and the contract is
+      // stated here because getting it wrong is silent rather than loud.
       return {
         rangeWeeks,
-        weeks: weeks.toReversed(),
+        weeks,
         totals: {
           workouts: activities.length,
           durationSeconds: sum(activities.map((a) => a.durationSeconds)),

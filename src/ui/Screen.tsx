@@ -37,11 +37,12 @@ import {
   Pressable,
   StyleSheet,
   View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
 import Animated, {
-  useAnimatedScrollHandler,
   useSharedValue,
   useAnimatedStyle,
   type SharedValue,
@@ -92,9 +93,39 @@ export function Screen({
 
 export type DetailHeader = {
   /** Drive the body's `onScroll` with this so the bar can gain a backing. */
-  onScroll: ReturnType<typeof useAnimatedScrollHandler>;
+  onScroll: ScrollToSharedValue;
   scrollY: SharedValue<number>;
 };
+
+/**
+ * Writes scroll offset into a shared value, from the JS thread.
+ *
+ * This is deliberately *not* `useAnimatedScrollHandler`, which is the obvious thing and does
+ * not work here. That hook returns an event-handler *object* (`{ workletEventHandler }`) built
+ * to be consumed by Reanimated's `createAnimatedComponent` — reanimated's docs say to pass it
+ * to `Animated.ScrollView`'s `onScroll`. These screens scroll a `FlashList`, whose own
+ * `AnimatedFlashList` is wrapped with *RN's* `Animated`, not Reanimated's, so nothing on that
+ * side recognises the object. FlashList's native code does
+ * `props.onScroll?.call(props, event)` — and an object is not callable, so every scroll frame
+ * threw "undefined is not a function" while the header quietly never collapsed.
+ *
+ * The cost is real and small: offset crosses to the UI thread per JS scroll event
+ * (`scrollEventThrottle={16}`) instead of the worklet running there, so during a heavy list
+ * recycle the backing can trail by one JS frame. On a frosted colour and a title opacity —
+ * the only things `useHeaderCollapse` drives — that is below the threshold of notice. A
+ * transform-critical gesture follower would need Reanimated's own scrollable, and does not
+ * exist here.
+ */
+export type ScrollToSharedValue = (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+
+function useScrollOffsetWriter(scrollY: SharedValue<number>): ScrollToSharedValue {
+  return useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      scrollY.value = event.nativeEvent.contentOffset.y;
+    },
+    [scrollY],
+  );
+}
 
 /**
  * A pushed screen: fixed bar, and a body that is told how far to pad to clear it.
@@ -124,9 +155,7 @@ export function DetailScreen({
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
   const scrollY = useSharedValue(0);
-  const onScroll = useAnimatedScrollHandler((event) => {
-    scrollY.value = event.contentOffset.y;
-  });
+  const onScroll = useScrollOffsetWriter(scrollY);
   const barOpacity = useAnimatedStyle(() => ({
     opacity: Math.min(1, scrollY.value / 48),
   }));
@@ -206,11 +235,7 @@ export function useScreenHeaderScroll(distance = COLLAPSE_DISTANCE) {
   // The object form is required: the positional form takes the event directly. Passing a
   // bare function here would read `event.contentOffset` off the wrong shape and leave the
   // shared value at zero, i.e. a header that never collapses.
-  const onScroll = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollY.value = event.contentOffset.y;
-    },
-  });
+  const onScroll = useScrollOffsetWriter(scrollY);
 
   const collapse = useHeaderCollapse(scrollY, {
     distance,

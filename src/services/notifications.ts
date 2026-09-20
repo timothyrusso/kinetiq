@@ -23,6 +23,7 @@ import { Platform } from 'react-native';
 import {
   AndroidImportance,
   cancelAllScheduledNotificationsAsync,
+  cancelScheduledNotificationAsync,
   getPermissionsAsync,
   requestPermissionsAsync,
   SchedulableTriggerInputTypes,
@@ -93,36 +94,52 @@ function withChannel(trigger: NotificationTriggerInput | null): NotificationTrig
   return trigger ? { ...trigger, channelId: CHANNEL_ID } : null;
 }
 
+/**
+ * Posts a notification and hands back the identifier the scheduler assigned, or
+ * `null` when nothing was posted (permission denied, or the native call refused).
+ *
+ * Returning the id is not decoration. expo-notifications cannot cancel by tag, so
+ * `cancelAllScheduledNotificationsAsync` is the only blunt instrument — and using it
+ * to retract a rest-timer alert would also delete the weekly training reminder. The
+ * id is the only handle there is to undo exactly one scheduled notification.
+ */
 async function post(
   content: NotificationContentInput,
   trigger: NotificationTriggerInput | null,
-): Promise<boolean> {
+): Promise<string | null> {
   const permission = await readNotificationPermission();
-  if (!permission.granted) return false;
+  if (!permission.granted) return null;
   await ensureChannel();
   try {
     // `channelId` belongs on the trigger, not the content: on Android it picks
     // the channel the notification is posted to, and content has no such field.
-    await scheduleNotificationAsync({
+    const identifier = await scheduleNotificationAsync({
       content: { sound: 'default', ...content },
       trigger: withChannel(trigger),
     });
-    return true;
+    return identifier ?? null;
   } catch {
-    return false;
+    return null;
   }
 }
 
 /**
- * Fire a rest-timer alert. `delaySeconds` is measured here against an absolute
- * deadline, so a backgrounded or suspended app that takes a moment to wake
- * still lands the notification rather than firing late with stale copy.
+ * Arm a rest-timer alert.
+ *
+ * `delaySeconds` must be the **remaining** seconds, not the rest's configured length:
+ * `TIME_INTERVAL` counts from now, so re-arming a rest that already ran 40 of its 90
+ * seconds with `90` would push the alert a minute and a half into the future. That is also
+ * why the caller arms at the *start* of the rest rather than when the timer expires — by
+ * then the app is foregrounded and ticking, and an alert nobody needed would fire.
+ *
+ * Returns the scheduled identifier, or `null` when nothing was posted. Callers keep the id
+ * so an early next set can retract exactly this alert; see `cancelScheduledNotification`.
  */
 export async function notifyRestComplete(
   exerciseName: string,
   nextLabel: string,
   delaySeconds: number,
-): Promise<boolean> {
+): Promise<string | null> {
   const seconds = Math.max(1, Math.round(delaySeconds));
   return post(
     {
@@ -136,9 +153,57 @@ export async function notifyRestComplete(
   );
 }
 
-/** A PR deserves the one celebratory notification the app sends. */
-export async function notifyPersonalRecord(exerciseName: string, detail: string): Promise<boolean> {
+/**
+ * A PR deserves the one celebratory notification the app sends. Immediate (a `null`
+ * trigger posts now), so there is nothing to retract and the identifier is of no use —
+ * returned anyway, because `post` returns it and a second signature would be a second
+ * thing to keep honest.
+ */
+export async function notifyPersonalRecord(
+  exerciseName: string,
+  detail: string,
+): Promise<string | null> {
   return post({ title: `New record — ${exerciseName}`, body: detail }, null);
+}
+
+/**
+ * A single immediate alert with honest "this is a test" copy, for the settings screen that
+ * offers to prove delivery works.
+ *
+ * Deliberately its own function rather than a call to `notifyRestComplete`: that one builds a
+ * body about the next exercise, so a test built on it reads "Test alert is done — you are
+ * finished here", which is worse than no test at all. Immediate (a `null` trigger), so there
+ * is nothing to retract and no identifier to keep.
+ */
+export async function notifySettingsTest(): Promise<string | null> {
+  return post(
+    {
+      title: 'Notifications are working',
+      body: 'This is the same channel your rest-timer alerts use.',
+    },
+    null,
+  );
+}
+
+/**
+ * Retract one scheduled notification by the identifier `post` handed back.
+ *
+ * This exists because expo-notifications cannot cancel by tag or by purpose, and
+ * `cancelAllScheduledNotificationsAsync` would take the weekly training reminder down with
+ * the rest alert. That blunt instrument is what makes the identifier load-bearing: without
+ * it, skipping a rest could not silence the buzz without also unpublishing a reminder the
+ * user asked for.
+ *
+ * Never throws, and a `null` argument is a no-op — which is what "nothing was armed" looks
+ * like coming out of `notifyRestComplete`.
+ */
+export async function cancelScheduledNotification(identifier: string | null): Promise<void> {
+  if (identifier === null || Platform.OS === 'web') return;
+  try {
+    await cancelScheduledNotificationAsync(identifier);
+  } catch {
+    // Either it already fired or it was never scheduled. Both are the outcome we wanted.
+  }
 }
 
 /**
@@ -193,7 +258,7 @@ export async function syncTrainingReminder(
   const permission = await readNotificationPermission();
   if (!permission.granted) return { scheduled: false, nextDate: null };
 
-  const scheduled = await post(
+  const identifier = await post(
     {
       title: 'Time to train',
       body: 'Your session is waiting. Even a short one keeps the streak alive.',
@@ -201,7 +266,13 @@ export async function syncTrainingReminder(
     },
     { type: SchedulableTriggerInputTypes.DATE, date: next },
   );
-  return { scheduled, nextDate: scheduled ? next : null };
+  // The reminder's own identifier is deliberately not returned: it is not something the
+  // caller can act on, and the cancellation above is what keeps at most one of these
+  // alive. That blunt cancellation also sweeps an armed rest alert if one is in flight
+  // when the app comes back to the foreground — a missed buzz, in a situation where the
+  // user has just unlocked their phone and can see the timer. Accepted, because the
+  // alternative is a scheduler that can leave two reminders behind.
+  return { scheduled: identifier !== null, nextDate: next };
 }
 
 /** Clears everything this app scheduled — used when the master switch flips off. */

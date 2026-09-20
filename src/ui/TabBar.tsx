@@ -59,6 +59,7 @@ export const TabBar = memo(function TabBar({
   activeKey,
   onSelect,
   bottomInset,
+  hidden = false,
   style,
 }: {
   items: TabItem[];
@@ -66,6 +67,15 @@ export const TabBar = memo(function TabBar({
   onSelect: (key: string) => void;
   /** Home-indicator inset, passed in rather than read here so the bar stays pure. */
   bottomInset: number;
+  /**
+   * Takes the bar out of the tree. A sheet on a tab screen cannot rise above this bar,
+   * because the bar is painted by the navigator and the sheet lives inside the scene —
+   * separate view hierarchies, so no `zIndex` crosses between them. See
+   * `ui/sheetPresence.ts` for why the bar yields rather than the sheet being rebuilt as a
+   * native `Modal`: without yielding, a sheet's own footer lands under the bar and a tap
+   * there changes tab instead of pressing the button the user can see.
+   */
+  hidden?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
   const theme = useAppTheme();
@@ -130,6 +140,13 @@ export const TabBar = memo(function TabBar({
     }),
     [translateX, visible, width],
   );
+
+  // Removed rather than faded: a bar that is merely transparent still swallows the taps
+  // aimed at the sheet footer underneath it, which is half the bug. Remounting is cheap
+  // and the indicator does not slide in from x=0 to greet the user, because the layout
+  // callback re-places the active slot with `moveTo(key, false)` — no animation — before
+  // anything has been drawn.
+  if (hidden) return null;
 
   return (
     <View

@@ -10,7 +10,7 @@
  */
 import { remoteExerciseId } from '@/domain/exerciseId';
 import type { Exercise, Taxon } from '@/domain/types';
-import type {
+import {
   WgerExerciseInfo,
   WgerImage,
   WgerLanguage,

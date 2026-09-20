@@ -2,6 +2,17 @@
  * Formatting primitives. All domain values are stored canonically in metric
  * (metres, kilograms, seconds-per-kilometre); conversion happens only here, at
  * the moment a value is shown.
+ *
+ * The parsers live here alongside the formatters (`parseDuration`, `parseNumber`,
+ * `repsFromRange`) because they are the same concern seen from the other side, and because
+ * a rule like "which number does the rep range '5-8' mean" must have exactly one answer:
+ * the programmatic stepper, the planned-volume figure and the session engine all read the
+ * same string, and if they disagree the routine screen and the workout screen show two
+ * different rep counts for one exercise.
+ *
+ * Weight conversion is here for the same reason. `weightValue`/`toKilograms` are the only
+ * place the lb factor is written; an earlier pass had it inlined in three more files, one
+ * under a constant named `LB_PER_LB`.
  */
 
 export type UnitSystem = 'metric' | 'imperial';
@@ -162,9 +173,58 @@ export function toKilograms(value: number, system: UnitSystem): number {
   return system === 'metric' ? value : value / LB_PER_KG;
 }
 
+/**
+ * kg → the number to show in a weight control the user edits.
+ *
+ * The pair of this and `weightFromDisplayValue` is the whole units story for a stepper, and
+ * both directions round for a reason:
+ *
+ * - Going out, an imperial value is stored in kg, so 60 kg is 132.277… lb. Showing that
+ *   verbatim makes a control whose step is 2.5 sit on a number its own steps cannot produce,
+ *   and the next tap appears to change the weight by nothing. Rounding to the nearest tenth
+ *   — or to a whole number when the step is a whole number — keeps the displayed value on
+ *   the grid the step moves along.
+ * - Coming back, the division produces another long decimal, and storing it means two
+ *   routines that are both "135 lb" differ at the sixth significant figure and never compare
+ *   equal. Two places is below the resolution of a barbell and above the resolution of a
+ *   fraction of a kilogram.
+ *
+ * This replaced four inlined copies of `* 2.2046226218` / `/ 2.2046226218`, one of which was
+ * in a local constant named `LB_PER_LB`.
+ */
+export function weightDisplayValue(kg: number, system: UnitSystem, step: number): number {
+  if (system === 'metric') return kg;
+  return Number(weightValue(kg, system).toFixed(step < 1 ? 1 : 0));
+}
+
+/** The inverse: what the user typed in their unit, in the kilograms everything is stored in. */
+export function weightFromDisplayValue(value: number, system: UnitSystem): number {
+  return Number(toKilograms(value, system).toFixed(2));
+}
+
 /** Weight step for steppers — 1 kg / 2.5 lb, the plates people actually own. */
 export function weightStep(system: UnitSystem): number {
   return system === 'metric' ? 1 : 2.5;
+}
+
+/**
+ * The number a programmed rep target means when a single number is needed.
+ *
+ * A routine stores reps as text because people program ranges ("5-8"), singles ("1+"), and
+ * efforts that are not numbers at all ("AMRAP"). Anything that needs arithmetic — the
+ * planned-volume figure, the session-length estimate, the stepper on the editor sheet, the
+ * first set the workout engine opens with — takes the leading integer.
+ *
+ * The fallback is 8, not 0: "AMRAP" still occupies roughly a set's worth of time and a real
+ * effort, and reading it as zero would report a five-exercise routine as a two-minute one
+ * and offer a stepper starting at nothing. The 100 cap is what makes the value safe to hand
+ * to a stepper whose maximum is 100 — without it, a stray "1000" in stored data would open a
+ * control that cannot represent the number it was given.
+ */
+export function repsFromRange(reps: string): number {
+  const first = /(\d+)/.exec(reps)?.[1];
+  const parsed = first === undefined ? Number.NaN : Number.parseInt(first, 10);
+  return Number.isFinite(parsed) && parsed > 0 && parsed <= 100 ? parsed : 8;
 }
 
 /* ----------------------------------------------------------------- calorie -- */
@@ -303,8 +363,27 @@ export function joinMiddleDot(parts: Array<string | null | undefined>): string {
   return parts.filter((p): p is string => Boolean(p && p.trim())).join('  ·  ');
 }
 
-export function pluralize(count: number, singular: string, plural = `${singular}s`): string {
+/**
+ * `"2 exercises"`, `"1 exercise"` — the number included.
+ *
+ * Two near-identical jobs used to hide behind one name called `pluralize`, and half the
+ * call sites assumed the other half's contract: a template would write
+ * `${total} ${pluralize(total, 'exercise')}` and render "904 904 exercises", while
+ * `Rest timer · ${pluralize(days, 'day')} a week` needed the number the helper supplies.
+ * Every reader checked the helper and still got it wrong, because the name describes the
+ * grammar and not the return value. The names now say what comes out.
+ */
+export function countNoun(count: number, singular: string, plural = `${singular}s`): string {
   return `${count} ${count === 1 ? singular : plural}`;
+}
+
+/**
+ * `"exercises"`, `"exercise"` — the number *not* included, for when the template already
+ * prints it, which is most of the time: the count is usually a separate, styled, or
+ * localised piece (`4,562 kg`, `4,562 <Txt>sets</Txt>`).
+ */
+export function pluralWord(count: number, singular: string, plural = `${singular}s`): string {
+  return count === 1 ? singular : plural;
 }
 
 /** "12:45" style split for large metric displays, keeping units visually small. */

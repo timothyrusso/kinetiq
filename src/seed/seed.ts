@@ -375,36 +375,60 @@ function buildStrengthActivity(
 }
 
 /**
- * Thirteen weeks: two lifts, two runs, and a ride or walk per week, plus one
- * near-empty travel week so streak breaks and sparse weeks are visible rather
- * than hypothetical.
+ * Thirteen weeks, ending *in the present*: two lifts, two runs, and a ride or
+ * walk per week, plus one near-empty travel week so streak breaks and sparse
+ * weeks are visible rather than hypothetical.
+ *
+ * ## Why the last loop is a repeat, not a new week
+ *
+ * The window runs Monday-to-Monday and its last week is the one the user is
+ * standing in. Laying the normal schedule across it would date a Thursday lift
+ * or a Saturday run *after* today, and `push` would then drop it — leaving a
+ * visible, empty current week while the six weeks behind it look busy. Home
+ * would open on "0 of 4 this week" above a full-looking history, which reads as
+ * a broken summary rather than a quiet week. So the final loop reuses the
+ * previous week's plan, form and progression index: same shape, shifted into the
+ * past, and every session it schedules before Sunday has either happened or is
+ * honestly yet to come.
  */
 function buildHistory(rng: () => number): Activity[] {
   const activities: Activity[] = [];
   const today = startOfDay(Date.now());
-  const firstMonday = startOfWeek(addDays(today, -WEEKS * 7));
+  // `-(WEEKS - 1)` because week 0 and week WEEKS-1 are both Mondays *inside* the
+  // window: thirteen Mondays, thirteen weeks, the last one today's.
+  const firstMonday = startOfWeek(addDays(today, -(WEEKS - 1) * 7));
   /** Week 6 is a travel week: almost nothing logged. */
   const TRAVEL_WEEK = 6;
 
   const push = (activity: Activity) => {
+    // `< today + 1 day`, not `< today`: an evening session scheduled on today's
+    // own date is still in the window, and dropping it would thin out the very
+    // week the app is being opened in. Nothing later than today can get through.
     if (activity.startedAt <= today.getTime() + 86_400_000) activities.push(activity);
   };
 
   for (let week = 0; week < WEEKS; week += 1) {
     const weekStart = addDays(firstMonday, week * 7);
-    const form = week / (WEEKS - 1);
-    const travel = week === TRAVEL_WEEK;
+    // The plan/form/progression index this loop copies. Only differs from `week`
+    // on the final loop, where reusing the last full week keeps the trend line
+    // monotonic without inventing a future session.
+    const source = week === WEEKS - 1 ? week - 1 : week;
+    // Divided by `WEEKS - 2` because `source` tops out at `WEEKS - 2`: peak form
+    // still lands on 1.
+    const form = source / (WEEKS - 2);
+    const travel = source === TRAVEL_WEEK;
+    const evenWeek = source % 2 === 0;
 
     // Monday and Thursday lifting, rotating through the three plans.
     const lifts = travel ? [0] : [0, 1];
     lifts.forEach((offset, index) => {
-      const plan = PLANS[(week + index) % PLANS.length];
+      const plan = PLANS[(source + index) % PLANS.length];
       if (!plan) return;
       push(
         buildStrengthActivity(
           rng,
           plan,
-          week,
+          source,
           addDays(weekStart, offset + (travel ? 2 : index * 3)).getTime() + 19 * 3_600_000,
         ),
       );
@@ -418,7 +442,7 @@ function buildHistory(rng: () => number): Activity[] {
     }
 
     // A ride most weeks and a short walk most weeks.
-    if (week % 2 === 0) {
+    if (evenWeek) {
       push(buildCardio(rng, 'ride', addDays(weekStart, 3).getTime() + 16 * 3_600_000, form));
     }
     if (!travel) {
@@ -429,20 +453,28 @@ function buildHistory(rng: () => number): Activity[] {
   return activities.sort((a, b) => a.startedAt - b.startedAt);
 }
 
-function buildRoutines(now: number): Routine[] {
+function buildRoutines(createdAt: number): Routine[] {
   return PLANS.map((plan) => ({
     id: localId('seed'),
     name: plan.name,
     description: plan.description,
-    createdAt: now - WEEKS * 7 * 86_400_000,
-    updatedAt: now - 2 * 86_400_000,
+    // The date history *starts* on, not `now - WEEKS weeks`: that subtraction
+    // used `WEEKS` as a duration on a quantity that is a count of Mondays, which
+    // put creation exactly one week before anything was ever trained.
+    createdAt,
+    // Two days ago rather than today, so "last trained" is a plausible recent
+    // number instead of "just now" on an app that has never recorded a session.
+    updatedAt: startOfDay(Date.now()).getTime() - 2 * 86_400_000,
     // Completion counts are back-filled from history so "performed 9×" is true.
     timesCompleted: 0,
     lastPerformedAt: null,
     seeded: true,
     items: plan.keys.map<RoutineItem>((key, index) => {
       const source = exerciseByKey.get(key);
-      const snapshot = snapshotFor(key, now);
+      // `snapshotFor` caches by key and history runs first, so this date is a
+      // fallback rather than the value that usually survives — but it must still
+      // be a date the routine could have known about, which `createdAt` is.
+      const snapshot = snapshotFor(key, createdAt);
       return {
         id: localId('seed'),
         exerciseId: snapshot.exerciseId,
@@ -531,7 +563,7 @@ export async function seedIfEmpty(): Promise<SeedResult | null> {
   const now = Date.now();
 
   const activities = buildHistory(rng);
-  const routines = buildRoutines(now);
+  const routines = buildRoutines(activities[0]?.startedAt ?? now);
   applyCompletionStats(routines, activities);
   const records = buildRecords(activities);
 

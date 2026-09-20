@@ -59,7 +59,7 @@ import type { Exercise, Taxon } from '@/domain/types';
 import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
 import { spacing } from '@/theme/tokens';
-import { joinMiddleDot, pluralize } from '@/utils/format';
+import { joinMiddleDot, pluralWord } from '@/utils/format';
 
 const BOTTOM_SPACE = 96;
 
@@ -122,7 +122,7 @@ export default function ExercisesScreen() {
         <Txt variant="caption" tone="muted" style={{ marginTop: spacing.xs }}>
           {search.total === null
             ? 'Search the wger catalog and add anything to a routine'
-            : `${search.total.toLocaleString()} ${pluralize(search.total, 'exercise')}${
+            : `${search.total.toLocaleString()} ${pluralWord(search.total, 'exercise')}${
                 searching ? ` for “${filter.query}”` : ''
               }`}
         </Txt>
@@ -411,7 +411,7 @@ function ListFooter({
             ? `${count.toLocaleString()} loaded`
             : total === null
               ? `${count.toLocaleString()} shown`
-              : `All ${total.toLocaleString()} ${pluralize(total, 'exercise')} loaded`}
+              : `All ${total.toLocaleString()} ${pluralWord(total, 'exercise')} loaded`}
       </Txt>
     </View>
   );

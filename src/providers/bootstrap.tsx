@@ -113,7 +113,7 @@ const SETTINGS_KEYS = [
   SETTING_KEYS.defaultRestSeconds,
   SETTING_KEYS.autoStartRest,
   SETTING_KEYS.weeklyGoalWorkouts,
-  SETTING_KEYS.showKmSplits,
+  SETTING_KEYS.showSpeedInsteadOfPace,
   SETTING_KEYS.profile,
   SETTING_KEYS.reminder,
 ] as const;

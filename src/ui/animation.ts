@@ -19,7 +19,9 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Pressable, useWindowDimensions, type ViewStyle } from 'react-native';
 import {
+  clamp,
   createAnimatedComponent,
+  type AnimatedStyle,
   Easing,
   ReduceMotion,
   runOnJS,
@@ -35,7 +37,13 @@ import {
 } from 'react-native-reanimated';
 import { Gesture } from 'react-native-gesture-handler';
 import { motion } from '@/theme/tokens';
-import { clamp } from '@/utils/functional';
+
+// `clamp` comes from Reanimated, not `utils/functional`, and the difference is not style: every
+// call site below is inside a worklet, which is serialised to a string and re-evaluated on the UI
+// thread. A plain JS import is `undefined` there — `tsc` approves it, and the app throws
+// "undefined is not a function" at the first scroll frame. Reanimated's is declared `'worklet'`.
+// There is no JS-side `clamp` use in this file to reconcile against; if one is ever added, import
+// the other one under a distinct name rather than swapping this one back.
 
 // ---------------------------------------------------------------------------
 // Shared physics vocabulary. One spring per *intent*, so the whole app has one
@@ -130,15 +138,24 @@ export function useHeaderCollapse(
 }
 
 /**
- * Adds alpha to a `#rrggbb` token. Kept here rather than in the theme because it
- * is only ever needed by an animated style, where the alpha changes per frame
- * and must not be memoised.
+ * Adds alpha to a `#rrggbb` token, for a colour that changes per frame.
+ *
+ * Deliberately not `utils/color`'s `withAlpha`, which remains the one to use anywhere a worklet
+ * is not involved. Reanimated stringifies a worklet and re-evaluates it on the UI thread, where
+ * it can only reach functions from *its own module* or from a package Reanimated whitelists; a
+ * project-module import is unreachable either way you mark it — unmarked it is `undefined`,
+ * marked `'worklet'` it becomes a Remote Function and throws "Tried to synchronously call a
+ * Remote Function" the moment a worklet calls it synchronously. `tsc` accepts all of these and
+ * the app only finds out on the first scroll frame, which is why this is a duplicate rather
+ * than an import. It is seven lines of string arithmetic with no policy in it.
  */
-export function withAlpha(hex: string, alpha: number): string {
+function withAlpha(hex: string, alpha: number): string {
+  'worklet';
+  if (hex.length !== 7 || !hex.startsWith('#')) return hex;
   const a = Math.round(clamp(alpha, 0, 1) * 255)
     .toString(16)
     .padStart(2, '0');
-  return hex.length === 7 ? `${hex}${a}` : hex;
+  return `${hex}${a}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -302,7 +319,7 @@ export function useSpin(duration = 850): ReturnType<typeof useAnimatedStyle> {
 }
 
 /** Breathing opacity — the dot on a live-recording pill. */
-export function usePulse(period = 1500, min = 0.32): ReturnType<typeof useAnimatedStyle> {
+export function usePulse(period = 1500, min = 0.32): AnimatedStyle<ViewStyle> {
   const phase = useSharedValue(0);
   useEffect(() => {
     phase.value = withRepeat(

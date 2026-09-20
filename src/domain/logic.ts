@@ -2,9 +2,10 @@
  * Domain rules that the UI must never re-implement: energy expenditure,
  * estimated one-rep max, streaks and derived totals.
  */
-import type {
+import {
   Activity,
   ActivityKind,
+  RoutineItem,
   CompletedWorkout,
   PersonalRecord,
   StrengthEntry,
@@ -12,7 +13,7 @@ import type {
   Streak,
   WorkoutSession,
 } from './types';
-import { daysBetween, startOfDay } from '@/utils/format';
+import { daysBetween, repsFromRange, startOfDay } from '@/utils/format';
 import { sum } from '@/utils/functional';
 
 /**
@@ -65,6 +66,48 @@ export function entryVolumeKg(entry: Pick<StrengthEntry, 'sets'>): number {
 
 export function totalVolumeKg(entries: readonly StrengthEntry[]): number {
   return Math.round(sum(entries.map(entryVolumeKg)));
+}
+
+/**
+ * Planned load for a *program*: Σ sets × weight, over a routine's rows.
+ *
+ * The sibling of `totalVolumeKg`, which is the same sum over sets actually performed. The
+ * two must stay side by side in this file because their whole value is being comparable —
+ * a progress screen that computes the planned figure with a different rule than the performed
+ * one shows a "completion percentage" that means nothing.
+ *
+ * Bodyweight rows contribute zero, which is correct for load and not a bug: tonnage is the
+ * unit here, and a routine of bodyweight work legitimately has a planned volume of 0.
+ */
+export function plannedVolumeKg(items: readonly RoutineItem[]): number {
+  return items.reduce((total, item) => total + item.sets * Math.max(0, item.weightKg), 0);
+}
+
+/** Total programmed reps, each row's rep target read by `repsFromRange`. */
+export function plannedReps(items: readonly RoutineItem[]): number {
+  return items.reduce((total, item) => total + item.sets * repsFromRange(item.reps), 0);
+}
+
+/**
+ * The "about 55 min" figure on a routine header.
+ *
+ * Deliberately rough and labelled as such wherever it is shown: a rep is three seconds of
+ * work, rest is whatever the row says, and every exercise costs twenty seconds of
+ * transition. Anyone who has timed a real session knows the number is an estimate, which is
+ * why it carries the word rather than pretending to a precision this model does not have.
+ *
+ * It is a duration model rather than a domain rule in the sense the rest of this file means,
+ * but it belongs here for the same reason the volume figures do: the builder and the saved
+ * routine screen both show it, and two copies drift into disagreeing about how long the same
+ * routine takes.
+ */
+export function estimateMinutes(items: readonly RoutineItem[]): number {
+  const workSeconds = items.reduce(
+    (total, item) => total + item.sets * (repsFromRange(item.reps) * 3 + item.restSeconds),
+    0,
+  );
+  const transitions = items.length * 20;
+  return Math.max(1, Math.round((workSeconds + transitions) / 60));
 }
 
 export function completedSetCount(entries: readonly StrengthEntry[]): number {

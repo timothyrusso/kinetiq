@@ -41,6 +41,21 @@ const TAB_HREFS: Record<TabKey, Href> = {
   profile: '/profile' as Href,
 };
 
+/**
+ * What each tab is called in the bar.
+ *
+ * Lives here rather than beside the bar's own list because the not-found screen offers the
+ * same five destinations as text and must not maintain a second spelling of them. `index` is
+ * "Home" and not "Index" — the group segment is a routing fact, the label is a product one.
+ */
+export const TAB_LABELS: Record<TabKey, string> = {
+  index: 'Home',
+  activities: 'Activities',
+  workout: 'Workout',
+  exercises: 'Exercises',
+  profile: 'Profile',
+};
+
 export function tabHref(index: number): Href {
   const key = TAB_ROUTES[index] ?? 'index';
   return TAB_HREFS[key];
@@ -95,14 +110,27 @@ export const routes = {
    * look when one moves.
    */
   newRoutine: () => '/routine/new' as Href,
-  workoutStart: () => '/workout' as Href,
+  /**
+   * The Workout tab, not a "start" screen.
+   *
+   * `/workout` is a `TAB_ROUTES` entry, so the tab owns that path — a screen at
+   * `app/workout.tsx` would fight it for the same URL. Anything asking to "go start a
+   * workout" means the tab, which is where the routines and the resume card live.
+   */
+  workoutTab: () => tabHref(2) as Href,
+  /**
+   * The Exercises *tab*, not a detail screen.
+   *
+   * `tabHref` rather than `'/exercises'` because the literal happens to work either way and
+   * that is the problem: it resolves through the group and the bar stops highlighting
+   * properly, which reads as a rendering glitch three screens later.
+   */
+  exercisesTab: () => tabHref(3) as Href,
   workoutSession: () => '/workout/session' as Href,
   workoutHistory: () => '/workout/history' as Href,
   cardio: () => '/workout/cardio' as Href,
   progress: () => '/progress' as Href,
   settings: () => '/settings' as Href,
-  settingsUnits: () => '/settings/units' as Href,
-  settingsAppearance: () => '/settings/appearance' as Href,
   settingsTraining: () => '/settings/training' as Href,
   settingsNotifications: () => '/settings/notifications' as Href,
   settingsAbout: () => '/settings/about' as Href,

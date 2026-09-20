@@ -7,6 +7,7 @@ export { activityRepository } from './activityRepository';
 export type { ActivityListQuery } from './activityRepository';
 export {
   routineRepository,
+  snapshotById,
   snapshotOf,
   snapshotsOf,
   upsertSnapshot,

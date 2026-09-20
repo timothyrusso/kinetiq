@@ -14,7 +14,16 @@
  * floating above the bar, and a blur that follows the theme's `overlay` token instead of a
  * hard-coded system material.
  *
- * ## Why the first two tabs are not lazy
+ * ## Why `headerShown: false` lives here and not only in the root layout
+ *
+ * The root `Stack` already sets `headerShown: false`, and that is *not* inherited: it applies
+ * to the screens the root stack owns, including this group as one screen — it says nothing
+ * about the screens *this* navigator owns. Left alone, bottom-tabs falls back to a
+ * `Header` whose title is `getHeaderTitle(options, route.name)`, i.e. literally "index", and
+ * that header paints an opaque bar across the top of every tab scene — over the large title
+ * each screen draws itself, and over the settings control inside it. Each tab owns its header
+ * (`CollapsibleHeader`), which is the only way a title can collapse on scroll; the navigator's
+ * must stay off for that to be the only one.
  *
  * Home and Activities are where a user lands within the first second. Lazy-mounting them
  * makes the first tap pay a mount *and* a query, which reads as a slow app. Exercises is
@@ -27,10 +36,11 @@ import { StyleSheet, View } from 'react-native';
 import { Tabs, router, usePathname } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { tabHref, tabKeyForPathname, type TabKey } from '@/navigation/nav';
+import { routes, tabHref, tabKeyForPathname, type TabKey } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
 import { spacing, z } from '@/theme/tokens';
 import { ActiveWorkoutPill, TabBar, type TabItem } from '@/ui/TabBar';
+import { useAnySheetMounted } from '@/ui/sheetPresence';
 import { formatDuration } from '@/utils/format';
 import { useWorkoutSession } from '@/workout/session';
 
@@ -72,6 +82,7 @@ export default function TabsLayout() {
 
   return (
     <Tabs
+      screenOptions={{ headerShown: false }}
       tabBar={() => (
         <TabBarWithPill activeKey={activeKey} onSelect={onSelect} bottomInset={insets.bottom} />
       )}
@@ -105,10 +116,13 @@ function TabBarWithPill({
   const theme = useAppTheme();
   const { session } = useWorkoutSession();
   const running = session !== null && (session.status === 'active' || session.status === 'paused');
+  // Subscribed here rather than in `TabsLayout` so opening a sheet re-renders the bar and
+  // nothing above it — the navigator, and through it every mounted screen, stays put.
+  const sheetUp = useAnySheetMounted();
 
   return (
     <>
-      {running && session ? (
+      {running && session && !sheetUp ? (
         // Absolutely positioned above the bar rather than stacked under it: `TabBar` is
         // itself `position: 'absolute', bottom: 0, zIndex: z.sheet`, so a sibling in normal
         // flow would sit *behind* it at the bottom of the screen. The offset hard-codes the
@@ -129,7 +143,7 @@ function TabBarWithPill({
                 : formatDuration(session.elapsedSeconds, ':')
             }
             onPress={() => {
-              router.push('/workout/session');
+              router.push(routes.workoutSession());
             }}
             theme={theme}
           />
@@ -140,6 +154,7 @@ function TabBarWithPill({
         activeKey={activeKey}
         onSelect={onSelect}
         bottomInset={bottomInset}
+        hidden={sheetUp}
       />
     </>
   );

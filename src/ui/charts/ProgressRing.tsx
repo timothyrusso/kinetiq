@@ -84,12 +84,12 @@ export const ProgressRing = memo(function ProgressRing({
   // already caps at 0.9999 for exactly this reason. Same colour as the arc's seam,
   // so the gap is not visible.
   const trackProps = useAnimatedProps(
-    () => ({ d: arcPath(centre, centre, radius, sweepTo(0), sweepTo(0.9999)) }),
+    () => ({ d: arcFromTurns(centre, radius, 0, 0.9999) }),
     [centre, radius],
   );
 
   const arcProps = useAnimatedProps(
-    () => ({ d: arcPath(centre, centre, radius, sweepTo(0), sweepTo(value.value)) }),
+    () => ({ d: arcFromTurns(centre, radius, 0, value.value) }),
     [centre, radius, value],
   );
 
@@ -175,6 +175,41 @@ export function ringArc(
   to: number,
 ): string {
   return arcPath(centre, centre, radius, sweepTo(clamp01(from)), sweepTo(clamp01(to)));
+}
+
+// ---------------------------------------------------------------------------
+// Worklet-local geometry
+// ---------------------------------------------------------------------------
+
+/**
+ * The arc maths, again, deliberately.
+ *
+ * `arcPath`/`sweepTo`/`clamp01` in `geometry.ts` are the canonical implementation and stay
+ * canonical for everything rendered on the JS thread — `ringArc` above, the single-ring path,
+ * the heatmap. These three exist because a worklet is stringified and re-evaluated on the UI
+ * thread, where it can only reach functions from *its own module* or from a package Reanimated
+ * whitelists. Importing the shared ones fails twice over, and the two failures look unrelated:
+ * unmarked, they are `undefined` on the UI thread; marked `'worklet'`, they become Remote
+ * Functions and throw "Tried to synchronously call a Remote Function" the moment a worklet calls
+ * one synchronously. Neither is visible to `tsc`, and both only surface once a ring animates.
+ *
+ * The duplication is bounded and checkable: same 6 lines, same rounding, no policy in them.
+ */
+function arcFromTurns(centre: number, radius: number, fromTurn: number, toTurn: number): string {
+  'worklet';
+  const clamp = (v: number): number => (v < 0 ? 0 : v > 1 ? 1 : v);
+  const r = (v: number): number => Math.round(v * 100) / 100;
+  // 0.9999 of a turn, not 1: a single SVG arc command cannot close a circle — start and end
+  // coincide and the renderer draws nothing.
+  const sweep = (t: number): number => -Math.PI / 2 + Math.min(clamp(t), 0.9999) * Math.PI * 2;
+  const a = sweep(fromTurn);
+  const b = sweep(toTurn);
+  const sx = centre + radius * Math.cos(a);
+  const sy = centre + radius * Math.sin(a);
+  const ex = centre + radius * Math.cos(b);
+  const ey = centre + radius * Math.sin(b);
+  const large = Math.abs(b - a) > Math.PI ? 1 : 0;
+  return `M${r(sx)} ${r(sy)} A${r(radius)} ${r(radius)} 0 ${large} 1 ${r(ex)} ${r(ey)}`;
 }
 
 export type ProgressRingProps = React.ComponentProps<typeof ProgressRing>;

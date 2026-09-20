@@ -69,8 +69,6 @@ const RECENT_FETCHED = 60;
 /** Clearance for the floating tab bar plus the live-session pill above it. */
 const BOTTOM_SPACE = 132;
 
-const WEEK_LABEL: Intl.DateTimeFormatOptions = { weekday: 'short' };
-
 /** `Card`'s default `padding='lg'`, subtracted from any chart that must fit inside one. */
 const CARD_PADDING = spacing.lg;
 
@@ -95,6 +93,9 @@ export default function HomeScreen() {
   const streak = useMemo(() => computeStreak(fetched), [fetched]);
 
   const loading = summaryQuery.isPending && !summaryQuery.isError;
+  // `weeks` is oldest-first, so the current week is the *last* entry. See the contract in
+  // `useProgress.ts` — reading index 0 instead shows a week four (or seven) ago as today,
+  // with numbers plausible enough that nothing looks broken.
   const week = summary?.weeks.at(-1);
   const remaining = goal - (week?.workouts ?? 0);
   const ratio = goal > 0 ? Math.min(1, (week?.workouts ?? 0) / goal) : 0;
@@ -204,7 +205,13 @@ export default function HomeScreen() {
       <CollapsibleHeader
         header={header}
         title={profileName ? `Hi ${firstName(profileName)}` : 'Today'}
-        right={<BarAction icon="settings" label="Settings" onPress={() => router.push('/settings')} />}
+        right={
+          <BarAction
+            icon="settings"
+            label="Settings"
+            onPress={() => router.push(routes.settings())}
+          />
+        }
       />
 
       <FlashList
@@ -271,10 +278,13 @@ function HomeSummary({
   const week = summary.weeks.at(-1);
   const previous = summary.weeks.at(-2);
 
+  // The last six weeks, oldest on the left. `WeekSummary.label` is "Sep 1", which is what a
+  // weekly bar wants: labelling by weekday — as this did — puts "Mon" under all six bars,
+  // because every week in the array starts on the same weekday.
   const bars: BarPoint[] = useMemo(
     () =>
       summary.weeks.slice(-6).map((w, index, all) => ({
-        label: index === all.length - 1 ? 'Now' : weekLabel(w.weekStart),
+        label: index === all.length - 1 ? 'Now' : w.label,
         value: Math.round(w.durationSeconds / 60),
         emphasised: index === all.length - 1,
         detail: `${w.workouts} ${w.workouts === 1 ? 'session' : 'sessions'}`,
@@ -431,7 +441,7 @@ function ActiveWorkoutNotice() {
         theme={theme}
         label={session.status === 'paused' ? 'Workout paused' : 'Workout in progress'}
         detail={formatDurationCompact(session.elapsedSeconds)}
-        onPress={() => router.push('/workout/session')}
+        onPress={() => router.push(routes.workoutSession())}
       />
     </View>
   );
@@ -464,10 +474,6 @@ function greeting(): string {
 
 function firstName(full: string): string {
   return full.trim().split(/\s+/)[0] ?? full;
-}
-
-function weekLabel(weekStart: number): string {
-  return new Date(weekStart).toLocaleDateString(undefined, WEEK_LABEL);
 }
 
 /**

@@ -387,3 +387,19 @@ export async function snapshotsOf(exerciseIds: readonly string[]): Promise<Exerc
   );
   return rows.map(rowToExerciseSnapshot);
 }
+
+/**
+ * One stored exercise, or null when we have never seen it.
+ *
+ * The exercise detail screen reads this *before* it goes to the network, which is what
+ * makes a saved exercise readable on a plane: anything the user has ever added to a
+ * routine has a row here. `snapshotsOf` covers the batch case; this is the single-id one,
+ * and the distinction is a `LIMIT 1` plan rather than a one-element `IN` list.
+ */
+export async function snapshotById(exerciseId: string): Promise<ExerciseSnapshot | null> {
+  const row = await getDatabase().getFirstAsync<ExerciseRow>(
+    'SELECT * FROM exercises WHERE id = ?',
+    exerciseId,
+  );
+  return row === null ? null : rowToExerciseSnapshot(row);
+}

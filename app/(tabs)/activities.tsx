@@ -36,7 +36,7 @@ import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BarAction, CollapsibleHeader, CollapsibleHero, useScreenHeaderScroll } from '@/ui/Screen';
+import { CollapsibleHeader, CollapsibleHero, useScreenHeaderScroll } from '@/ui/Screen';
 import { ActivityRow } from '@/ui/rows';
 import { Row } from '@/ui/layout';
 import { MetricLabel, Txt } from '@/ui/Text';
@@ -168,7 +168,10 @@ export default function ActivitiesScreen() {
 
   const confirmDelete = useCallback(() => {
     if (!pendingDelete) return;
-    removeActivity.mutate(pendingDelete.id, { onSettled: () => setPendingDelete(null) });
+    // `onSuccess`, not `onSettled`: a delete that fails must leave the sheet open with
+    // the reason visible, not close and leave a row the user just tried to remove sitting
+    // in the list, which reads as the button having done nothing.
+    removeActivity.mutate(pendingDelete.id, { onSuccess: () => setPendingDelete(null) });
   }, [pendingDelete, removeActivity]);
 
   const summaryLine = useMemo(() => {
@@ -235,13 +238,11 @@ export default function ActivitiesScreen() {
 
   return (
     <View style={styles.root}>
-      <CollapsibleHeader
-        header={header}
-        title="Activities"
-        right={
-          <BarAction icon="filter" label="Filter by type" onPress={() => setSearch(search)} />
-        }
-      />
+      {/* No bar action. The type chips and the sort control are permanently in the list
+          header directly under this bar, so a funnel button here would either open a sheet
+          duplicating controls that are already on screen or, as it did, fire a press that
+          set the search text to what it already was. A dead icon is worse than no icon. */}
+      <CollapsibleHeader header={header} title="Activities" />
 
       <FlashList
         data={rows}
@@ -281,7 +282,9 @@ export default function ActivitiesScreen() {
               message="Finish a workout or record a run and it lands here — route, splits, every set."
               icon="activities"
               actionLabel="Start a workout"
-              onAction={() => router.push('/workout')}
+              // A `replace`, not a push: this is a tab, and pushing it would stack a second
+              // copy of the tab bar on the one the user is standing on.
+              onAction={() => router.replace(routes.workoutTab())}
             />
           )
         }
@@ -294,7 +297,18 @@ export default function ActivitiesScreen() {
           message={`"${pendingDelete.title}" and its route will be removed. Personal records it set are recalculated from what remains.`}
           confirmLabel={removeActivity.isPending ? 'Deleting…' : 'Delete'}
           onConfirm={confirmDelete}
-          onRequestClose={() => setPendingDelete(null)}
+          onRequestClose={() => {
+            removeActivity.reset();
+            setPendingDelete(null);
+          }}
+          {...(removeActivity.isError
+            ? {
+                error:
+                  removeActivity.error instanceof Error
+                    ? removeActivity.error.message
+                    : 'The session could not be deleted.',
+              }
+            : {})}
         />
       ) : null}
     </View>

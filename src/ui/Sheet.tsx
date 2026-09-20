@@ -14,10 +14,15 @@
  * - **Height is content-driven with a ceiling.** A sheet that always fills the screen
  *   is a page; one that measures exactly is cramped. This hugs content up to 88 % of
  *   the viewport and scrolls past it.
+ * - **A keyboard moves the panel, not just the caret.** See `AvoidingKeyboard` below:
+ *   the sheet is pinned to the bottom edge, which is the one place the keyboard
+ *   covers, so a sheet holding a field would otherwise bury its own save button.
  */
 import React, { forwardRef, memo, useImperativeHandle, useRef, useState } from 'react';
 import {
   Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -28,10 +33,11 @@ import {
 import { GestureDetector } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { palette, radius, spacing, touchTarget } from '@/theme/tokens';
+import { radius, spacing, touchTarget, z } from '@/theme/tokens';
 import { useAppTheme } from '@/theme/theme';
 import { haptics } from '@/services/haptics';
 import { useSheetDrag } from './animation';
+import { useSheetPresence } from './sheetPresence';
 import { Button } from './Button';
 import { Icon } from './icons';
 import { Txt } from './Text';
@@ -74,6 +80,9 @@ export const Sheet = forwardRef<SheetHandle, SheetProps>(function Sheet(
 ) {
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
+  // Tells the tabs layout this sheet exists, so the tab bar can get out of the way.
+  // Every composite sheet in this file bottoms out here, so one call covers all of them.
+  useSheetPresence();
   // A gesture can finish and the backdrop can be tapped in the same frame; without a
   // latch the route pops twice and the user lands two screens back.
   const closing = useRef(false);
@@ -105,8 +114,74 @@ export const Sheet = forwardRef<SheetHandle, SheetProps>(function Sheet(
     </View>
   );
 
+  const sheet = (
+    <GestureDetector gesture={drag.gesture}>
+      <Animated.View
+        style={[
+          {
+            backgroundColor: theme.colors.background,
+            borderTopLeftRadius: radius.xxl,
+            borderTopRightRadius: radius.xxl,
+            paddingTop: edgeToEdge ? 0 : spacing.md,
+            // The bottom inset belongs to the sheet, not the content: a save button
+            // under the iOS home indicator is unreachable, not merely tight.
+            paddingBottom: Math.max(insets.bottom + spacing.md, spacing.xxl),
+            paddingHorizontal: spacing.xl,
+            maxHeight: '88%',
+            ...theme.shadows.raised,
+            elevation: 24,
+          },
+          drag.style,
+          style,
+        ]}
+      >
+        {edgeToEdge ? null : (
+          <View
+            style={{
+              alignSelf: 'center',
+              width: 40,
+              height: 5,
+              borderRadius: radius.pill,
+              marginBottom: spacing.md,
+              backgroundColor: theme.colors.borderStrong,
+            }}
+          />
+        )}
+        {scrollable ? (
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            showsVerticalScrollIndicator={false}
+            // A short sheet must not stretch its scroll view to the ceiling and leave
+            // dead space under the footer; a tall one has to be able to scroll at all.
+            contentContainerStyle={contentHeight > 0 ? undefined : GROW_TO_FILL}
+          >
+            {body}
+          </ScrollView>
+        ) : (
+          body
+        )}
+      </Animated.View>
+    </GestureDetector>
+  );
+
   return (
-    <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+    // Absolute fill, not `flex: 1`. Every screen hosts a sheet as a *sibling* of its own
+    // flex-1 content (the activities list, a detail ScrollView), and a second `flex: 1` in
+    // that column does not overlay anything: it wins half the leftover space, anchors the
+    // panel to the bottom of *that* box, and caps it at 88% of half a screen. The sheet
+    // would then float somewhere around the middle of the display with its scrim over
+    // everything — wrong on every device. Filling the parent absolutely makes it a real
+    // overlay regardless of what the host's layout is doing, which is also the only way the
+    // drag translate and `maxHeight: '88%'` mean what they say.
+    //
+    // The avoiding view sits outside that fill rather than inside the panel, and the
+    // placement is the whole fix: the sheet is pinned to the bottom edge, which is the
+    // exact strip the keyboard covers, so an auto-focused field buries the footer holding
+    // its own Save button. Padding the container lifts `justifyContent: 'flex-end'` above
+    // the keyboard, panel and all. The scrim is unaffected because an absolutely filled
+    // child is laid out against the container's border box, ignoring its padding.
+    <AvoidingKeyboard style={{ ...ABSOLUTE_FILL, justifyContent: 'flex-end', zIndex: z.modal }}>
       <Pressable
         onPress={() => {
           Keyboard.dismiss();
@@ -119,64 +194,43 @@ export const Sheet = forwardRef<SheetHandle, SheetProps>(function Sheet(
         <AnimatedScrim style={drag.backdropStyle} />
       </Pressable>
 
-      <GestureDetector gesture={drag.gesture}>
-        <Animated.View
-          style={[
-            {
-              backgroundColor: theme.colors.background,
-              borderTopLeftRadius: radius.xxl,
-              borderTopRightRadius: radius.xxl,
-              paddingTop: edgeToEdge ? 0 : spacing.md,
-              // The bottom inset belongs to the sheet, not the content: a save button
-              // under the iOS home indicator is unreachable, not merely tight.
-              paddingBottom: Math.max(insets.bottom + spacing.md, spacing.xxl),
-              paddingHorizontal: spacing.xl,
-              maxHeight: '88%',
-              ...theme.shadows.raised,
-              elevation: 24,
-            },
-            drag.style,
-            style,
-          ]}
-        >
-          {edgeToEdge ? null : (
-            <View
-              style={{
-                alignSelf: 'center',
-                width: 40,
-                height: 5,
-                borderRadius: radius.pill,
-                marginBottom: spacing.md,
-                backgroundColor: theme.colors.borderStrong,
-              }}
-            />
-          )}
-          {scrollable ? (
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
-              keyboardDismissMode="on-drag"
-              showsVerticalScrollIndicator={false}
-              // A short sheet must not stretch its scroll view to the ceiling and leave
-              // dead space under the footer; a tall one has to be able to scroll at all.
-              contentContainerStyle={contentHeight > 0 ? undefined : GROW_TO_FILL}
-            >
-              {body}
-            </ScrollView>
-          ) : (
-            body
-          )}
-        </Animated.View>
-      </GestureDetector>
-    </View>
+      {sheet}
+    </AvoidingKeyboard>
   );
 });
 
-/** The scrim lives on the JS-side colour but the UI-thread opacity of the drag. */
-function AnimatedScrim({ style }: { style: React.ComponentProps<typeof Animated.View>['style'] }) {
+/**
+ * Lifts a bottom-pinned sheet clear of the keyboard.
+ *
+ * `padding` on iOS because the keyboard there floats over the window; nothing on Android,
+ * where `resize` mode shrinks the window — and therefore this container — already. Adding
+ * the padding there too would push the sheet up by the keyboard's height *twice*, which is
+ * the classic double-shift: the panel ends up floating in the middle of the screen with a
+ * gap under it. Same reasoning as `KeyboardAvoid` in `ui/TextField`, applied at the layer
+ * that actually owns the bottom edge.
+ */
+function AvoidingKeyboard({ children, style }: { children: React.ReactNode; style: ViewStyle }) {
   return (
-    <Animated.View
-      style={[ABSOLUTE_FILL, { backgroundColor: palette.black }, style]}
-    />
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={style}>
+      {children}
+    </KeyboardAvoidingView>
+  );
+}
+
+/**
+ * The scrim lives on the JS-side colour but the UI-thread opacity of the drag.
+ *
+ * It used to paint `palette.black` at full strength, which turned the whole screen
+ * behind a sheet solid black on the light theme — not a dimmed context, an outright
+ * black screen, indistinguishable at a glance from a failed load. `colors.scrim` is
+ * translucent ink that carries its own weight per theme (heavier in dark, where the
+ * canvas is already near-black and needs separating; light in light, where the point
+ * is that the content is still there behind the sheet).
+ */
+function AnimatedScrim({ style }: { style: React.ComponentProps<typeof Animated.View>['style'] }) {
+  const theme = useAppTheme();
+  return (
+    <Animated.View style={[ABSOLUTE_FILL, { backgroundColor: theme.colors.scrim }, style]} />
   );
 }
 
@@ -314,6 +368,7 @@ export const ConfirmSheet = memo(function ConfirmSheet({
   onRequestClose,
   destructive = true,
   cancelLabel = 'Cancel',
+  error,
 }: {
   title: string;
   message: string;
@@ -322,6 +377,8 @@ export const ConfirmSheet = memo(function ConfirmSheet({
   onRequestClose: () => void;
   destructive?: boolean;
   cancelLabel?: string;
+  /** Why the last attempt failed. See the note in `app/(tabs)/activities.tsx`. */
+  error?: string | null;
 }) {
   return (
     <Sheet onRequestClose={onRequestClose} scrollable={false}>
@@ -330,6 +387,11 @@ export const ConfirmSheet = memo(function ConfirmSheet({
         <Txt variant="body" tone="muted">
           {message}
         </Txt>
+        {error ? (
+          <Txt variant="caption" tone="danger">
+            {error}
+          </Txt>
+        ) : null}
       </View>
       <SheetFooter>
         <Button

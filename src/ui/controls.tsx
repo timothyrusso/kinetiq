@@ -27,14 +27,14 @@ import {
 } from 'react-native';
 import Animated, {
   useAnimatedStyle,
-  useReducedMotion,
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
 import { palette, radius, spacing } from '@/theme/tokens';
 import { useAppTheme } from '@/theme/theme';
 import { haptics } from '@/services/haptics';
-import { AnimatedPressable, settleSpring, usePressScale, withAlpha } from './animation';
+import { withAlpha } from '@/utils/color';
+import { AnimatedPressable, settleSpring, usePressScale } from './animation';
 import { Icon, type IconName } from './icons';
 import { Txt } from './Text';
 
@@ -52,7 +52,6 @@ export function SegmentedControl<T extends string>({
   style?: StyleProp<ViewStyle>;
 }) {
   const theme = useAppTheme();
-  const reduced = useReducedMotion();
   const [trackWidth, setTrackWidth] = useState(0);
   const [rowHeight, setRowHeight] = useState(0);
 
@@ -64,23 +63,40 @@ export function SegmentedControl<T extends string>({
   // varies, and a thumb sized from a guess lands a pixel off on wide phones.
   const innerWidth = trackWidth > 0 ? trackWidth - INSET * 2 : 0;
   const segmentWidth = segments.length > 0 ? innerWidth / segments.length : 0;
+  const targetX = segmentWidth * selectedIndex;
 
-  // A shared value written from render and animated by the UI thread. Writing it in
-  // an effect instead would lag a frame behind the label colour change and the thumb
-  // would visibly trail the text it is supposed to sit under.
-  const translateX = useSharedValue(0);
-  translateX.value = segmentWidth * selectedIndex;
+  // The spring starts in an effect and the style function only reads the cell.
+  // Writing `translateX.value` from render — which is what this did first, on the
+  // theory that an effect would leave the thumb trailing the label colour — trips
+  // Reanimated's render-write warning on every mount of every screen that carries
+  // the control, and bought nothing: this effect runs in the same commit as the
+  // `onLayout` that first gives the thumb a width, so the earliest visible frame is
+  // still the thumb sitting under the selected label rather than sliding into place.
+  // `settleSpring` carries `reduceMotion: System`, so the old hand-written
+  // `useReducedMotion` branch here was doing the same job twice, less correctly.
+  const translateX = useSharedValue(targetX);
+  const seeded = useRef(false);
+  useEffect(() => {
+    // The first real target arrives with `onLayout`, when the thumb stops being
+    // zero-wide. Snapping there instead of springing is what keeps a freshly
+    // mounted control from animating its own entrance: before this, a control
+    // defaulting to the third segment would slide its thumb in from the left.
+    if (segmentWidth > 0 && !seeded.current) {
+      seeded.current = true;
+      translateX.value = targetX;
+      return;
+    }
+    translateX.value = withSpring(targetX, settleSpring);
+  }, [targetX, segmentWidth, translateX]);
 
-  const thumbStyle = useAnimatedStyle(() => {
-    const motion = reduced
-      ? { duration: 0 }
-      : { damping: settleSpring.damping, stiffness: settleSpring.stiffness, mass: settleSpring.mass };
-    return {
+  const thumbStyle = useAnimatedStyle(
+    () => ({
       width: segmentWidth,
       height: rowHeight > 0 ? rowHeight - INSET * 2 : 0,
-      transform: [{ translateX: withSpring(translateX.value, motion) }],
-    };
-  }, [segmentWidth, rowHeight, reduced]);
+      transform: [{ translateX: translateX.value }],
+    }),
+    [segmentWidth, rowHeight],
+  );
 
   return (
     <View

@@ -10,6 +10,7 @@
  * code; freshness is TanStack Query's responsibility, which is the right layer
  * for it anyway.
  */
+import { intercept, type FaultKind } from './devFaults';
 
 export type ApiRequestOptions = {
   /** Query parameters; undefined, null and empty-string values are dropped. */
@@ -128,6 +129,58 @@ function classify(status: number, retryAfter: number | null): ApiError {
   return new ApiError('bad-request', `Request rejected (${status})`, { status });
 }
 
+/* -------------------------------------------------- dev fault injection hooks -- */
+
+/**
+ * Builds an injected failure. Deliberately a `classify` sibling rather than a call to it: the
+ * faults are named by kind, not by status, and the two must stay in step by inspection. Each
+ * one sets the same `status` and `retryAfterSeconds` a live server would, so `retryable` — and
+ * therefore the query client's backoff — behaves identically either way.
+ */
+function faultError(kind: FaultKind): ApiError {
+  switch (kind) {
+    case 'offline':
+      return new ApiError('offline', 'No connection (injected)');
+    case 'timeout':
+      return new ApiError('timeout', 'The request took too long (injected)');
+    case 'rate-limit':
+      return new ApiError('rate-limit', 'Too many requests (injected)', {
+        status: 429,
+        retryAfterSeconds: 2,
+      });
+    case 'not-found':
+      return new ApiError('not-found', 'Not found (injected)', { status: 404 });
+    case 'bad-request':
+      return new ApiError('bad-request', 'Request rejected (injected)', { status: 400 });
+    case 'server':
+      return new ApiError('server', 'Server error 500 (injected)', { status: 500 });
+  }
+}
+
+/**
+ * A cancellable wait, used to simulate latency. Cancellation matters: a search-as-you-type
+ * aborts its previous query on every keystroke, so an un-abortable 3 s delay would leave three
+ * abandoned promises in the runtime — and one of them resolving later is precisely the
+ * stale-response bug the query layer is supposed to make impossible.
+ */
+function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new ApiError('cancelled', 'Request cancelled'));
+      return;
+    }
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(new ApiError('cancelled', 'Request cancelled'));
+    };
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
 function countOf(data: unknown): number | null {
   const count = (data as { count?: unknown } | null)?.count;
   return typeof count === 'number' ? count : null;
@@ -144,6 +197,16 @@ export async function requestJson<T>(
 ): Promise<ApiResponse<T>> {
   const { params, signal, timeoutMs = DEFAULT_TIMEOUT_MS } = options;
   const url = buildUrl(baseUrl, path, params);
+
+  // The dev-only fault injector, behind `__DEV__` so a release build never runs it. One guard
+  // in the one function every remote call passes through, rather than a call per provider
+  // method that someone could forget to add. It sits *above* `composeSignal` on purpose: an
+  // injected delay is cancelled by the caller's own signal, and a throw after the composer ran
+  // would skip the `finally` below and leak that timeout timer.
+  if (__DEV__) {
+    await intercept(url, signal, { errorFor: faultError, sleep: abortableSleep });
+  }
+
   const composed = composeSignal(signal, timeoutMs);
 
   let response: Response;

@@ -22,6 +22,14 @@
  * stops, and both are worse than a link. Six exercises answer "is the catalog alive?" and
  * the Browse button hands off to the Exercises tab, which owns search, filters and paging.
  *
+ * ## Two kinds of training, one front door
+ *
+ * Routines *and* cardio both start here. The tab used to offer only routines and leave
+ * `routes.cardio()` reachable from Profile alone, which buried a whole training mode behind a
+ * settings-looking screen. The split is also honest about what the two are: a routine is a plan
+ * you follow from a list, cardio is an activity you go out and do, and the entry points read
+ * differently for that reason — pick a plan versus put your phone in your pocket.
+ *
  * ## No history list
  *
  * Activities owns history. Repeating it here would be a second list with a second sort and
@@ -29,7 +37,14 @@
  * I actually running, and when did I last do each?" — so that lives on the routine rows.
  */
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -39,6 +54,7 @@ import { BarAction, CollapsibleHeader, CollapsibleHero, useScreenHeaderScroll } 
 import { ExerciseThumb, RoutineRow } from '@/ui/rows';
 import { SegmentedControl } from '@/ui/controls';
 import { MetricLabel, Txt } from '@/ui/Text';
+import { Icon } from '@/ui/icons';
 import { EmptyState, ErrorState, SkeletonCard } from '@/ui/states';
 import { ProgressRing } from '@/ui/charts/ProgressRing';
 import { useMeasuredWidth } from '@/ui/charts/Sparkline';
@@ -50,6 +66,9 @@ import type { Routine } from '@/domain/types';
 import { useAppTheme } from '@/theme/theme';
 import { radius, spacing } from '@/theme/tokens';
 import { formatAgo, formatTimer } from '@/utils/format';
+import { useSettings } from '@/settings';
+import { haptics } from '@/services/haptics';
+import { useStartRoutine } from '@/workout/startRoutine';
 import { useWorkoutSession } from '@/workout/session';
 
 type Order = 'recent' | 'name';
@@ -77,6 +96,11 @@ export default function WorkoutScreen() {
   const [order, setOrder] = useState<Order>('recent');
   const [sectionWidth, measureSection] = useMeasuredWidth();
 
+  // One card covers both "I am mid-set" and "the app was killed mid-set", because by the time
+  // this screen can see either they are the same object: bootstrap restores an unfinished
+  // session and immediately pauses it, so a crashed workout arrives as a paused one. There is
+  // no separate "recover" state to surface here, and inventing one would mean a second card
+  // with a second button pointing at the same session.
   const { session } = useWorkoutSession();
   const resuming = session !== null && (session.status === 'active' || session.status === 'paused');
 
@@ -163,6 +187,11 @@ export default function WorkoutScreen() {
           />
         ) : null}
 
+        {/* After the "continue" affordances and before the archive of plans, because it is a
+            third way to train rather than the most likely one: nobody returns to this tab
+            mid-session looking for the recorder, but nobody finds it under Profile either. */}
+        <CardioCard onPress={() => router.push(routes.cardio())} style={styles.section} />
+
         <View style={styles.section} onLayout={measureSection}>
           <SectionHeader
             title="Your routines"
@@ -231,7 +260,7 @@ export default function WorkoutScreen() {
           }))}
           tileWidth={tileWidth}
           onOpen={(id) => router.push(routes.exerciseDetail(id))}
-          onBrowse={() => router.push('/exercises')}
+          onBrowse={() => router.push(routes.exercisesTab())}
         />
 
         <SessionCounts routines={routines.routines} width={gridWidth} />
@@ -308,6 +337,10 @@ function ResumeCard({
  */
 function LastTrainedCard({ routine, onOpen }: { routine: Routine; onOpen: () => void }) {
   const performedAt = routine.lastPerformedAt ?? routine.createdAt;
+  // The card, not the button, shows the refusal: squeezed under a `Start` button the line
+  // would be two clipped words, and this is the one case where the button correctly did
+  // nothing — it has to be readable, not merely present.
+  const [refused, setRefused] = useState(false);
   return (
     <View style={styles.section}>
       <Card>
@@ -327,8 +360,13 @@ function LastTrainedCard({ routine, onOpen }: { routine: Routine; onOpen: () => 
               {routine.items.length === 1 ? 'exercise' : 'exercises'}
             </Txt>
           </Pressable>
-          <StartButton routineId={routine.id} />
+          <StartButton routine={routine} onRefused={() => setRefused(true)} />
         </Row>
+        {refused ? (
+          <Txt variant="caption" tone="danger" style={{ marginTop: spacing.sm }}>
+            Nothing to train yet — open this routine and add an exercise.
+          </Txt>
+        ) : null}
       </Card>
     </View>
   );
@@ -337,38 +375,82 @@ function LastTrainedCard({ routine, onOpen }: { routine: Routine; onOpen: () => 
 /**
  * Starting a workout is a navigation, not a mutation.
  *
- * `startSession` is synchronous over an in-memory store and persists on its own; the
- * session screen reads the same store. So the button's job is only to build entries from
- * the routine's items and move — no optimistic state, no pending label, nothing to roll
- * back if the push is interrupted.
+ * `startSession` is synchronous over an in-memory store and persists on its own; the session
+ * screen reads the same store. `useStartRoutine` owns the whole sequence — the same one the
+ * routine screen runs, which is the point: two entry points that build entries slightly
+ * differently, or that read a default rest time from different places, is how a user ends up
+ * with a different workout depending on which of two identical buttons they happened to tap.
+ * It also latches on a ref rather than state, because a double-tap in one frame would
+ * otherwise start twice and replace the session that was just created.
  */
-function StartButton({ routineId }: { routineId: string }) {
+function StartButton({ routine, onRefused }: { routine: Routine; onRefused: () => void }) {
   const router = useRouter();
-  const [busy, setBusy] = useState(false);
+  const defaultRest = useSettings((s) => s.defaultRestSeconds);
+  const { start, busy } = useStartRoutine();
 
-  const start = useCallback(async () => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      const { routineRepository } = await import('@/persistence/routineRepository');
-      const routine = await routineRepository.byId(routineId);
-      if (!routine || routine.items.length === 0) return;
-      const { entriesFromItems } = await import('@/queries/useRoutines');
-      const { startSession } = await import('@/workout/session');
-      const { DEFAULT_SETTINGS } = await import('@/settings/types');
-      startSession({
-        routineId: routine.id,
-        routineName: routine.name,
-        entries: entriesFromItems(routine.items),
-        defaultRestSeconds: DEFAULT_SETTINGS.defaultRestSeconds,
-      });
-      router.push(routes.workoutSession());
-    } finally {
-      setBusy(false);
-    }
-  }, [busy, router, routineId]);
+  return (
+    <Button
+      label="Start"
+      icon="play"
+      size="sm"
+      loading={busy}
+      onPress={() =>
+        start({
+          routineId: routine.id,
+          routineName: routine.name,
+          items: routine.items,
+          defaultRestSeconds: defaultRest,
+          onResult: (started) => {
+            if (started) {
+              haptics.success();
+              router.push(routes.workoutSession());
+              return;
+            }
+            onRefused();
+          },
+        })
+      }
+    />
+  );
+}
 
-  return <Button label="Start" icon="play" size="sm" loading={busy} onPress={() => void start()} />;
+/**
+ * The cardio front door.
+ *
+ * A different shape from the routine rows on purpose: a routine is chosen, cardio is begun, so
+ * this is one large target with the activity kinds named on it rather than a row with a button
+ * on the right. It also carries the "why is distance sometimes estimated" line in one place —
+ * better here, where it is read before a session, than on the results screen, where it is
+ * read after one.
+ */
+function CardioCard({ onPress, style }: { onPress: () => void; style?: StyleProp<ViewStyle> }) {
+  const theme = useAppTheme();
+  return (
+    <View style={style}>
+      <SectionHeader title="Record an activity" eyebrow="Outdoors" />
+      <Card tone="flat" onPress={onPress} accessibilityLabel="Record a run, ride or walk. Opens the recorder.">
+        <Row gap="lg" align="center">
+          <View
+            style={[
+              styles.badge,
+              { backgroundColor: theme.colors.accentSoft },
+            ]}
+          >
+            <Icon name="play" size={20} color={theme.colors.accent} />
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Txt variant="subhead" weight="700">
+              Run, ride or walk
+            </Txt>
+            <Txt variant="caption" tone="muted" style={{ marginTop: spacing.xxs }}>
+              Traces a route while you move. Keeps going with the phone locked.
+            </Txt>
+          </View>
+          <Icon name="chevronRight" size={18} color={theme.colors.textFaint} />
+        </Row>
+      </Card>
+    </View>
+  );
 }
 
 function LibraryPreview({
@@ -498,6 +580,13 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   content: { flexGrow: 1 },
   section: { paddingHorizontal: spacing.lg, paddingTop: spacing.xxl },
+  badge: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   dot: { width: 8, height: 8, borderRadius: 4 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   tile: {

@@ -26,7 +26,7 @@ import type { Theme } from '@/theme/theme';
 import type { ActivityKind } from '@/domain/types';
 import { ACTIVITY_ICON } from '../rows';
 import { Icon } from '../icons';
-import { arcPath, clamp01, sweepTo } from './geometry';
+import { arcPath, sweepTo } from './geometry';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 /** Kinds drawn individually; anything beyond this is summed into "Other". */
@@ -96,12 +96,6 @@ export const ActivityDistribution = memo(function ActivityDistribution({
 
   const revealStyle = useAnimatedStyle(() => ({ opacity: 0.2 + 0.8 * progress.value }), [progress]);
 
-  // Computed unconditionally — a hook call inside the `single ? … : null` JSX branch would
-  // change hook order between the one-kind and many-kind cases.
-  const singleProps = useAnimatedProps(
-    () => ({ d: arcPath(0, 0, 1, sweepTo(0), sweepTo(progress.value)) }),
-    [progress],
-  );
 
   if (drawn.length === 0 || total <= 0) {
     return (
@@ -132,7 +126,7 @@ export const ActivityDistribution = memo(function ActivityDistribution({
   const singleD = single
     ? arcPath(centre, centre, ringRadius, sweepTo(0), sweepTo(0.9999))
     : '';
-  void singleProps;
+  const circumference = 2 * Math.PI * ringRadius * 0.9999;
 
   return (
     <View style={[{ flexDirection: 'row', alignItems: 'center', gap: spacing.xl }, style]}>
@@ -154,18 +148,19 @@ export const ActivityDistribution = memo(function ActivityDistribution({
                 />
               ))}
           {single ? (
-            // A complete ring animates as a dashed circle: `pathLength` is the SVG2
-            // attribute react-native-svg does not implement, so the dash length is
-            // measured here. 2πr · 0.9999 matches the hair-under-full arc `sweepTo`
-            // produces everywhere else.
+            // A single kind is a complete ring, so there is no arc to sweep open: the reveal
+            // is the whole group fading in, exactly as `ProgressRing` reveals one-ring weeks.
             <Path
               d={singleD}
               stroke={colorFor(drawn[0]?.kind ?? 'run', theme)}
               strokeWidth={thickness}
               strokeLinecap="round"
               fill="none"
-              strokeDasharray={`${2 * Math.PI * ringRadius * 0.9999}`}
-              strokeDashoffset={2 * Math.PI * ringRadius * 0.9999}
+              // 2πr · 0.9999 matches the hair-under-full arc `sweepTo` produces everywhere
+              // else, and the dash is measured by hand because `pathLength` is SVG2 — which
+              // react-native-svg does not implement.
+              strokeDasharray={`${circumference}`}
+              strokeDashoffset={0}
             />
           ) : null}
         </Svg>
@@ -275,22 +270,37 @@ const Segment = memo(function Segment({
   color: string;
   progress: { value: number };
 }) {
-  const from = offset + GAP_RAD / 2;
-  // A slice too small to hold the gap would end before it began and render a backwards
-  // arc, so it collapses to nothing instead.
-  const to = offset + Math.max(0, share - GAP_RAD / 2);
-
   const props = useAnimatedProps(
     () => {
-      if (to <= from) return { d: '' };
+      const clamp = (v: number): number => (v < 0 ? 0 : v > 1 ? 1 : v);
+      const r2 = (v: number): number => Math.round(v * 100) / 100;
+      const sweep = (t: number): number => -Math.PI / 2 + Math.min(clamp(t), 0.9999) * Math.PI * 2;
+
+      // The gap is subtracted in *angle* space, which is what `GAP_RAD` is denominated in.
+      // `offset` and `share` are turns, so the arithmetic that used to live up here mixed the
+      // two: half a `GAP_RAD` added to a turn-count charged every slice ~8° per edge instead
+      // of the ~1.3° intended, and a four-kind week lost a sixth of the ring to gaps that were
+      // never in the design.
+      const fromAngle = sweep(offset) + GAP_RAD / 2;
+      const toAngle = sweep(offset + share) - GAP_RAD / 2;
+      // A slice too small to hold the gap would end before it began and render a backwards
+      // arc, so it collapses to nothing instead.
+      if (toAngle <= fromAngle) return { d: '' };
+
       // The whole ring sweeps together (all segments share one progress) rather than each
       // growing on its own: independently animating arcs make adjacent slices overlap
       // mid-flight, which looks like a rendering glitch.
-      const p = clamp01(progress.value);
-      const liveTo = from + (to - from) * p;
-      return { d: arcPath(centre, centre, r, sweepTo(from), sweepTo(liveTo)) };
+      const liveTo = fromAngle + (toAngle - fromAngle) * clamp(progress.value);
+      const sx = centre + r * Math.cos(fromAngle);
+      const sy = centre + r * Math.sin(fromAngle);
+      const ex = centre + r * Math.cos(liveTo);
+      const ey = centre + r * Math.sin(liveTo);
+      const large = Math.abs(liveTo - fromAngle) > Math.PI ? 1 : 0;
+      return {
+        d: `M${r2(sx)} ${r2(sy)} A${r2(r)} ${r2(r)} 0 ${large} 1 ${r2(ex)} ${r2(ey)}`,
+      };
     },
-    [centre, from, progress, r, to],
+    [centre, offset, progress, r, share],
   );
 
   return (
