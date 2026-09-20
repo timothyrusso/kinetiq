@@ -54,7 +54,9 @@
     "check": "npm run typecheck && npm run check:jsx && npm run check:gps && npm run check:debounce",
     "lint": "expo lint",
     "qa": "agent-device",
-    "check:debounce": "tsx scripts/debounce-check.ts"
+    "check:debounce": "tsx scripts/debounce-check.ts",
+    "qa:network": "node scripts/network-check.js",
+    "qa:offline": "node scripts/qa/offline-routines.js"
   },
   "private": true
 }
