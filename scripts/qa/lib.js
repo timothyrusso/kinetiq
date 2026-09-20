@@ -259,6 +259,56 @@ function open(route, expectText, { scan: allowScan = false } = {}) {
   return fail(`never saw "${expectText}" after opening "${route}" — refusing to continue`);
 }
 
+/**
+ * Register a cleanup that MUST run even when the script fails.
+ *
+ * `fail()` exits, and a device does not forget what a dead script left behind. Every check in
+ * this folder that arms a fault, edits a routine or types into a search box has to undo it, or
+ * the next check inherits the state and reports it as a defect in the app — which is precisely
+ * how a fault-matrix run died mid-case and the next one's baseline search came back failed,
+ * producing "the baseline never committed" about a perfectly healthy network. Registered here,
+ * run on every exit path, including a plain `process.exit` from fail().
+ */
+const cleanups = [];
+let cleaning = false;
+function onExit(fn) {
+  cleanups.push(fn);
+}
+function runCleanups() {
+  if (cleaning || !cleanups.length) return;
+  cleaning = true;
+  for (const fn of cleanups.reverse()) {
+    try {
+      fn();
+    } catch (e) {
+      console.error(`   (cleanup failed: ${String(e).slice(0, 120)})`);
+    }
+  }
+  cleanups.length = 0;
+}
+process.on('exit', runCleanups);
+
+/**
+ * Is a fault currently armed? Cheap enough to call at the top of a check, and the answer
+ * decides whether the network is safe to measure anything against.
+ */
+function faultArmed() {
+  open('dev', 'Developer');
+  return seek((n) => /Failing the next|Slowing the next/.test(n.label ?? ''), { max: 8 }) !== null;
+}
+
+/** Disarm whatever is armed, if anything. Safe to call when nothing is. */
+function clearFaultQuietly() {
+  open('dev', 'Developer');
+  if (seek((n) => (n.label ?? '').trim() === 'Stop injecting', { max: 8 })) {
+    const b = nodes().find((n) => (n.label ?? '').trim() === 'Stop injecting');
+    sh(`npx agent-device press '@${b.ref}' 2>&1`, { allowFail: true });
+    sleep(1);
+    return true;
+  }
+  return false;
+}
+
 function fail(msg) {
   console.error(`   !! ${msg}`);
   process.exit(1);
@@ -421,5 +471,5 @@ function ledger(label) {
 module.exports = {
   CWD, METRO, TABS, VIEWPORT_HEIGHT, sh, sleep, nodes, labels, visible, onScreen, has, hasAnywhere,
   scan, seek, scrollTop, panDown, panUp, signature, open, fail, pressLabel, pressText, pressRow,
-  tab, ledger,
+  tab, ledger, onExit, faultArmed, clearFaultQuietly,
 };

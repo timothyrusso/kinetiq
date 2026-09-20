@@ -26,11 +26,15 @@
 //     armed it makes the NEXT check report a healthy app as broken.
 
 const {
-  CWD, sh, sleep, open, fail, ledger, nodes, visible, seek, scrollTop,
-  pressLabel, pressRow, has,
+  CWD, sh, sleep, open, fail, ledger, nodes, visible, seek, scrollTop, pressLabel, pressRow, has, onExit, clearFaultQuietly, faultArmed,
 } = require('./lib');
 
 process.chdir(CWD);
+// Undo the fault on every exit path. A fault lives in the app's memory, so a script that dies
+// with one armed leaves the NEXT script measuring a broken network while believing it armed
+// nothing — the failure then shows up somewhere unrelated and looks like an app bug.
+onExit(clearFaultQuietly);
+
 
 // Every term must be one that RETURNS ROWS (gibberish comes back as a successful empty result,
 // which is indistinguishable from a swallowed error from outside) and every faulted term must
