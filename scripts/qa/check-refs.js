@@ -36,6 +36,18 @@ for (const rel of scripts) {
     }
   }
 
+  // The other half of the same bug: lib exports the name, the script calls it, and the
+  // destructure at the top simply never mentions it. `pressText` was imported and unused while
+  // `nodes` was called and absent — bothCommonJS skew tsc cannot see, and both die at runtime.
+  if (destructure) {
+    const have = new Set(destructure[1].split(',').map((x) => x.trim()).filter(Boolean));
+    const libFns = Object.keys(L).filter((k) => typeof L[k] === 'function');
+    for (const name of libFns) {
+      const called = new RegExp(`(^|[^.\\w$])${name}\\s*\\(`).test(src.replace(/\/\/[^\n]*/g, ''));
+      if (called && !have.has(name)) fail(`${rel}: calls ${name}() without importing it`);
+    }
+  }
+
   for (const key of [...src.matchAll(/TABS\.([A-Za-z_$][\w$]*)/g)].map((m) => m[1])) {
     if (!(key in L.TABS)) {
       fail(`${rel}: TABS has no "${key}" — the keys are the visible tab labels: ${Object.keys(L.TABS).join(', ')}`);

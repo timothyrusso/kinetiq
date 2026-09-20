@@ -71,7 +71,7 @@ if (base.total > 0) {
 // nothing is the correct behaviour, not a passed assertion, so the baseline is taken
 // *after* a visit and the claim is measured as a relationship, never an absolute count.
 console.log('2. one Exercises visit — establishes the cache state we measure against');
-open('exercises', 'exercise', { scan: true });
+open('exercises', 'Exercise');
 sleep(4);
 const afterWarm = ledger('after first visit');
 const firstDelta = afterWarm.total - base.total;
@@ -103,7 +103,7 @@ const afterNav = ledger('after 3 round trips');
 // ── 4. One new search term, typed in one action ───────────────────────────
 console.log('4. one new search term');
 const term = `chest${Math.floor(Math.random() * 900 + 100)}`;
-open('exercises', 'Search the wger catalog');
+open('exercises', 'Exercise');
 // The field lives in the list header, so it is only reachable from the top of the list.
 scrollTop();
 const field = nodes().find((n) => n.type === 'TextField' && visible(n));

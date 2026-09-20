@@ -18,10 +18,13 @@
 // how many pages were fetched; one page means the scroll never reached the end of page 1 and
 // the check would pass by doing nothing. That is the failure mode this file exists to avoid:
 // a green run that measured nothing.
-const { sh, sleep, nodes, visible, labels, open, fail, ledger, panDown, scan } = require('./lib');
+const {
+  sh, sleep, nodes, visible, open, fail, ledger, panDown, scan,
+  has, pressLabel, scrollTop,
+} = require('./lib');
 
 console.log('1. Cold-ish start on the exercise list.');
-open('exercises', 'Search the wger catalog');
+open('exercises', 'Exercise');
 // A committed search from an earlier run is still in the store (module state, and a warm JS
 // context keeps it), narrowing the list until it fits on one page — which would leave the
 // paging step below unable to page, and the check passing by doing nothing. The screen has a

@@ -154,16 +154,23 @@ export default function DevScreen() {
   useFocusEffect(readCounters);
 
   /**
-   * Arms a kind for long enough to reach the error state: budget + 1. The retries are the
-   * requests that succeed *after* a failure, so arming a single failure on a kind with two
-   * retries is a request nobody ever sees the consequence of.
+   * Arms a kind for long enough to reach the error state — which is NOT one request.
+   *
+   * Two lower bounds, both learned by measurement rather than assumed:
+   *  - `budget + 1`, because the retries are the requests that succeed *after* a failure, so a
+   *    single failure on a kind with two retries is one nobody ever sees the consequence of.
+   *  - FAULT_BURST, because a screen does not send one request. Loading an exercise page issues
+   *    three in parallel, so an outage that lasts exactly one request fails #1, succeeds on #2,
+   *    and the query resolves with data: no error state, no retry affordance, and an offline
+   *    check that reports "the app ignored the fault" for three runs running. A real dead radio
+   *    outlasts a burst, so that is what this arms.
    *
    * No notice of its own — the status line above already says what is armed and over how many
    * requests, and restating it in a second line below is two places for one fact to disagree.
    */
   const arm = useCallback(
     (kind: FaultKind) => {
-      armFault(kind, RETRY_BUDGET[kind] + 1);
+      armFault(kind, Math.max(RETRY_BUDGET[kind] + 1, FAULT_BURST));
       setNotice(null);
       haptics.selection();
       readCounters();
@@ -558,6 +565,17 @@ function readSchemaVersion(): number | null {
     return null;
   }
 }
+
+/**
+ * How many requests an outage has to outlast to be worth arming.
+ *
+ * Loading one page of exercises is three parallel calls — the page itself plus the language and
+ * equipment lookups that let the rows render names instead of ids — so any fault armed for
+ * fewer failures than that heals before the screen finishes and looks, to anything watching
+ * from outside the app, like a fault the app ignored. Measured, not guessed: `exerciseinfo ×3`
+ * in the request ledger for a single committed search.
+ */
+const FAULT_BURST = 4;
 
 const styles = StyleSheet.create({
   content: { flexGrow: 1 },

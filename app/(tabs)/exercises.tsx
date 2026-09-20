@@ -112,9 +112,14 @@ export default function ExercisesScreen() {
 
   const keyExtractor = useCallback((item: Exercise) => item.id, []);
 
+  // Depend on the primitives, not on `search`: the hook returns a fresh result object every
+  // render, so `[search]` re-created this callback on every keystroke, scroll position and
+  // focus change — and FlashList re-binds `onEndReached` each time its identity moves. The
+  // guards below still read current values, because the closure is rebuilt whenever one flips.
+  const { hasMore, isFetchingNextPage, loadNextPage } = search;
   const onEndReached = useCallback(() => {
-    if (search.hasMore && !search.isFetchingNextPage) search.loadNextPage();
-  }, [search]);
+    if (hasMore && !isFetchingNextPage) loadNextPage();
+  }, [hasMore, isFetchingNextPage, loadNextPage]);
 
   const listHeader = (
     <>

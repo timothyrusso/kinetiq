@@ -159,7 +159,15 @@ function scrollTop({ max = 12 } = {}) {
  * moves it further away. So: if a match exists above the viewport, pan up; otherwise pan
  * down until either it becomes visible, or a pan changes nothing and it is genuinely absent.
  */
-function seek(want, { max = 14 } = {}) {
+function seek(want, { max = 24 } = {}) {
+  // Start from a known position when the target is not mounted anywhere in the tree. A screen
+  // remembers where it was scrolled, so re-opening the dev screen after a scroll-to-bottom read
+  // put the fault rows *above* the viewport, unmounted and therefore absent from the tree — and
+  // the loop below walks DOWNWARD, so it reported "never found row" on a row that had pressed
+  // fine seconds earlier. The few upward pans it does make cannot outrun its own
+  // bottom-detection on a three-page screen. Rewinding costs two seconds; a misattributed
+  // "the app has no such control" costs an afternoon.
+  if (!nodes().some((n) => want(n))) scrollTop();
   let last = null;
   let upward = 0;
   for (let i = 0; i < max; i += 1) {
@@ -242,8 +250,13 @@ function open(route, expectText, { scan: allowScan = false } = {}) {
     }
     sleep(2);
   }
-  console.error(`   !! never saw "${expectText}" after opening "${route}"`);
-  return false;
+  // A caller who passed expectText asked a question — "prove we are on that screen" — and a
+  // false answer to it is not a state worth continuing in. Returning false used to let scripts
+  // carry on, and they did: one ran its offline routine audit against the Workout tab because
+  // the navigation before it had quietly failed, and reported "routine vanished" about screens
+  // it had never looked at. Failing here attributes the problem to the navigation, which is
+  // where it is, instead of to the app several steps later.
+  return fail(`never saw "${expectText}" after opening "${route}" — refusing to continue`);
 }
 
 function fail(msg) {
@@ -322,8 +335,14 @@ function pressRow(title, buttonLabel = 'Arm') {
     // Buttons sit level with or just under the title they belong to; the next row is ~100pt
     // away, so 70pt is comfortably inside one row and safely outside the next. Both have to
     // be on screen — a partly-scrolled card is the one case where this can grab a neighbour.
+    // The same control relabels itself: "Arm" before it is armed, "Armed" after. Matching one
+      // literal string meant a fault left armed by an earlier run made this report "no such
+      // button" on a row that was plainly there and plainly armed — and the caller then armed
+      // nothing, searched, saw results, and accused the app of not injecting faults. Accept the
+      // whole label family so an already-armed row is treated as armed, which is what it is.
+    const wants = Array.isArray(buttonLabel) ? buttonLabel : [buttonLabel];
     const btn = nodes()
-      .filter((n) => n.type === 'Button' && (n.label ?? '').trim() === buttonLabel && visible(n))
+      .filter((n) => n.type === 'Button' && wants.includes((n.label ?? '').trim()) && visible(n))
       .filter((n) => n.rect.y >= head.rect.y - 10 && n.rect.y <= head.rect.y + 70)
       .sort((a, b) => a.rect.y - b.rect.y)[0];
     if (btn) {
