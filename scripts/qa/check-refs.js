@@ -23,6 +23,39 @@ const scripts = fs
   .map((f) => path.join('scripts/qa', f));
 if (fs.existsSync(path.join(ROOT, 'scripts/network-check.js'))) scripts.push('scripts/network-check.js');
 
+/**
+ * Does expo-router have a screen for this deep-link path? Mirrors the resolver well enough to
+ * catch a typo, which is the whole point: it never needs to be right about exotic cases, only
+ * about `open('routin/...')` style mistakes.
+ */
+function routeExists(route) {
+  if (route === '' || route === 'home') return true; // the tab group's index has no path
+  const segments = route.split('/');
+  const files = [];
+  (function walk(dir) {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (e.isDirectory()) walk(path.join(dir, e.name));
+      else if (e.name.endsWith('.tsx') && !e.name.startsWith('+')) files.push(path.join(dir, e.name));
+    }
+  })(path.join(ROOT, 'app'));
+
+  const candidates = files.map((f) =>
+    path
+      .relative(path.join(ROOT, 'app'), f)
+      .replace(/\.tsx$/, '')
+      .split('/')
+      .filter((seg) => !seg.startsWith('(')) // groups are layout-only, transparent to the path
+      .join('/')
+      .split('/')
+      .filter(Boolean),
+  );
+  return candidates.some((segs) => {
+    const shape = segs.map((s) => (s.startsWith('[') ? null : s)); // null = wildcard segment
+    if (shape.length !== segments.length) return false;
+    return shape.every((s, i) => s === null || s === segments[i]);
+  });
+}
+
 let bad = 0;
 const fail = (msg) => { console.error(`  !! ${msg}`); bad += 1; };
 
@@ -58,8 +91,13 @@ for (const rel of scripts) {
   // not-found screen and the script times out waiting for a heading. The route names are the
   // ones the app's own navigation module exports.
   const routes = new Set([...src.matchAll(/open\(\s*'([\w[\]/.-]*)'/g)].map((m) => m[1]));
-  const known = new Set(['dev', 'home', 'activities', 'workout', 'exercises', 'profile', 'settings']);
-  for (const r of routes) if (!known.has(r)) fail(`${rel}: open('${r}') is not a known route name`);
+  // Built from the router's own file tree rather than a list someone has to remember to edit —
+  // a hardcoded allow-list was half the reason this guard existed, and it went stale the first
+  // time a screen was added. `app/(tabs)/x.tsx` is reachable as `x`, `app/x.tsx` as `x`, a
+  // dynamic `[id]` segment matches any one segment, and groups in parens are transparent.
+  for (const r of routes) if (!routeExists(r)) {
+    fail(`${rel}: open('${r}') matches no screen under app/ — mistyped or deleted route`);
+  }
 }
 
 console.log(bad ? `\nFAIL — ${bad} broken reference(s)` : 'PASS — every QA script resolves against the harness');

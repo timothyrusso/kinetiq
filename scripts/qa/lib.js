@@ -118,6 +118,20 @@ const has = (...needles) => {
 };
 
 /**
+ * Is a not-found screen on screen, and which one?
+ *
+ * The app has two, deliberately: expo-router's own for a route with no file, and a
+ * feature-level one for a link the router accepted but nothing claimed (copy that promises the
+ * user's data is untouched, which the framework's cannot). A check that only recognises one
+ * calls the other a timeout, and a timeout blames the app for being slow.
+ */
+const NOT_FOUND = ["Sorry, we couldn't find the page", 'There is no screen here'];
+const matchesNotFound = (l) => (NOT_FOUND.some((p) => l.includes(p)) ? l : null);
+/** Accepts a label list or one label; returns the offending label, or null. */
+const isNotFound = (labelsOrLabel) =>
+  Array.isArray(labelsOrLabel) ? labelsOrLabel.find(matchesNotFound) ?? null : matchesNotFound(labelsOrLabel);
+
+/**
  * Fingerprint of what is on screen right now, so "did that swipe move anything?" has an
  * answer. The *visible* nodes only, and their labels, not just the first N in tree order:
  * the first twelve mounted nodes on the dev screen are header chrome that survives every
@@ -217,33 +231,75 @@ function dismissDevMenu() {
  *   were the harness reading the exercise list for itself. Turn it on for a screen you
  *   genuinely need to search, and only off the measurement path.
  */
-function open(route, expectText, { scan: allowScan = false } = {}) {
+/**
+ * `home` is the tab group's index, so it has no path of its own — `kinetiq://home` is a link
+ * to nowhere and lands on the feature-level not-found screen. The app is correct about that;
+ * the harness was wrong to ask. Mapping the name to the bare scheme means scripts can name the
+ * screen they want instead of remembering which of them is an index.
+ */
+const ROUTE_PATHS = { home: '' };
+
+/**
+ * @param soft navigate, but answer `false` instead of failing when we cannot land. For cleanup
+ *   only: a teardown that cannot reach the dev screen must not convert a PASS into exit 1, and
+ *   an `onExit` hook that calls `fail()` aborts the remaining cleanups with it. A measurement
+ *   step wants the hard failure — a step that never landed is not a measurement.
+ */
+function open(route, expectText, { scan: allowScan = false, soft = false } = {}) {
+  if (route in ROUTE_PATHS) route = ROUTE_PATHS[route];
+  const refused = (msg) => (soft ? (console.log(`   (${msg})`), false) : fail(msg));
   let recoveredMenu = false;
   let recoveredPicker = false;
-  sh(`npx agent-device open "kinetiq://${route}" ${METRO} 2>&1`, { allowFail: true });
+  let recoveredSession = false;
+  const deepLink = () =>
+    sh(`npx agent-device open "kinetiq://${route}" ${METRO} 2>&1`, { allowFail: true });
+  let out = deepLink();
   for (let i = 0; i < 10; i += 1) {
     const t = labels();
+    // A stale agent-device session holds the device and answers every call with this, after
+    // which the app is running but unreachable and each read comes back empty. One thing to do:
+    // close it, which the tool says is safe to retry, then re-open. Without this branch the
+    // loop just polls nothing for twenty seconds and reports "never saw <hero>", which reads as
+    // a broken screen rather than a busy tool.
+    if (/DEVICE_IN_USE/.test(out) && !recoveredSession) {
+      recoveredSession = true;
+      console.log('   agent-device session is holding the device — closing it and retrying');
+      sh('npx agent-device close --session default 2>&1', { allowFail: true });
+      sleep(2);
+      out = deepLink();
+      continue;
+    }
     if (t.some((x) => /DEVELOPMENT SERVERS|RECENTLY OPENED/.test(x))) {
-      if (recoveredPicker) return fail(`still on the dev-server picker after reconnecting to 8083`);
+      if (recoveredPicker) return refused(`still on the dev-server picker after reconnecting to 8083`);
       recoveredPicker = true;
       console.log('   app is on the dev-server picker — reconnecting to 8083');
       sh(`npx agent-device press 'text^="http://127.0.0.1:8083"' 2>&1`, { allowFail: true });
       sleep(18);
+      out = deepLink();
       continue;
     }
     if (onDevMenu()) {
-      if (recoveredMenu) return fail('expo dev menu returned after being dismissed — investigate');
+      if (recoveredMenu) return refused('expo dev menu returned after being dismissed — investigate');
       recoveredMenu = true;
       console.log('   expo dev menu is covering the app — dismissing it');
       dismissDevMenu();
-      sh(`npx agent-device open "kinetiq://${route}" ${METRO} 2>&1`, { allowFail: true });
+      out = deepLink();
       sleep(4);
       continue;
     }
     // Not-found is a verdict, not a retry: the route is genuinely unrouted, and looping ten
     // times waiting for a hero that will never mount just wastes a minute before saying so.
-    if (has("Sorry, we couldn't find the page")) {
-      return fail(`"${route}" resolved to the not-found screen — unrouted deep link`);
+    //
+    // Both of the app's two not-found screens count. The router's own catches a missing route;
+    // the feature-level one (`app/_not-found.tsx`) catches a link the router accepted but no
+    // screen claimed, and the two have different copy. Checking for one literal string meant a
+    // typo'd route spent the full polling budget on it and then reported "never saw the hero" —
+    // true, but it hides the actual reason, which is printed right there on screen.
+    if (isNotFound(t)) {
+      return refused(
+        `"${route}" resolved to a not-found screen (${t.find(isNotFound).slice(0, 60)}) — ` +
+          'unrouted or mistyped deep link',
+      );
     }
     if (!expectText || has(expectText) || (allowScan && i >= 2 && hasAnywhere(expectText))) {
       return true;
@@ -256,7 +312,7 @@ function open(route, expectText, { scan: allowScan = false } = {}) {
   // the navigation before it had quietly failed, and reported "routine vanished" about screens
   // it had never looked at. Failing here attributes the problem to the navigation, which is
   // where it is, instead of to the app several steps later.
-  return fail(`never saw "${expectText}" after opening "${route}" — refusing to continue`);
+  return refused(`never saw "${expectText}" after opening "${route}" — refusing to continue`);
 }
 
 /**
@@ -292,14 +348,21 @@ process.on('exit', runCleanups);
  * Is a fault currently armed? Cheap enough to call at the top of a check, and the answer
  * decides whether the network is safe to measure anything against.
  */
+/**
+ * These two navigate, and every caller of `clearFaultQuietly` is an `onExit` hook. Failing
+ * there would exit 1 over a teardown — turning a genuine PASS into a red run — and would abort
+ * the remaining cleanups with it, so the second half of a script's tidying never happens. Soft
+ * by definition: print why the device could not be reached, report what is knowable (unknown =
+ * false), and let the verdict stand on what was actually measured.
+ */
 function faultArmed() {
-  open('dev', 'Developer');
+  if (!open('dev', 'Developer', { soft: true })) return false;
   return seek((n) => /Failing the next|Slowing the next/.test(n.label ?? ''), { max: 8 }) !== null;
 }
 
 /** Disarm whatever is armed, if anything. Safe to call when nothing is. */
 function clearFaultQuietly() {
-  open('dev', 'Developer');
+  if (!open('dev', 'Developer', { soft: true })) return false;
   if (seek((n) => (n.label ?? '').trim() === 'Stop injecting', { max: 8 })) {
     const b = nodes().find((n) => (n.label ?? '').trim() === 'Stop injecting');
     sh(`npx agent-device press '@${b.ref}' 2>&1`, { allowFail: true });
@@ -307,6 +370,40 @@ function clearFaultQuietly() {
     return true;
   }
   return false;
+}
+
+/**
+ * Kill the app stone dead and bring it back, which is the only way to ask the brief's
+ * "terminate mid-workout and relaunch" question.
+ *
+ * `simctl terminate` is not backgrounding (which keeps the process and its timers alive) and
+ * not a reload (which keeps the JS module registry, and therefore any module-level state a bug
+ * is hiding in). It removes the process, so anything still standing afterwards came out of the
+ * database — which is the property under test.
+ *
+ * The session is closed first on purpose: the tool keeps its attachment across a terminate, and
+ * then reports an app that is running but unreachable as a run of empty snapshots. Several
+ * minutes of polling nothing, for a "the screen is blank" finding. Close, terminate, launch, and
+ * let `open` re-attach — it now recovers a held device instead of timing out on it.
+ */
+const SIMULATOR_UDID = process.env.SIMULATOR_UDID ?? '0C66B8BE-737D-4E57-A6DA-4B015C03953E';
+const BUNDLE_ID = process.env.BUNDLE_ID ?? 'app.kinetiq.mobile';
+function restartApp() {
+  sh(`xcrun simctl terminate ${SIMULATOR_UDID} ${BUNDLE_ID} 2>&1`, { allowFail: true });
+  sleep(2);
+  const launched = sh(`xcrun simctl launch ${SIMULATOR_UDID} ${BUNDLE_ID} 2>&1`, { allowFail: true });
+  if (/Unable to find|Error:/.test(launched)) {
+    fail(`simctl could not launch ${BUNDLE_ID}: ${launched.trim().slice(0, 160)}`);
+  }
+  sleep(8);
+  // Re-attaching is deliberately NOT done here. The agent-device session survives a terminate
+  // and then holds a dead attachment — every snapshot comes back empty and reads as a blank
+  // app. Closing it from here raced the launch instead (open() then hit DEVICE_IN_USE against
+  // the session it had just deleted). `open()` owns that whole recovery: it recognises
+  // DEVICE_IN_USE in its own output, closes the stale session once, and retries. So restartApp
+  // stops at the launch, and the caller's first `open` — which navigates AND proves the landing
+  // screen — is the thing that waits for the cold start to have actually rendered.
+  return true;
 }
 
 function fail(msg) {
@@ -470,6 +567,6 @@ function ledger(label) {
 
 module.exports = {
   CWD, METRO, TABS, VIEWPORT_HEIGHT, sh, sleep, nodes, labels, visible, onScreen, has, hasAnywhere,
-  scan, seek, scrollTop, panDown, panUp, signature, open, fail, pressLabel, pressText, pressRow,
-  tab, ledger, onExit, faultArmed, clearFaultQuietly,
+  isNotFound, scan, seek, scrollTop, panDown, panUp, signature, open, fail, pressLabel, pressText,
+  pressRow, tab, ledger, onExit, faultArmed, clearFaultQuietly, restartApp,
 };
