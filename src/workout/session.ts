@@ -412,10 +412,18 @@ function stopTick(): void {
 }
 
 /**
- * Called from the app-state handler. Backgrounding freezes the accumulated clock
- * (so time spent with the app closed is not training time) and resuming adds the
- * away gap once, with an absolute-deadline rest timer that keeps counting the whole
- * time.
+ * Called from the app-state handler.
+ *
+ * Background time **counts**. A strength session with the phone in a pocket is still a
+ * session — the sets you did five minutes ago are still done, and a clock that froze
+ * while you were away would understate a workout you actually finished. What the pause
+ * of the tick protects is the arithmetic, not the total: on return the whole away gap is
+ * added once from `lastTickAt`, so no second is double-counted or dropped by a missed
+ * interval. `awayNoticeSeconds` reports the size of that gap so the screen can say so
+ * rather than let 40 unattended seconds read as 40 seconds of work.
+ *
+ * An absolute-deadline rest timer keeps counting the whole time, which is the point: a
+ * rest that expired in your pocket has expired.
  */
 export function handleAppState(next: 'active' | 'background' | 'inactive'): void {
   if (!session) return;

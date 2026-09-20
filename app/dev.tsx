@@ -273,7 +273,11 @@ export default function DevScreen() {
 
             {/* ------------------------------------------------------------- arming */}
             <View>
-              <SectionHeader title="Arm a failure" eyebrow="Then open Exercises" />
+              {/* Not "then open Exercises": these faults hold until consumed, so arming one
+              on this screen and *then* navigating is the point — the first request the
+              app makes afterwards is the one that fails. A heading naming one screen
+              makes the others look unaffected. */}
+          <SectionHeader title="Arm a failure" eyebrow="Consumed by the next request" />
               <Card>
                 <Stack gap="lg">
                   <Txt variant="caption" tone="muted">

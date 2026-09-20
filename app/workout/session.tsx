@@ -70,6 +70,7 @@ import type { UnitSystem } from '@/utils/format';
 import type { Exercise, PersonalRecord } from '@/domain/types';
 import {
   compactNumber,
+  countNoun,
   formatAgo,
   formatDurationCompact,
   formatTimer,
@@ -82,7 +83,7 @@ import {
 import { useAppTheme } from '@/theme/theme';
 import { radius, spacing, z } from '@/theme/tokens';
 import { Button, IconButton } from '@/ui/Button';
-import { Card, Row, SectionHeader } from '@/ui/layout';
+import { Card, OverlaySurface, Row, SectionHeader } from '@/ui/layout';
 import { Chip } from '@/ui/controls';
 import { MetricLabel, Txt } from '@/ui/Text';
 import { EmptyState, SkeletonCard } from '@/ui/states';
@@ -404,12 +405,8 @@ export default function WorkoutSessionScreen() {
     <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
       <Stack.Screen options={{ gestureEnabled: false }} />
 
-      <View
-        style={[
-          styles.bar,
-          { paddingTop: insets.top + spacing.xs, backgroundColor: theme.colors.overlay },
-        ]}
-      >
+      <View style={[styles.bar, { paddingTop: insets.top + spacing.xs }]}>
+        <OverlaySurface theme={theme} edge="bottom" />
         <Row gap="sm" align="center">
           <IconButton
             name="close"
@@ -425,8 +422,11 @@ export default function WorkoutSessionScreen() {
             <Txt variant="label" weight="700" numberOfLines={1}>
               {session.routineName}
             </Txt>
+            {/* The noun agrees with the denominator, not the numerator: "1/18 set" reads
+                as though eighteen sets were one set. `1/1 set` is the only singular case,
+                which is exactly what `progress.planned` gives. */}
             <Txt variant="micro" tone="muted">
-              {`${formatTimer(session.elapsedSeconds)} · ${doneSets}/${progress.planned} ${pluralWord(doneSets, 'set')}`}
+              {`${formatTimer(session.elapsedSeconds)} · ${doneSets}/${progress.planned} ${pluralWord(progress.planned, 'set')}`}
             </Txt>
           </View>
           <Chip
@@ -528,7 +528,7 @@ export default function WorkoutSessionScreen() {
         <View style={styles.section}>
           <SectionHeader
             title="Exercises"
-            eyebrow={`${session.entries.length} ${pluralWord(session.entries.length, 'planned')}`}
+            eyebrow={countNoun(session.entries.length, 'exercise')}
             action={
               <Button
                 label="Add"
@@ -598,15 +598,11 @@ export default function WorkoutSessionScreen() {
       </ScrollView>
 
       <View
-        style={[
-          styles.footer,
-          {
-            paddingBottom: insets.bottom + spacing.md,
-            backgroundColor: theme.colors.overlay,
-            borderColor: theme.colors.hairline,
-          },
-        ]}
+        style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}
       >
+        {/* Sibling of the buttons, never their parent: a blur that contains them
+            re-blurs on every press-state change. */}
+        <OverlaySurface theme={theme} />
         <Row gap="md" align="center">
           <Button
             label="Discard"
@@ -1031,12 +1027,15 @@ const styles = StyleSheet.create({
   bar: {
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#00000000',
+    // No border here: `OverlaySurface` draws the hairline, and a second one on the
+    // same edge reads as a thicker, fuzzier line.
     zIndex: z.sticky,
   },
   content: { flexGrow: 1, paddingTop: spacing.lg },
   section: { paddingHorizontal: spacing.xl, paddingTop: spacing.xxl },
+  // No `zIndex`: the rest dock is rendered after this and is also `z.sticky`, and the
+  // dock must stay on top of the footer. Leaving this at `auto` keeps that ordering
+  // unambiguous rather than a tie won by DOM order.
   footer: {
     position: 'absolute',
     left: 0,
@@ -1044,7 +1043,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
   },
   record: {
     borderRadius: radius.lg,

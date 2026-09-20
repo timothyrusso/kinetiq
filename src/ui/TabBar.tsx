@@ -18,14 +18,7 @@
  * larger accessibility font and in landscape; measuring is correct in all of those.
  */
 import { memo, useCallback, useEffect, useRef } from 'react';
-import {
-  Platform,
-  Pressable,
-  StyleSheet,
-  View,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useReducedMotion,
@@ -33,8 +26,8 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { BlurView } from 'expo-blur';
 import { Icon, type IconName } from './icons';
+import { OverlaySurface } from './layout';
 import { CellText } from './rows';
 import { usePulse } from './animation';
 import { radius, spacing, z } from '@/theme/tokens';
@@ -155,7 +148,7 @@ export const TabBar = memo(function TabBar({
       // rather than an anonymous row of five icons.
       accessibilityRole="tablist"
     >
-      <BarSurface theme={theme} />
+      <OverlaySurface theme={theme} />
       <View
         style={{
           flexDirection: 'row',
@@ -257,44 +250,6 @@ const TabButton = memo(function TabButton({
         color={selected ? theme.colors.text : theme.colors.textFaint}
       />
     </Pressable>
-  );
-});
-
-/**
- * Frosted (iOS) or solid (Android) backing — a sibling of the items rather than their
- * parent, because a blur surface *containing* children re-blurs on every child update,
- * which is precisely the press feedback we need to keep cheap.
- */
-const BarSurface = memo(function BarSurface({ theme }: { theme: Theme }) {
-  const hairline = (
-    <View
-      style={{
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        top: 0,
-        height: StyleSheet.hairlineWidth,
-        backgroundColor: theme.colors.overlayBorder,
-      }}
-    />
-  );
-  const base = (
-    // An opaque base first, so the bar is never transparent to the content behind it
-    // even if the material fails to initialise.
-    <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.overlay }]} />
-  );
-  if (Platform.OS !== 'ios') return [base, hairline];
-  return (
-    <>
-      {base}
-      <BlurView
-        // The material the real iOS bar uses, so this matches the nav bar above it.
-        tint={theme.mode === 'dark' ? 'systemChromeMaterialDark' : 'systemChromeMaterialLight'}
-        intensity={theme.mode === 'dark' ? 68 : 80}
-        style={StyleSheet.absoluteFill}
-      />
-      {hairline}
-    </>
   );
 });
 

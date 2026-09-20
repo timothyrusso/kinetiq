@@ -262,14 +262,23 @@ function dayBefore(date: Date): Date {
   return d;
 }
 
-/** Rest remaining in seconds, computed from a wall-clock deadline so that
- * backgrounding the app cannot make the timer run slow or fast. */
+/**
+ * Rest remaining in **whole** seconds, computed from a wall-clock deadline so that
+ * backgrounding the app cannot make the timer run slow or fast.
+ *
+ * The rounding belongs here rather than in the label, because "seconds" is what this
+ * function's name promises: a raw `(endsAt - now) / 1000` leaked the millisecond
+ * remainder into the countdown (`2:59.9799999999999`) and into the ±15s adjusters,
+ * where it was silently re-rounded by `setRestTimer` — right answer, wrong arithmetic,
+ * visible in the UI. Ceiling so the last partial second still reads `1` and the dock
+ * disappears exactly at the deadline, not half a second early.
+ */
 export function restRemaining(
   restEndsAt: number | null,
   now: number = Date.now(),
 ): number {
   if (restEndsAt === null) return 0;
-  return Math.max(0, (restEndsAt - now) / 1000);
+  return Math.max(0, Math.ceil((restEndsAt - now) / 1000));
 }
 
 export function sessionProgress(session: WorkoutSession): {

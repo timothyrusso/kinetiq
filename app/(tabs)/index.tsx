@@ -44,8 +44,6 @@ import { ActivityDistribution, type DistributionSlice } from '@/ui/charts/Activi
 import { ProgressRing } from '@/ui/charts/ProgressRing';
 import { useMeasuredWidth } from '@/ui/charts/Sparkline';
 import { EmptyState, ErrorState, SkeletonCard, SkeletonList, ThemedRefreshControl } from '@/ui/states';
-import { ActiveWorkoutPill } from '@/ui/TabBar';
-import { useWorkoutSession } from '@/workout/session';
 import { useRecentActivities } from '@/queries/useActivities';
 import { useTrainingSummary, type TrainingSummary } from '@/queries/useProgress';
 import { useSettings } from '@/settings/hooks';
@@ -54,7 +52,7 @@ import { computeStreak } from '@/domain/logic';
 import type { Activity } from '@/domain/types';
 import { routes, tabHref } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
-import { spacing, z } from '@/theme/tokens';
+import { spacing } from '@/theme/tokens';
 import {
   compactNumber,
   formatDurationCompact,
@@ -244,10 +242,10 @@ export default function HomeScreen() {
         }
         style={{ backgroundColor: theme.colors.background }}
       />
-
-      {/* Deliberately only on Home: "you have a workout running" is a homepage fact, not
-          a navigation one — and the session screen is where you go when you tap it. */}
-      <ActiveWorkoutNotice />
+      {/* No resume pill here: `TabBarWithPill` owns it, for every tab. Home used to mount
+          its own, and since the tab bar renders behind this scene rather than inside it,
+          both drew at once — two pills overlapping on the one screen where that was
+          visible. One owner, and it is the one that is not a scene. */}
     </View>
   );
 }
@@ -406,44 +404,6 @@ function MetricCell({ label, value }: { label: string; value: string }) {
         {value}
       </Txt>
     </Stack>
-  );
-}
-
-/* -------------------------------------------------------------------- pill -- */
-
-/**
- * The resume pill.
- *
- * Reads the live session store rather than a query, because the elapsed figure it shows
- * updates on the store's own one-second tick — routing it through the cache would either
- * re-read SQLite every second or show a number that has stopped moving, and a frozen
- * timer next to a breathing dot is worse than no timer.
- */
-function ActiveWorkoutNotice() {
-  const theme = useAppTheme();
-  const router = useRouter();
-  const snapshot = useWorkoutSession();
-  const session = snapshot.session;
-  if (!session || session.status === 'finished') return null;
-
-  return (
-    <View
-      pointerEvents="box-none"
-      style={{
-        position: 'absolute',
-        left: spacing.lg,
-        right: spacing.lg,
-        bottom: BOTTOM_SPACE - 28,
-        zIndex: z.sticky,
-      }}
-    >
-      <ActiveWorkoutPill
-        theme={theme}
-        label={session.status === 'paused' ? 'Workout paused' : 'Workout in progress'}
-        detail={formatDurationCompact(session.elapsedSeconds)}
-        onPress={() => router.push(routes.workoutSession())}
-      />
-    </View>
   );
 }
 

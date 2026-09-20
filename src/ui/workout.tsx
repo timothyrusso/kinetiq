@@ -24,6 +24,7 @@ import type { Theme } from '@/theme/theme';
 import type { UnitSystem } from '@/utils/format';
 import { radius, spacing, touchTarget, z } from '@/theme/tokens';
 import {
+  formatTimer,
   formatWeight,
   trimNumber,
   weightDisplayValue,
@@ -467,8 +468,6 @@ export const RestDock = memo(function RestDock({
 }) {
   const insets = useSafeAreaInsets();
   const progress = totalSeconds > 0 ? Math.min(1, Math.max(0, remainingSeconds / totalSeconds)) : 0;
-  const minutes = Math.floor(remainingSeconds / 60);
-  const seconds = remainingSeconds % 60;
 
   return (
     <View
@@ -495,7 +494,7 @@ export const RestDock = memo(function RestDock({
               tone="accent"
               style={{ fontVariant: ['tabular-nums'] }}
             >
-              {`${minutes}:${String(seconds).padStart(2, '0')}`}
+              {formatTimer(remainingSeconds)}
             </Txt>
           </Row>
           <View style={[styles.track, { backgroundColor: theme.colors.placeholder }]}>
