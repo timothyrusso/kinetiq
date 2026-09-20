@@ -20,7 +20,7 @@
 // a green run that measured nothing.
 const {
   sh, sleep, nodes, visible, open, fail, ledger, panDown, scan,
-  has, pressLabel, scrollTop,
+  has, pressLabel, scrollTop, seek,
 } = require('./lib');
 
 console.log('1. Cold-ish start on the exercise list.');
@@ -46,16 +46,43 @@ if (has('exercises for “')) {
 scrollTop();
 sleep(2);
 
-const beforePages = ledger('before scrolling').total;
+// Zero the ledger, then prove it took. Two reads of a CUMULATIVE counter attribute everything
+// since launch to the scroll, and the delta below went NEGATIVE (-1) until this was fixed.
+open('dev', 'Developer');
+if (seek((n) => (n.label ?? '').trim() === 'Reset')) {
+  const r = nodes().find((n) => (n.label ?? '').trim() === 'Reset');
+  sh(`npx agent-device press '@${r.ref}' 2>&1`, { allowFail: true });
+  sleep(1);
+}
+const base = ledger('baseline').total;
+if (base !== 0) fail(`baseline is ${base}, not 0 — the Reset did not take, so the scroll delta is meaningless`);
+
+// ledger() reads itself by navigating to the dev screen, so the pointer is no longer on the
+// list we are about to scroll. Coming back is not ceremony: panning the dev screen for forty
+// stops while asserting "the exercise list did not page" is the sort of green that means nothing.
+open('exercises', 'Exercise');
+sleep(3);
+scrollTop();
 
 // ── 2. Scroll to the bottom, checking every stop for a simultaneous duplicate ─────────────
 console.log('2. scrolling the list, watching for a row that appears twice at once');
 
-/** Titles of the mounted exercise rows: Buttons whose label is a name plus a subtitle line. */
-function rowTitles() {
+/**
+ * The exercise rows currently mounted, as full labels.
+ *
+ * Height is what separates a row from the chrome: rows are 72 pt tall, the "Filters" chip is
+ * 30–38, and the screen's own containers report 874. Filtering on "is a Button taller than 30"
+ * counted the Filters chip as the top row — and since that chip never moves, the loop concluded
+ * on its FIRST pan that the list had stopped scrolling and reported "the list never paged".
+ *
+ * The whole label is the key, not the first line: wger really does hold two exercises with the
+ * same name, and a name collision is not the defect under test. Overlapping pages would repeat
+ * a row including its category line, which is what this compares.
+ */
+function rowLabels() {
   return nodes()
-    .filter((n) => n.type === 'Button' && visible(n) && n.rect.height > 30)
-    .map((n) => (n.label ?? '').split('\n')[0].trim())
+    .filter((n) => n.type === 'Button' && visible(n) && n.rect.height >= 50 && n.rect.height <= 140)
+    .map((n) => (n.label ?? '').replace(/\s+/g, ' ').trim())
     .filter((t) => t.length > 1);
 }
 
@@ -63,7 +90,7 @@ const dupes = [];
 let stops = 0;
 let lastTop = null;
 for (let i = 0; i < 40; i += 1) {
-  const titles = rowTitles();
+  const titles = rowLabels();
   const seen = new Set();
   for (const t of titles) {
     if (seen.has(t) && !dupes.includes(t)) dupes.push(t);
@@ -79,7 +106,7 @@ for (let i = 0; i < 40; i += 1) {
 sleep(2);
 
 const afterPages = ledger('after scrolling').total;
-const fetched = afterPages - beforePages;
+const fetched = afterPages - base;
 console.log(`   panned ${stops} times, ${fetched} request(s) fired while paging`);
 if (dupes.length) {
   fail(`the same exercise is on screen twice at once: ${dupes.slice(0, 3).join(' | ')} — ` +
@@ -93,5 +120,3 @@ if (fetched < 2) {
 }
 
 console.log('\nPASS — multiple pages rendered with no row appearing twice');
-void sh;
-void labels;
