@@ -56,7 +56,8 @@
     "qa": "agent-device",
     "check:debounce": "tsx scripts/debounce-check.ts",
     "qa:network": "node scripts/network-check.js",
-    "qa:offline": "node scripts/qa/offline-routines.js"
+    "qa:offline": "node scripts/qa/offline-routines.js",
+    "qa:pagination": "node scripts/qa/pagination-check.js"
   },
   "private": true
 }
