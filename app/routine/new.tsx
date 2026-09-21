@@ -183,14 +183,21 @@ export default function NewRoutineScreen() {
           else router.dismiss();
         }}
       >
-        {(_topInset, header) => (
+        {(topInset, header) => (
           <KeyboardAvoid style={{ flex: 1 }}>
             <ScrollView
               keyboardShouldPersistTaps="handled"
               onScroll={header.onScroll}
               scrollEventThrottle={16}
               contentContainerStyle={{
-                paddingTop: spacing.lg,
+                // `topInset` is the translucent header's height, and this screen was the only
+                // one of eleven that threw it away for a flat 16pt. The header then covered the
+                // first ~105pt of content, which on THIS screen is the routine's name field —
+                // so "New routine" opened with its first and most important input hidden, and
+                // no amount of scrolling revealed it because the list was already at offset 0.
+                // A routine saved without a name falls back to being named after its first
+                // exercise, which is how a QA run produced a routine called "Squat (Stacchi)".
+                paddingTop: topInset + spacing.lg,
                 paddingBottom: insets.bottom + spacing.huge,
                 gap: spacing.xxl,
               }}

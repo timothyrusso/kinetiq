@@ -34,7 +34,7 @@
  */
 const {
   fillField, tab, fail, onExit, pressLabel, seek, nodes, visible, sh,
-  sleep, restartApp, dbQuery, dbCol,
+  sleep, restartApp, dbQuery, dbCol, dbExec,
 } = require('./lib');
 
 const PREFIX = 'QA Circuit';
@@ -51,7 +51,7 @@ let created = false;
 onExit(() => {
   if (!created) return;
   try {
-    dbQuery(`delete from routines where name like '${sql(like('%'))}';`);
+    dbExec(`delete from routines where name like '${sql(like('%'))}';`);
     const left = dbCol(`select name from routines where name like '${sql(like('%'))}';`);
     console.log(`   cleanup: ${left.length ? `COULD NOT REMOVE ${left.join(', ')}` : 'test routines removed'}`);
   } catch (e) {
@@ -88,7 +88,7 @@ for (const s of SEEDED) {
 }
 console.log(`0. oracle: ${before.length} routines on disk, seeded fixtures present`);
 if (before.some((n) => n.startsWith('QA '))) {
-  dbQuery(`delete from routines where name like 'QA %';`);
+  dbExec(`delete from routines where name like 'QA %';`);
   console.log('   cleared routines left by an earlier aborted run');
 }
 
@@ -105,12 +105,27 @@ if (!nameField?.ref) fail('the routine builder has no visible field to name the 
 fillField(nameField.ref, NAME);
 sleep(1);
 
-if (!pressLabel('Add')) fail('could not open the exercise picker');
+// An EMPTY routine offers "Add exercise" (the empty state's own call to action); the compact
+// "Add" button in the Exercises section header only exists once there is a row to sit above.
+// A new routine is always the first case, but both are tried so this step does not depend on
+// which one the screen happens to be in.
+if (!pressLabel('Add exercise') && !pressLabel('Add')) {
+  fail('could not open the exercise picker — neither "Add exercise" nor "Add" was pressable');
+}
 sleep(3);
-if (!seek((n) => (n.label ?? '') === 'Add exercises')) fail('the exercise picker did not open');
-const pick = nodes().find((n) => n.type === 'TextField' && visible(n));
-if (!pick?.ref) fail('the picker has no search field');
-fillField(pick.ref, TERM);
+const pickerTitle = seek((n) => (n.label ?? '').trim() === 'Add exercises');
+if (!pickerTitle) fail('the exercise picker did not open');
+// Scope the field to the SHEET. The picker is presented over the builder, and the builder's
+// own "Routine name" input stays in the tree behind it — higher up the screen, so it is also
+// the FIRST visible TextField. Taking that one typed the search term into the routine's name
+// field and left the picker empty, which then read as "the remote catalog never loaded".
+// Anything belonging to the sheet sits below its title.
+const pick = nodes().find(
+  (n) => n.type === 'TextField' && visible(n) && (n.rect?.y ?? 0) > pickerTitle.rect.y,
+);
+if (!pick?.ref) fail('the picker is open but has no search field below its title');
+// Blur inside the sheet: the default tap point is above it, on the screen behind.
+fillField(pick.ref, TERM, { blurAt: `201 ${Math.round(pickerTitle.rect.y)}` });
 sleep(12);
 // A row already in the routine renders disabled with a check, and pressing it does nothing —
 // which would read as the picker ignoring the tap. Take the first row that is actually pressable,

@@ -541,6 +541,34 @@ function dbQuery(sql) {
     .map((l) => l.split('\t'));
 }
 
+/**
+ * Run a WRITE against the app's database. Cleanup only.
+ *
+ * `dbQuery` opens read-only on purpose, and everything that reads should keep using it — a
+ * check that can mutate the thing it is measuring is not a check. This exists for exactly one
+ * job: removing rows a previous aborted run left behind, which cannot be done through the UI
+ * because the run died before reaching its own teardown.
+ *
+ * Callers must scope the statement to their own fixtures. Deleting anything not created by the
+ * run that is deleting it is a bug in the caller, not a policy this function can enforce.
+ */
+function dbExec(sql) {
+  const cont = sh(`xcrun simctl get_app_container ${SIMULATOR_UDID} ${BUNDLE_ID} data 2>&1`).trim();
+  if (!/\/Containers\/Data\/Application\//.test(cont)) {
+    fail(`cannot locate the app container to write to the database: ${cont.slice(0, 120)}`);
+  }
+  try {
+    execSync(`/usr/bin/sqlite3 "${cont}/Documents/SQLite/kinetiq.db"`, {
+      encoding: 'utf8',
+      input: sql,
+      maxBuffer: 4 * 1024 * 1024,
+    });
+  } catch (e) {
+    return String(e.stderr ?? e.message).trim();
+  }
+  return '';
+}
+
 /** Same query, expecting exactly one column: `['a', 'b']`. */
 function dbCol(sql) {
   return dbQuery(sql).map((r) => r[0]);
@@ -850,7 +878,7 @@ function ledger(label) {
 module.exports = {
   CWD, METRO, TABS, VIEWPORT_HEIGHT, sh, sleep, nodes, labels, visible, onScreen, has, hasAnywhere,
   isNotFound, scan, seek, scrollTop, panDown, panUp, signature, open, fail, pressLabel, pressText,
-  pressRow, tab, ledger, onExit, faultArmed, clearFaultQuietly, restartApp, dbQuery, dbCol,
+  pressRow, tab, ledger, onExit, faultArmed, clearFaultQuietly, restartApp, dbQuery, dbCol, dbExec,
   fillField,
   metroAlive,
 };
