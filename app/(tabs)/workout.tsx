@@ -45,7 +45,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useIsFocused } from 'expo-router';
 import { useTabContentBottom } from '@/ui/insets';
 
 import { Button } from '@/ui/Button';
@@ -123,7 +123,11 @@ export default function WorkoutScreen() {
     return items;
   }, [order, routines.routines]);
 
-  const library = useExerciseSearch(BROWSE_FILTER);
+  // Gated on focus for the same reason as the Exercises tab: `NativeTabs` mounts every tab's
+  // screen when the bar is built, so this preview strip was fetching from wger during app
+  // launch for a tab the user had not opened.
+  const focused = useIsFocused();
+  const library = useExerciseSearch(BROWSE_FILTER, focused);
   const preview = useMemo(() => library.items.slice(0, LIBRARY_PREVIEW), [library.items]);
 
   const openRoutine = useCallback((id: string) => router.push(routes.routine(id)), [router]);

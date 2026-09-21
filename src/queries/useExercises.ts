@@ -110,7 +110,17 @@ const EXERCISE_LIST_STALE_MS = 5 * 60_000;
  */
 const TAXONOMY_STALE_MS = 24 * 60 * 60_000;
 
-export function useExerciseSearch(filter: ExerciseFilter) {
+/**
+ * @param active whether the screen that owns this query is on screen. Fetching is gated on it.
+ *
+ * The gate is not an optimisation, it is the difference between a tab that costs nothing until
+ * it is opened and one that fetches the whole wger catalog during app launch. `NativeTabs`
+ * renders a real UITabBarController, and every tab's screen is MOUNTED when the bar is created
+ * — there is no `lazy` option, because the platform does not have one. Measured after that
+ * switch: a cold launch sent five wger requests before the user had touched anything, for a
+ * tab they might never open.
+ */
+export function useExerciseSearch(filter: ExerciseFilter, active = true) {
   const provider = getExerciseProvider();
 
   const query = useInfiniteQuery<
@@ -121,6 +131,7 @@ export function useExerciseSearch(filter: ExerciseFilter) {
     PageParams
   >({
     queryKey: queryKeys.exercises.list(filter),
+    enabled: active,
     initialPageParam: { offset: FIRST_OFFSET } as PageParams,
     queryFn: async ({ pageParam, signal }) => {
       const offset = pageParam?.offset ?? FIRST_OFFSET;
@@ -178,10 +189,12 @@ export function useExerciseSearch(filter: ExerciseFilter) {
  * failure must never block searching — filters are optional, so the UI hides them
  * rather than erroring.
  */
-export function useExerciseTaxonomy() {
+/** @param active see `useExerciseSearch` — the same mount-is-not-focus problem. */
+export function useExerciseTaxonomy(active = true) {
   const provider = getExerciseProvider();
   return useQuery({
     queryKey: queryKeys.exercises.taxonomy(),
+    enabled: active,
     queryFn: ({ signal }) => provider.taxonomy(signal),
     // A module constant rather than `emptyTaxonomy`: passing the factory itself
     // makes TypeScript infer the data type as the factory's *return type of a

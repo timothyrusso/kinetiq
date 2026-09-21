@@ -32,7 +32,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
-import { useRouter } from 'expo-router';
+import { useIsFocused, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTabContentBottom } from '@/ui/insets';
@@ -73,8 +73,14 @@ export default function ExercisesScreen() {
 
   const { draft, filter } = useExerciseFilter();
   const settling = useIsQuerySettling();
-  const taxonomy = useExerciseTaxonomy();
-  const search = useExerciseSearch(filter);
+  // Mounted is not the same as on screen. `NativeTabs` is a real UITabBarController and mounts
+  // every tab's screen when the bar is built, so without this gate the catalog was fetched
+  // during app launch for a tab the user may never open — measured at five wger requests before
+  // the first interaction. Focus is the condition that actually means "someone is looking at
+  // this", and it also parks the query while the user is elsewhere.
+  const focused = useIsFocused();
+  const taxonomy = useExerciseTaxonomy(focused);
+  const search = useExerciseSearch(filter, focused);
   const [filterOpen, setFilterOpen] = useState(false);
 
   const activeCount = activeFilterCount(filter);
