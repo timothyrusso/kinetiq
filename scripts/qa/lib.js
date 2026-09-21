@@ -53,12 +53,43 @@ function sh(cmd, { allowFail = false } = {}) {
 }
 const sleep = (s) => sh(`sleep ${s}`);
 
-function nodes() {
-  try {
-    return (JSON.parse(sh('npx agent-device snapshot --json 2>/dev/null')).data ?? {}).nodes ?? [];
-  } catch {
-    return [];
+/**
+ * The accessibility tree, or a loud failure — never a quiet empty list.
+ *
+ * The runner has a watchdog on accessibility capture, and a heavy or animating screen trips it:
+ * the next call answers `RUNNER_BUSY` instead of a tree. The old body swallowed that and
+ * returned `[]`, so a snapshot that FAILED was indistinguishable from a screen with nothing on
+ * it — and every caller here treats an empty tree as "the app rendered nothing". One run
+ * reported the cold-start search as never rendering while a screenshot of that exact moment
+ * showed "53 exercises for squat" and a full list. The app was fine; the read was not.
+ *
+ * So a busy runner is retried rather than believed. If it never answers, the return is still
+ * `[]` — callers cannot be rewritten to handle an exception here — but the reason is printed,
+ * which is the difference between debugging the app and debugging the harness.
+ */
+function nodes({ tries = 4 } = {}) {
+  let last = '';
+  for (let i = 0; i < tries; i += 1) {
+    const raw = sh('npx agent-device snapshot --json 2>&1', { allowFail: true });
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed.success === false) {
+        last = parsed.error?.code ?? 'UNKNOWN';
+        // Busy is transient by definition — the runner is finishing the previous capture.
+        if (last === 'RUNNER_BUSY') {
+          sleep(3);
+          continue;
+        }
+        break;
+      }
+      return (parsed.data ?? {}).nodes ?? [];
+    } catch {
+      last = 'UNPARSEABLE';
+      sleep(1);
+    }
   }
+  console.log(`   (snapshot unavailable after ${tries} attempts: ${last} — reading as empty)`);
+  return [];
 }
 
 /**
@@ -517,25 +548,32 @@ function dbCol(sql) {
 /**
  * Type into a field and put the keyboard away.
  *
- * The dismissal is not politeness, it is correctness. While the keyboard is up it covers the
- * lower half of the screen, which breaks two things at once:
+ * Dismissal is correctness, not tidiness. While the keyboard is up:
  *
- *   - `visible()` reads the viewport, so the keys ARE the visible nodes. A check that read the
- *     screen after typing saw `Next keyboard / Padding-Left / q` and concluded the app had
- *     rendered nothing.
- *   - every pan in this file swipes at y=600..520, which is INSIDE the keyboard once it is up.
- *     So `scrollTop`/`seek` stop scrolling the list and start stroking the keys — one run left a
- *     stray "q" on screen, typed by its own scroll gesture.
+ *   - it owns the lower half of the screen, so `visible()` reports the KEYS as the visible
+ *     nodes. A check reading the screen after typing sees `Next keyboard / Padding-Left / q`
+ *     and concludes the app rendered nothing.
+ *   - every pan here swipes at y=600..520, which is INSIDE the keyboard. `scrollTop` and `seek`
+ *     stop scrolling the list and start stroking keys — one run typed a stray "q" into the app
+ *     with its own scroll gesture.
+ *   - worst, the keyboard screen is heavy enough to trip the runner's accessibility-capture
+ *     watchdog, after which every snapshot answers RUNNER_BUSY. That is unrecoverable from
+ *     inside the tool: `keyboard return` needs the runner, and the runner is busy because the
+ *     keyboard is up.
  *
- * `keyboard return` is what works here: it presses the return key, the field submits, and the
- * keyboard closes. `keyboard dismiss` is the obvious call and reports UNSUPPORTED_OPERATION on
- * iOS, because the iOS keyboard exposes no dismiss key.
+ * So the dismissal is a COORDINATE TAP, which needs no snapshot and therefore cannot deadlock
+ * against a busy runner. `keyboard dismiss` is the obvious call and reports
+ * UNSUPPORTED_OPERATION on iOS; `keyboard return` works only while the runner is idle, which
+ * is exactly when it is not needed.
+ *
+ * The default target is the horizontal centre just under the nav bar — a title on every screen
+ * this harness types on. Pass `blurAt` for a screen where that would hit a control.
  */
-function fillField(ref, text) {
+function fillField(ref, text, { blurAt = '201 120' } = {}) {
   sh(`npx agent-device fill @${ref} ${JSON.stringify(text)} 2>&1`, { allowFail: true });
   sleep(1);
-  sh('npx agent-device keyboard return 2>&1', { allowFail: true });
-  sleep(1);
+  sh(`npx agent-device press ${blurAt} 2>&1`, { allowFail: true });
+  sleep(2);
 }
 
 function fail(msg) {
