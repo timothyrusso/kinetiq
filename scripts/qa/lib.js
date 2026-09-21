@@ -406,6 +406,50 @@ function restartApp() {
   return true;
 }
 
+/**
+ * Read the app's SQLite file from the HOST, while the app is running.
+ *
+ * Some things a snapshot cannot tell you. "Did the routine survive a force-quit?" reads the same
+ * on screen whether it was persisted or re-derived from an in-memory cache, and "is the row
+ * actually gone, or just filtered out of the list?" is unanswerable from pixels. The database is
+ * the only witness with standing for those, and it is a plain file the simulator keeps on this
+ * disk — so a check can ask it directly instead of trusting the screen that is being tested.
+ *
+ * Verified on device rather than assumed: the file is in WAL mode, and a `-readonly` open of a
+ * WAL database succeeds here (the `-shm` file is present) and returns rows three times in a row
+ * while another QA run is mid-write. Reading is therefore safe concurrently; nothing here opens
+ * for write, ever, which is the property that keeps it safe.
+ *
+ * SQL goes in over stdin, not as a shell argument. Routine names are user text and an apostrophe
+ * in one would otherwise break the quoting and report as a syntax error in the wrong layer.
+ */
+function dbQuery(sql) {
+  const cont = sh(`xcrun simctl get_app_container ${SIMULATOR_UDID} ${BUNDLE_ID} data 2>&1`).trim();
+  if (!/\/Containers\/Data\/Application\//.test(cont)) {
+    fail(`cannot locate the app container to read the database: ${cont.slice(0, 120)}`);
+  }
+  const db = `${cont}/Documents/SQLite/kinetiq.db`;
+  let raw;
+  try {
+    raw = execSync(`/usr/bin/sqlite3 -readonly "${db}" -separator "\t"`, {
+      encoding: 'utf8',
+      input: sql,
+      maxBuffer: 16 * 1024 * 1024,
+    });
+  } catch (e) {
+    fail(`could not read ${db}: ${String(e.stderr ?? e.message).trim().slice(0, 200)}`);
+  }
+  return raw
+    .split('\n')
+    .filter((l) => l.length)
+    .map((l) => l.split('\t'));
+}
+
+/** Same query, expecting exactly one column: `['a', 'b']`. */
+function dbCol(sql) {
+  return dbQuery(sql).map((r) => r[0]);
+}
+
 function fail(msg) {
   console.error(`   !! ${msg}`);
   process.exit(1);
@@ -543,15 +587,42 @@ function ledger(label) {
   // counters several times a run, and a full scan (bottom, then back to the top) cost more
   // than the navigation step it was there to measure. One pan past the heading is enough —
   // the group list is short and sits directly under it.
-  // Both copies, matched case-insensitively on purpose. The empty one is a sentence — `Request
-  // ledger — nothing sent since you opened the dev screen` — so its n is lower-case, and a
-  // capitalised pattern never matched it. The result looked like a dead harness: on a cold app
-  // that has sent nothing yet, seek scrolled for a heading that only renders when there ARE rows,
-  // gave up, and reported "ledger never came into view" for a ledger that was fine. Zero requests
-  // is a real and important state (it is the baseline every delta is measured against), so it has
-  // to be readable, not fatal.
-  if (!seek((n) => /grouped by path|nothing sent since/i.test(n.label ?? ''))) {
-    return fail(`ledger never came into view (reading ${label})`);
+  // ── Walk the whole section from the top, every time ───────────────────────────────────────
+  // Not `seek` + a pan. Seek stops at the first match and leaves the list wherever that happened
+  // to be, so each read started from a different scroll offset and saw a different subset of a
+  // recycling list. Measured, three consecutive reads of one unchanged ledger: total=5, then
+  // total=1, then "never came into view". Those are the same screen read from three positions —
+  // and the middle one is the dangerous shape, because a partial read is indistinguishable from
+  // a real number and every ceiling here is an upper bound.
+  //
+  // So: go to the top, then pan down until the section's LAST element is on screen, unioning what
+  // each stop mounts. `Refresh counters` is that element — it renders in both the empty and the
+  // populated state, and it sits below every LedgerRow — so seeing it is proof the walk went past
+  // all the rows rather than stopping among them.
+  scrollTop({ max: 8 });
+  const seen = new Map();
+  const collect = () => {
+    for (const n of nodes()) {
+      const l = (n.label ?? '').trim();
+      if (!l || n.visible === false) continue;
+      if (!seen.has(l)) seen.set(l, n);
+    }
+  };
+  const sawEnd = () => [...seen.keys()].some((l) => l === 'Refresh counters');
+  collect();
+  for (let i = 0; i < 12 && !sawEnd(); i += 1) {
+    panDown();
+    collect();
+  }
+  const labels_ = [...seen.keys()];
+  if (!sawEnd()) {
+    return fail(
+      `ledger never came fully into view (reading ${label}): panned to the bottom without ` +
+        'reaching "Refresh counters", so any count here would be a partial read.',
+    );
+  }
+  if (!labels_.some((l) => /requests since launch/i.test(l))) {
+    return fail(`the dev screen has no request ledger on it at all (reading ${label})`);
   }
   // ── Read one row per a11y label: "/api/v2/x/, 3 requests" ─────────────────────────────────
   // Two earlier versions tried to find the count and put it with the path. First by list order
@@ -565,19 +636,6 @@ function ledger(label) {
   // The count was missing for everyone, including a screen reader, so the fix is in the product
   // (app/dev.tsx `LedgerRow`: one accessible element labelled "path, N requests"), and this reads
   // that label. One node per row, nothing to pair, nothing to lose to a duplicate.
-  const seen = new Map();
-  const collect = () => {
-    for (const n of nodes()) {
-      const l = (n.label ?? '').trim();
-      if (!l || n.visible === false) continue;
-      if (!seen.has(l)) seen.set(l, n);
-    }
-  };
-  collect();
-  panDown();
-  collect();
-
-  const labels_ = [...seen.keys()];
   const rows = new Map();
   for (const l of labels_) {
     const m = /^(\/[^\s,]+), (\d+) requests?$/.exec(l);
@@ -626,5 +684,5 @@ function ledger(label) {
 module.exports = {
   CWD, METRO, TABS, VIEWPORT_HEIGHT, sh, sleep, nodes, labels, visible, onScreen, has, hasAnywhere,
   isNotFound, scan, seek, scrollTop, panDown, panUp, signature, open, fail, pressLabel, pressText,
-  pressRow, tab, ledger, onExit, faultArmed, clearFaultQuietly, restartApp,
+  pressRow, tab, ledger, onExit, faultArmed, clearFaultQuietly, restartApp, dbQuery, dbCol,
 };
