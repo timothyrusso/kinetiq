@@ -52,7 +52,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
 import { useAppTheme, type Theme } from '@/theme/theme';
-import { radius, spacing, z, touchTarget } from '@/theme/tokens';
+import { radius, spacing, z, touchTarget, screenGutter } from '@/theme/tokens';
 import { Icon, type IconName } from '@/ui/icons';
 import { Txt } from '@/ui/Text';
 import { Row } from '@/ui/layout';
@@ -309,7 +309,7 @@ export function CollapsibleHero({
 }) {
   const insets = useSafeAreaInsets();
   return (
-    <View style={{ paddingTop: insets.top + spacing.xxl, paddingHorizontal: spacing.lg }}>
+    <View style={{ paddingTop: insets.top + spacing.xxl, paddingHorizontal: screenGutter }}>
       <Animated.View style={header.heroTitleStyle}>
         {eyebrow ? (
           <Txt variant="micro" tone="faint" uppercase tracking={1.1}>
@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: screenGutter,
     gap: spacing.sm,
   },
   // Keeps the collapsed title on the same left edge as the hero title above it, so the

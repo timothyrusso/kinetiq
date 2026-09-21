@@ -76,7 +76,7 @@ import { RECORD_LABEL, formatRecordValue } from '@/queries/useExerciseHistory';
 import { useSettings } from '@/settings';
 import { routes, tabHref, tabIndexOf } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
-import { spacing } from '@/theme/tokens';
+import { spacing, screenGutter } from '@/theme/tokens';
 import { dayKey } from '@/domain/logic';
 import { KIND_ORDER } from '@/domain/display';
 import {
@@ -685,7 +685,7 @@ function rangeLabel(weeks: number): string {
 
 const styles = StyleSheet.create({
   content: { flexGrow: 1 },
-  body: { paddingHorizontal: spacing.xl },
+  body: { paddingHorizontal: screenGutter },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
 });
 

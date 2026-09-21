@@ -55,7 +55,7 @@ import { computeStreak } from '@/domain/logic';
 import type { Activity } from '@/domain/types';
 import { routes, tabHref } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
-import { spacing } from '@/theme/tokens';
+import { spacing, screenGutter } from '@/theme/tokens';
 import {
   compactNumber,
   formatDurationCompact,
@@ -159,7 +159,7 @@ export default function HomeScreen() {
       </CollapsibleHero>
 
       <View
-        style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.xl }}
+        style={{ paddingHorizontal: screenGutter, paddingTop: spacing.xl, paddingBottom: spacing.xl }}
         onLayout={onChartLayout}
       >
         {loading ? (
@@ -188,7 +188,7 @@ export default function HomeScreen() {
         <SectionHeader
           title="Recent"
           eyebrow="Latest sessions"
-          style={{ paddingHorizontal: spacing.lg }}
+          style={{ paddingHorizontal: screenGutter }}
           action={
             visible.length > 0 ? (
               <Button
@@ -241,7 +241,7 @@ export default function HomeScreen() {
               onAction={() => router.push(tabHref(2))}
             />
           ) : loading ? (
-            <View style={{ paddingHorizontal: spacing.lg }}>
+            <View style={{ paddingHorizontal: screenGutter }}>
               <SkeletonList rows={4} />
             </View>
           ) : null

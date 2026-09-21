@@ -60,7 +60,7 @@ import {
 import type { Exercise, Taxon } from '@/domain/types';
 import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
-import { spacing } from '@/theme/tokens';
+import { spacing, screenGutter } from '@/theme/tokens';
 import { joinMiddleDot, pluralWord } from '@/utils/format';
 
 
@@ -236,7 +236,7 @@ export default function ExercisesScreen() {
         }
         ListEmptyComponent={
           search.isLoading ? (
-            <View style={{ paddingHorizontal: spacing.lg }}>
+            <View style={{ paddingHorizontal: screenGutter }}>
               <SkeletonList rows={7} />
             </View>
           ) : search.error !== null ? (
@@ -467,11 +467,11 @@ function nameOf(taxons: readonly Taxon[] | undefined, id: number | null): string
 const styles = StyleSheet.create({
   root: { flex: 1 },
   controls: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: screenGutter,
     paddingTop: spacing.lg,
     paddingBottom: spacing.md,
     gap: spacing.md,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  footer: { paddingVertical: spacing.xl, paddingHorizontal: spacing.lg },
+  footer: { paddingVertical: spacing.xl, paddingHorizontal: screenGutter },
 });

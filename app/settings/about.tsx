@@ -58,7 +58,7 @@ import { routes } from '@/navigation/nav';
 import { useActivityList } from '@/queries/useActivities';
 import { useRoutines } from '@/queries/useRoutines';
 import { useAppTheme } from '@/theme/theme';
-import { spacing } from '@/theme/tokens';
+import { spacing, screenGutter } from '@/theme/tokens';
 import { haptics } from '@/services/haptics';
 import {
   countNoun,
@@ -410,7 +410,7 @@ const LABELLED_PROVIDERS: Record<string, string> = {
 
 const styles = StyleSheet.create({
   content: { flexGrow: 1 },
-  body: { paddingHorizontal: spacing.xl },
+  body: { paddingHorizontal: screenGutter },
   footnote: { marginTop: spacing.sm, paddingHorizontal: spacing.xs },
   fact: { gap: spacing.xxs },
   factRow: {

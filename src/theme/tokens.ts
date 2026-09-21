@@ -85,6 +85,20 @@ export const spacing = {
   huge: 44,
 } as const;
 
+/**
+ * The distance from the screen edge to any content, everywhere.
+ *
+ * One token because it was previously two. Nine screens indented their body by `xl` and seven
+ * by `lg`, and the header bar used `lg`, so on those nine the title in the bar and the content
+ * under it did not share a left edge. Navigating between two screens shifted everything four
+ * points sideways, which is the kind of thing that reads as sloppiness without ever being
+ * identifiable as a bug.
+ *
+ * `xl` won because the wider gutter suits the larger type this app uses for metrics, and
+ * because a generous edge is what makes a dense dashboard readable on a phone.
+ */
+export const screenGutter = 20;
+
 export const radius = {
   xs: 6,
   sm: 10,

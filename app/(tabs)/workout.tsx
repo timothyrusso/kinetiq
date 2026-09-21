@@ -64,7 +64,7 @@ import { BROWSE_FILTER, useExerciseSearch } from '@/queries/useExercises';
 import { routes } from '@/navigation/nav';
 import type { Routine } from '@/domain/types';
 import { useAppTheme } from '@/theme/theme';
-import { radius, spacing } from '@/theme/tokens';
+import { radius, spacing, screenGutter } from '@/theme/tokens';
 import { formatAgo, formatTimer } from '@/utils/format';
 import { useSettings } from '@/settings';
 import { haptics } from '@/services/haptics';
@@ -581,7 +581,7 @@ function routineSubtitle(routine: Routine): string {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   content: { flexGrow: 1 },
-  section: { paddingHorizontal: spacing.lg, paddingTop: spacing.xxl },
+  section: { paddingHorizontal: screenGutter, paddingTop: spacing.xxl },
   badge: {
     width: 44,
     height: 44,

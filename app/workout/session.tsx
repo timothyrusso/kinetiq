@@ -81,7 +81,7 @@ import {
   weightValue,
 } from '@/utils/format';
 import { useAppTheme } from '@/theme/theme';
-import { radius, spacing, z } from '@/theme/tokens';
+import { radius, spacing, z, screenGutter } from '@/theme/tokens';
 import { Button, IconButton } from '@/ui/Button';
 import { Card, OverlaySurface, Row, SectionHeader } from '@/ui/layout';
 import { Chip } from '@/ui/controls';
@@ -363,7 +363,7 @@ export default function WorkoutSessionScreen() {
   if (!hydrated) {
     return (
       <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
-        <View style={{ paddingTop: insets.top + spacing.xl, paddingHorizontal: spacing.xl }}>
+        <View style={{ paddingTop: insets.top + spacing.xl, paddingHorizontal: screenGutter }}>
           <SkeletonCard lines={3} />
         </View>
       </View>
@@ -1032,7 +1032,7 @@ const styles = StyleSheet.create({
     zIndex: z.sticky,
   },
   content: { flexGrow: 1, paddingTop: spacing.lg },
-  section: { paddingHorizontal: spacing.xl, paddingTop: spacing.xxl },
+  section: { paddingHorizontal: screenGutter, paddingTop: spacing.xxl },
   // No `zIndex`: the rest dock is rendered after this and is also `z.sticky`, and the
   // dock must stay on top of the footer. Leaving this at `auto` keeps that ordering
   // unambiguous rather than a tie won by DOM order.
@@ -1041,7 +1041,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: screenGutter,
     paddingTop: spacing.md,
   },
   record: {

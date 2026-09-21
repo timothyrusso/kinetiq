@@ -102,7 +102,7 @@ export const TrendChart = memo(function TrendChart({
         // `padding` is the outer margin and is what keeps the first and last axis LABELS inside
         // the frame. `domainPadding` insets the plotted points but leaves a label centred under
         // the outermost one hanging over the edge.
-        padding={{ left: 16, right: 16, top: 0, bottom: 0 }}
+        padding={{ left: 18, right: 24, top: 0, bottom: 0 }}
         {...(includeZero ? { domain: { y: [0] } } : {})}
         {...(interactive ? { chartPressState: state } : {})}
         {...(showAxes && font

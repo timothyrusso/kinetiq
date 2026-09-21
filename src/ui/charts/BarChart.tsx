@@ -101,7 +101,7 @@ export const BarChart = memo(function BarChart({
           variant="caption"
           tone="muted"
           align="right"
-          style={{ marginBottom: spacing.xs, paddingRight: spacing.lg }}
+          style={{ marginBottom: spacing.xs, paddingRight: spacing.xxl }}
         >
           {format(last.value)}
         </Txt>
@@ -119,7 +119,7 @@ export const BarChart = memo(function BarChart({
           // labels running off the edge. `domainPadding` insets the bars within the plot but
           // leaves a label centred under the outermost bar hanging over the frame, which is how
           // the old chart came to render "Now" as "No".
-          padding={{ left: 18, right: 18, top: 0, bottom: 0 }}
+          padding={{ left: 20, right: 26, top: 0, bottom: 0 }}
           // Bars are only honest from zero. The upper bound is left to the data.
           domain={{ y: [0] }}
           axisOptions={

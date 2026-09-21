@@ -40,7 +40,7 @@ import { useTrainingSummary } from '@/queries/useProgress';
 import { useSettings, useSettingsUpdate } from '@/settings';
 import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
-import { spacing } from '@/theme/tokens';
+import { spacing, screenGutter } from '@/theme/tokens';
 import {
   formatDistance,
   formatDurationCompact,
@@ -379,6 +379,6 @@ function notificationsSubtitle(hapticsEnabled: boolean): string {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  content: { paddingHorizontal: spacing.lg },
-  body: { paddingHorizontal: spacing.lg, gap: spacing.lg },
+  content: { paddingHorizontal: screenGutter },
+  body: { paddingHorizontal: screenGutter, gap: spacing.lg },
 });

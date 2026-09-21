@@ -70,7 +70,7 @@ import { routes, tabHref, tabIndexOf } from '@/navigation/nav';
 import type { ActivityListParams, ActivitySort } from '@/query/keys';
 import type { Activity, ActivityKind } from '@/domain/types';
 import { useAppTheme } from '@/theme/theme';
-import { spacing } from '@/theme/tokens';
+import { spacing, screenGutter } from '@/theme/tokens';
 
 const BOTTOM_SPACE = 96;
 const DAY_MS = 86_400_000;
@@ -259,7 +259,7 @@ export default function WorkoutHistoryScreen() {
             getItemType={getItemType}
             extraData={units}
             contentContainerStyle={{
-              paddingHorizontal: spacing.lg,
+              paddingHorizontal: screenGutter,
               paddingTop: topInset + spacing.md,
               paddingBottom: BOTTOM_SPACE + insets.bottom,
             }}
@@ -297,7 +297,7 @@ export default function WorkoutHistoryScreen() {
             }
             ListEmptyComponent={
               list.isLoading ? (
-                <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.lg }}>
+                <View style={{ paddingHorizontal: screenGutter, paddingTop: spacing.lg }}>
                   <SkeletonList rows={5} />
                 </View>
               ) : list.error ? (

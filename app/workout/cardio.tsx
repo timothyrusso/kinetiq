@@ -74,7 +74,7 @@ import { haptics } from '@/services/haptics';
 import { routes } from '@/navigation/nav';
 import type { ActivityKind } from '@/domain/types';
 import { useAppTheme } from '@/theme/theme';
-import { spacing } from '@/theme/tokens';
+import { spacing, screenGutter } from '@/theme/tokens';
 import type { UnitSystem } from '@/utils/format';
 import {
   formatCalories,
@@ -687,9 +687,9 @@ function placeholderFor(kind: ActivityKind): string {
 
 const styles = StyleSheet.create({
   content: { flexGrow: 1 },
-  body: { paddingHorizontal: spacing.xl },
+  body: { paddingHorizontal: screenGutter },
   center: { flex: 1, justifyContent: 'center' },
-  liveBody: { paddingHorizontal: spacing.xl },
+  liveBody: { paddingHorizontal: screenGutter },
   hero: { alignItems: 'center', paddingVertical: spacing.xxl, gap: spacing.xxs },
   dot: { width: 12, height: 12, borderRadius: 6, borderWidth: 2 },
   dotDim: { opacity: 0.35 },

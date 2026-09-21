@@ -64,7 +64,7 @@ import { useSettings } from '@/settings';
 import { useStartRoutine } from '@/workout/startRoutine';
 import { useWorkoutSession } from '@/workout/session';
 import { useAppTheme } from '@/theme/theme';
-import { spacing } from '@/theme/tokens';
+import { spacing, screenGutter } from '@/theme/tokens';
 import { haptics } from '@/services/haptics';
 import { moveItem } from '@/utils/functional';
 import { defaultItemTarget, orderedIdsOf, pairItems, type ItemTarget } from '@/routines/draft';
@@ -260,7 +260,7 @@ export default function RoutineDetailScreen() {
       <DetailScreen title="Routine">
         {() => (
           <View
-            style={{ flex: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.md }}
+            style={{ flex: 1, paddingHorizontal: screenGutter, paddingTop: spacing.md }}
           >
             <SkeletonList rows={6} />
           </View>
@@ -273,7 +273,7 @@ export default function RoutineDetailScreen() {
     return (
       <DetailScreen title="Routine">
         {() => (
-          <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: spacing.lg }}>
+          <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: screenGutter }}>
             <ErrorState
               error={error}
               onRetry={() => void refresh()}
@@ -292,7 +292,7 @@ export default function RoutineDetailScreen() {
     return (
       <DetailScreen title="Routine">
         {() => (
-          <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: spacing.lg }}>
+          <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: screenGutter }}>
             <EmptyState
               icon="listAdd"
               title="This routine is gone"
@@ -350,7 +350,7 @@ export default function RoutineDetailScreen() {
               gap: spacing.xxl,
             }}
           >
-            <Column gap="lg" style={{ paddingHorizontal: spacing.lg }}>
+            <Column gap="lg" style={{ paddingHorizontal: screenGutter }}>
               {routine.description === null || routine.description.length === 0 ? null : (
                 <Txt variant="body" tone="secondary">
                   {routine.description}
@@ -435,14 +435,14 @@ export default function RoutineDetailScreen() {
                     );
                   })}
                 </View>
-                <Txt variant="caption" tone="faint" style={{ paddingHorizontal: spacing.lg }}>
+                <Txt variant="caption" tone="faint" style={{ paddingHorizontal: screenGutter }}>
                   Tap a row to change its sets, reps, weight or rest: changes save as you make
                   them. The arrows reorder the routine.
                 </Txt>
               </Column>
             )}
 
-            <Column gap="md" style={{ paddingHorizontal: spacing.lg }}>
+            <Column gap="md" style={{ paddingHorizontal: screenGutter }}>
               <Button
                 label={liveSession ? 'Open your workout' : 'Start this workout'}
                 icon={liveSession ? 'arrowUpRight' : 'play'}

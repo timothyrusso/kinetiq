@@ -70,7 +70,7 @@ import {
 } from '@/api/devFaults';
 import { RETRY_BUDGET } from '@/query/client';
 import { useAppTheme } from '@/theme/theme';
-import { spacing } from '@/theme/tokens';
+import { spacing, screenGutter } from '@/theme/tokens';
 import { haptics, setHapticsEnabled } from '@/services/haptics';
 import { clearAllUserData, readSchemaVersion } from '@/persistence';
 import { seedIfEmpty } from '@/seed/seed';
@@ -601,7 +601,7 @@ const FAULT_BURST_REQUESTS = 5;
 
 const styles = StyleSheet.create({
   content: { flexGrow: 1 },
-  body: { paddingHorizontal: spacing.xl },
+  body: { paddingHorizontal: screenGutter },
   selfEnd: { alignSelf: 'flex-end' },
   row: {
     flexDirection: 'row',

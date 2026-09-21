@@ -47,7 +47,7 @@ import { useSettings, useSettingsUpdate } from '@/settings';
 import type { ReminderSettings } from '@/settings';
 import { usePermissions } from '@/queries/usePermissions';
 import { useAppTheme } from '@/theme/theme';
-import { spacing } from '@/theme/tokens';
+import { spacing, screenGutter } from '@/theme/tokens';
 import {
   clearScheduledNotifications,
   notifySettingsTest,
@@ -501,7 +501,7 @@ function describeDays(days: readonly number[]): string {
 
 const styles = StyleSheet.create({
   content: { flexGrow: 1 },
-  body: { paddingHorizontal: spacing.xl },
+  body: { paddingHorizontal: screenGutter },
   chips: { flexWrap: 'wrap' },
   dot: { width: 10, height: 10, borderRadius: 5 },
   clock: { minWidth: 62, alignItems: 'center' },

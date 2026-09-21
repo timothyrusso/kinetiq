@@ -51,7 +51,7 @@ import { degradationMessage } from '@/services/location';
 import type { LocationPermissionStatus } from '@/services/location';
 import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
-import { spacing } from '@/theme/tokens';
+import { spacing, screenGutter } from '@/theme/tokens';
 import { haptics } from '@/services/haptics';
 
 
@@ -390,7 +390,7 @@ const NEVER_ASKED: readonly { title: string; detail: string }[] = [
 
 const styles = StyleSheet.create({
   content: { flexGrow: 1 },
-  body: { paddingHorizontal: spacing.xl },
+  body: { paddingHorizontal: screenGutter },
   after: { marginTop: spacing.md },
   dot: { width: 10, height: 10, borderRadius: 5 },
   strip: {

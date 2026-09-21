@@ -44,7 +44,7 @@ import { useSaveRoutine } from '@/queries/useRoutines';
 import { useSettings } from '@/settings';
 import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
-import { spacing } from '@/theme/tokens';
+import { spacing, screenGutter } from '@/theme/tokens';
 import { trimNumber, weightUnit, weightValue } from '@/utils/format';
 import { haptics } from '@/services/haptics';
 import { pairItems } from '@/routines/draft';
@@ -201,7 +201,7 @@ export default function NewRoutineScreen() {
                 gap: spacing.xxl,
               }}
             >
-              <Column gap="md" style={{ paddingHorizontal: spacing.lg }}>
+              <Column gap="md" style={{ paddingHorizontal: screenGutter }}>
                 <TextField
                   label="Routine name"
                   value={draft.name}
@@ -277,7 +277,7 @@ export default function NewRoutineScreen() {
                       />
                     ))}
                   </View>
-                  <Row gap="xxl" style={{ paddingHorizontal: spacing.lg }}>
+                  <Row gap="xxl" style={{ paddingHorizontal: screenGutter }}>
                     <MetricNote
                       label="Planned volume"
                       value={
@@ -288,7 +288,7 @@ export default function NewRoutineScreen() {
                     />
                     <MetricNote label="Est. time" value={`~${minutes} min`} />
                   </Row>
-                  <Txt variant="caption" tone="faint" style={{ paddingHorizontal: spacing.lg }}>
+                  <Txt variant="caption" tone="faint" style={{ paddingHorizontal: screenGutter }}>
                     Tap a row to change its sets, reps, weight or rest. The arrows reorder it,
                     and Done writes every row at once.
                   </Txt>

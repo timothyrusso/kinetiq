@@ -77,7 +77,7 @@ import type {
   StrengthSet,
 } from '@/domain/types';
 import { useAppTheme, type Theme } from '@/theme/theme';
-import { radius, spacing } from '@/theme/tokens';
+import { radius, spacing, screenGutter } from '@/theme/tokens';
 import type { UnitSystem } from '@/utils/format';
 import {
   compactNumber,
@@ -1049,7 +1049,7 @@ function axisLabel(name: string): string {
 }
 
 const styles = StyleSheet.create({
-  content: { paddingHorizontal: spacing.lg },
+  content: { paddingHorizontal: screenGutter },
   hero: { marginTop: spacing.md, padding: spacing.lg, borderRadius: radius.xl },
   section: { paddingTop: spacing.xxxl },
   headRow: { paddingVertical: spacing.xs },
@@ -1067,5 +1067,5 @@ const styles = StyleSheet.create({
   narrow: { width: 30 },
   wide: { width: 54 },
   cell: { flex: 1 },
-  noteBody: { paddingHorizontal: spacing.lg, paddingBottom: spacing.lg },
+  noteBody: { paddingHorizontal: screenGutter, paddingBottom: spacing.lg },
 });

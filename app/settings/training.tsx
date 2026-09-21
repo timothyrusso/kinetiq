@@ -42,7 +42,7 @@ import { Chip, SegmentedControl, Stepper, Toggle } from '@/ui/controls';
 import { Txt } from '@/ui/Text';
 import { useSettings, useSettingsUpdate } from '@/settings';
 import { GOAL_PRESETS, REST_PRESETS } from '@/settings';
-import { spacing } from '@/theme/tokens';
+import { spacing, screenGutter } from '@/theme/tokens';
 import { formatDurationCompact } from '@/utils/format';
 
 /** The two readings of the same run. A string union because `Segment<T extends string>`. */
@@ -248,7 +248,7 @@ function ToggleRow({
 
 const styles = StyleSheet.create({
   content: { flexGrow: 1 },
-  body: { paddingHorizontal: spacing.xl },
+  body: { paddingHorizontal: screenGutter },
   chips: { flexWrap: 'wrap' },
   footnote: { marginTop: spacing.sm, paddingHorizontal: spacing.xs },
   toggleRow: {

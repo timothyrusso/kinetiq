@@ -55,7 +55,7 @@ import { activityDisplay } from '@/domain/display';
 import type { Activity, ActivityKind } from '@/domain/types';
 import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
-import { spacing } from '@/theme/tokens';
+import { spacing, screenGutter } from '@/theme/tokens';
 import { compactNumber, formatDistance, formatDurationCompact } from '@/utils/format';
 import { toggleInArray } from '@/utils/functional';
 import { useDebouncedValue, useIsSettling } from '@/utils/useDebouncedValue';
@@ -265,7 +265,7 @@ export default function ActivitiesScreen() {
         ListHeaderComponent={listHeader}
         ListEmptyComponent={
           list.isLoading ? (
-            <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.lg }}>
+            <View style={{ paddingHorizontal: screenGutter, paddingTop: spacing.lg }}>
               <SkeletonList rows={6} />
             </View>
           ) : list.error ? (
@@ -339,14 +339,14 @@ function DayLabel({ text, count }: { text: string; count: number }) {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   filters: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: screenGutter,
     paddingTop: spacing.lg,
     paddingBottom: spacing.md,
     gap: spacing.md,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   dayLabel: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: screenGutter,
     paddingTop: spacing.xl,
     paddingBottom: spacing.sm,
   },

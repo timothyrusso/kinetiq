@@ -57,7 +57,7 @@ import { useAllSettings, useSettingsUpdate } from '@/settings';
 import type { Profile, SettingsState } from '@/settings';
 import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
-import { spacing } from '@/theme/tokens';
+import { spacing, screenGutter } from '@/theme/tokens';
 import { haptics } from '@/services/haptics';
 import {
   countNoun,
@@ -311,5 +311,5 @@ function notificationSummary(settings: SettingsState): string {
 
 const styles = StyleSheet.create({
   content: { flexGrow: 1 },
-  body: { paddingHorizontal: spacing.xl },
+  body: { paddingHorizontal: screenGutter },
 });
