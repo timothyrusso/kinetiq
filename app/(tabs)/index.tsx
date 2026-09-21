@@ -36,6 +36,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTabContentBottom } from '@/ui/insets';
 
 import { BarAction, CollapsibleHeader, CollapsibleHero, useScreenHeaderScroll } from '@/ui/Screen';
+import { LiveClock } from '@/ui/LiveClock';
 import { ActivityRow } from '@/ui/rows';
 import { Badge, Card, Divider, Row, SectionHeader, Stack } from '@/ui/layout';
 import { MetricLabel, Txt } from '@/ui/Text';
@@ -137,6 +138,9 @@ export default function HomeScreen() {
         eyebrow={greeting()}
         title={headlineFor(streak.current, summary)}
       >
+        {/* Its own component so the per-second tick re-renders two Txt nodes rather than the
+            hero, its badges and everything the hero is a child of. */}
+        <LiveClock />
         {summary?.hasAnyHistory ? (
           <Row gap="sm" style={{ marginTop: spacing.md }}>
             <Badge
