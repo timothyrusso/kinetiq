@@ -612,7 +612,13 @@ function pressLabel(label) {
       return true;
     }
   }
-  const node = seek(want);
+  // Prefer an actual control. A label is frequently carried by more than one node — the
+  // Workout tab has "New routine" on both the top-right Button (38pt wide) and an `Other`
+  // container spanning the whole screen — and `seek` returns whichever comes first in tree
+  // order. Pressing the container is a no-op that REPORTS SUCCESS, so the caller believes it
+  // navigated and then asserts against the screen it never left. That is exactly how the CRUD
+  // gate failed its first run: "pressed New routine: true", still on the Workout tab.
+  const node = seek((n) => want(n) && n.type === 'Button') ?? seek(want);
   if (!node?.ref) {
     console.error(`   !! never found "${label}" on screen`);
     return false;
