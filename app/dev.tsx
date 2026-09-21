@@ -259,7 +259,12 @@ export default function DevScreen() {
                   <StatusLine
                     icon={armed === null ? 'checkCircle' : 'warning'}
                     tone={armed === null ? 'ok' : 'bad'}
-                    text={status ?? 'Nothing armed. Requests go to the network as usual.'}
+                    // `faultSummary()` always returns a sentence, including the disarmed
+                    // one ("No fault armed — requests go to wger normally."), so there is no
+                    // null case to cover. The `??` fallback that used to sit here could never
+                    // render and worded the same state differently, which is exactly the kind
+                    // of second copy that a check then goes looking for and never finds.
+                    text={status}
                   />
                   {armed !== null ? (
                     <Button

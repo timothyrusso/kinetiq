@@ -55,7 +55,7 @@ type OwnProps = {
   /** Validation copy. Also flips the field to the danger palette. */
   error?: string | null;
   hint?: string;
-  /** Leading unit, e.g. `kg` — inside the box so the number and its unit read together. */
+  /** Trailing unit, e.g. `kg` — inside the box so the number and its unit read together. */
   unit?: string;
   accessibilityLabel?: string;
   disabled?: boolean;
@@ -150,11 +150,6 @@ export const TextField = forwardRef<TextFieldHandle, TextFieldProps>(function Te
         {label}
       </Txt>
       <View style={box}>
-        {unit ? (
-          <Txt variant="body" tone="faint" style={multiline ? { marginTop: 3 } : undefined}>
-            {unit}
-          </Txt>
-        ) : null}
         <TextInput
           ref={input}
           value={value}
@@ -186,6 +181,15 @@ export const TextField = forwardRef<TextFieldHandle, TextFieldProps>(function Te
           }}
           {...rest}
         />
+        {/* AFTER the input, not before it. A unit of measure follows its number — "178 cm",
+            not "cm 178", which is what the leading affix produced on the height field and
+            read as a stray word before the value. A leading affix is right for a currency
+            symbol, and nothing in this app uses one. */}
+        {unit ? (
+          <Txt variant="body" tone="faint" style={multiline ? { marginTop: 3 } : undefined}>
+            {unit}
+          </Txt>
+        ) : null}
         {secureTextEntry ? (
           <Pressable
             onPress={() => {

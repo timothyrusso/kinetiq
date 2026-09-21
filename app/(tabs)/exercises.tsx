@@ -440,8 +440,17 @@ function ListFooter({
  * often than it fills equipment. Everything optional is optional *silently*.
  */
 function exerciseSubtitle(exercise: Exercise): string {
-  const muscles = exercise.primaryMuscles.slice(0, 2).join(', ');
-  return joinMiddleDot([muscles.length > 0 ? muscles : null, exercise.category]);
+  const shown = exercise.primaryMuscles.slice(0, 2);
+  const muscles = shown.join(', ');
+  // Drop the category when a muscle already said it. wger's taxonomies overlap — "Arnold
+  // Shoulder Press" is category Shoulders with primary muscle Shoulders — and the naive join
+  // rendered "Shoulders · Shoulders", which reads as a duplication bug rather than as two
+  // facts that happen to coincide. Compared case-insensitively because the two taxonomies are
+  // maintained separately and are not guaranteed to agree on capitalisation.
+  const category = exercise.category ?? null;
+  const redundant =
+    category !== null && shown.some((m) => m.toLowerCase() === category.toLowerCase());
+  return joinMiddleDot([muscles.length > 0 ? muscles : null, redundant ? null : category]);
 }
 
 function nameOf(taxons: readonly Taxon[] | undefined, id: number | null): string | null {

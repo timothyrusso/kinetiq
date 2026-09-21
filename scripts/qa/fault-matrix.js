@@ -154,7 +154,11 @@ function ensureFaultCleared(context) {
         'button was reachable to clear it — it would poison every later check.',
     );
   }
-  if (!seek((n) => /Nothing armed/i.test(n.label ?? ''), { max: 6 })) {
+  // The exact copy from `faultSummary()`: "No fault armed — requests go to wger normally."
+  // Matched on the distinctive phrase rather than a guess at it — the first version looked for
+  // "Nothing armed", which is the wording of a `??` fallback in dev.tsx that can never render
+  // because faultSummary always returns a string.
+  if (!seek((n) => /No fault armed/i.test(n.label ?? ''), { max: 6 })) {
     fail(
       `${context}: could not confirm the fault state either way — no "Stop injecting" button ` +
         'and no "Nothing armed" line. The dev screen did not render, so the next case would ' +
@@ -354,12 +358,24 @@ console.log('   full-screen error state, with its own retry');
 console.log(`   fault ${ensureFaultCleared('after the cold-load case')}`);
 sleep(2);
 open('exercises', 'SEARCH EXERCISES', { soft: true });
-if (!pressLabel('Try again')) fail('after recovery the error state lost its retry control');
+sleep(6);
+// Two legitimate ways back, and the check must accept both. Returning to the tab can remount
+// the query and refetch on its own, in which case the error state is already gone and there is
+// no "Try again" left to press — demanding one failed a run for recovering too well. Or the
+// query holds its error until asked, and the button is there. What is NOT acceptable is the
+// third outcome: still broken after the network came back.
+const askedAgain = pressLabel('Try again');
 sleep(12);
 if (below('Exercise search unavailable')) {
-  fail('the list stayed broken after the fault was cleared and the user asked again — the error state is sticky');
+  fail(
+    'the list stayed broken after the fault was cleared' +
+      `${askedAgain ? ' and the user pressed "Try again"' : ' and a fresh visit to the tab'} — ` +
+      'the error state is sticky, so a recovered network leaves the user stuck on a dead screen',
+  );
 }
-console.log('   cleared the fault, pressed "Try again", and the list came back');
+console.log(
+  `   cleared the fault and the list came back ${askedAgain ? 'after pressing "Try again"' : 'on its own'}`,
+);
 
 for (const c of CASES) {
   console.log(`\n${c.row} — ${c.note}`);
@@ -406,6 +422,14 @@ for (const c of CASES) {
   // two surfaces name their control differently — the banner's is `Retry`, the error state's is
   // `Try again` — so press the one that is actually on screen rather than hoping.
   const control = seen.stale ? 'Retry' : 'Try again';
+  // Back to the tab FIRST. `ledger()` reads the counters by navigating to the dev screen, so by
+  // this point the app is standing on the dev screen and the control being pressed is two
+  // screens away. Run 19 reported `the full-screen error offered no pressable "Try again"` for
+  // exactly this reason — the button was on screen and correct, and the check was looking at a
+  // different screen. Probed directly afterwards: error state present, "Try again" visible at
+  // y=531, found by `seek` on the first try.
+  open('exercises', 'SEARCH EXERCISES', { soft: true });
+  sleep(2);
   if (!pressLabel(control)) fail(`"${c.row}": the ${surface} offered no pressable "${control}"`);
   sleep(10);
   const retried = below('outdated results') || below('Exercise search unavailable');
