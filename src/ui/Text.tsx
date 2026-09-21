@@ -7,9 +7,10 @@
  * captions have one fixed relationship to each other, and the moment a screen
  * freehands `fontSize: 17` the hierarchy starts to drift screen by screen.
  *
- * `variant` chooses face, size, weight and line height together, because those
- * four are only correct as a set — Space Grotesk at 34 needs a tighter leading
- * than Manrope at 34, and separating them guarantees someone gets it wrong.
+ * `variant` chooses weight, size, line height and tracking together, because
+ * those four are only correct as a set — Inter at 34 needs tighter leading AND
+ * negative tracking, while the same face at 11 needs neither; separating them
+ * guarantees someone gets one of the four wrong.
  */
 import { memo } from 'react';
 import { Text as RNText, type StyleProp, type TextProps, type TextStyle } from 'react-native';
@@ -17,34 +18,38 @@ import { fontFamily } from '@/theme/tokens';
 import { useAppTheme, type Theme } from '@/theme/theme';
 
 /**
- * The scale. `numeral` variants use Space Grotesk, whose figures are near
- * tabular — which is why the metric grid reads as an instrument panel rather
- * than text. `mono` is for values that must not reflow as digits change: the
- * timer, live pace, anything counting.
+ * The scale. Every row carries its own `track` (letter-spacing in points),
+ * because Inter is drawn loose enough to survive an 11pt caption and that same
+ * spacing reads slack at 44pt. Tracking tightens as size climbs and opens
+ * slightly below 13pt — the correction the family is designed to want, and the
+ * difference between "uses Inter" and "set in Inter".
+ *
+ * `mono` rows are never tracked: fixed-width digits exist so a ticking value
+ * does not move, and letter-spacing would reintroduce exactly that shift.
  */
 const VARIANTS = {
-  giant: { family: fontFamily.display, size: 58, line: 1.02 },
-  hero: { family: fontFamily.display, size: 44, line: 1.04 },
-  display: { family: fontFamily.display, size: 34, line: 1.08 },
-  headline: { family: fontFamily.display, size: 27, line: 1.12 },
-  title: { family: fontFamily.heading, size: 22, line: 1.2 },
-  subhead: { family: fontFamily.heading, size: 19, line: 1.24 },
+  giant: { family: fontFamily.display, size: 58, line: 1.02, track: -1.8 },
+  hero: { family: fontFamily.display, size: 44, line: 1.04, track: -1.2 },
+  display: { family: fontFamily.display, size: 34, line: 1.08, track: -0.9 },
+  headline: { family: fontFamily.display, size: 27, line: 1.12, track: -0.6 },
+  title: { family: fontFamily.heading, size: 22, line: 1.2, track: -0.4 },
+  subhead: { family: fontFamily.heading, size: 19, line: 1.24, track: -0.2 },
 
-  body: { family: fontFamily.regular, size: 15, line: 1.45 },
-  bodyLg: { family: fontFamily.regular, size: 16.5, line: 1.45 },
-  strong: { family: fontFamily.semibold, size: 15, line: 1.35 },
-  label: { family: fontFamily.medium, size: 13.5, line: 1.3 },
-  caption: { family: fontFamily.medium, size: 12.5, line: 1.3 },
-  micro: { family: fontFamily.semibold, size: 11, line: 1.28 },
+  body: { family: fontFamily.regular, size: 15, line: 1.45, track: 0 },
+  bodyLg: { family: fontFamily.regular, size: 16.5, line: 1.45, track: -0.1 },
+  strong: { family: fontFamily.semibold, size: 15, line: 1.35, track: 0 },
+  label: { family: fontFamily.medium, size: 13.5, line: 1.3, track: 0 },
+  caption: { family: fontFamily.medium, size: 12.5, line: 1.3, track: 0.1 },
+  micro: { family: fontFamily.semibold, size: 11, line: 1.28, track: 0.2 },
 
-  /** Big readouts: distance, volume, time. Tabular-ish, tight leading. */
-  numeral: { family: fontFamily.display, size: 30, line: 1.02 },
-  numeralLg: { family: fontFamily.display, size: 40, line: 1.0 },
-  numeralSm: { family: fontFamily.displayMedium, size: 20, line: 1.1 },
+  /** Big readouts: distance, volume, time. Tight leading, tighter tracking. */
+  numeral: { family: fontFamily.display, size: 30, line: 1.02, track: -0.8 },
+  numeralLg: { family: fontFamily.display, size: 40, line: 1.0, track: -1.1 },
+  numeralSm: { family: fontFamily.displayMedium, size: 20, line: 1.1, track: -0.3 },
   /** Values that tick: the timer, live pace. Fixed-width digits, no reflow. */
-  mono: { family: fontFamily.monoSemiBold, size: 16, line: 1.2 },
-  monoLg: { family: fontFamily.monoSemiBold, size: 26, line: 1.06 },
-  monoSm: { family: fontFamily.mono, size: 12.5, line: 1.25 },
+  mono: { family: fontFamily.monoSemiBold, size: 16, line: 1.2, track: 0 },
+  monoLg: { family: fontFamily.monoSemiBold, size: 26, line: 1.06, track: 0 },
+  monoSm: { family: fontFamily.mono, size: 12.5, line: 1.25, track: 0 },
 } as const;
 
 export type TxtVariant = keyof typeof VARIANTS;
@@ -143,7 +148,9 @@ export const Txt = memo(function Txt({
       color: color ?? toneColor(theme, tone),
       ...(align ? { textAlign: align } : null),
       ...(weight ? { fontWeight: weight } : null),
-      ...(tracking === undefined ? null : { letterSpacing: tracking }),
+      // The variant's optical tracking, unless the caller overrides it — which all-caps
+      // labels do, since capitals need opening up where lowercase needs tightening.
+      letterSpacing: tracking ?? spec.track,
       ...(uppercase ? { textTransform: 'uppercase' as const } : null),
     },
     style,

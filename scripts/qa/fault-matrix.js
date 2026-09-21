@@ -177,7 +177,7 @@ function coldStart(terms, { proveIdle = false } = {}) {
   // is no failure yet in a healthy warm-up. Asserting it would have made a correct screen look
   // broken, which is the failure mode this whole file has been fighting. What the case below
   // asserts instead is the thing that matters: a failure produces an error state.
-  console.log(`   cold start: ${l.total} request(s) — ${l.rows.map(([p, n]) => `${p.split('/').pop()} ×${n}`).join(', ')}`);
+  console.log(`   cold start: ${l.total} request(s) — ${l.rows.map(([p, n]) => `${p.split('/').filter(Boolean).pop()} ×${n}`).join(', ')}`);
 }
 
 /**

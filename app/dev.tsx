@@ -158,10 +158,10 @@ export default function DevScreen() {
    *  - `budget + 1`, because the retries are the requests that succeed *after* a failure, so a
    *    single failure on a kind with two retries is one nobody ever sees the consequence of.
    *  - and the burst's TOTAL attempts, because a screen neither sends one request nor stops at
-   *    the first failure. An exercise page issues three calls in parallel, and each of those is
-   *    retried on a transient kind, so a fault has to survive concurrency x attempts or the
+   *    the first failure. A cold exercise page issues five calls in parallel, and each of those
+   *    is retried on a transient kind, so a fault has to survive concurrency x attempts or the
    *    screen heals mid-flight: the offline check reported "the app ignored the fault" for three
-   *    runs while the injector was arming one failure against a burst of three.
+   *    runs while the injector was arming one failure against the whole burst.
    *
    * No notice of its own — the status line above already says what is armed and over how many
    * requests, and restating it in a second line below is two places for one fact to disagree.
@@ -570,14 +570,30 @@ function StatusLine({
  * How many requests one screen puts in flight at once, which is how long an outage has to last
  * to be worth arming.
  *
- * Loading a page of exercises is three parallel calls — the page itself plus the language and
- * equipment lookups that let rows render names instead of ids. Measured, not guessed:
- * `exerciseinfo ×3` in the request ledger for a single committed search. Multiplied by the
- * kind's retry attempts at the call site, so "arm a 500" means *every* request this screen
- * makes, for *every* attempt it will make — which is what a user reading an error state needs,
- * and what a QA script needs to be able to assert one.
+ * Five, measured from the request ledger on a cold open of the Exercises tab:
+ *
+ *     /api/v2/equipment/ ×1   /api/v2/exercisecategory/ ×1   /api/v2/exerciseinfo/ ×1
+ *     /api/v2/language/ ×1    /api/v2/muscle/ ×1
+ *
+ * — the page itself plus the four taxonomy lookups that let rows render names instead of ids.
+ * (A *subsequent* search is smaller, `exerciseinfo ×2`, because the taxonomies are already
+ * cached. The cold open is the number that matters here, because it is the larger one and the
+ * one an error state has to survive.)
+ *
+ * This said three, and cited a measurement that was never taken — it came from a ledger parser
+ * that was silently dropping rows, so it under-reported every count it produced. Three was
+ * therefore too small to do the job this constant exists for. Multiplied by the server kind's
+ * retry budget it armed 9 failures against a load that makes up to 15 attempts, so the last
+ * attempts landed on a healthy network, the list populated, and the full-screen error state was
+ * simply unreachable from the dev tools. Verified on device: with 9 armed, the tab renders 909
+ * exercises and never shows an error — the app recovering correctly from a partial outage, and
+ * the injector failing to inject a whole one.
+ *
+ * Multiplied by the kind's retry attempts at the call site, so "arm a 500" means *every* request
+ * this screen makes, for *every* attempt it will make — which is what a user reading an error
+ * state needs, and what a QA script needs to be able to assert one.
  */
-const FAULT_BURST_REQUESTS = 3;
+const FAULT_BURST_REQUESTS = 5;
 
 const styles = StyleSheet.create({
   content: { flexGrow: 1 },

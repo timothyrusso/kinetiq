@@ -380,6 +380,14 @@ function FetchNotice({
       <Row gap="md" align="center" justify="between">
         <View style={{ flex: 1, minWidth: 0 }}>
           <Badge label="Outdated results" tone="warning" />
+          {/* The badge alone is not an explanation. Sighted or not, "OUTDATED RESULTS" next to a
+              list does not say that the newest search failed and these rows answer the PREVIOUS
+              one — and this is the branch where knowing that matters most. The sibling
+              "Updating" branch below says so in a sentence; this one used to leave the amber to
+              carry it, which also meant the state was communicated by colour alone. */}
+          <Txt variant="micro" tone="faint">
+            That search failed. Showing the results from before it.
+          </Txt>
         </View>
         <Button label="Retry" size="sm" variant="secondary" onPress={onRetry} />
       </Row>

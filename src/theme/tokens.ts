@@ -48,22 +48,30 @@ export const palette = {
 export type ActivityTone = 'volt' | 'spark' | 'azure' | 'coral' | 'plum';
 
 /**
- * Three faces, each with a job: Space Grotesk carries display numerals and
- * headings (its tabular-ish figures are why the metric grid reads as an
- * instrument panel), Manrope is the reading face, and JetBrains Mono is for
- * values that must not reflow as digits change — the timer, live pace.
+ * One family, the full weight ramp. Inter carries everything from 11pt captions
+ * to the 58pt hero numeral; hierarchy comes from weight, size and tracking
+ * rather than from switching typeface, which is what three families were doing
+ * before and why headings and body never quite looked related.
+ *
+ * `display` is 800 rather than 700 because at 34pt and above a bold that reads
+ * strong at 15pt goes soft — the ramp has to keep climbing as the size does.
+ *
+ * JetBrains Mono survives for exactly one reason: digits that must not reflow
+ * as they change (the timer, live pace). Inter's proportional figures make a
+ * running clock jitter on every tick.
  */
 export const fontFamily = {
-  display: 'SpaceGrotesk_700Bold',
-  displayMedium: 'SpaceGrotesk_600SemiBold',
-  displaySemiBold: 'SpaceGrotesk_600SemiBold',
-  heading: 'Manrope_700Bold',
-  semibold: 'Manrope_600SemiBold',
-  medium: 'Manrope_500Medium',
-  regular: 'Manrope_400Regular',
+  display: 'Inter_800ExtraBold',
+  displayMedium: 'Inter_700Bold',
+  displaySemiBold: 'Inter_600SemiBold',
+  heading: 'Inter_700Bold',
+  semibold: 'Inter_600SemiBold',
+  medium: 'Inter_500Medium',
+  regular: 'Inter_400Regular',
   mono: 'JetBrainsMono_500Medium',
   monoSemiBold: 'JetBrainsMono_600SemiBold',
 } as const;
+
 
 export const spacing = {
   xxs: 2,

@@ -500,8 +500,15 @@ function fail(msg) {
 /**
  * Press a real button by its label, scrolling to it first.
  *
- * Also accepts a selector string (`text^="…"`) for the cases where a label is ambiguous —
- * a routine row and its own title node share text, and `label="X"` throws AMBIGUOUS_MATCH.
+ * Also accepts `text^="…"` to mean "press the node whose label STARTS WITH this", for the cases
+ * where an exact label is ambiguous — a routine row and its own title node share text, and
+ * `label="X"` throws AMBIGUOUS_MATCH.
+ *
+ * `text^=` is this harness's own shorthand, NOT an agent-device selector. It looks like one,
+ * which is the trap: agent-device supports id, role, text, label, value, appname, windowtitle
+ * and the state flags, and anything else is INVALID_ARGS. Passing `text^=` straight through
+ * therefore always failed — silently, wherever a caller ignored the result — so it is resolved
+ * here, against a snapshot, and pressed by ref.
  */
 function pressLabel(label) {
   const want = label.startsWith('text') || label.startsWith('role')
