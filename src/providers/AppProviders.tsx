@@ -50,6 +50,7 @@ import {
   useSystemDark,
   type BootstrapOutcome,
 } from './bootstrap';
+import { SplashCover } from '@/ui/SplashCover';
 
 /**
  * Held outside React on purpose: this has to be readable from non-component code
@@ -102,6 +103,9 @@ type Phase = 'starting' | 'slow' | 'ready' | 'failed';
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const systemDark = useSystemDark();
   const [phase, setPhase] = useState<Phase>(settled ? 'ready' : 'starting');
+  // Held up for one beat past `ready` so the cover has a frame to paint before the native
+  // splash is hidden underneath it. Unmounting it is what triggers the fade.
+  const [covering, setCovering] = useState(true);
   const [failure, setFailure] = useState<unknown>(null);
   const settledRef = useRef(settled !== null);
 
@@ -131,12 +135,31 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(deadline);
   }, [attempt]);
 
+  useEffect(() => {
+    if (phase !== 'ready') return;
+    // Two frames, not zero: the cover has to be on screen before the native splash goes, or the
+    // gap between them is the flash this exists to prevent.
+    const id = setTimeout(() => setCovering(false), 120);
+    return () => clearTimeout(id);
+  }, [phase]);
+
   // The AppState subscription lives here rather than in the root layout so it attaches
   // exactly once, above the navigator, and cannot be torn down by a stack change, // the workout clock depends on seeing every background transition.
   useEffect(() => installAppLifecycle(), []);
 
   if (phase === 'ready') {
-    return <QueryClientProvider client={getQueryClient()}>{children}</QueryClientProvider>;
+    return (
+      <QueryClientProvider client={getQueryClient()}>
+        {children}
+        {/* Covers the handover and fades. The native splash follows the OS appearance and this
+            app has its own theme setting, so a dark-mode app on a light-mode phone showed the
+            cream splash and then cut straight to a near-black UI. Captured frame by frame, app
+            content appeared OVER the light splash background mid-handover. The cover mounts in
+            whatever colour the OS splash was actually showing, so the first frame after the
+            native splash hides matches the last frame before it, then it fades out. */}
+        {covering ? <SplashCover onFadeStart={splash.hide} /> : null}
+      </QueryClientProvider>
+    );
   }
 
   // Note the query provider is intentionally *below* this gate on the success path but
