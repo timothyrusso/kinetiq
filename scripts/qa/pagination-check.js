@@ -38,10 +38,19 @@ open('exercises', 'Exercise');
 // the wrong thing. A viewport read, NOT scan(): scan() scrolls the list to its bottom to read
 // labels, which would page it here and then leave step 3 standing at the end of the list with
 // nothing left to page — the vacuous-pass guard firing on a defect in this file.
-if (has('exercises for “')) {
+// Match on ` for “`, not `exercises for “`: the hero pluralises, so a term with a single hit
+// renders "1 exercise for “chest192”" and the plural pattern misses it entirely. That is
+// exactly the state a previous gate leaves behind — qa:network commits a deliberately
+// obscure term — and with one row on screen there is nothing to scroll and nothing to page,
+// so this check's own vacuous-pass guard fires and blames the app.
+//
+// The clear control is labelled `Clear <field label>` ("Clear Search exercises"), so it needs
+// a prefix match; `pressLabel('Clear')` compares exactly and never found it.
+if (has(' for “')) {
   console.log('   a search is committed — clearing so the list is long enough to page');
-  pressLabel('Clear');
+  if (!pressLabel('text^="Clear "')) fail('a search is committed and its clear button was not pressable');
   sleep(4);
+  if (has(' for “')) fail('pressed the clear control but the search is still committed');
 }
 scrollTop();
 sleep(2);
@@ -82,6 +91,12 @@ console.log('2. scrolling the list, watching for a row that appears twice at onc
 function rowLabels() {
   return nodes()
     .filter((n) => n.type === 'Button' && visible(n) && n.rect.height >= 50 && n.rect.height <= 140)
+    // SORTED BY POSITION. A recycling list reuses its cells, so tree order is the order the
+    // cells were created in, not the order they appear on screen — "the first row in the tree"
+    // is a stable slot whose content changes underneath it. Comparing that across pans said
+    // the list had stopped moving on the first pan, and the check reported "the list never
+    // paged" for a list that was scrolling perfectly well.
+    .sort((a, b) => a.rect.y - b.rect.y)
     .map((n) => (n.label ?? '').replace(/\s+/g, ' ').trim())
     .filter((t) => t.length > 1);
 }
@@ -96,8 +111,10 @@ for (let i = 0; i < 40; i += 1) {
     if (seen.has(t) && !dupes.includes(t)) dupes.push(t);
     seen.add(t);
   }
-  // Stop when the top row stops moving: the list is at its end, so another pan is noise.
-  const top = titles[0] ?? null;
+  // Stop when the whole visible window stops changing, not when one row repeats: at the end
+  // of the list a pan moves nothing, and that is the only reliable signal. A single row is
+  // too weak a fingerprint — two adjacent windows can share their topmost item.
+  const top = titles.join('|') || null;
   if (top === lastTop) break;
   lastTop = top;
   stops += 1;
