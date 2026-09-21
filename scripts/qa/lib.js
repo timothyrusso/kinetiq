@@ -142,14 +142,36 @@ function signature() {
   return labels().join('|');
 }
 
+/**
+ * One scroll step — deliberately a SHORT swipe.
+ *
+ * A swipe is a fling, and the content keeps moving after the finger lifts. Measured on the dev
+ * screen, travel per gesture:
+ *
+ *     280pt swipe -> more than a full viewport (the sampled row never appeared at all)
+ *     120pt swipe -> 386pt    80pt swipe -> 269pt    40pt swipe -> 21pt (below the fling threshold)
+ *
+ * The old 280pt step therefore moved the content FURTHER THAN THE 874pt VIEWPORT in one go, so
+ * anything that lived in the skipped band was never mounted at either sample point and read as
+ * absent. That is how the fault matrix concluded the dev screen had no "Not found 404" row: the
+ * row is there, and the scroll jumped straight over it.
+ *
+ * 80pt keeps travel (~269pt) comfortably under one viewport, so every row passes through a
+ * sampled frame on its way past. It costs ~3x more gestures to cover the same distance, which is
+ * the correct trade: a slow scroll finds the row, a fast one reports it missing.
+ *
+ * `agent-device scroll` would be the obvious alternative and does not work here — it reports
+ * "Scrolled down by 240px" and the ScrollView does not move.
+ */
+const PAN_STEP = 80;
 // Finger travels UP the screen to move content up, i.e. to reveal what is below.
 function panDown() {
-  sh('npx agent-device swipe 201 620 201 340 --pause-ms 150 2>/dev/null', { allowFail: true });
+  sh(`npx agent-device swipe 201 600 201 ${600 - PAN_STEP} --pause-ms 150 2>/dev/null`, { allowFail: true });
   sleep(1);
 }
 // And the reverse, to get back to what we panned past.
 function panUp() {
-  sh('npx agent-device swipe 201 340 201 620 --pause-ms 150 2>/dev/null', { allowFail: true });
+  sh(`npx agent-device swipe 201 ${600 - PAN_STEP} 201 600 --pause-ms 150 2>/dev/null`, { allowFail: true });
   sleep(1);
 }
 
