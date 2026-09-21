@@ -514,6 +514,30 @@ function dbCol(sql) {
   return dbQuery(sql).map((r) => r[0]);
 }
 
+/**
+ * Type into a field and put the keyboard away.
+ *
+ * The dismissal is not politeness, it is correctness. While the keyboard is up it covers the
+ * lower half of the screen, which breaks two things at once:
+ *
+ *   - `visible()` reads the viewport, so the keys ARE the visible nodes. A check that read the
+ *     screen after typing saw `Next keyboard / Padding-Left / q` and concluded the app had
+ *     rendered nothing.
+ *   - every pan in this file swipes at y=600..520, which is INSIDE the keyboard once it is up.
+ *     So `scrollTop`/`seek` stop scrolling the list and start stroking the keys — one run left a
+ *     stray "q" on screen, typed by its own scroll gesture.
+ *
+ * `keyboard return` is what works here: it presses the return key, the field submits, and the
+ * keyboard closes. `keyboard dismiss` is the obvious call and reports UNSUPPORTED_OPERATION on
+ * iOS, because the iOS keyboard exposes no dismiss key.
+ */
+function fillField(ref, text) {
+  sh(`npx agent-device fill @${ref} ${JSON.stringify(text)} 2>&1`, { allowFail: true });
+  sleep(1);
+  sh('npx agent-device keyboard return 2>&1', { allowFail: true });
+  sleep(1);
+}
+
 function fail(msg) {
   console.error(`   !! ${msg}`);
   process.exit(1);
@@ -761,5 +785,6 @@ module.exports = {
   CWD, METRO, TABS, VIEWPORT_HEIGHT, sh, sleep, nodes, labels, visible, onScreen, has, hasAnywhere,
   isNotFound, scan, seek, scrollTop, panDown, panUp, signature, open, fail, pressLabel, pressText,
   pressRow, tab, ledger, onExit, faultArmed, clearFaultQuietly, restartApp, dbQuery, dbCol,
+  fillField,
   metroAlive,
 };

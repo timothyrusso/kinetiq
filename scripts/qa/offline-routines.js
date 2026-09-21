@@ -22,7 +22,7 @@
 //     left armed silently poisons every later run, which reads as a broken app.
 
 const {
-  CWD, sh, sleep, scan, has, open, fail, pressLabel, pressRow, ledger, nodes, visible, scrollTop, hasAnywhere, labels, seek, onExit, clearFaultQuietly, faultArmed,
+  fillField, CWD, sh, sleep, scan, has, open, fail, pressLabel, pressRow, ledger, nodes, visible, scrollTop, hasAnywhere, labels, seek, onExit, clearFaultQuietly, faultArmed,
 } = require('./lib');
 
 process.chdir(CWD);
@@ -107,7 +107,7 @@ for (let attempt = 1; attempt <= 3 && !cut; attempt++) {
   scrollTop();
   const field = nodes().find((n) => n.type === 'TextField' && visible(n));
   if (!field) fail('no visible search field to type into');
-  sh(`npx agent-device fill @${field.ref} ${probe} 2>&1`, { allowFail: true });
+  fillField(field.ref, probe);
   sleep(7);
   const typed = (nodes().find((n) => n.type === 'TextField' && visible(n)) ?? {}).value;
   if (typed !== probe) {

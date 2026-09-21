@@ -33,7 +33,7 @@
  * than sleeping a guessed number of seconds.
  */
 const {
-  tab, fail, onExit, pressLabel, seek, nodes, visible, sh,
+  fillField, tab, fail, onExit, pressLabel, seek, nodes, visible, sh,
   sleep, restartApp, dbQuery, dbCol,
 } = require('./lib');
 
@@ -102,7 +102,7 @@ sleep(2);
 if (!seek((n) => (n.label ?? '') === 'Routine name')) fail('the routine builder never opened');
 const nameField = nodes().find((n) => n.type === 'TextField' && visible(n));
 if (!nameField?.ref) fail('the routine builder has no visible field to name the routine');
-sh(`npx agent-device fill @${nameField.ref} '${NAME}' 2>&1`, { allowFail: true });
+fillField(nameField.ref, NAME);
 sleep(1);
 
 if (!pressLabel('Add')) fail('could not open the exercise picker');
@@ -110,7 +110,7 @@ sleep(3);
 if (!seek((n) => (n.label ?? '') === 'Add exercises')) fail('the exercise picker did not open');
 const pick = nodes().find((n) => n.type === 'TextField' && visible(n));
 if (!pick?.ref) fail('the picker has no search field');
-sh(`npx agent-device fill @${pick.ref} ${TERM} 2>&1`, { allowFail: true });
+fillField(pick.ref, TERM);
 sleep(12);
 // A row already in the routine renders disabled with a check, and pressing it does nothing —
 // which would read as the picker ignoring the tap. Take the first row that is actually pressable,
@@ -173,7 +173,7 @@ if (!pressLabel('Rename')) fail('could not choose Rename');
 const RENAMED = `${NAME} II`;
 const renameField = nodes().find((n) => n.type === 'TextField' && visible(n));
 if (!renameField?.ref) fail('the rename sheet has no field');
-sh(`npx agent-device fill @${renameField.ref} '${RENAMED}' 2>&1`, { allowFail: true });
+fillField(renameField.ref, RENAMED);
 sleep(1);
 if (!pressLabel('Save name')) fail('could not commit the rename');
 sleep(2);

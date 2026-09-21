@@ -49,7 +49,7 @@
 //     bottom pages it, and those page fetches land in the ledger charged to the fault.
 
 const {
-  CWD, sh, sleep, open, fail, ledger, nodes, visible, seek, scrollTop,
+  fillField, CWD, sh, sleep, open, fail, ledger, nodes, visible, seek, scrollTop,
   has, labels, pressLabel, pressRow, onExit, clearFaultQuietly, restartApp,
 } = require('./lib');
 
@@ -193,7 +193,7 @@ function coldStart(terms, { proveIdle = false } = {}) {
     sleep(1);
   }
   const field = searchField();
-  sh(`npx agent-device fill @${field.ref} ${terms[0]} 2>&1`, { allowFail: true });
+  fillField(field.ref, terms[0]);
   sleep(10);
   if (!has(`exercises for “${terms[0]}”`)) {
     fail(`the cold-start search for "${terms[0]}" never rendered results — the network is not ` +
@@ -266,7 +266,7 @@ function below(text) {
 /** Type a term and report which of the three possible outcomes the screen chose. */
 function searchAndRead(term) {
   const field = searchField();
-  sh(`npx agent-device fill @${field.ref} ${term} 2>&1`, { allowFail: true });
+  fillField(field.ref, term);
   // Past the debounce AND past two retry round-trips at the smallest backoff, so what is on
   // screen is the settled verdict rather than a mid-retry frame. The `below()` reads after this
   // take further seconds, so a slower policy still lands inside the window.
@@ -447,13 +447,24 @@ console.log('\nrecovery with the network healthy');
 open('exercises', 'SEARCH EXERCISES');
 sleep(2);
 const f = searchField();
-sh(`npx agent-device fill @${f.ref} leg press 2>&1`, { allowFail: true });
+fillField(f.ref, 'leg press');
 sleep(10);
 if (below('Exercise search unavailable')) {
   fail('the list never came back after the last fault was cleared — the error state is sticky');
 }
-if (!has('exercises for “leg press”')) {
-  fail('after recovery the search did not render results on a healthy network');
+// Scroll to the hero before reading it. Typing moves the list, so immediately after a search
+// the count line is mounted but ABOVE the viewport, and `has` only reports what is visible —
+// it failed a run for a search that had worked perfectly (the hero read `76 exercises for
+// “leg press”` the moment the list was scrolled back to the top).
+//
+// Matched without the leading "exercises", because the copy is pluralised: a term returning a
+// single row renders "1 exercise for …" and would fail a check keyed to the plural.
+scrollTop({ max: 4 });
+if (!has('for “leg press”')) {
+  fail(
+    'after recovery the search did not render results on a healthy network — visible: ' +
+      `${labels().slice(0, 8).join(' / ')}`,
+  );
 }
 console.log('   search renders results again after recovery');
 
