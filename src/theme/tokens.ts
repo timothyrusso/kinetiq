@@ -73,6 +73,13 @@ export const fontFamily = {
 } as const;
 
 
+/**
+ * The spacing scale.
+ *
+ * `xxl` and up carry the vertical rhythm BETWEEN sections, and they are generous on purpose:
+ * fewer, larger, further-apart elements is what makes a metrics dashboard legible on a phone,
+ * and the alternative is a screen that is dense with information and unreadable at a glance.
+ */
 export const spacing = {
   xxs: 2,
   xs: 4,
@@ -80,9 +87,9 @@ export const spacing = {
   md: 12,
   lg: 16,
   xl: 20,
-  xxl: 24,
-  xxxl: 32,
-  huge: 44,
+  xxl: 26,
+  xxxl: 36,
+  huge: 48,
 } as const;
 
 /**

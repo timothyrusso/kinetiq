@@ -42,10 +42,17 @@ const VARIANTS = {
   caption: { family: fontFamily.medium, size: 12.5, line: 1.3, track: 0.1 },
   micro: { family: fontFamily.semibold, size: 11, line: 1.28, track: 0.2 },
 
-  /** Big readouts: distance, volume, time. Tight leading, tighter tracking. */
-  numeral: { family: fontFamily.display, size: 30, line: 1.02, track: -0.8 },
-  numeralLg: { family: fontFamily.display, size: 40, line: 1.0, track: -1.1 },
-  numeralSm: { family: fontFamily.displayMedium, size: 20, line: 1.1, track: -0.3 },
+  /**
+   * Big readouts: distance, volume, time.
+   *
+   * Deliberately larger than the reading scale by a wide margin. A training app is looked at
+   * between sets, at arm's length, and the number is the whole point of the screen; the label
+   * beside it is there to say what the number means and can afford to be small. This is the
+   * single biggest lever on whether a dashboard reads as an instrument or as a form.
+   */
+  numeral: { family: fontFamily.display, size: 34, line: 1.0, track: -1 },
+  numeralLg: { family: fontFamily.display, size: 46, line: 0.98, track: -1.4 },
+  numeralSm: { family: fontFamily.displayMedium, size: 21, line: 1.1, track: -0.35 },
   /** Values that tick: the timer, live pace. Fixed-width digits, no reflow. */
   mono: { family: fontFamily.monoSemiBold, size: 16, line: 1.2, track: 0 },
   monoLg: { family: fontFamily.monoSemiBold, size: 26, line: 1.06, track: 0 },
