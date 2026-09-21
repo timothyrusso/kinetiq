@@ -309,7 +309,17 @@ export function CollapsibleHero({
 }) {
   const insets = useSafeAreaInsets();
   return (
-    <View style={{ paddingTop: insets.top + spacing.xxl, paddingHorizontal: screenGutter }}>
+    // Below the BAR, not below the status bar. The bar occupies `insets.top .. insets.top +
+    // BAR_HEIGHT` and holds the trailing action, so a hero starting at `insets.top + xxl` puts
+    // its eyebrow inside that band and straight into the button: measured, the bar ends at 111
+    // and the eyebrow began at 85. It got worse when the spacing scale opened up, because the
+    // padding was derived from a spacing step rather than from the thing it had to clear.
+    <View
+      style={{
+        paddingTop: insets.top + BAR_HEIGHT + spacing.md,
+        paddingHorizontal: screenGutter,
+      }}
+    >
       <Animated.View style={header.heroTitleStyle}>
         {eyebrow ? (
           <Txt variant="micro" tone="faint" uppercase tracking={1.1}>
