@@ -134,6 +134,13 @@ function scan({ maxStops = 10 } = {}) {
     last = sig;
     panDown();
   }
+  // Put the list back at the top before returning. `scan` answers "does this text exist
+  // anywhere", and leaving the view at the BOTTOM is a side effect its callers do not expect:
+  // the next `pressLabel` then finds its target at y=42, which `visible()` accepts and a tap
+  // does not reach, because the translucent header is sitting over it. The press silently hits
+  // the header, nothing navigates, and the check reports the screen it never left. Restoring
+  // the position makes a scan a read rather than a move.
+  scrollTop();
   return { text: [...seen].join('  '), stops: stops + 1 };
 }
 
@@ -209,6 +216,18 @@ function panUp() {
 
 /** Walk back to the top, so a scan starts from a known place. */
 function scrollTop({ max = 12 } = {}) {
+  // Ask the tool first. `agent-device scroll top` reaches the top of a long list in one call
+  // ("Scrolled to top with 3 up passes") where the pan loop cannot: a list left 40 pans deep
+  // by an earlier check needs more than `max` swipes to climb back, and the loop gives up
+  // silently and returns false. That is how the offline gate came to report "no visible search
+  // field to type into" on a screen whose field was simply above the viewport.
+  //
+  // It is not trusted on its own, because it is view-dependent: on the dev screen the same
+  // command reports success and moves nothing. So the pan loop still runs afterwards as the
+  // guarantee — it exits after one comparison when the list really is at the top, so the cost
+  // when the native call worked is a single snapshot.
+  sh('npx agent-device scroll top --settle 2>&1', { allowFail: true });
+  sleep(1);
   let last = null;
   for (let i = 0; i < max; i += 1) {
     const sig = signature();

@@ -67,8 +67,24 @@ sleep(2);
 const before = routineRows(scan().text);
 if (before.length === 0) fail('no saved routines on the Workout tab — re-seed from kinetiq://dev first');
 console.log(`   ${before.length} listed: ${before.map((r) => r.split('.')[0]).join(' | ')}`);
-const target = before[0];
+// Prefer a routine with NO session attached to it. The seed leaves one paused, and the app
+// correctly refuses to start a second run of a routine already in progress — "'Push — Heavy'
+// is already in progress. Finish or discard it before starting another." Picking that one made
+// step 5 read a correct refusal as "the session never started". The Resume card names the
+// routine in progress, so the list of rows minus that name is the set that can be started.
+const inProgress = scan()
+  .text.match(/([^|]+?) in progress\./)?.[1]
+  ?.trim()
+  .split('  ')
+  .pop()
+  ?.trim();
+const startable = before.filter((r) => !inProgress || !r.startsWith(inProgress));
+if (startable.length === 0) {
+  fail(`every saved routine is mid-session (${inProgress ?? '?'}), so none can be started offline`);
+}
+const target = startable[0];
 const name = target.split('.')[0].trim();
+if (inProgress) console.log(`   "${inProgress}" is mid-session; starting "${name}" instead`);
 
 // ── 2. Mount the exercise screen FIRST, then arm ───────────────────────────
 // The offline fault has exactly one shot: offline is a permanent failure, so the client does
@@ -149,7 +165,12 @@ const lost = before.filter((r) => !during.includes(r));
 if (lost.length) fail(`routine(s) vanished with no network: ${lost.map((r) => r.split('.')[0]).join(', ')}`);
 console.log(`   all ${before.length} still listed`);
 
-if (!pressLabel(`text^="${name}"`)) fail(`could not open "${name}" offline`);
+// The row, not anything that merely starts with the name. A paused session puts a Resume card
+// above the list labelled "<name> in progress. 5 of 18 sets done. Resume.", and a prefix match
+// on the bare name hits THAT first — which resumed the workout and left this check reading the
+// session screen, then reporting that the routine detail "does not show its exercise rows".
+// The list row's label is "<name>. <subtitle>", so the period is what distinguishes them.
+if (!pressLabel(`text^="${name}. "`)) fail(`could not open "${name}" offline`);
 sleep(3);
 // The sets the user configured can be below the fold on a five-exercise routine, so this
 // reads the whole screen — a viewport-only read would report a healthy routine as broken.
@@ -176,6 +197,24 @@ console.log(`   "${name}" opens offline: ${listed}, volume and ${named.length} e
 
 // ── 5. Start a session from it, offline ────────────────────────────────────
 console.log('5. start the workout offline');
+// Clear any session first. The app allows exactly ONE workout at a time and says so — "'Push —
+// Heavy' is already in progress. Finish or discard it before starting another." — and that
+// refusal applies to every routine, not just the one mid-session (verified on device). The seed
+// leaves a paused session, so without this the step can never start anything, and a correct
+// refusal reads as "the session never started".
+if (inProgress) {
+  console.log(`   discarding the seeded "${inProgress}" session so a new one can start`);
+  open('workout/session', undefined, { soft: true });
+  sleep(3);
+  if (pressLabel('Discard')) {
+    sleep(2);
+    if (!pressLabel('Discard workout')) fail('the discard confirmation never offered its confirm button');
+    sleep(4);
+  }
+  if (scan().text.includes('in progress.')) {
+    fail(`could not clear the "${inProgress}" session, so no workout can be started offline`);
+  }
+}
 if (!pressLabel('Start this workout')) fail('"Start this workout" offline was not pressable');
 sleep(5);
 const session = scan().text;
