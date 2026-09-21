@@ -34,7 +34,7 @@
  */
 import { useCallback } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useScreenContentBottom } from '@/ui/insets';
 
 import { DetailScreen } from '@/ui/Screen';
 import { Card, Divider, Row, SectionHeader, Stack } from '@/ui/layout';
@@ -48,7 +48,6 @@ import { formatDurationCompact } from '@/utils/format';
 /** The two readings of the same run. A string union because `Segment<T extends string>`. */
 type ReadingMode = 'pace' | 'speed';
 
-const BOTTOM_SPACE = 48;
 /** The same bounds the store clamps to — see the module header. */
 const REST_MIN = 15;
 const REST_MAX = 600;
@@ -56,7 +55,7 @@ const GOAL_MIN = 1;
 const GOAL_MAX = 14;
 
 export default function SettingsTrainingScreen() {
-  const insets = useSafeAreaInsets();
+  const bottomSpace = useScreenContentBottom();
   const update = useSettingsUpdate();
 
   const rest = useSettings((s) => s.defaultRestSeconds);
@@ -76,7 +75,7 @@ export default function SettingsTrainingScreen() {
         <ScrollView
           contentContainerStyle={[
             styles.content,
-            { paddingTop: topInset + spacing.md, paddingBottom: BOTTOM_SPACE + insets.bottom },
+            { paddingTop: topInset + spacing.md, paddingBottom: bottomSpace },
           ]}
           keyboardShouldPersistTaps="handled"
         >

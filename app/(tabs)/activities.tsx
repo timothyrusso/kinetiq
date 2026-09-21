@@ -36,6 +36,8 @@ import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useTabContentBottom } from '@/ui/insets';
+
 import { CollapsibleHeader, CollapsibleHero, useScreenHeaderScroll } from '@/ui/Screen';
 import { ActivityRow } from '@/ui/rows';
 import { Row } from '@/ui/layout';
@@ -79,12 +81,12 @@ const SORTS: readonly { value: ActivitySort; label: string }[] = [
 ];
 
 /** Clearance for the floating tab bar. */
-const BOTTOM_SPACE = 108;
 
 export default function ActivitiesScreen() {
   const router = useRouter();
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
+  const bottomSpace = useTabContentBottom();
   const header = useScreenHeaderScroll();
   const online = useIsOnline();
 
@@ -252,7 +254,7 @@ export default function ActivitiesScreen() {
         extraData={units}
         onScroll={header.onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={{ paddingBottom: BOTTOM_SPACE }}
+        contentContainerStyle={{ paddingBottom: bottomSpace }}
         progressViewOffset={insets.top + 52}
         refreshControl={
           <ThemedRefreshControl

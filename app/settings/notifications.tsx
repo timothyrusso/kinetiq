@@ -37,7 +37,7 @@
  */
 import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useScreenContentBottom } from '@/ui/insets';
 
 import { DetailScreen } from '@/ui/Screen';
 import { Card, Divider, Row, SectionHeader, Stack } from '@/ui/layout';
@@ -61,7 +61,6 @@ import {
   formatClock,
 } from '@/utils/format';
 
-const BOTTOM_SPACE = 48;
 /** A quarter-hour grid: nobody wants 18:07, and finer steps make the stepper pointless. */
 const REMINDER_STEP_MINUTES = 15;
 /** 23:45 is the latest slot; midnight itself belongs to the next day. */
@@ -79,7 +78,7 @@ const DAYS: readonly { iso: number; label: string }[] = [
 ];
 
 export default function SettingsNotificationsScreen() {
-  const insets = useSafeAreaInsets();
+  const bottomSpace = useScreenContentBottom();
   const theme = useAppTheme();
   const update = useSettingsUpdate();
   const { notifications, requestNotifications } = usePermissions();
@@ -163,7 +162,7 @@ export default function SettingsNotificationsScreen() {
         <ScrollView
           contentContainerStyle={[
             styles.content,
-            { paddingTop: topInset + spacing.md, paddingBottom: BOTTOM_SPACE + insets.bottom },
+            { paddingTop: topInset + spacing.md, paddingBottom: bottomSpace },
           ]}
           keyboardShouldPersistTaps="handled"
         >

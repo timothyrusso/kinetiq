@@ -17,7 +17,7 @@
  * window minus safe area divided by five, but computing that in JS breaks under a
  * larger accessibility font and in landscape; measuring is correct in all of those.
  */
-import { memo, useCallback, useEffect, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -28,6 +28,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Icon, type IconName } from './icons';
 import { OverlaySurface } from './layout';
+import { TAB_BAR_HEIGHT as BAR_HEIGHT } from './insets';
 import { CellText } from './rows';
 import { usePulse } from './animation';
 import { radius, spacing, z } from '@/theme/tokens';
@@ -42,7 +43,6 @@ export type TabItem = {
   dot?: boolean;
 };
 
-const BAR_HEIGHT = 60;
 const ITEM_MIN_HEIGHT = 48;
 /** Horizontal padding of the item row; indicator x is measured inside it. */
 const BAR_PADDING = spacing.md;
@@ -53,6 +53,7 @@ export const TabBar = memo(function TabBar({
   onSelect,
   bottomInset,
   hidden = false,
+  accessory,
   style,
 }: {
   items: TabItem[];
@@ -69,6 +70,16 @@ export const TabBar = memo(function TabBar({
    * there changes tab instead of pressing the button the user can see.
    */
   hidden?: boolean;
+  /**
+   * Rendered INSIDE the bar's material, directly above the tab row — the live-workout pill.
+   *
+   * It used to float as an absolutely positioned sibling above the bar, and that is what a
+   * floating overlay does: it covered whatever content happened to be under it. At rest on
+   * Home that was the "Sessions over 8 weeks" heading, which read as a rendering fault rather
+   * than as chrome. Inside the bar it is chrome — it shares the glass, it grows the bar, and
+   * `useTabContentBottom` already reserves exactly this much room so content can clear it.
+   */
+  accessory?: ReactNode;
   style?: StyleProp<ViewStyle>;
 }) {
   const theme = useAppTheme();
@@ -149,41 +160,48 @@ export const TabBar = memo(function TabBar({
       accessibilityRole="tablist"
     >
       <OverlaySurface theme={theme} />
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          height: BAR_HEIGHT + safeBottom,
-          paddingTop: 0,
-          paddingBottom: safeBottom,
-          paddingHorizontal: BAR_PADDING,
-        }}
-      >
-        {items.map((item) => (
-          <TabButton
-            key={item.routeKey}
-            item={item}
-            selected={item.routeKey === activeKey}
-            onSelect={onSelect}
-            onMeasure={measure}
-            theme={theme}
-          />
-        ))}
+      {accessory}
+      {/* The row and its indicator share a relatively positioned parent, so the indicator's
+          `top` is measured from the ROW rather than from the bar. Without this the accessory
+          above would push the row down and leave the indicator behind, floating over the
+          pill. */}
+      <View style={{ position: 'relative' }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            height: BAR_HEIGHT + safeBottom,
+            paddingTop: 0,
+            paddingBottom: safeBottom,
+            paddingHorizontal: BAR_PADDING,
+          }}
+        >
+          {items.map((item) => (
+            <TabButton
+              key={item.routeKey}
+              item={item}
+              selected={item.routeKey === activeKey}
+              onSelect={onSelect}
+              onMeasure={measure}
+              theme={theme}
+            />
+          ))}
+        </View>
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            {
+              position: 'absolute',
+              left: BAR_PADDING,
+              top: (BAR_HEIGHT - 40) / 2,
+              height: 40,
+              borderRadius: radius.lg,
+              backgroundColor: theme.colors.accentSoft,
+            },
+            indicatorStyle,
+          ]}
+        />
       </View>
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          {
-            position: 'absolute',
-            left: BAR_PADDING,
-            top: (BAR_HEIGHT - 40) / 2,
-            height: 40,
-            borderRadius: radius.lg,
-            backgroundColor: theme.colors.accentSoft,
-          },
-          indicatorStyle,
-        ]}
-      />
     </View>
   );
 });

@@ -50,7 +50,7 @@
 import { Fragment, useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useScreenContentBottom } from '@/ui/insets';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { DetailScreen } from '@/ui/Screen';
@@ -78,7 +78,6 @@ import { readSettingsSnapshot } from '@/providers/bootstrap';
 import { flushSettings, hydrateSettings } from '@/settings';
 import { countNoun, pluralWord } from '@/utils/format';
 
-const BOTTOM_SPACE = 48;
 
 /**
  * The kinds worth reaching for, in the order someone asks for them: "it broke", "there's no
@@ -126,7 +125,7 @@ const FAULTS: { kind: FaultKind; label: string; blurb: string; icon: IconName }[
 type Notice = { text: string; tone: 'ok' | 'bad' };
 
 export default function DevScreen() {
-  const insets = useSafeAreaInsets();
+  const bottomSpace = useScreenContentBottom();
   const queryClient = useQueryClient();
 
   const [status, setStatus] = useState(() => faultSummary());
@@ -247,7 +246,7 @@ export default function DevScreen() {
         <ScrollView
           contentContainerStyle={[
             styles.content,
-            { paddingTop: topInset + spacing.md, paddingBottom: BOTTOM_SPACE + insets.bottom },
+            { paddingTop: topInset + spacing.md, paddingBottom: bottomSpace },
           ]}
           keyboardShouldPersistTaps="handled"
         >

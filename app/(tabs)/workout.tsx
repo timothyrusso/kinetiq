@@ -46,7 +46,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTabContentBottom } from '@/ui/insets';
 
 import { Button } from '@/ui/Button';
 import { Card, Row, SectionHeader } from '@/ui/layout';
@@ -81,7 +81,6 @@ const ORDER_SEGMENTS: readonly { value: Order; label: string }[] = [
 /** Six is two rows of three on a compact phone and reads as a sample, not a list. */
 const LIBRARY_PREVIEW = 6;
 /** Clearance for the floating tab bar, which this tab is inside. */
-const BOTTOM_SPACE = 96;
 const CARD_PADDING = spacing.lg;
 /** Grid columns, fixed rather than measured: three across is legible at every width. */
 const GRID_COLUMNS = 3;
@@ -89,7 +88,7 @@ const GRID_COLUMNS = 3;
 export default function WorkoutScreen() {
   const router = useRouter();
   const theme = useAppTheme();
-  const insets = useSafeAreaInsets();
+  const bottomSpace = useTabContentBottom();
   const header = useScreenHeaderScroll();
 
   const routines = useRoutines();
@@ -155,7 +154,7 @@ export default function WorkoutScreen() {
       <ScrollView
         onScroll={header.onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={[styles.content, { paddingBottom: BOTTOM_SPACE + insets.bottom }]}
+        contentContainerStyle={[styles.content, { paddingBottom: bottomSpace }]}
         keyboardShouldPersistTaps="handled"
       >
         <CollapsibleHero header={header} eyebrow="Train" title="Workout">

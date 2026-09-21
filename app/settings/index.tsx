@@ -45,7 +45,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useScreenContentBottom } from '@/ui/insets';
 
 import { DetailScreen } from '@/ui/Screen';
 import { NavRow } from '@/ui/rows';
@@ -64,7 +64,6 @@ import {
   parseNumber,
 } from '@/utils/format';
 
-const BOTTOM_SPACE = 48;
 const HEIGHT_MIN = 100;
 const HEIGHT_MAX = 230;
 /** A birth year this far back is a typo, not a memory. Matches the store's own clamp. */
@@ -73,7 +72,7 @@ const BIRTH_YEAR_MIN = 1930;
 export default function SettingsScreen() {
   const router = useRouter();
   const theme = useAppTheme();
-  const insets = useSafeAreaInsets();
+  const bottomSpace = useScreenContentBottom();
 
   const settings = useAllSettings();
   const update = useSettingsUpdate();
@@ -84,7 +83,7 @@ export default function SettingsScreen() {
         <ScrollView
           contentContainerStyle={[
             styles.content,
-            { paddingTop: topInset + spacing.md, paddingBottom: BOTTOM_SPACE + insets.bottom },
+            { paddingTop: topInset + spacing.md, paddingBottom: bottomSpace },
           ]}
           keyboardShouldPersistTaps="handled"
         >

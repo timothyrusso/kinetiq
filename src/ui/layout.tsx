@@ -23,6 +23,7 @@ import {
   type GestureResponderEvent,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { radius, spacing } from '@/theme/tokens';
 import { useAppTheme, type Theme } from '@/theme/theme';
 import { Txt } from './Text';
@@ -286,6 +287,24 @@ export const OverlaySurface = memo(function OverlaySurface({
       }}
     />
   );
+  // Liquid Glass, where the OS has it (iOS 26+). This is the real system material — it
+  // refracts and specularly highlights the content scrolling under it, which a blur cannot
+  // do — so it gets NO opaque base: an opaque layer underneath would be the one thing that
+  // defeats it. No hairline either; the material carries its own edge, and Apple's own glass
+  // bars do not draw one.
+  //
+  // `colorScheme` is passed explicitly rather than left on `auto` because this app has its
+  // own light/dark/system setting: on `auto` the glass follows the OS while the app follows
+  // the user, and the bar ends up light under a dark app.
+  if (liquidGlass()) {
+    return (
+      <GlassView
+        glassEffectStyle="regular"
+        colorScheme={theme.mode === 'dark' ? 'dark' : 'light'}
+        style={StyleSheet.absoluteFill}
+      />
+    );
+  }
   const base = (
     // An opaque base first, so the bar is never transparent to the content behind it
     // even if the material fails to initialise.
@@ -305,6 +324,25 @@ export const OverlaySurface = memo(function OverlaySurface({
     </>
   );
 });
+
+/**
+ * Is Liquid Glass available on this device?
+ *
+ * Resolved once, lazily — not at module scope. This module is imported by the tab bar, which
+ * is on the first frame, and asking a native module a question before it has registered
+ * answers wrong rather than throwing. Cached because the answer cannot change at runtime.
+ */
+let liquidGlassCache: boolean | null = null;
+function liquidGlass(): boolean {
+  if (liquidGlassCache === null) {
+    try {
+      liquidGlassCache = isLiquidGlassAvailable();
+    } catch {
+      liquidGlassCache = false;
+    }
+  }
+  return liquidGlassCache;
+}
 
 export const SectionHeader = memo(function SectionHeader({
   title,

@@ -33,6 +33,8 @@ import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useTabContentBottom } from '@/ui/insets';
+
 import { BarAction, CollapsibleHeader, CollapsibleHero, useScreenHeaderScroll } from '@/ui/Screen';
 import { ActivityRow } from '@/ui/rows';
 import { Badge, Card, Divider, Row, SectionHeader, Stack } from '@/ui/layout';
@@ -65,7 +67,6 @@ const RECENT_VISIBLE = 7;
 const RECENT_FETCHED = 60;
 
 /** Clearance for the floating tab bar plus the live-session pill above it. */
-const BOTTOM_SPACE = 132;
 
 /** `Card`'s default `padding='lg'`, subtracted from any chart that must fit inside one. */
 const CARD_PADDING = spacing.lg;
@@ -74,6 +75,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
+  const bottomSpace = useTabContentBottom();
   const header = useScreenHeaderScroll();
   const [chartWidth, onChartLayout] = useMeasuredWidth();
 
@@ -219,7 +221,7 @@ export default function HomeScreen() {
         extraData={units}
         onScroll={header.onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={{ paddingBottom: BOTTOM_SPACE }}
+        contentContainerStyle={{ paddingBottom: bottomSpace }}
         progressViewOffset={insets.top + 52}
         refreshControl={
           <ThemedRefreshControl refreshing={recentQuery.isFetching} onRefresh={refresh} />

@@ -468,6 +468,24 @@ export function useWorkoutSession(): SessionSnapshot {
   return useSyncExternalStore(subscribe, getSessionSnapshot, getSessionSnapshot);
 }
 
+/**
+ * Is a workout in progress (active or paused)?
+ *
+ * A BOOLEAN on purpose. `useWorkoutSession()` republishes once a second while a workout
+ * runs, so a screen that only needs to know "is the floating pill on screen, and must I
+ * reserve room for it" would re-render every tick to answer a question whose answer changed
+ * once. `useSyncExternalStore` compares with `Object.is`, so returning the boolean means the
+ * subscriber wakes on the transition and never on the ticks between.
+ */
+export function useWorkoutRunning(): boolean {
+  return useSyncExternalStore(subscribe, isRunningNow, isRunningNow);
+}
+
+function isRunningNow(): boolean {
+  const s = getSessionSnapshot().session;
+  return s !== null && (s.status === 'active' || s.status === 'paused');
+}
+
 /** Derived, memo-free helpers so screens do not each reimplement progress maths. */
 export function useSessionProgress(): { completed: number; planned: number; ratio: number } {
   const snap = useWorkoutSession();

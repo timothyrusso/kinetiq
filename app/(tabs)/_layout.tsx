@@ -38,7 +38,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { routes, tabHref, tabKeyForPathname, type TabKey } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
-import { spacing, z } from '@/theme/tokens';
+import { spacing } from '@/theme/tokens';
 import { ActiveWorkoutPill, TabBar, type TabItem } from '@/ui/TabBar';
 import { useAnySheetMounted } from '@/ui/sheetPresence';
 import { formatDuration } from '@/utils/format';
@@ -120,57 +120,45 @@ function TabBarWithPill({
   // nothing above it — the navigator, and through it every mounted screen, stays put.
   const sheetUp = useAnySheetMounted();
 
+  // Rendered INSIDE the bar's material rather than floating above it. As a floating sibling
+  // it covered whatever content sat beneath it — at rest on Home, the "Sessions over 8 weeks"
+  // heading — which reads as a rendering fault rather than as chrome. In the bar it shares the
+  // glass, and `useTabContentBottom` reserves exactly its height so content can still clear it.
+  const pill =
+    running && session && !sheetUp ? (
+      <View style={pillStyles.wrap} pointerEvents="box-none">
+        <ActiveWorkoutPill
+          label={session.routineName}
+          detail={
+            session.status === 'paused' ? 'Paused' : formatDuration(session.elapsedSeconds, ':')
+          }
+          onPress={() => {
+            router.push(routes.workoutSession());
+          }}
+          theme={theme}
+        />
+      </View>
+    ) : null;
+
   return (
-    <>
-      {running && session && !sheetUp ? (
-        // Absolutely positioned above the bar rather than stacked under it: `TabBar` is
-        // itself `position: 'absolute', bottom: 0, zIndex: z.sheet`, so a sibling in normal
-        // flow would sit *behind* it at the bottom of the screen. The offset hard-codes the
-        // bar's own height because the bar does not export it and measuring it here would
-        // need a second layout pass for one number.
-        <View
-          style={[
-            pillStyles.wrap,
-            { bottom: bottomInset + BAR_HEIGHT + spacing.sm, backgroundColor: 'transparent' },
-          ]}
-          pointerEvents="box-none"
-        >
-          <ActiveWorkoutPill
-            label={session.routineName}
-            detail={
-              session.status === 'paused'
-                ? 'Paused'
-                : formatDuration(session.elapsedSeconds, ':')
-            }
-            onPress={() => {
-              router.push(routes.workoutSession());
-            }}
-            theme={theme}
-          />
-        </View>
-      ) : null}
-      <TabBar
-        items={[...TABS]}
-        activeKey={activeKey}
-        onSelect={onSelect}
-        bottomInset={bottomInset}
-        hidden={sheetUp}
-      />
-    </>
+    <TabBar
+      items={[...TABS]}
+      activeKey={activeKey}
+      onSelect={onSelect}
+      bottomInset={bottomInset}
+      hidden={sheetUp}
+      accessory={pill}
+    />
   );
 }
 
-/** Mirrors `BAR_HEIGHT` inside `TabBar.tsx`. If that changes, this changes with it. */
-const BAR_HEIGHT = 60;
-
 const pillStyles = StyleSheet.create({
+  // In normal flow now, inside the bar's material: it sits above the tab row and grows the
+  // bar rather than hovering over the screen.
   wrap: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
     alignItems: 'center',
-    // Above the bar's own `z.sheet` so the pill is never clipped by it during the
-    // indicator spring.
-    zIndex: z.sheet + 1,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xs,
+    paddingHorizontal: spacing.lg,
   },
 });

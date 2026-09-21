@@ -35,7 +35,7 @@
  */
 import { useCallback } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useScreenContentBottom } from '@/ui/insets';
 import { useRouter } from 'expo-router';
 
 import { DetailScreen } from '@/ui/Screen';
@@ -54,11 +54,10 @@ import { useAppTheme } from '@/theme/theme';
 import { spacing } from '@/theme/tokens';
 import { haptics } from '@/services/haptics';
 
-const BOTTOM_SPACE = 48;
 
 export default function PermissionsScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const bottomSpace = useScreenContentBottom();
   const theme = useAppTheme();
 
   const { location, notifications, requesting, requestLocation, requestNotifications } =
@@ -88,7 +87,7 @@ export default function PermissionsScreen() {
         <ScrollView
           contentContainerStyle={[
             styles.content,
-            { paddingTop: topInset + spacing.md, paddingBottom: BOTTOM_SPACE + insets.bottom },
+            { paddingTop: topInset + spacing.md, paddingBottom: bottomSpace },
           ]}
         >
           <Stack gap="xxl" style={styles.body}>

@@ -35,6 +35,8 @@ import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useTabContentBottom } from '@/ui/insets';
+
 import { BarAction, CollapsibleHeader, CollapsibleHero, useScreenHeaderScroll } from '@/ui/Screen';
 import { ExerciseRow } from '@/ui/rows';
 import { Badge, Row } from '@/ui/layout';
@@ -61,12 +63,12 @@ import { useAppTheme } from '@/theme/theme';
 import { spacing } from '@/theme/tokens';
 import { joinMiddleDot, pluralWord } from '@/utils/format';
 
-const BOTTOM_SPACE = 96;
 
 export default function ExercisesScreen() {
   const router = useRouter();
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
+  const bottomSpace = useTabContentBottom();
   const header = useScreenHeaderScroll();
 
   const { draft, filter } = useExerciseFilter();
@@ -205,7 +207,7 @@ export default function ExercisesScreen() {
         keyExtractor={keyExtractor}
         onScroll={header.onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={{ paddingBottom: BOTTOM_SPACE + insets.bottom }}
+        contentContainerStyle={{ paddingBottom: bottomSpace }}
         progressViewOffset={insets.top + 52}
         refreshControl={
           <ThemedRefreshControl

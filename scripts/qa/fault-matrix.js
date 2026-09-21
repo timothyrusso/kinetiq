@@ -127,6 +127,44 @@ function resetLedger(name) {
 }
 
 /**
+ * Leave the app with no fault armed, and say so truthfully.
+ *
+ * Pressing "Stop injecting" unconditionally is wrong, because a fault CLEARS ITSELF when its
+ * last request is spent (`devFaults.ts`: `if (fault.remaining <= 0) fault = null`). The button
+ * only renders while one is armed, so a case that consumed its whole burst — which the cold
+ * first-load case is designed to do — arrives here with nothing to press and no button to find.
+ * Demanding it turned a correctly finished case into "the fault could not be cleared".
+ *
+ * So: press it if it is there, accept an already-clear status line if it is not, and fail only
+ * when the screen says neither — which is the one case that really is a problem, because it
+ * means a fault of unknown size is about to poison every measurement after it.
+ */
+function ensureFaultCleared(context) {
+  open('dev', 'Developer');
+  if (pressLabel('Stop injecting')) {
+    sleep(1);
+    return 'cleared';
+  }
+  // No button. Either nothing is armed (fine, and expected after a fully spent burst) or we
+  // are not reading the screen we think we are (not fine).
+  const armedLine = nodes().find((n) => /Failing the next/.test(n.label ?? ''));
+  if (armedLine) {
+    fail(
+      `${context}: a fault is still armed ("${armedLine.label.trim()}") but no "Stop injecting" ` +
+        'button was reachable to clear it — it would poison every later check.',
+    );
+  }
+  if (!seek((n) => /Nothing armed/i.test(n.label ?? ''), { max: 6 })) {
+    fail(
+      `${context}: could not confirm the fault state either way — no "Stop injecting" button ` +
+        'and no "Nothing armed" line. The dev screen did not render, so the next case would ' +
+        'start from an unknown network.',
+    );
+  }
+  return 'already-clear';
+}
+
+/**
  * Bring the app up from nothing and prove the cache came up empty with it.
  *
  * The proof is the ledger: a warm cache serves the first search from memory and sends nothing,
@@ -313,8 +351,7 @@ if (!below('Exercise search unavailable')) {
 }
 if (!pressLabel('Try again')) fail('the cold-load error state offered no pressable "Try again"');
 console.log('   full-screen error state, with its own retry');
-open('dev', 'Developer');
-if (!pressLabel('Stop injecting')) fail('the fault could not be cleared');
+console.log(`   fault ${ensureFaultCleared('after the cold-load case')}`);
 sleep(2);
 open('exercises', 'SEARCH EXERCISES', { soft: true });
 if (!pressLabel('Try again')) fail('after recovery the error state lost its retry control');
@@ -378,9 +415,7 @@ for (const c of CASES) {
                 'request can legitimately succeed — the fault is finite)');
   }
 
-  open('dev', 'Developer');
-  if (!pressLabel('Stop injecting')) fail('the fault could not be cleared — it would poison every later check');
-  sleep(1);
+  ensureFaultCleared(`case "${c.row}"`);
 }
 
 // ── Last one cleared for good, and the list must come back on its own terms ───────────────

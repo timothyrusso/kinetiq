@@ -25,7 +25,7 @@
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTabContentBottom } from '@/ui/insets';
 
 import { Icon } from '@/ui/icons';
 import { BarAction, CollapsibleHeader, CollapsibleHero, useScreenHeaderScroll } from '@/ui/Screen';
@@ -49,7 +49,6 @@ import {
 import type { UnitSystem } from '@/utils/format';
 import type { ThemeMode } from '@/settings';
 
-const BOTTOM_SPACE = 96;
 
 const THEME_OPTIONS: readonly Segment<ThemeMode>[] = [
   { value: 'system', label: 'System' },
@@ -65,7 +64,7 @@ const UNIT_OPTIONS: readonly Segment<UnitSystem>[] = [
 export default function ProfileScreen() {
   const router = useRouter();
   const theme = useAppTheme();
-  const insets = useSafeAreaInsets();
+  const bottomSpace = useTabContentBottom();
   const header = useScreenHeaderScroll();
 
   const name = useSettings((s) => s.profile.name);
@@ -106,7 +105,7 @@ export default function ProfileScreen() {
       <ScrollView
         onScroll={header.onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={[styles.content, { paddingBottom: BOTTOM_SPACE + insets.bottom }]}
+        contentContainerStyle={[styles.content, { paddingBottom: bottomSpace }]}
         keyboardShouldPersistTaps="handled"
       >
         <CollapsibleHero header={header} eyebrow="Profile" title={name || 'Athlete'}>

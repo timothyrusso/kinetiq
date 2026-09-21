@@ -40,7 +40,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useScreenContentBottom } from '@/ui/insets';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { DetailScreen } from '@/ui/Screen';
@@ -65,10 +65,9 @@ import {
   countNoun,
 } from '@/utils/format';
 
-const BOTTOM_SPACE = 48;
 
 export default function SettingsAboutScreen() {
-  const insets = useSafeAreaInsets();
+  const bottomSpace = useScreenContentBottom();
   const queryClient = useQueryClient();
 
   const provider = getExerciseProvider();
@@ -118,7 +117,7 @@ export default function SettingsAboutScreen() {
         <ScrollView
           contentContainerStyle={[
             styles.content,
-            { paddingTop: topInset + spacing.md, paddingBottom: BOTTOM_SPACE + insets.bottom },
+            { paddingTop: topInset + spacing.md, paddingBottom: bottomSpace },
           ]}
           keyboardShouldPersistTaps="handled"
         >
