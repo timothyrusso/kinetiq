@@ -1,3 +1,4 @@
+import type { Language } from '@/i18n';
 import type { UnitSystem } from '@/utils/format';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
@@ -25,6 +26,8 @@ export const DEFAULT_REMINDER: ReminderSettings = {
 export type SettingsState = {
   unitSystem: UnitSystem;
   themeMode: ThemeMode;
+  /** 'system' follows the device's preferred languages; the others force one. */
+  language: Language;
   hapticsEnabled: boolean;
   notificationsEnabled: boolean;
   /** Used by both rest timers and scheduled reminders. */
@@ -40,6 +43,8 @@ export type SettingsState = {
 export const DEFAULT_SETTINGS: SettingsState = {
   unitSystem: 'metric',
   themeMode: 'system',
+  // `system` so a device set to Italian is in Italian on first launch, without being asked.
+  language: 'system',
   hapticsEnabled: true,
   notificationsEnabled: true,
   notificationsGranted: false,
@@ -109,6 +114,9 @@ export function normaliseSettings(
     unitSystem: s.unitSystem === 'imperial' ? 'imperial' : 'metric',
     themeMode:
       s.themeMode === 'light' || s.themeMode === 'dark' ? s.themeMode : 'system',
+    // Validated the same way as the others: a persisted value from an older build, or a hand
+    // edited database, must not put an unknown language code into the catalog lookup.
+    language: s.language === 'en' || s.language === 'it' ? s.language : 'system',
     hapticsEnabled: s.hapticsEnabled ?? DEFAULT_SETTINGS.hapticsEnabled,
     notificationsEnabled: s.notificationsEnabled ?? DEFAULT_SETTINGS.notificationsEnabled,
     notificationsGranted: s.notificationsGranted ?? DEFAULT_SETTINGS.notificationsGranted,

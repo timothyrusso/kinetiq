@@ -32,6 +32,8 @@ import { BarAction, CollapsibleHeader, CollapsibleHero, useScreenHeaderScroll } 
 import { Avatar, NavRow } from '@/ui/rows';
 import { Badge, Card, MetricGrid, Row, SectionHeader } from '@/ui/layout';
 import { SegmentedControl, type Segment } from '@/ui/controls';
+import { useT } from '@/i18n/useT';
+import type { Language } from '@/i18n';
 import { IconButton } from '@/ui/Button';
 import { ProgressRing } from '@/ui/charts/ProgressRing';
 import { Txt } from '@/ui/Text';
@@ -56,6 +58,17 @@ const THEME_OPTIONS: readonly Segment<ThemeMode>[] = [
   { value: 'dark', label: 'Dark' },
 ];
 
+/**
+ * `system` first, because it is the default and the one most people should leave alone. The
+ * names are each written IN their own language: someone who has the app in a language they
+ * cannot read still has to find their own.
+ */
+const LANGUAGE_OPTIONS: readonly Segment<Language>[] = [
+  { value: 'system', label: 'System' },
+  { value: 'en', label: 'English' },
+  { value: 'it', label: 'Italiano' },
+] as const;
+
 const UNIT_OPTIONS: readonly Segment<UnitSystem>[] = [
   { value: 'metric', label: 'Metric' },
   { value: 'imperial', label: 'Imperial' },
@@ -72,6 +85,8 @@ export default function ProfileScreen() {
   const birthYear = useSettings((s) => s.profile.birthYear);
   const unitSystem = useSettings((s) => s.unitSystem);
   const themeMode = useSettings((s) => s.themeMode);
+  const language = useSettings((s) => s.language);
+  const { t } = useT();
   const weeklyGoal = useSettings((s) => s.weeklyGoalWorkouts);
   const hapticsEnabled = useSettings((s) => s.hapticsEnabled);
   const update = useSettingsUpdate();
@@ -175,24 +190,31 @@ export default function ProfileScreen() {
           </Card>
 
           {/* ---- Controls that change what this tab and the rest show --------- */}
-          <SectionHeader title="Preferences" />
+          <SectionHeader title={t('profile.preferences')} />
           <Card padding="md">
             <Stack gap="lg">
-              <Preference label="Units" hint="Affects every distance, weight and pace in the app.">
+              <Preference label={t('profile.units')} hint="Affects every distance, weight and pace in the app.">
                 <SegmentedControl
                   segments={UNIT_OPTIONS}
                   value={unitSystem}
                   onChange={(next) => update({ unitSystem: next })}
                 />
               </Preference>
-              <Preference label="Appearance" hint="Dark mode is a designed palette, not inverted colours.">
+              <Preference label={t('profile.appearance')} hint="Dark mode is a designed palette, not inverted colours.">
                 <SegmentedControl
                   segments={THEME_OPTIONS}
                   value={themeMode}
                   onChange={(next) => update({ themeMode: next })}
                 />
               </Preference>
-              <Preference label="Weekly goal" hint={`${weeklyGoal} ${pluralWord(weeklyGoal, 'session', 'sessions')} a week.`}>
+              <Preference label={t('profile.language')} hint={t('settings.languageHint')}>
+                <SegmentedControl
+                  segments={LANGUAGE_OPTIONS}
+                  value={language}
+                  onChange={(next) => update({ language: next })}
+                />
+              </Preference>
+              <Preference label={t('profile.weeklyGoal')} hint={`${weeklyGoal} ${pluralWord(weeklyGoal, 'session', 'sessions')} a week.`}>
                 <GoalStepper value={weeklyGoal} onChange={(next) => update({ weeklyGoalWorkouts: next })} />
               </Preference>
             </Stack>

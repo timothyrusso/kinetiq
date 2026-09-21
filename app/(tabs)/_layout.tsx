@@ -35,12 +35,14 @@ import { Icon, Label, router } from 'expo-router';
 
 import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
+import { useT } from '@/i18n/useT';
 import { ActiveWorkoutPill } from '@/ui/TabBar';
 import { formatDuration } from '@/utils/format';
 import { useWorkoutSession } from '@/workout/session';
 
 export default function TabsLayout() {
   const theme = useAppTheme();
+  const { t } = useT();
 
   return (
     <NativeTabs
@@ -53,28 +55,28 @@ export default function TabsLayout() {
     >
       <NativeTabs.Trigger name="index" disableAutomaticContentInsets>
         <Icon sf={{ default: 'house', selected: 'house.fill' }} md="home" />
-        <Label>Home</Label>
+        <Label>{t('tabs.home')}</Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="activities" disableAutomaticContentInsets>
         {/* An ECG trace rather than a runner: this tab lists rides, walks and lifts too. */}
         <Icon sf="waveform.path.ecg" md="monitor_heart" />
-        <Label>Activities</Label>
+        <Label>{t('tabs.activities')}</Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="workout" disableAutomaticContentInsets>
         <Icon sf="figure.strengthtraining.traditional" md="fitness_center" />
-        <Label>Workout</Label>
+        <Label>{t('tabs.workout')}</Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="exercises" disableAutomaticContentInsets>
         <Icon sf={{ default: 'square.grid.2x2', selected: 'square.grid.2x2.fill' }} md="grid_view" />
-        <Label>Exercises</Label>
+        <Label>{t('tabs.exercises')}</Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="profile" disableAutomaticContentInsets>
         <Icon sf={{ default: 'person', selected: 'person.fill' }} md="person" />
-        <Label>Profile</Label>
+        <Label>{t('tabs.profile')}</Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.BottomAccessory>
