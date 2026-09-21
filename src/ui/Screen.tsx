@@ -52,7 +52,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
 import { useAppTheme, type Theme } from '@/theme/theme';
-import { radius, spacing, z } from '@/theme/tokens';
+import { radius, spacing, z, touchTarget } from '@/theme/tokens';
 import { Icon, type IconName } from '@/ui/icons';
 import { Txt } from '@/ui/Text';
 import { Row } from '@/ui/layout';
@@ -261,7 +261,20 @@ export function CollapsibleHeader({
 
   return (
     <View style={[styles.barWrap, { zIndex: z.sticky }]} pointerEvents="box-none">
-      <Animated.View style={[styles.bar, { height: insets.top + BAR_HEIGHT }, header.barStyle]}>
+      {/* `paddingTop: insets.top` with a BAR_HEIGHT row, exactly as `DetailScreen` does it.
+          Before this, the bar was a single `insets.top + BAR_HEIGHT` box and its row centred
+          inside the whole thing, which puts the trailing action at `BAR_HEIGHT / 2 +
+          insets.top / 2` instead of `insets.top + BAR_HEIGHT / 2`. On a 59pt inset that is
+          55.5 rather than 85: thirty points too high, tucked under the notch, and about thirty
+          points above the back button on every pushed screen. Two header components, two
+          different vertical-centring rules, and only one of them correct. */}
+      <Animated.View
+        style={[
+          styles.bar,
+          { paddingTop: insets.top, height: insets.top + BAR_HEIGHT },
+          header.barStyle,
+        ]}
+      >
         <View style={styles.barSpacer} />
         <Animated.View style={[styles.barInner, header.inlineTitleStyle]}>
           <Txt variant="subhead" weight="700" numberOfLines={1}>
@@ -366,7 +379,8 @@ export function BarAction({
         { backgroundColor: theme.colors.surfacePressed, opacity: pressed ? 0.75 : 1 },
       ]}
     >
-      <Icon name={icon} size={20} color={theme.colors.text} />
+      {/* 22 to match `IconButton`, the other component that fills this slot. */}
+      <Icon name={icon} size={22} color={theme.colors.text} />
       {badge ? <View style={[styles.dot, { backgroundColor: theme.colors.accent }]} /> : null}
     </Pressable>
   );
@@ -386,12 +400,17 @@ const styles = StyleSheet.create({
   barSpacer: { width: 0 },
   barInner: { flex: 1, alignItems: 'flex-start' },
   barRight: { marginLeft: 'auto' },
+  // `touchTarget`, not 38. Two reasons, and the second is the one that shows: 38 is below the
+  // 44pt minimum a control is meant to offer, and `IconButton` (which two header screens use
+  // in this same slot) is already 44 with a 22pt glyph. So the trailing action was two
+  // different sizes depending on which screen you were on, which is visible the moment you
+  // navigate between them.
   roundButton: {
-    width: 38,
-    height: 38,
+    width: touchTarget,
+    height: touchTarget,
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dot: { position: 'absolute', top: 8, right: 9, width: 7, height: 7, borderRadius: 4 },
+  dot: { position: 'absolute', top: 10, right: 11, width: 7, height: 7, borderRadius: 4 },
 });
