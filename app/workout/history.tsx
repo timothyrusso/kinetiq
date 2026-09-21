@@ -218,11 +218,21 @@ export default function WorkoutHistoryScreen() {
     ? 'Loading…'
     : visible.length === 0
       ? 'Nothing in this range'
-      : [
+      : // Three segments at most. This renders into a fixed-height bar that also carries the
+        // Search button, and `numberOfLines={1}` truncates whatever does not fit — with four
+        // segments that landed mid-number ("24 sessions · 17h 21m · 127.6…"), which reads as
+        // a broken value rather than as an abbreviated summary. Count and duration always
+        // apply; the third is whichever of distance or volume this range actually has, and
+        // when it has both, distance wins because every strength row already shows its own
+        // volume and Progress carries the full breakdown.
+        [
           `${visible.length} ${visible.length === 1 ? 'session' : 'sessions'}`,
           formatDurationCompact(totals.duration),
-          ...(totals.distance > 0 ? [formatDistance(totals.distance, units, 1)] : []),
-          ...(totals.volume > 0 ? [`${compactNumber(totals.volume)} kg`] : []),
+          ...(totals.distance > 0
+            ? [formatDistance(totals.distance, units, 1)]
+            : totals.volume > 0
+              ? [`${compactNumber(totals.volume)} kg`]
+              : []),
         ].join(' · ');
 
   return (

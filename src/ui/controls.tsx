@@ -19,12 +19,15 @@ import {
   useState,
 } from 'react';
 import {
+  Platform,
   Pressable,
   Switch as RNSwitch,
   View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import { Host, Picker, Text as UIText } from '@expo/ui/swift-ui';
+import { pickerStyle, tag } from '@expo/ui/swift-ui/modifiers';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -40,17 +43,81 @@ import { Txt } from './Text';
 
 export type Segment<T extends string> = { value: T; label: string; icon?: IconName };
 
-export function SegmentedControl<T extends string>({
-  segments,
-  value,
-  onChange,
-  style,
-}: {
+type SegmentedProps<T extends string> = {
   segments: readonly Segment<T>[];
   value: T;
   onChange: (next: T) => void;
   style?: StyleProp<ViewStyle>;
-}) {
+};
+
+/**
+ * Segmented control — the real UIKit one on iOS, the drawn one everywhere else.
+ *
+ * On iOS this is a SwiftUI `Picker` in `segmented` style, so it inherits what the system
+ * control does and a redrawn copy never quite will: the platform's own selection animation,
+ * its press states, Dynamic Type, and on iOS 26 the Liquid Glass treatment the rest of the
+ * chrome now uses.
+ *
+ * It falls back to the drawn control in two cases, both real rather than defensive. Android
+ * has no equivalent primitive in this library (`SingleChoiceSegmentedButtonRow` is Material's
+ * and behaves differently enough to be its own design), and a segment carrying an ICON cannot
+ * be expressed as a tagged `Text`, which several call sites use. Rather than degrade those
+ * silently to text-only, they keep the control that can draw them.
+ */
+export function SegmentedControl<T extends string>(props: SegmentedProps<T>) {
+  const hasIcon = props.segments.some((s) => s.icon !== undefined);
+  if (Platform.OS === 'ios' && !hasIcon) return <SegmentedControlNative {...props} />;
+  return <SegmentedControlDrawn {...props} />;
+}
+
+/** SwiftUI `Picker`, segmented. Text-only by construction — see `SegmentedControl`. */
+function SegmentedControlNative<T extends string>({
+  segments,
+  value,
+  onChange,
+  style,
+}: SegmentedProps<T>) {
+  const theme = useAppTheme();
+  return (
+    // `vertical` only: the host hugs the control's HEIGHT — which is not a fixed 32pt once
+    // Dynamic Type is in play, so it cannot be hard-coded — while still filling the width it
+    // is given. Plain `matchContents` hugs both, which left the control sized to its labels
+    // and floating at the left edge of a full-width card.
+    //
+    // `colorScheme` is pinned to the app's theme for the same reason the glass is: this app
+    // has its own light/dark setting and must not follow the OS independently of it.
+    // `seedColor` tints the selection with the app's accent, so the system control belongs
+    // to this app rather than looking like a stock control dropped into it.
+    <Host
+      matchContents={{ vertical: true }}
+      colorScheme={theme.mode}
+      seedColor={theme.colors.accent}
+      style={[{ width: '100%' }, style]}
+    >
+      <Picker
+        selection={value}
+        onSelectionChange={(next) => {
+          haptics.selection();
+          onChange(next as T);
+        }}
+        modifiers={[pickerStyle('segmented')]}
+      >
+        {segments.map((s) => (
+          <UIText key={s.value} modifiers={[tag(s.value)]}>
+            {s.label}
+          </UIText>
+        ))}
+      </Picker>
+    </Host>
+  );
+}
+
+function SegmentedControlDrawn<T extends string>({
+  segments,
+  value,
+  onChange,
+  style,
+}: SegmentedProps<T>) {
   const theme = useAppTheme();
   const [trackWidth, setTrackWidth] = useState(0);
   const [rowHeight, setRowHeight] = useState(0);
