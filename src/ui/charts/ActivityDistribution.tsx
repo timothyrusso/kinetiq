@@ -210,7 +210,6 @@ export const ActivityDistribution = memo(function ActivityDistribution({
                 name={slice.kind === 'other' ? 'layers' : ACTIVITY_ICON[slice.kind]}
                 size={14}
                 color={colorFor(slice.kind, theme)}
-                strokeWidth={2.2}
               />
               <Text
                 numberOfLines={1}

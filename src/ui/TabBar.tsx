@@ -241,7 +241,6 @@ const TabButton = memo(function TabButton({
           size={23}
           // Weight, not just colour, carries the selected state: at a glance across a
           // room, a thicker stroke reads as "here" before the colour registers.
-          strokeWidth={selected ? 2.2 : 1.7}
           color={selected ? theme.colors.accent : theme.colors.textFaint}
         />
         {item.dot ? (

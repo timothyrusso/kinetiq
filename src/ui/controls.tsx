@@ -541,7 +541,7 @@ export const FilterOption = memo(function FilterOption({
         }}
       >
         {selected ? (
-          <Icon name="check" size={14} color={theme.colors.onAccent} strokeWidth={3} />
+          <Icon name="check" size={14} color={theme.colors.onAccent} />
         ) : null}
       </View>
       <View style={{ flex: 1, gap: 1 }}>

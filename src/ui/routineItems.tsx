@@ -179,7 +179,7 @@ function RowButton({
         { opacity: pressed && !disabled ? 0.45 : disabled ? 0.4 : 1 },
       ]}
     >
-      <Icon name={icon} size={19} color={color} strokeWidth={2.1} />
+      <Icon name={icon} size={19} color={color} />
     </Pressable>
   );
 }

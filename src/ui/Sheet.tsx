@@ -468,7 +468,7 @@ export function OptionSheet<T extends string | number>({
                 ) : null}
               </View>
               {selected ? (
-                <Icon name="check" size={19} color={theme.colors.accent} strokeWidth={2.5} />
+                <Icon name="check" size={19} color={theme.colors.accent} />
               ) : null}
             </Pressable>
           );

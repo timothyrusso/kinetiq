@@ -350,7 +350,7 @@ function BarBackButton({
         },
       ]}
     >
-      <Icon name="arrowLeft" size={21} color={theme.colors.text} strokeWidth={2.1} />
+      <Icon name="arrowLeft" size={21} color={theme.colors.text} />
     </Pressable>
   );
 }
