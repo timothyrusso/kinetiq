@@ -1,5 +1,5 @@
 /**
- * Cardio recording — run, ride, walk, with a route.
+ * Cardio recording: run, ride, walk, with a route.
  *
  * ## The state lives in `src/services/location`, not here
  *
@@ -15,7 +15,7 @@
  *
  * `recorder.start()` never refuses: with permission off it records a timed entry and estimates
  * distance from elapsed time. The screen says so in the service's own words (`degradationMessage`)
- * rather than inventing a second description of the same fault — two phrasings of one failure is
+ * rather than inventing a second description of the same fault: two phrasings of one failure is
  * how a user ends up with two contradictory ideas about it. Refusing to start would be the worse
  * product: someone who has denied location permanently is still allowed to time a run.
  *
@@ -30,13 +30,13 @@
  * ## The finish rules belong to the service
  *
  * Under 20 seconds *and* under 50 metres, `finish()` discards and returns `null`. This screen does
- * not restate that threshold — it asks for the activity and, if none came back, says what happened.
+ * not restate that threshold: it asks for the activity and, if none came back, says what happened.
  * Copying the number here would eventually mean the two disagree about whether a session exists.
  *
  * ## Why the live panel has no back button
  *
  * The start panel is an ordinary pushed screen. Once a recording is live the chrome changes to a
- * self-contained panel whose only exits are Stop, Discard, and the system gestures — no header, no
+ * self-contained panel whose only exits are Stop, Discard, and the system gestures: no header, no
  * back chevron, and the swipe-back gesture is off for this route (see `app/workout/_layout.tsx`,
  * same reasoning as the workout session). A large timer under a thumb is the one place where a
  * stray edge swipe must not look like it cancelled six kilometres. What the gestures actually do is
@@ -88,7 +88,7 @@ const BOTTOM_SPACE = 48;
 
 /**
  * The recorder is an external store. Its `getSnapshot` is throttled to a new object every
- * 250 ms, and `useSyncExternalStore` re-renders on reference change — so that throttle *is* the
+ * 250 ms, and `useSyncExternalStore` re-renders on reference change: so that throttle *is* the
  * frame-rate cap, which is what keeps the map from refitting its region 60 times a second.
  *
  * The interval in the live panel exists because the same throttle means nothing is published while
@@ -134,7 +134,7 @@ export default function CardioScreen() {
   // See `useCardio`: one second is the smallest thing the clock displays.
   //
   // The callback has to **render**, not merely fire. `recorder` is an external store, and
-  // `useSyncExternalStore` re-reads it only when the store notifies — which happens on a location
+  // `useSyncExternalStore` re-reads it only when the store notifies: which happens on a location
   // fix or a state change, never on the wall clock. An interval with an empty body keeps a timer
   // alive that nothing is listening to, and the displayed elapsed time sits at `00:00` for the whole
   // run while the underlying arithmetic is perfectly correct: a freeze like that is invisible to the
@@ -189,9 +189,9 @@ export default function CardioScreen() {
       setSavedAs(result.activityId);
       haptics.success();
     } catch {
-      // The draft survives a failed save — that is deliberate, in the service — so the right next
+      // The draft survives a failed save: that is deliberate, in the service: so the right next
       // move is to try again, not to start over.
-      setFinishError('Your phone could not save this activity. It is still here — try again.');
+      setFinishError('Your phone could not save this activity. It is still here: try again.');
       haptics.warning();
     } finally {
       setFinishing(false);
@@ -436,7 +436,7 @@ export default function CardioScreen() {
             {/* Said rather than assumed: there is no back button here, so the panel has to say that
                 stepping away is allowed and costs nothing. */}
             <Txt variant="caption" tone="muted" align="center">
-              Lock your phone or switch apps — the recording continues, and it is waiting here when
+              Lock your phone or switch apps: the recording continues, and it is waiting here when
               you come back.
             </Txt>
 
@@ -581,7 +581,7 @@ function StartPanel({
                     <Icon name="mapPin" size={18} color={theme.colors.textMuted} />
                     <Txt variant="caption" tone="muted" style={{ flex: 1 }}>
                       Location is used while recording, and only for this. If it is off, the session
-                      still runs and distance is estimated from your time — in{' '}
+                      still runs and distance is estimated from your time: in{' '}
                       {units === 'metric' ? 'kilometres' : 'miles'}, either way.
                     </Txt>
                   </Row>
@@ -649,7 +649,7 @@ function Metric({ label, value, note }: { label: string; value: string; note?: s
 
 /**
  * The recording indicator. Pulses while live and holds steady while paused, because a steady dot
- * beside a frozen clock is how a user tells "paused" from "crashed" — and the two must never look
+ * beside a frozen clock is how a user tells "paused" from "crashed": and the two must never look
  * the same from across the room, which is roughly where a phone is when it is in a pocket.
  *
  * Local state and a local interval, so the blink never re-renders the metrics next to it.

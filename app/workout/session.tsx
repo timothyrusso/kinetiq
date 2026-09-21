@@ -5,7 +5,7 @@
  *
  * Every mutation here is a synchronous call into `@/workout/session`, which writes to
  * SQLite before it publishes. Nothing on this screen has pending state, a spinner, or an
- * undo — the write has already landed by the time the press handler returns. What the
+ * undo: the write has already landed by the time the press handler returns. What the
  * screen *does* own is the asking: which of the two ways out of here destroy data go
  * through a confirmation, and which do not.
  *
@@ -16,15 +16,15 @@
  * engine ticks once a second and this subscribes. Backgrounding the app, force-quitting it,
  * or a phone call in the middle of a set all resolve to the same number when the app comes
  * back, because none of them involve a `Date.now()` difference computed in JS. The rest
- * timer works the same way — it survives by re-deriving from the deadline, not by counting
+ * timer works the same way: it survives by re-deriving from the deadline, not by counting
  * in a component that may no longer exist.
  *
  * ## Why the rest notification lives here
  *
  * The engine is deliberately free of notification imports: it should not care whether the
  * device is allowed to buzz. But a rest timer with no alert is a rest timer you cannot walk
- * away from, so the screen arms one at the exact moment a rest begins — which is *here*, in
- * the one handler that starts a rest — and retracts it when the user starts the next set
+ * away from, so the screen arms one at the exact moment a rest begins: which is *here*, in
+ * the one handler that starts a rest: and retracts it when the user starts the next set
  * early. Arming it in the engine would put a `Permissions`-shaped failure inside a module
  * whose job is arithmetic.
  */
@@ -149,7 +149,7 @@ export default function WorkoutSessionScreen() {
    *
    * The engine publishes a new snapshot every second while a workout runs. A `useCallback`
    * that closed over `session` would therefore change identity every second, which quietly
-   * defeats the `memo` on every `ExerciseBlock` below — the whole list re-rendering on a
+   * defeats the `memo` on every `ExerciseBlock` below: the whole list re-rendering on a
    * clock tick is exactly the unnecessary work the review pass would flag. Reading through a
    * ref keeps the callback fixed while still seeing the current session.
    */
@@ -175,7 +175,7 @@ export default function WorkoutSessionScreen() {
    *
    * `activeIndex` is persisted, so a session restored after three exercises were removed
    * could legitimately point past the end. `setActiveIndex` clamps on write, but a row read
-   * from disk never went through it — so the clamp belongs here too, and the footer's
+   * from disk never went through it: so the clamp belongs here too, and the footer's
    * current exercise must not be a `undefined` crash dressed up as an edge case.
    */
   const activeIndex = Math.min(
@@ -193,8 +193,8 @@ export default function WorkoutSessionScreen() {
     if (id !== null) void cancelScheduledNotification(id);
   }, []);
 
-  // Deliberately *not* retracted on unmount. Leaving this screen mid-rest — to answer a
-  // message, or to look at a previous session — is the case the alert exists for: the rest
+  // Deliberately *not* retracted on unmount. Leaving this screen mid-rest: to answer a
+  // message, or to look at a previous session: is the case the alert exists for: the rest
   // is still running, and the user is no longer looking at it. Only these retract it: an
   // un-ticked set, a skipped rest, a re-armed rest, finishing, discarding.
 
@@ -258,7 +258,7 @@ export default function WorkoutSessionScreen() {
   /**
    * An exercise chosen from the library, mid-workout.
    *
-   * The picker deliberately stays open after a tap — the row turns into a checkmark — so
+   * The picker deliberately stays open after a tap: the row turns into a checkmark: so
    * adding two accessories in one go does not mean opening a sheet twice. The sheet closes on
    * Done, which is why nothing here navigates.
    *
@@ -283,7 +283,7 @@ export default function WorkoutSessionScreen() {
           // the list did not change: it was already in the workout, or the workout finished
           // while the sheet was open. Either way the honest statement is "nothing changed".
           setActionError(
-            'That exercise did not go in — it is either already in this workout, or the workout has ended. Nothing was changed.',
+            'That exercise did not go in: it is either already in this workout, or the workout has ended. Nothing was changed.',
           );
           haptics.warning();
         })
@@ -318,7 +318,7 @@ export default function WorkoutSessionScreen() {
     setDiscarding(true);
     retractRestAlert();
     // `error()`, not `warning()`: this is the app refusing to lose something quietly. The
-    // haptic fires *before* the await, which is where it belongs — a confirmation buzz
+    // haptic fires *before* the await, which is where it belongs: a confirmation buzz
     // after a disk write is a buzz nobody connects to the tap that caused it.
     haptics.error();
     try {
@@ -355,7 +355,7 @@ export default function WorkoutSessionScreen() {
         router.replace(routes.workoutHistory());
       }
     } catch {
-      setActionError('Your phone could not save the session. Nothing was lost — try again.');
+      setActionError('Your phone could not save the session. Nothing was lost: try again.');
       setFinishing(false);
     }
   }, [client, finishing, retractRestAlert, session]);
@@ -475,7 +475,7 @@ export default function WorkoutSessionScreen() {
                   </Txt>
                   <Txt variant="caption" tone="muted">
                     Your phone refused a write, so these sets exist only until the app
-                    closes. Keep going — it will retry with every set — but do not force
+                    closes. Keep going: it will retry with every set: but do not force
                     quit.
                   </Txt>
                 </View>
@@ -641,7 +641,7 @@ export default function WorkoutSessionScreen() {
             // derived from `restEndsAt`, so an adjustment that did not move the deadline
             // would snap back on the next tick.
             retractRestAlert();
-            // `setRestTimer` floors at 5 seconds — it has no way to say "no rest" — so the
+            // `setRestTimer` floors at 5 seconds: it has no way to say "no rest": so the
             // dock stepping below that has to clear the timer instead, or minus-15s would
             // appear to stop working five seconds short of zero.
             if (seconds < 5) clearRest();
@@ -714,7 +714,7 @@ export default function WorkoutSessionScreen() {
           title="Finish this workout?"
           message={
             progress.ratio < 1
-              ? `${progress.planned - progress.completed} of ${progress.planned} ${pluralWord(progress.planned, 'set')} left un-ticked. Un-ticked work is not recorded — the workout saves what you completed.`
+              ? `${progress.planned - progress.completed} of ${progress.planned} ${pluralWord(progress.planned, 'set')} left un-ticked. Un-ticked work is not recorded: the workout saves what you completed.`
               : `All ${progress.planned} sets are done. This becomes an activity in your history.`
           }
           confirmLabel={finishing ? 'Saving…' : 'Finish and save'}
@@ -743,7 +743,7 @@ export default function WorkoutSessionScreen() {
           A sheet over the session rather than a pushed screen, which is what the `picker`
           route in this group was for. `ExercisePickerSheet` already hands the chosen exercise
           back through a callback; routing there instead would mean parking the choice in a
-          store and reading it out on unmount — a shared mutable mailbox, on the one screen in
+          store and reading it out on unmount: a shared mutable mailbox, on the one screen in
           the app that must not lose state. The sheet also keeps the workout visible behind the
           scrim, so the set you were on is still on screen while you pick.
         */
@@ -858,7 +858,7 @@ function NotesSheet({
  * What you just did better than you have ever done it.
  *
  * Not dismissible by backdrop, because the only correct action is to acknowledge it and
- * then land somewhere sensible. `onDone` is the sole exit and it goes to history — back
+ * then land somewhere sensible. `onDone` is the sole exit and it goes to history: back
  * would return to a session screen that no longer has a session.
  */
 function RecordsSheet({
@@ -956,7 +956,7 @@ function SessionTotals({
  * The first set in this block that is still outstanding.
  *
  * "First unticked" rather than "one past the last ticked", because dropping a middle set
- * and finishing the rest is normal — a bench press where the third set became a phone call
+ * and finishing the rest is normal: a bench press where the third set became a phone call
  * should still point at the third set.
  */
 function firstOpenSetIndex(entry: {
@@ -970,7 +970,7 @@ function firstOpenSetIndex(entry: {
  * "Last time 82.5 kg × 5 · 3 weeks ago", or the honest alternative.
  *
  * Three distinct answers, because there are three distinct truths: the history query has
- * not answered yet (say nothing — "no previous data" before it has is a lie), it answered
+ * not answered yet (say nothing, "no previous data" before it has is a lie), it answered
  * and this exercise is genuinely new (say so, since "nothing here yet" is useful), or there
  * is a previous number (say it). The last case is the one that decides whether to add
  * weight, which is why it gets the most detail: heaviest set's load and reps, not a volume

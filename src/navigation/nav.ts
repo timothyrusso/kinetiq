@@ -6,7 +6,7 @@
  * Typed routes are enabled, so `Href` is a union of literal strings and
  * `RelativePathString`, and a computed `Segment[]` is genuinely not assignable to it.
  * The honest fix would be a literal union of the ~20 routes in this app maintained by
- * hand in two places — which is a list that silently rots the moment a route is renamed,
+ * hand in two places: which is a list that silently rots the moment a route is renamed,
  * because the only thing keeping it correct is nobody noticing.
  *
  * So the honesty lives one level up instead: `tabHref` is the **only** cast in the app,
@@ -23,7 +23,7 @@ export type TabKey = 'index' | 'activities' | 'workout' | 'exercises' | 'profile
 /**
  * Tab routes in bar order. `index` rather than `home` because the folder is
  * `(tabs)/index.tsx`, and a mismatch here is the kind of typo that compiles under a
- * cast — which is precisely why the cast has one home.
+ * cast: which is precisely why the cast has one home.
  */
 export const TAB_ROUTES: readonly [TabKey, TabKey, TabKey, TabKey, TabKey] = [
   'index',
@@ -46,7 +46,7 @@ const TAB_HREFS: Record<TabKey, Href> = {
  *
  * Lives here rather than beside the bar's own list because the not-found screen offers the
  * same five destinations as text and must not maintain a second spelling of them. `index` is
- * "Home" and not "Index" — the group segment is a routing fact, the label is a product one.
+ * "Home" and not "Index": the group segment is a routing fact, the label is a product one.
  */
 export const TAB_LABELS: Record<TabKey, string> = {
   index: 'Home',
@@ -69,7 +69,7 @@ export function tabIndexOf(key: TabKey): number {
  * The tab a pathname belongs to.
  *
  * `/workout/session` reports `workout`, which is what lets the tab layout decide both
- * to hide its bar and to keep the Workout tab lit behind the player — the user is still
+ * to hide its bar and to keep the Workout tab lit behind the player: the user is still
  * in the workout flow, and a bar that jumps to Home as the sheet closes reads as a bug
  * even when the stack underneath is correct.
  *
@@ -92,7 +92,7 @@ export function tabKeyForPathname(pathname: string): TabKey | undefined {
  * `params` rather than string interpolation because it is the same cast count with one
  * less correctness hazard: interpolating into a path means the caller must remember to
  * encode, and an exercise id from wger is a plain integer today but the local fallback
- * ids are UUIDs — a shape that would change under a future import path. Passing params
+ * ids are UUIDs: a shape that would change under a future import path. Passing params
  * as data lets the router do the encoding itself.
  */
 export const routes = {
@@ -103,7 +103,7 @@ export const routes = {
   /**
    * The parameterless routes, as functions rather than string literals at call sites.
    *
-   * Typed routes would make a typo here a compile error — except that `.expo/types` is
+   * Typed routes would make a typo here a compile error: except that `.expo/types` is
    * generated during `expo start`, so in a fresh checkout with the types absent every
    * literal is `string` and every literal compiles. Routing the app's own destinations
    * through builders keeps there exactly one place a path is spelled, and one place to
@@ -113,7 +113,7 @@ export const routes = {
   /**
    * The Workout tab, not a "start" screen.
    *
-   * `/workout` is a `TAB_ROUTES` entry, so the tab owns that path — a screen at
+   * `/workout` is a `TAB_ROUTES` entry, so the tab owns that path: a screen at
    * `app/workout.tsx` would fight it for the same URL. Anything asking to "go start a
    * workout" means the tab, which is where the routines and the resume card live.
    */

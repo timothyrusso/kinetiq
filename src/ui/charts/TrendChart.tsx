@@ -1,11 +1,11 @@
 /**
- * Trend chart — the interactive series chart on Home and Progress.
+ * Trend chart: the interactive series chart on Home and Progress.
  *
  * Built around the one interaction that matters on a phone: press and slide to read a
  * value off the line. Everything else follows from that constraint.
  *
  * The scrubber is a manual gesture writing shared values, and only the marker and the
- * vertical rule read them. The series path is never rebuilt during a drag — redrawing a
+ * vertical rule read them. The series path is never rebuilt during a drag: redrawing a
  * 30-vertex path through React at 60fps is exactly the mistake this design avoids. The
  * readout *text* does have to cross back into JS to become a formatted string, so it
  * goes through `runOnJS`, fired on index change rather than per frame.
@@ -15,7 +15,7 @@
  *
  * The readout appears on gesture *activation*, roughly 8pt of horizontal travel, and
  * disappears when the finger lifts. A tap therefore does not leave the chart in a
- * changed state — which is the right trade: a readout that persists after a stray tap
+ * changed state: which is the right trade: a readout that persists after a stray tap
  * on the way to a button would be worse than one that needs a small drag.
  */
 import { memo, useCallback, useEffect, useId, useMemo, useState } from 'react';
@@ -55,14 +55,14 @@ const READOUT_WIDTH = 92;
 const READOUT_HEIGHT = 28;
 /** Horizontal breathing room so the end dots and their markers are not clipped. */
 const INSET = 12;
-/** Below this the chart is decoration — show the empty state instead of a squiggle. */
+/** Below this the chart is decoration: show the empty state instead of a squiggle. */
 const MIN_PLOT_HEIGHT = 28;
 
 export type TrendPoint = {
   /** Short axis label: "Mar", "Wk 12", "Mon". */
   label: string;
   value: number;
-  /** Anything the readout should add — "PR", "rest day", the raw duration. */
+  /** Anything the readout should add, "PR", "rest day", the raw duration. */
   detail?: string;
 };
 
@@ -185,7 +185,7 @@ export const TrendChart = memo(function TrendChart({
       .shouldCancelWhenOutside(false)
       // Activation, not `onBegin`. BEGIN fires for a plain touch-down, which means a
       // vertical scroll that happens to start on the chart would mount the readout
-      // bubble and tear it down ~150ms later — a flicker on every pass over the card.
+      // bubble and tear it down ~150ms later: a flicker on every pass over the card.
       // Waiting for activation costs nothing (the finger has moved 8pt either way) and
       // makes the scroll case structurally impossible rather than merely brief.
       .onStart((e) => {
@@ -343,7 +343,7 @@ export const TrendChart = memo(function TrendChart({
     <View style={[{ width, height }, style]}>
       {activePoint ? (
         /* A real RN view, not SVG text: it needs the app's font, its shadow, and to be
-           announced by VoiceOver — none of which SVG text does well. */
+           announced by VoiceOver: none of which SVG text does well. */
         <View
           pointerEvents="none"
           accessibilityLiveRegion="polite"

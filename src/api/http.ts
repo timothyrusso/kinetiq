@@ -134,8 +134,8 @@ function classify(status: number, retryAfter: number | null): ApiError {
 /**
  * Builds an injected failure. Deliberately a `classify` sibling rather than a call to it: the
  * faults are named by kind, not by status, and the two must stay in step by inspection. Each
- * one sets the same `status` and `retryAfterSeconds` a live server would, so `retryable` — and
- * therefore the query client's backoff — behaves identically either way.
+ * one sets the same `status` and `retryAfterSeconds` a live server would, so `retryable`: and
+ * therefore the query client's backoff: behaves identically either way.
  */
 function faultError(kind: FaultKind): ApiError {
   switch (kind) {
@@ -160,7 +160,7 @@ function faultError(kind: FaultKind): ApiError {
 /**
  * A cancellable wait, used to simulate latency. Cancellation matters: a search-as-you-type
  * aborts its previous query on every keystroke, so an un-abortable 3 s delay would leave three
- * abandoned promises in the runtime — and one of them resolving later is precisely the
+ * abandoned promises in the runtime: and one of them resolving later is precisely the
  * stale-response bug the query layer is supposed to make impossible.
  */
 function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
@@ -221,7 +221,7 @@ export async function requestJson<T>(
     if (signal?.aborted) throw new ApiError('cancelled', 'Request cancelled');
     // RN reports connectivity failures as a bare TypeError("Network request
     // failed"). The real cause goes to the console, never to a user-facing
-    // string — "Network request failed" is a terrible thing to show a screen.
+    // string, "Network request failed" is a terrible thing to show a screen.
     if (__DEV__) console.warn('[api] fetch failed', url, error);
     throw new ApiError('offline', 'No connection');
   } finally {

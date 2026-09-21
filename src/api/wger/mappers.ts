@@ -4,7 +4,7 @@
  * The interesting problem is language: `translations[]` arrives in *every*
  * language regardless of the `language__code` filter (that filter narrows which
  * exercises come back, not which translations each row carries), and wger does
- * not order them by preference. So `translations[0]` is a coin flip — for
+ * not order them by preference. So `translations[0]` is a coin flip: for
  * exercise 73 it is German. Everything here resolves against an explicit
  * preference list and falls back rather than inventing content.
  */
@@ -137,7 +137,7 @@ function entityNames(entities: readonly WgerNamedEntity[] | null | undefined): s
  * Chooses the art to show. `is_main` is the author's own pick, so it wins;
  * otherwise the first image. `medium` thumbnails are preferred for both slots
  * because the full `image` is often a large scan while the thumbnail variants
- * are consistently sized — and 400px covers a detail header on a phone.
+ * are consistently sized: and 400px covers a detail header on a phone.
  */
 function pickImages(images: readonly WgerImage[] | null | undefined): {
   imageUrl: string | null;

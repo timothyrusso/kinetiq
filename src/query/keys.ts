@@ -68,7 +68,7 @@ export const queryKeys = {
 
   exercises: {
     all: ['exercises'] as const,
-    /** Provider capability — offline or not — used to pick the error copy. */
+    /** Provider capability: offline or not: used to pick the error copy. */
     status: () => ['exercises', 'status'] as const,
     taxonomy: () => ['exercises', 'taxonomy'] as const,
     list: (filter: ExerciseFilter) => ['exercises', 'list', filter] as const,

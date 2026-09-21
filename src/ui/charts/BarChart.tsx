@@ -1,5 +1,5 @@
 /**
- * Bar chart — weekly volume, monthly distance, sessions per week.
+ * Bar chart: weekly volume, monthly distance, sessions per week.
  *
  * Two rules make a bar chart honest, and both are enforced here rather than left to the
  * caller:
@@ -51,7 +51,7 @@ const MIN_BAR_WIDTH = 3;
 export type BarPoint = {
   label: string;
   value: number;
-  /** Highlights a bar — "this week", "your PR week". */
+  /** Highlights a bar, "this week", "your PR week". */
   emphasised?: boolean;
   /** Anything the readout should add. */
   detail?: string;
@@ -79,7 +79,7 @@ export const BarChart = memo(function BarChart({
   format: (value: number) => string;
   color?: string;
   showAxes?: boolean;
-  /** Puts the last bar's value above it — the "so far this week" affordance. */
+  /** Puts the last bar's value above it: the "so far this week" affordance. */
   showValueForLast?: boolean;
   includeZero?: boolean;
   interactive?: boolean;
@@ -350,7 +350,7 @@ const Bar = memo(function Bar({
 
   // Declared unconditionally (a hook in a branch would change call order between
   // renders) and applied to the value label so it fades in with *its* bar rather than
-  // with the series — the last bar reveals last, so a shared opacity would put the
+  // with the series: the last bar reveals last, so a shared opacity would put the
   // number above an empty column.
   const labelStyle = useAnimatedStyle(() => ({ opacity: local.value }), [local]);
 

@@ -3,7 +3,7 @@
  *
  * ## Two header forms, on purpose
  *
- * A pushed detail screen wants a compact bar immediately — the user is deep in a stack and
+ * A pushed detail screen wants a compact bar immediately: the user is deep in a stack and
  * needs the back affordance and the title on frame one. A root tab wants a large title that
  * collapses as content scrolls under it, which is the native reading of "you are at the top
  * level". Rendering one header for both makes either case feel like the wrong kind of screen.
@@ -14,7 +14,7 @@
  * wrapper component cannot reach inside a `FlashList` the caller owns. So the pattern is:
  * the screen calls `useScreenHeaderScroll()`, spreads the returned `onScroll` onto its own
  * scrollable, and renders `<CollapsibleHeader header={…} />` above it. The scrollable stays
- * the screen's business — which is also how a screen keeps its own `onEndReached`, its key
+ * the screen's business: which is also how a screen keeps its own `onEndReached`, its key
  * extractor, and its recycling config without fighting an abstraction.
  *
  * ## Why `surface` and `hairline` are read once and passed down
@@ -60,7 +60,7 @@ import { useHeaderCollapse } from '@/ui/animation';
 
 /** Height of the compact bar, excluding any top safe-area inset. */
 const BAR_HEIGHT = 52;
-/** Distance over which the large title collapses — a little under one title height, so the
+/** Distance over which the large title collapses: a little under one title height, so the
  * compact title is fully in before the hero has left the screen. */
 const COLLAPSE_DISTANCE = 72;
 
@@ -102,17 +102,16 @@ export type DetailHeader = {
  *
  * This is deliberately *not* `useAnimatedScrollHandler`, which is the obvious thing and does
  * not work here. That hook returns an event-handler *object* (`{ workletEventHandler }`) built
- * to be consumed by Reanimated's `createAnimatedComponent` — reanimated's docs say to pass it
+ * to be consumed by Reanimated's `createAnimatedComponent`: reanimated's docs say to pass it
  * to `Animated.ScrollView`'s `onScroll`. These screens scroll a `FlashList`, whose own
  * `AnimatedFlashList` is wrapped with *RN's* `Animated`, not Reanimated's, so nothing on that
  * side recognises the object. FlashList's native code does
- * `props.onScroll?.call(props, event)` — and an object is not callable, so every scroll frame
+ * `props.onScroll?.call(props, event)`: and an object is not callable, so every scroll frame
  * threw "undefined is not a function" while the header quietly never collapsed.
  *
  * The cost is real and small: offset crosses to the UI thread per JS scroll event
  * (`scrollEventThrottle={16}`) instead of the worklet running there, so during a heavy list
- * recycle the backing can trail by one JS frame. On a frosted colour and a title opacity —
- * the only things `useHeaderCollapse` drives — that is below the threshold of notice. A
+ * recycle the backing can trail by one JS frame. On a frosted colour and a title opacity, * the only things `useHeaderCollapse` drives: that is below the threshold of notice. A
  * transform-critical gesture follower would need Reanimated's own scrollable, and does not
  * exist here.
  */
@@ -131,7 +130,7 @@ function useScrollOffsetWriter(scrollY: SharedValue<number>): ScrollToSharedValu
  * A pushed screen: fixed bar, and a body that is told how far to pad to clear it.
  *
  * The body receives the inset as an argument rather than being absolutely positioned under
- * the bar. A list that scrolls *under* a bar needs its first row offset by padding — without
+ * the bar. A list that scrolls *under* a bar needs its first row offset by padding: without
  * it the first item slides out of view behind the title rather than under it, which reads to
  * a user as a clipping bug.
  */
@@ -167,7 +166,7 @@ export function DetailScreen({
     }
     // `back`, not `replace('/')`: the user expects the screen they came from, with its
     // scroll position intact. `canGoBack` covers the case where this screen *is* the entry
-    // point — a deep link opened from a notification has nothing to return to, and a back
+    // point: a deep link opened from a notification has nothing to return to, and a back
     // button that does nothing is worse than no back button.
     if (router.canGoBack()) router.back();
     else router.replace('/');
@@ -282,7 +281,7 @@ export function CollapsibleHeader({
 /**
  * The hero half: the big title plus anything the screen wants under it, rendered inside the
  * scroll view's content so it scrolls away normally. `CollapsibleHeader` and this must be
- * used together — the bar's compact title is invisible until this one has scrolled out.
+ * used together: the bar's compact title is invisible until this one has scrolled out.
  */
 export function CollapsibleHero({
   header,

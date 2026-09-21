@@ -5,7 +5,7 @@
  *
  * `useProgress` answers "how am I doing", which is a question about a date range and about
  * all exercises at once. This answers "what have I done with *this* one", which has no
- * range at all — a personal best from two years ago is still the personal best — and which
+ * range at all: a personal best from two years ago is still the personal best: and which
  * needs the per-set detail (reps, weight, whether the set was completed) that every
  * progress aggregate deliberately throws away. Two questions, two shapes, two cache keys:
  * one invalidates when history changes, the other when the user changes a window.
@@ -16,7 +16,7 @@
  * a row per set, because a session is always read whole and a per-set table would be a
  * join nobody asked for. So "find every session containing exercise X" cannot be an index
  * lookup; it is a scan of the strength rows. A few hundred rows of JSON parse is a few
- * milliseconds, done once and cached — and it is honest in a way a `LIKE '%"wger:46"%'`
+ * milliseconds, done once and cached: and it is honest in a way a `LIKE '%"wger:46"%'`
  * over the blob is not: the blob is parsed before it is matched, so an id that happens to
  * appear as a substring of a longer id cannot make one exercise report another's numbers.
  *
@@ -24,8 +24,8 @@
  *
  * `previousValue` on a record. The `records` table holds one row per (exercise, kind) with
  * no history behind it, so the value it displaced is not stored anywhere. Rather than
- * reconstruct a plausible-sounding "previous best" from the log — which would be a
- * different number from the one Sentry-style record-keeping actually displaced — the
+ * reconstruct a plausible-sounding "previous best" from the log: which would be a
+ * different number from the one Sentry-style record-keeping actually displaced: the
  * detail screen leaves the claim out. Absent beats invented.
  */
 import { useQuery } from '@tanstack/react-query';
@@ -42,7 +42,7 @@ import { sum } from '@/utils/functional';
 export type ExercisePerformance = {
   activityId: string;
   performedAt: number;
-  /** As recorded on the session — a later rename does not rewrite history. */
+  /** As recorded on the session: a later rename does not rewrite history. */
   exerciseName: string;
   /** Volume across completed sets only, kg. */
   volumeKg: number;
@@ -88,9 +88,9 @@ const EMPTY_HISTORY: ExerciseHistory = {
 /**
  * How each record kind reads, in the order the UI lists them.
  *
- * These strings live here rather than in a screen because two screens show records — the
+ * These strings live here rather than in a screen because two screens show records: the
  * activity detail celebrates the ones set *in that session*, the exercise detail the ones
- * held *for that exercise* — and a user comparing the two should never see the same record
+ * held *for that exercise*: and a user comparing the two should never see the same record
  * called two different things.
  */
 export const RECORD_LABEL: Record<PersonalRecordKind, string> = {
@@ -125,7 +125,7 @@ export function useExerciseHistory(exerciseId: string | null) {
 
   // Records come from their own tiny table rather than from the scan above: the log tells
   // you what happened, the record table tells you what the app agreed was best at the time
-  // it happened, and those are different claims — an estimate the user deletes from history
+  // it happened, and those are different claims: an estimate the user deletes from history
   // should not keep being a headline number, and a record set years ago should not depend
   // on the session that produced it still parsing cleanly.
   const records = useQuery({
@@ -192,8 +192,8 @@ function summarise(exerciseId: string, activities: readonly Activity[]): Exercis
  *
  * There is deliberately no name-based or suffix-based fallback. `entriesFromItems` writes
  * the routine item's `exerciseId` verbatim, and the session engine copies that forward, so
- * an exact id match is what the write path guarantees. A looser match — `endsWith`, or
- * comparing the renamed `exerciseName` — would trade that guarantee for the substring
+ * an exact id match is what the write path guarantees. A looser match, `endsWith`, or
+ * comparing the renamed `exerciseName`: would trade that guarantee for the substring
  * hazard above (`wger:46` inside `wger:146`) and for a wrong-ownership bug the first time
  * a user renames a custom exercise, which is exactly the kind of plausible, silently-wrong
  * history number this screen exists to avoid printing.
@@ -207,8 +207,7 @@ function findEntry(activity: Activity, exerciseId: string): StrengthEntry | null
 function rollUpSession(entry: StrengthEntry) {
   const completed = entry.sets.filter((set) => set.completed);
   if (completed.length === 0) {
-    // A skipped exercise still counts as an encounter — it was planned and it happened —
-    // but it contributed nothing, so volume and load stay null rather than 0.
+    // A skipped exercise still counts as an encounter: it was planned and it happened, // but it contributed nothing, so volume and load stay null rather than 0.
     return {
       volumeKg: 0,
       sets: entry.sets.length,

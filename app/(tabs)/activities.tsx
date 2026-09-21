@@ -1,5 +1,5 @@
 /**
- * Activities — the whole history, filterable and searchable.
+ * Activities: the whole history, filterable and searchable.
  *
  * ## Flat list, day labels as rows
  *
@@ -11,7 +11,7 @@
  * freely within each type.
  *
  * Sorting also shapes the labels. Sorting "longest first" and then labelling by day
- * produces headings that jump around, which reads as a bug — so anything other than
+ * produces headings that jump around, which reads as a bug: so anything other than
  * recency drops the day headings entirely. The date is still in every row's subtitle; the
  * headings just stop claiming to be an ordering.
  *
@@ -19,8 +19,8 @@
  *
  * History is in SQLite, so search is a `LIKE` inside the query rather than a filter in JS:
  * it scales past what an in-memory filter would, and it means the debounce is the only rate
- * limiter needed. The query key carries the *debounced* string — one fetch per pause rather
- * than one per keystroke — and the field shows "Searching…" while the input runs ahead of
+ * limiter needed. The query key carries the *debounced* string: one fetch per pause rather
+ * than one per keystroke: and the field shows "Searching…" while the input runs ahead of
  * the data, which is the only feedback that says a keystroke was received.
  *
  * ## Delete is confirm-then-remove, never optimistic
@@ -231,7 +231,7 @@ export default function ActivitiesScreen() {
 
         {online ? null : (
           <Txt variant="caption" tone="muted">
-            Offline — your history is stored on this device, so everything below is intact.
+            Offline: your history is stored on this device, so everything below is intact.
           </Txt>
         )}
       </View>
@@ -281,7 +281,7 @@ export default function ActivitiesScreen() {
           ) : (
             <EmptyState
               title="No activities yet"
-              message="Finish a workout or record a run and it lands here — route, splits, every set."
+              message="Finish a workout or record a run and it lands here: route, splits, every set."
               icon="activities"
               actionLabel="Start a workout"
               // A `replace`, not a push: this is a tab, and pushing it would stack a second

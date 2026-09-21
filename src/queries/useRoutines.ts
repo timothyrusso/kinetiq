@@ -3,7 +3,7 @@
  *
  * Routines are local-first: the source of truth is SQLite, never the API. TanStack
  * Query is used here for its cache-identity and invalidation properties rather than
- * for network abstraction — several screens show the same routine (the Workout tab,
+ * for network abstraction: several screens show the same routine (the Workout tab,
  * the routine detail, the session screen's header) and they must agree without any
  * of them holding a copy.
  *
@@ -11,7 +11,7 @@
  *
  * A routine's items live in their own table, and `save` replaces them wholesale
  * inside a transaction. Writing the new list into the cache by hand would mean
- * re-implementing that join in the client — and getting it subtly wrong, e.g. a
+ * re-implementing that join in the client: and getting it subtly wrong, e.g. a
  * cache that shows a reordered list while the row order on disk says otherwise.
  * The reads are a couple of indexed queries on a table with dozens of rows; the
  * re-read costs nothing and cannot disagree with the database.
@@ -78,7 +78,7 @@ export function useRoutine(id: string | null) {
   return {
     routine: query.data?.routine ?? null,
     snapshots: query.data?.snapshots ?? new Map(),
-    /** True once the query settled and found nothing — distinct from still loading. */
+    /** True once the query settled and found nothing: distinct from still loading. */
     missing: query.status === 'success' && query.data === null,
     isLoading: query.isLoading,
     error: query.error,
@@ -109,7 +109,7 @@ export function useDeleteRoutine() {
     mutationFn: (id: string) => routineRepository.remove(id),
     onSuccess: (_result, id) => {
       invalidateRoutines(client);
-      // Removing a routine must not leave its detail cached — the delete sheet is
+      // Removing a routine must not leave its detail cached: the delete sheet is
       // often opened from the detail screen itself, and a `removeQueries` here is
       // what stops that screen re-rendering a corpse on the way out.
       client.removeQueries({ queryKey: queryKeys.routines.detail(id) });
@@ -118,8 +118,7 @@ export function useDeleteRoutine() {
 }
 
 /**
- * Duplicates a routine. Returns the copy so the caller can open it immediately —
- * duplicating and then being left on the original is the confusing half of the
+ * Duplicates a routine. Returns the copy so the caller can open it immediately, * duplicating and then being left on the original is the confusing half of the
  * interaction, and it is the reason this is not just `save` with a new id.
  */
 export function useDuplicateRoutine() {
@@ -278,8 +277,8 @@ export type PreviousLift = {
 /**
  * What the user lifted last time, per exercise in this routine.
  *
- * This is the single most valuable thing a strength screen can show — it is what
- * tells someone whether to add weight — and it is expensive to compute naively,
+ * This is the single most valuable thing a strength screen can show: it is what
+ * tells someone whether to add weight: and it is expensive to compute naively,
  * because "last time" means scanning history per exercise. One query per routine
  * does it once: fetch the most recent strength sessions, then index them by
  * exercise id, keeping the first occurrence of each.
@@ -348,7 +347,7 @@ export function usePreviousPerformance(routineId: string | null, exerciseIds: re
  *
  * Lives here rather than in the session module because it needs to know that
  * `weightKg: 0` means bodyweight and that `reps` is a string a program may have put
- * "5-8" into — i.e. it is a routine-shape concern, not a session-engine one. The rep number
+ * "5-8" into: i.e. it is a routine-shape concern, not a session-engine one. The rep number
  * comes from `repsFromRange` so the set the session opens with holds the same number the
  * routine screen displayed for it.
  */

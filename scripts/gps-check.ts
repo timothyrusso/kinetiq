@@ -6,7 +6,7 @@
  * This exists because the two things that could check this maths otherwise both fail to:
  * a device cannot be made to stand in a known sky (iOS Simulator streams no usable fixes
  * to a dev client, and the canned Drive scenarios are all car speeds, above the
- * plausibility gate), and there is no test runner in this project — `tsc` is the only
+ * plausibility gate), and there is no test runner in this project, `tsc` is the only
  * automated gate, and it checks types, not arithmetic. So the policy in `src/services/gps.ts`
  * would otherwise ship on a reading alone, for a feature whose whole job is not lying
  * about how far someone ran.
@@ -72,13 +72,13 @@ const at = (metres: number, opts: { accuracy?: number | null; speed?: number | n
   speed: opts.speed === undefined ? null : opts.speed,
 });
 
-console.log('\nacceptedSegmentMeters — one fix, four ways to be wrong\n');
+console.log('\nacceptedSegmentMeters: one fix, four ways to be wrong\n');
 
 // 1. Below the segment floor at *both* ends of the trade: 3.6 m of true motion in one
 //    second is a genuine 3.6 m/s and a genuine rejection, because at 1 s sampling a
 //    stationary phone jitters by about this much. Asserted as a rejection so the floor
-//    is a decision on the record — the accepted case is number 6.
-segment('a 3.6 m segment at 1 s sampling — under the floor', base, at(3.6), 0);
+//    is a decision on the record: the accepted case is number 6.
+segment('a 3.6 m segment at 1 s sampling: under the floor', base, at(3.6), 0);
 // And the same pace, sampled over ten seconds, is 36 m and passes: the floor is about
 // distance-per-fix, not about how fast someone is allowed to move.
 segment('the same 3.6 m/s pace over 10 s (36 m)', base, at(36, { dt: 10_000 }), 36);
@@ -87,7 +87,7 @@ segment('the same 3.6 m/s pace over 10 s (36 m)', base, at(36, { dt: 10_000 }), 
 //    genuinely unreliable fix. Distance is the sum of noise, and noise does not cancel.
 segment(`a 12 m jump from ${GPS_ACCURACY_FLOOR_M + 21} m accuracy`, base, at(12, { accuracy: 45 }), 0);
 
-// 3. Jitter at good accuracy — below the segment floor. This is the trade the floor
+// 3. Jitter at good accuracy: below the segment floor. This is the trade the floor
 //    makes: 3.9 m of true motion is discarded along with the wobble.
 segment(`a ${GPS_MIN_SEGMENT_M - 0.1} m jitter hop`, base, at(GPS_MIN_SEGMENT_M - 0.1), 0);
 
@@ -107,14 +107,14 @@ segment('a 90 m jump the device says was 3 m/s', base, at(90, { dt: 30_000, spee
 // 7. A slow walk: 1 m in one second is real motion that this design knowingly gives up
 //    (see GPS_MIN_SEGMENT_M). Asserted as a rejection so the trade stays a decision and
 //    not an accident someone discovers by reading a distance that came in short.
-segment('a slow walk (1 m in 1 s) — knowingly sacrificed', base, at(1), 0);
+segment('a slow walk (1 m in 1 s): knowingly sacrificed', base, at(1), 0);
 
 // 8. A first fix has nothing to measure from, so it can only ever be a start point.
 segment('the very first fix (no previous point)', null, at(0), 0);
 
 // 9. A platform that reports no accuracy is not a platform reporting bad accuracy: the
 //    accuracy gate steps aside, so the remaining two gates carry the whole argument.
-//    Not a free pass — the teleport is still rejected, and the sub-floor hop is still
+//    Not a free pass: the teleport is still rejected, and the sub-floor hop is still
 //    rejected, purely on length and pace.
 segment('no accuracy reported, honest motion at 3 m/s', base, at(30, { dt: 10_000, accuracy: null }), 30);
 segment('no accuracy reported, but a teleport', base, at(200, { accuracy: null }), 0);
@@ -149,7 +149,7 @@ if (impliedCeiling !== MAX_HUMAN_SPEED_MPS) {
   console.log(`  ✓ the two thresholds meet at 2 Hz: ${GPS_MIN_SEGMENT_M} m ↔ ${MAX_HUMAN_SPEED_MPS} m/s`);
 }
 
-console.log('\nisPlausiblePace — the 250 ms dead band\n');
+console.log('\nisPlausiblePace: the 250 ms dead band\n');
 // Below the dead band, an elapsed time too small to divide by must not manufacture a
 // rejection: 20 m in 100 ms reads 200 m/s, and were that honoured, every dense GPS
 // sample would be discarded and a run would record zero distance.
@@ -157,7 +157,7 @@ checks += 1;
 const deadBand = isPlausiblePace(20, 100, null);
 if (!deadBand) {
   failures += 1;
-  console.log('  ✗ dense samples rejected inside the dead band — distance would collapse to 0');
+  console.log('  ✗ dense samples rejected inside the dead band: distance would collapse to 0');
 } else {
   console.log('  ✓ dense samples inside the dead band are not judged on speed');
 }
@@ -177,8 +177,8 @@ if (isPlausiblePace(5, 1000, -3)) {
   console.log('  ✓ a negative speed reading is rejected, not reinterpreted');
 }
 
-console.log('\nbuildSplits — six splits for 5.2 km, the last one honest\n');
-// 5.2 km at an even 5:00/km, sampled every 5 m — the density a phone actually produces
+console.log('\nbuildSplits: six splits for 5.2 km, the last one honest\n');
+// 5.2 km at an even 5:00/km, sampled every 5 m: the density a phone actually produces
 // at running pace, and the density the geometry header claims. The old 100 m fixture
 // would have hidden a boundary error of up to 95 m per kilometre behind its own coarseness.
 const EVEN_T = 300; // seconds per km
@@ -191,8 +191,7 @@ const splits = buildSplits(run);
 // Expectations come from the route's *measured* length, not from the 5200 m the loop
 // aimed at: converting metres to degrees of latitude is only exact on a sphere whose
 // radius matches that constant, and haversine uses the one in geometry.ts. Deriving the
-// target from routeLength means this fixture cannot drift away from the maths it checks —
-// which is exactly how the last three failures here were produced.
+// target from routeLength means this fixture cannot drift away from the maths it checks, // which is exactly how the last three failures here were produced.
 const routeM = routeLength(run.map((p) => p.coords));
 const wholeKm = Math.floor(routeM / 1000);
 const expectedSplits = routeM - wholeKm * 1000 > 1 ? wholeKm + 1 : wholeKm;
@@ -212,7 +211,7 @@ if (!last || Math.abs(last.distanceMeters - remainderM) > STEP_M + 1) {
 } else {
   console.log(`  ✓ final split keeps its true length: ${last.distanceMeters} m of a real ${remainderM.toFixed(0)} m remainder, labelled index ${last.index}`);
 }
-// Every closed kilometre must sit within one sampling interval of the mark — this is the
+// Every closed kilometre must sit within one sampling interval of the mark: this is the
 // assertion the discarded-overshoot bug failed, and it is the one a user actually reads.
 checks += 1;
 const offMark = splits.slice(0, wholeKm).filter((s) => Math.abs(s.distanceMeters - 1000) > STEP_M + 1);
@@ -220,7 +219,7 @@ if (offMark.length > 0) {
   failures += 1;
   console.log(`  ✗ ${offMark.length} closed kilometre(s) are more than one sample off: ${offMark.map((s) => s.distanceMeters).join(', ')}`);
 } else {
-  console.log(`  ✓ all ${wholeKm} closed kilometres read ${splits[0]!.distanceMeters}±${STEP_M} m — no overshoot discarded`);
+  console.log(`  ✓ all ${wholeKm} closed kilometres read ${splits[0]!.distanceMeters}±${STEP_M} m: no overshoot discarded`);
 }
 checks += 1;
 const fifth = splits[4];
@@ -238,7 +237,7 @@ if (Math.abs(totalSplitM - routeM) > splits.length) {
   failures += 1;
   console.log(`  ✗ splits sum to ${totalSplitM} m against a ${routeM.toFixed(0)} m route`);
 } else {
-  console.log(`  ✓ splits sum to ${totalSplitM} m against a ${routeM.toFixed(0)} m route — nothing invented or dropped`);
+  console.log(`  ✓ splits sum to ${totalSplitM} m against a ${routeM.toFixed(0)} m route: nothing invented or dropped`);
 }
 // A single point is not a route, and must not be reported as a one-kilometre split.
 checks += 1;
@@ -250,7 +249,7 @@ if (stub.length !== 0) {
   console.log('  ✓ a one-point route produces no splits, not a fabricated one');
 }
 
-console.log('\ntrimRoute — bounded rows, exact finish position\n');
+console.log('\ntrimRoute: bounded rows, exact finish position\n');
 const long: RoutePoint[] = Array.from({ length: 5000 }, (_, i) => pt(i * 1000, i * 2));
 const trimmed = trimRoute(long, 2000);
 checks += 1;
@@ -277,7 +276,7 @@ if (untouched.length !== run.length) {
   console.log('  ✓ a route under the cap is returned point-for-point');
 }
 
-console.log('\nestimatedDistanceMeters — the fallback must never overstate\n');
+console.log('\nestimatedDistanceMeters: the fallback must never overstate\n');
 // The fallback is what a user sees when GPS never arrived, so its sin is optimism.
 // A strength session has no distance at all, and inventing one would put a pace on a
 // workout that had none.
@@ -307,5 +306,5 @@ if (estimatedDistanceMeters('run', -500) !== 0) {
   console.log('  ✓ negative elapsed time cannot produce negative distance');
 }
 
-console.log(`\n${failures === 0 ? 'all ' : ''}${checks - failures}/${checks} assertions passed${failures ? ` — ${failures} FAILED` : ''}\n`);
+console.log(`\n${failures === 0 ? 'all ' : ''}${checks - failures}/${checks} assertions passed${failures ? `, ${failures} FAILED` : ''}\n`);
 process.exit(failures === 0 ? 0 : 1);

@@ -2,7 +2,7 @@
  * Cross-feature invalidation, in one place.
  *
  * The client turns off refetch-on-mount and refetch-on-reconnect, so ordinary
- * navigation is free of requests — which means correctness across features has to
+ * navigation is free of requests: which means correctness across features has to
  * be *pushed*: finishing a workout has to tell the activity list and the progress
  * charts. Doing that from the screens that happen to notice would produce a
  * different, partial set of invalidations per call site; these functions are the
@@ -22,7 +22,7 @@ export function invalidateActivityHistory(client: QueryClient): void {
 
 /**
  * Finishing a workout touches history, progress, the routine's completion count
- * and its "previous performance" readout — and nothing in the exercise cache,
+ * and its "previous performance" readout: and nothing in the exercise cache,
  * which is remote data with its own freshness rules.
  */
 export function invalidateAfterWorkout(client: QueryClient, routineId: string | null): void {
@@ -43,7 +43,7 @@ export function invalidateRoutines(client: QueryClient): void {
  * A units change alters how stored numbers are *displayed*, and several queries
  * compute aggregates (weekly volume, pace) in canonical units that some views
  * rescale at build time rather than render time. Rather than audit which of them
- * baked a converted number into cache data, invalidate everything derived — the
+ * baked a converted number into cache data, invalidate everything derived: the
  * exercise cache is remote and unaffected, so it stays put.
  */
 export function invalidateAfterUnitsChange(client: QueryClient): void {

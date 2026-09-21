@@ -1,5 +1,5 @@
 /**
- * Route trace — the map without a map.
+ * Route trace: the map without a map.
  *
  * ## Why this is the fallback, and what it is for
  *
@@ -9,7 +9,7 @@
  * route, and "Map unavailable" throwing away the shape of the run they just did is the worst
  * available answer.
  *
- * This draws the route itself — projected, fitted, pace-coloured — on a plain canvas. It is not
+ * This draws the route itself: projected, fitted, pace-coloured: on a plain canvas. It is not
  * a map: there are no streets, so it cannot answer "where was that". It answers "what shape was
  * it, and where did I go hard", which is most of what a route review is for.
  *
@@ -17,8 +17,8 @@
  *
  * A lat/lng pair is not a point on a plane, and the distortion matters at city scale: at 45°
  * latitude a degree of longitude is ~0.7 of a degree of latitude, so an unprojected route comes
- * out squashed east-west. Scaling longitude by cos(centre latitude) — the equirectangular
- * approximation — is exact enough for anything a phone records and costs one multiply.
+ * out squashed east-west. Scaling longitude by cos(centre latitude): the equirectangular
+ * approximation: is exact enough for anything a phone records and costs one multiply.
  */
 import { memo, useMemo, useState } from 'react';
 import { View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
@@ -55,7 +55,7 @@ export const RouteTrace = memo(function RouteTrace({
   paceColoured?: boolean;
   showStartEnd?: boolean;
   /**
-   * Off when the surrounding card already explains the colours — a map layered over the trace
+   * Off when the surrounding card already explains the colours: a map layered over the trace
    * has its own key, and two legends on one route reads like the app is unsure which is real.
    * An explicit `caption` still renders; this only suppresses the automatic ramp and its label.
    */
@@ -184,7 +184,7 @@ function Endpoint({
 }: {
   point: { x: number; y: number };
   color: string;
-  /** Hollow for the start, solid for the finish — distinguishable without a legend. */
+  /** Hollow for the start, solid for the finish: distinguishable without a legend. */
   ring?: boolean;
 }) {
   return (
@@ -219,7 +219,7 @@ type Projected = {
  *
  * The `cos(lat)` factor is evaluated once at the route's centre latitude rather than per point.
  * Over the few kilometres a workout covers, the cosine changes by less than a part in ten
- * thousand — recomputing it per point would be precision theatre.
+ * thousand: recomputing it per point would be precision theatre.
  */
 function project(route: readonly RoutePoint[], width: number, height: number): Projected | null {
   const coords = route.map((p) => p.coords);

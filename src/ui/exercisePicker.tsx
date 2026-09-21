@@ -14,7 +14,7 @@
  *
  * The library tab keeps its filter in a shared store (`queries/exerciseFilters`) so it
  * survives tab switches. Reusing that store here would mean that building a routine quietly
- * rewired the library tab behind the modal — finish a routine, tap Exercises, find it filtered
+ * rewired the library tab behind the modal: finish a routine, tap Exercises, find it filtered
  * to "dumbbell". So this sheet owns its query and taxon ids locally and passes them into the
  * search hook as an ordinary value.
  *
@@ -49,7 +49,7 @@ import type { Exercise, ExerciseFilter } from '@/domain/types';
  *
  * Rows here are plain `ListRow`s inside the sheet's own `ScrollView` rather than a
  * virtualised list, because a `FlashList` inside a scrolling sheet means two scroll
- * containers fighting over one gesture — a real class of bug on Android especially. 24 rows
+ * containers fighting over one gesture: a real class of bug on Android especially. 24 rows
  * is well inside what a ScrollView renders in one pass, and an explicit Load more control
  * gives the next page a visible state, which `onEndReached` cannot when the list is this
  * short: there is nothing left to reach.
@@ -116,7 +116,7 @@ export function ExercisePickerSheet({
         autoFocus
         // Text rather than a spinner: a hint is announced, and it explains the one state
         // where typing has been received and nothing has moved yet.
-        hint={settling ? 'Searching…' : `${search.total ?? '—'} exercises in the library`}
+        hint={settling ? 'Searching…' : `${search.total ?? '-'} exercises in the library`}
         accessibilityHint="Filters the exercise library as you type"
       />
 
@@ -273,8 +273,8 @@ function PickerRow({
 /**
  * The row's second line.
  *
- * The same order the rest of the app uses for an exercise's caption — muscles, then category,
- * then a bare "Exercise" — because two screens falling back to two different words for the
+ * The same order the rest of the app uses for an exercise's caption: muscles, then category,
+ * then a bare "Exercise": because two screens falling back to two different words for the
  * same missing field is how a library starts to look unfinished.
  */
 function pickerSubtitle(exercise: Exercise): string {

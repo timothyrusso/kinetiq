@@ -7,8 +7,8 @@
  * ## The one save, and why not several
  *
  * The name and notes are ordinary controlled inputs; nothing is written until Done. The
- * alternative — autosaving the name on blur the way the saved-routine screen autosaves a
- * stepper press — would create a routine row the moment someone typed three characters and
+ * alternative: autosaving the name on blur the way the saved-routine screen autosaves a
+ * stepper press: would create a routine row the moment someone typed three characters and
  * then backed out. `routineRepository.save` has no "empty draft" concept and should not
  * acquire one: a routine with no exercises is not a thing this app displays, and inventing a
  * hidden state for it would leak into the routines list, the counts and the workout picker.
@@ -133,7 +133,7 @@ export default function NewRoutineScreen() {
       router.replace(routes.routine(saved.id));
     } catch {
       markDraftSaveFailed();
-      setBlocked('Could not save. Nothing was lost — the routine is still here as you left it.');
+      setBlocked('Could not save. Nothing was lost: the routine is still here as you left it.');
       haptics.warning();
     }
   }, [saveRoutine]);
@@ -192,8 +192,7 @@ export default function NewRoutineScreen() {
               contentContainerStyle={{
                 // `topInset` is the translucent header's height, and this screen was the only
                 // one of eleven that threw it away for a flat 16pt. The header then covered the
-                // first ~105pt of content, which on THIS screen is the routine's name field —
-                // so "New routine" opened with its first and most important input hidden, and
+                // first ~105pt of content, which on THIS screen is the routine's name field, // so "New routine" opened with its first and most important input hidden, and
                 // no amount of scrolling revealed it because the list was already at offset 0.
                 // A routine saved without a name falls back to being named after its first
                 // exercise, which is how a QA run produced a routine called "Squat (Stacchi)".
@@ -220,7 +219,7 @@ export default function NewRoutineScreen() {
                   label="Notes"
                   value={draft.description}
                   onChangeText={setDraftDescription}
-                  placeholder="Optional — how the session should feel, what to leave at the gym"
+                  placeholder="Optional: how the session should feel, what to leave at the gym"
                   multiline
                   accessibilityHint="Adds an optional description"
                 />
@@ -230,7 +229,7 @@ export default function NewRoutineScreen() {
                 <EmptyState
                   icon="listAdd"
                   title="No exercises yet"
-                  message="A routine is a list of exercises with targets. Add the first one from the library — it is searched live, and everything you choose is frozen into the routine so it still opens with no signal."
+                  message="A routine is a list of exercises with targets. Add the first one from the library: it is searched live, and everything you choose is frozen into the routine so it still opens with no signal."
                   actionLabel="Add exercise"
                   onAction={() => {
                     haptics.light();

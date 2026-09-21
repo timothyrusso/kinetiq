@@ -1,6 +1,5 @@
 /**
- * Semantic theme. Components consume `theme.*` only — never raw palette ramps —
- * so light and dark can diverge freely.
+ * Semantic theme. Components consume `theme.*` only: never raw palette ramps, * so light and dark can diverge freely.
  *
  * Dark is a deep blue-black "training at night" surface with volt accent.
  * Light is warm paper with a *deeper* volt accent for contrast: the bright lime
@@ -111,7 +110,7 @@ export type Theme = {
   weight: typeof weight;
   lineHeight: typeof lineHeight;
   motion: typeof motion;
-  /** 1 on small phones, 1.06 on tablets — used to scale display type only. */
+  /** 1 on small phones, 1.06 on tablets: used to scale display type only. */
   scale: number;
 };
 
@@ -350,7 +349,7 @@ export function themeFor(mode: ThemeMode): Theme {
  * The theme the app should draw with right now: the user's mode preference
  * (which may be 'system') folded against the OS appearance, with display type
  * scaled for large phones. Re-renders on OS appearance change, on preference
- * change, and on rotation — `useThemeFor` memoises on the longest edge, which
+ * change, and on rotation, `useThemeFor` memoises on the longest edge, which
  * rotation does not change, so rotating costs no rebuild.
  */
 export function useAppTheme(): Theme {

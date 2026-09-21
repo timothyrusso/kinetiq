@@ -1,13 +1,13 @@
 /**
  * Catches what the router's per-route boundary cannot: an error thrown while rendering
- * the *providers* — the query client, the safe-area provider, the gesture root.
+ * the *providers*: the query client, the safe-area provider, the gesture root.
  *
  * Those sit above the navigator, so no route boundary is above them, and React's rule for
  * an unbounded error is to unmount the whole tree: a blank app with no message.
  *
  * ## Why this component owns its own theme
  *
- * It renders outside `ThemedRoot`, so it has no access to `useAppTheme()` — and even if it
+ * It renders outside `ThemedRoot`, so it has no access to `useAppTheme()`: and even if it
  * did, the failure may *be* the theme or the settings store it reads through. So it takes
  * a plain colour pair and renders plain `Text`. An error screen that depends on the system
  * that broke is not an error screen.
@@ -30,7 +30,7 @@ export class RootErrorBoundary extends Component<{ children: ReactNode }, State>
   override componentDidCatch(error: Error, info: ErrorInfo): void {
     // Console only. There is no upload here on purpose: nothing below this boundary is
     // guaranteed to work, and a throw inside `componentDidCatch` is an unrecoverable
-    // error in React — the blank screen we are trying to avoid, with a worse message.
+    // error in React: the blank screen we are trying to avoid, with a worse message.
     console.error('[kinetiq] Unhandled error above the navigator', error, info.componentStack);
   }
 
@@ -67,7 +67,7 @@ export class RootErrorBoundary extends Component<{ children: ReactNode }, State>
           <Text
             accessibilityRole="button"
             onPress={() => {
-              // Clears the boundary's state, which re-renders `children` — i.e. remounts
+              // Clears the boundary's state, which re-renders `children`: i.e. remounts
               // the provider tree from scratch. That fixes the transient case (a native
               // module that answered too early) and re-throws the deterministic one,
               // landing back here. There is no programmatic restart available without

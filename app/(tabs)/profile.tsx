@@ -1,12 +1,12 @@
 /**
- * Profile tab — identity, the two numbers worth glancing at, and the way out to settings.
+ * Profile tab: identity, the two numbers worth glancing at, and the way out to settings.
  *
  * ## Why this is not a settings list
  *
  * The obvious version of this screen is a column of `NavRow`s: Units, Appearance,
  * Notifications, Training, About. That is a menu, and it makes the tab a launcher for four
  * screens the user visits once a year. Everything configurable that has an *observable*
- * effect on what this tab shows lives here as a control — units, theme — because changing
+ * effect on what this tab shows lives here as a control: units, theme: because changing
  * units is something you do while looking at a number that is in the wrong ones.
  *
  * ## ScrollView, not FlashList
@@ -18,7 +18,7 @@
  * ## Streak and goal, not history
  *
  * Two numbers, both of which change daily and neither of which is available anywhere else
- * at a glance. Everything else that lives in history — volumes, PRs, the heatmap — belongs
+ * at a glance. Everything else that lives in history: volumes, PRs, the heatmap: belongs
  * to Progress, which is a full screen with range controls, and repeating a third of it here
  * would just be a second place to be out of date.
  */
@@ -81,7 +81,7 @@ export default function ProfileScreen() {
   const summary = useTrainingSummary(4);
   const weeks = summary.data?.weeks;
 
-  // Oldest-first array, so the current week is the last entry — see `useProgress.ts`.
+  // Oldest-first array, so the current week is the last entry: see `useProgress.ts`.
   const thisWeek = weeks?.at(-1);
   const goalProgress = thisWeek === undefined ? 0 : thisWeek.workouts / Math.max(1, weeklyGoal);
 
@@ -158,17 +158,17 @@ export default function ProfileScreen() {
               <Stat label="Sessions" value={formatNumber(totals?.workouts)} note="last 4 weeks" />
               <Stat
                 label="Time"
-                value={totals === undefined ? '—' : formatDurationCompact(totals.durationSeconds)}
+                value={totals === undefined ? '-' : formatDurationCompact(totals.durationSeconds)}
                 note="last 4 weeks"
               />
               <Stat
                 label="Distance"
-                value={totals === undefined ? '—' : formatDistance(totals.distanceMeters, unitSystem, 1)}
+                value={totals === undefined ? '-' : formatDistance(totals.distanceMeters, unitSystem, 1)}
                 note="run, ride, walk"
               />
               <Stat
                 label="Volume"
-                value={totals === undefined ? '—' : `${Math.round(totals.volumeKg / 1000)} t`}
+                value={totals === undefined ? '-' : `${Math.round(totals.volumeKg / 1000)} t`}
                 note="lifted"
               />
             </MetricGrid>
@@ -365,12 +365,12 @@ function countSessions(n: number): string {
 function trainingSince(data: { totals: { workouts: number } } | undefined): string {
   if (data === undefined) return 'Exercise search runs against the wger catalog';
   return data.totals.workouts === 0
-    ? 'No sessions logged yet — search the library to build your first routine'
+    ? 'No sessions logged yet: search the library to build your first routine'
     : 'Routines and history are stored on this device';
 }
 
 function formatNumber(value: number | undefined): string {
-  return value === undefined ? '—' : String(value);
+  return value === undefined ? '-' : String(value);
 }
 
 function notificationsSubtitle(hapticsEnabled: boolean): string {

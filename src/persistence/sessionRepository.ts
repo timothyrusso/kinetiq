@@ -57,7 +57,7 @@ export const sessionRepository = {
 
   /**
    * The session to offer restoring, if any. `finished`/`discarded` rows are kept
-   * briefly for audit but must never be resurrected — that is the difference
+   * briefly for audit but must never be resurrected: that is the difference
    * between a helpful restore and a workout that won't stop coming back.
    */
   async active(): Promise<WorkoutSession | null> {
@@ -75,7 +75,7 @@ export const sessionRepository = {
     return rows.map(rowToSession);
   },
 
-  /** Targeted column update — avoids a read-modify-write round trip per tick. */
+  /** Targeted column update: avoids a read-modify-write round trip per tick. */
   async patch(id: string, patch: SessionPatch): Promise<void> {
     const sets: string[] = [];
     const args: (string | number | null)[] = [];

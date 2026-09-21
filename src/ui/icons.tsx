@@ -116,7 +116,7 @@ export type IconProps = {
   style?: StyleProp<ViewStyle>;
   /**
    * Accessible label. A decorative icon beside a text label must leave this
-   * undefined, or VoiceOver reads "run, Run" — the icon is the label's
+   * undefined, or VoiceOver reads "run, Run": the icon is the label's
    * decoration, not a second copy of its content.
    */
   accessibilityLabel?: string;
@@ -181,12 +181,12 @@ export const IconDot = memo(function IconDot({
 });
 
 /**
- * Rounded swatch behind a list-row icon — the visual rhythm of the app.
+ * Rounded swatch behind a list-row icon: the visual rhythm of the app.
  *
  * Deliberately a plain `View` rather than an SVG rect: the tile has to clip
  * nothing and layer one child, so drawing it in SVG would cost a raster surface
  * per row in a list that may show thirty of them at once. No theme hook here
- * either — `radius.md` is a constant, and subscribing a row icon to the theme
+ * either, `radius.md` is a constant, and subscribing a row icon to the theme
  * context would re-render it on an appearance change for a corner it already has.
  */
 export const IconTile = memo(function IconTile({

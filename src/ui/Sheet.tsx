@@ -4,7 +4,7 @@
  * Why a component rather than a `Modal` with a `View` inside:
  *
  * - **Dismiss is a gesture, not a hint.** The drag runs natively (RNGH + Reanimated),
- *   so it stays smooth while the JS thread is busy — the common case, since sheets are
+ *   so it stays smooth while the JS thread is busy: the common case, since sheets are
  *   usually opened over a screen that is still fetching.
  * - **The scrim fades with the drag**, so a released-early sheet looks half-dismissed
  *   rather than fully open with a finger-shaped hole in it.
@@ -43,7 +43,7 @@ import { Icon } from './icons';
 import { Txt } from './Text';
 
 export type SheetHandle = {
-  /** Closes without consulting any guard — call after a save has already succeeded. */
+  /** Closes without consulting any guard: call after a save has already succeeded. */
   dismiss: () => void;
 };
 
@@ -53,7 +53,7 @@ type SheetProps = {
   onRequestClose: () => void;
   title?: string;
   subtitle?: string;
-  /** Right-aligned header accessory — a text button or a count, not an icon. */
+  /** Right-aligned header accessory: a text button or a count, not an icon. */
   accessory?: React.ReactNode;
   /** Content taller than the ceiling scrolls. Turn off for a fixed two-row sheet. */
   scrollable?: boolean;
@@ -171,7 +171,7 @@ export const Sheet = forwardRef<SheetHandle, SheetProps>(function Sheet(
     // that column does not overlay anything: it wins half the leftover space, anchors the
     // panel to the bottom of *that* box, and caps it at 88% of half a screen. The sheet
     // would then float somewhere around the middle of the display with its scrim over
-    // everything — wrong on every device. Filling the parent absolutely makes it a real
+    // everything: wrong on every device. Filling the parent absolutely makes it a real
     // overlay regardless of what the host's layout is doing, which is also the only way the
     // drag translate and `maxHeight: '88%'` mean what they say.
     //
@@ -203,7 +203,7 @@ export const Sheet = forwardRef<SheetHandle, SheetProps>(function Sheet(
  * Lifts a bottom-pinned sheet clear of the keyboard.
  *
  * `padding` on iOS because the keyboard there floats over the window; nothing on Android,
- * where `resize` mode shrinks the window — and therefore this container — already. Adding
+ * where `resize` mode shrinks the window: and therefore this container: already. Adding
  * the padding there too would push the sheet up by the keyboard's height *twice*, which is
  * the classic double-shift: the panel ends up floating in the middle of the screen with a
  * gap under it. Same reasoning as `KeyboardAvoid` in `ui/TextField`, applied at the layer
@@ -221,7 +221,7 @@ function AvoidingKeyboard({ children, style }: { children: React.ReactNode; styl
  * The scrim lives on the JS-side colour but the UI-thread opacity of the drag.
  *
  * It used to paint `palette.black` at full strength, which turned the whole screen
- * behind a sheet solid black on the light theme — not a dimmed context, an outright
+ * behind a sheet solid black on the light theme: not a dimmed context, an outright
  * black screen, indistinguishable at a glance from a failed load. `colors.scrim` is
  * translucent ink that carries its own weight per theme (heavier in dark, where the
  * canvas is already near-black and needs separating; light in light, where the point
@@ -415,7 +415,7 @@ export const ConfirmSheet = memo(function ConfirmSheet({
 /**
  * Single-choice picker: units, default rest, sort order. Radio semantics even though
  * the rows are custom, because a picker a screen reader cannot enumerate is not a
- * picker. Selecting closes the sheet — a second tap to dismiss is the kind of friction
+ * picker. Selecting closes the sheet: a second tap to dismiss is the kind of friction
  * that shows up in one-star reviews.
  */
 export function OptionSheet<T extends string | number>({

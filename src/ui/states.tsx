@@ -2,8 +2,8 @@
  * Loading, empty and error surfaces.
  *
  * The rule behind all of them: **a screen is never blank**. Every one of these has a
- * title that says what is missing, a line that says why it matters here, and — where
- * the user can act — the action. An error with no retry is a dead end, and a dead end
+ * title that says what is missing, a line that says why it matters here, and: where
+ * the user can act: the action. An error with no retry is a dead end, and a dead end
  * with no explanation reads as a broken app rather than a failed request.
  *
  * Skeletons are shaped like the content they stand in for. A grey box the same size as

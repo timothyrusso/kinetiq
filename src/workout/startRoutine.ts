@@ -1,8 +1,8 @@
 /**
  * Starting a workout from a routine.
  *
- * Lives here rather than in either screen because two screens start routines — the Workout
- * tab's "last trained" card and the routine's own detail page — and starting one wrong is not
+ * Lives here rather than in either screen because two screens start routines: the Workout
+ * tab's "last trained" card and the routine's own detail page: and starting one wrong is not
  * a cosmetic mistake: a session that begins with the wrong rest default or a half-built entry
  * list is a session the user then trains.
  *
@@ -19,7 +19,7 @@
  * the session screen reads the same store. So there is no optimistic state, no pending label
  * and nothing to roll back if the navigation is interrupted. An earlier version `await`ed
  * four dynamic imports here purely to keep this file free of static imports, which bought a
- * frame of blank `busy` time and a `catch` nobody wrote — an unhandled rejection on a Start
+ * frame of blank `busy` time and a `catch` nobody wrote: an unhandled rejection on a Start
  * button is a crash with no explanation.
  */
 import { useCallback, useRef, useState } from 'react';
@@ -46,7 +46,7 @@ export type StartRoutineInput = {
  *
  * The re-entrancy latch is a ref, not the `busy` state read from a closure: two taps in the
  * same frame both see the state as it was when the callback was created, so a state-based
- * guard lets the second one through — and a second `startSession` call replaces the session
+ * guard lets the second one through: and a second `startSession` call replaces the session
  * that was just created, which the user experiences as the screen changing and then changing
  * back. `busy` is still published for the button's spinner.
  */
@@ -60,8 +60,8 @@ export function useStartRoutine() {
     setBusy(true);
     try {
       if (input.items.length === 0) {
-        // An untrained empty routine is a real state — everything removed but not yet
-        // deleted — and it must not navigate to a session with nothing in it.
+        // An untrained empty routine is a real state: everything removed but not yet
+        // deleted: and it must not navigate to a session with nothing in it.
         input.onResult(false);
         return;
       }

@@ -3,7 +3,7 @@
  *
  * An in-flight workout outlives any component. It has to be readable from the
  * tab bar (a live "in progress" pill), from the root layout's lifecycle handler,
- * from a deep link, and from the rest-timer notification — none of which are
+ * from a deep link, and from the rest-timer notification: none of which are
  * descendants of a provider that would own a reducer. So the session lives here
  * as a module singleton with the same external-store shape the settings store
  * uses, and `useWorkoutSession` is a thin subscription over it.
@@ -126,7 +126,7 @@ function commit(patch: SessionPatch | null, write: boolean): void {
 /**
  * Loads the session to restore, if any. `sessionRepository.active()` already
  * excludes finished and discarded rows, so a workout the user already committed can
- * never be resurrected — but an unfinished one always comes back, which is the
+ * never be resurrected: but an unfinished one always comes back, which is the
  * brief's "accidentally backgrounding the app must not destroy an active workout".
  */
 export async function hydrateWorkoutSession(): Promise<WorkoutSession | null> {
@@ -212,7 +212,7 @@ export async function discardSession(id: string): Promise<void> {
  * Commits the session to history.
  *
  * `detectPersonalRecords` needs prior history to compare against, and the current
- * session must not be part of it — otherwise the workout being finished would be
+ * session must not be part of it: otherwise the workout being finished would be
  * its own baseline and no PR would ever register. `activityRepository.list` is
  * called before the insert for exactly that reason, and the whole thing is one
  * repository call so a crash between "insert" and "record PRs" cannot leave a
@@ -300,7 +300,7 @@ export function updateSet(
   commit({ entries }, true);
 }
 
-/** Appends a set, inheriting the previous one's targets — the common case. */
+/** Appends a set, inheriting the previous one's targets: the common case. */
 export function addSet(entryIndex: number): void {
   if (!session) return;
   const entry = session.entries[entryIndex];
@@ -382,7 +382,7 @@ let lastTickAt = 0;
  * One-second tick that owns elapsed time.
  *
  * Doing the arithmetic here rather than in a component's interval means a screen
- * unmount — swiping to the Activities tab mid-set, which happens constantly — cannot
+ * unmount: swiping to the Activities tab mid-set, which happens constantly: cannot
  * lose seconds. On `resume`, `awayNoticeSeconds` reports how long the user was gone
  * so a two-minute rest can be shown as having elapsed rather than silently frozen.
  */
@@ -415,7 +415,7 @@ function stopTick(): void {
  * Called from the app-state handler.
  *
  * Background time **counts**. A strength session with the phone in a pocket is still a
- * session — the sets you did five minutes ago are still done, and a clock that froze
+ * session: the sets you did five minutes ago are still done, and a clock that froze
  * while you were away would understate a workout you actually finished. What the pause
  * of the tick protects is the arithmetic, not the total: on return the whole away gap is
  * added once from `lastTickAt`, so no second is double-counted or dropped by a missed

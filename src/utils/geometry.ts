@@ -1,5 +1,5 @@
 /**
- * Route geometry: haversine distance, Douglas–Peucker simplification and
+ * Route geometry: haversine distance, Douglas-Peucker simplification and
  * bounding boxes. Routes are stored as [lat, lng] pairs; the map needs a
  * fitted coordinate, and the stats need a decimated polyline, so both live here
  * rather than in components.
@@ -44,7 +44,7 @@ function perpendicularDistance(point: LatLng, lineStart: LatLng, lineEnd: LatLng
 }
 
 /**
- * Ramer–Douglas–Peucker. Keeps a route visually faithful while bounding how
+ * Ramer-Douglas-Peucker. Keeps a route visually faithful while bounding how
  * many points cross into the map renderer and into chart scales.
  */
 export function simplifyRoute(route: readonly LatLng[], toleranceDeg = 0.00012): LatLng[] {
@@ -118,7 +118,7 @@ export function boundsCenter(bounds: Bounds): LatLng {
 
 /**
  * Latitude span that fits `route` inside a viewport of `widthPx` x `heightPx`
- * with padding — MapView's `fitPadding` is unreliable on some devices, so we
+ * with padding, MapView's `fitPadding` is unreliable on some devices, so we
  * compute a zoom-independent span and drive `region` directly.
  */
 export function regionForRoute(
@@ -163,7 +163,7 @@ export function regionForRoute(
  * - **A leftover is its own split.** Once a boundary is crossed, the points after it are
  *   a new segment. Folding a 200 m remainder into the kilometre that just closed made a
  *   5.2 km run report *four* splits, the last one 2.2 km long and labelled as a fifth
- *   kilometre — a pace for a distance that was never one.
+ *   kilometre: a pace for a distance that was never one.
  *
  * Consecutive splits share their boundary point, so each `meters` is the true distance
  * between its own endpoints and the set sums to the route exactly. Individual splits sit
@@ -181,7 +181,7 @@ export function splitRouteByDistance(
   /** Cumulative distance from the start, and its value at `fromIndex`. */
   let acc = 0;
   let accAtFrom = 0;
-  /** Where the next boundary must fall — advanced by one segment, never reset. */
+  /** Where the next boundary must fall: advanced by one segment, never reset. */
   let target = segmentMeters;
   for (let i = 1; i < route.length; i += 1) {
     acc += haversine(route[i - 1]!.coords, route[i]!.coords);

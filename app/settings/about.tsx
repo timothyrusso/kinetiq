@@ -1,5 +1,5 @@
 /**
- * About — what this build is, where the exercise data comes from, and how to get rid of it.
+ * About: what this build is, where the exercise data comes from, and how to get rid of it.
  *
  * ## Version comes from the app config, not a hard-coded string
  *
@@ -19,12 +19,11 @@
  * earns its place by being load-bearing information: exercises are stored as local snapshots
  * precisely so the catalog can vanish without taking the user's routines with it, and this is
  * where that design becomes visible to them. The second paragraph answers the question the
- * first one raises — "what happens to my stuff when it's down?".
+ * first one raises, "what happens to my stuff when it's down?".
  *
  * ## The counts read the list cache, not SQL
  *
- * `useActivityList` with the default params is the *same* query the Activities tab uses —
- * frozen default params, so the key matches — and its raw rows are cached unsorted and
+ * `useActivityList` with the default params is the *same* query the Activities tab uses, * frozen default params, so the key matches: and its raw rows are cached unsorted and
  * ungrouped. Counting them here costs one pass over data the app is already holding. A second
  * query for "how many activities" would be a second source of truth for one number, and the
  * only thing that buys is a way for two screens to disagree.
@@ -32,8 +31,8 @@
  * ## Reset
  *
  * A destructive control that says "erase everything" is easy to tap by accident and impossible
- * to undo. `ConfirmSheet` is the app's one confirmation idiom — the same one workout discard
- * uses — and the copy spells out what is destroyed, including the demo history, because
+ * to undo. `ConfirmSheet` is the app's one confirmation idiom: the same one workout discard
+ * uses: and the copy spells out what is destroyed, including the demo history, because
  * "it came back on its own" is the most confusing possible outcome of a wipe.
  */
 import { useCallback, useMemo, useState } from 'react';
@@ -94,8 +93,7 @@ export default function SettingsAboutScreen() {
   const erase = useCallback(async () => {
     setErasing(true);
     try {
-      // Order matters. Data first, then the caches that describe it, then settings last —
-      // settings is the one step that writes back to the database, so doing it earlier would
+      // Order matters. Data first, then the caches that describe it, then settings last, // settings is the one step that writes back to the database, so doing it earlier would
       // have the wipe undone by its own next step.
       await clearAllUserData();
       await queryClient.cancelQueries();
@@ -145,7 +143,7 @@ export default function SettingsAboutScreen() {
                     {LABELLED_PROVIDERS[provider.name] ?? provider.name}
                   </Txt>
                   <Txt variant="caption" tone="muted">
-                    The exercise library — search, photos, muscles and equipment — is served by
+                    The exercise library: search, photos, muscles and equipment: is served by
                     an external catalog, live.
                   </Txt>
                   <Divider inset={0} />
@@ -215,8 +213,8 @@ export default function SettingsAboutScreen() {
             </View>
 
             {/* ----------------------------------------------------- dev console
-                Compiled into the route table either way — expo-router has no conditional
-                routes — so `app/dev.tsx` returns null outside `__DEV__` as well. The link is
+                Compiled into the route table either way: expo-router has no conditional
+                routes: so `app/dev.tsx` returns null outside `__DEV__` as well. The link is
                 gated here because an entry point is the thing a reviewer or a user sees, and
                 a row that leads to a blank screen is worse than no row. */}
             {__DEV__ ? (
@@ -281,7 +279,7 @@ export default function SettingsAboutScreen() {
             `${countNoun(activityCount, 'activity', 'activities')} and ` +
             `${countNoun(routines.length, 'routine')} will be deleted from this device, along ` +
             'with your units, appearance, goal and reminder settings. You will be left with an ' +
-            'empty app — nothing is re-added unless you ask for it below.'
+            'empty app: nothing is re-added unless you ask for it below.'
           }
           confirmLabel={erasing ? 'Erasing…' : 'Erase everything'}
           onConfirm={() => {
@@ -369,12 +367,12 @@ function Hairline() {
 /* ----------------------------------------------------------------- helpers -- */
 
 /**
- * The version this install actually migrated to. The read — and why it asks the database
- * instead of importing a constant — lives in `readSchemaVersion` (src/persistence/database.ts);
+ * The version this install actually migrated to. The read: and why it asks the database
+ * instead of importing a constant: lives in `readSchemaVersion` (src/persistence/database.ts);
  * this pins the answer to the first render so the row never flashes 'reading…'.
  */
 function useSchemaVersion(): number | null {
-  // The read itself lives in the persistence layer (`readSchemaVersion`) — this only pins it to
+  // The read itself lives in the persistence layer (`readSchemaVersion`): this only pins it to
   // the first render, which is the part that is this screen's business.
   const [version] = useState<number | null>(readSchemaVersion);
   return version;
@@ -402,7 +400,7 @@ const KIND_NAMES: Record<ActivityKind, string> = {
 };
 
 /**
- * The provider's own `name` is a machine identifier ('wger') — right for a query key, wrong
+ * The provider's own `name` is a machine identifier ('wger'): right for a query key, wrong
  * for a sentence. Mapped here rather than changed at the source: human labels are not the API
  * layer's job, and the identifier namespaces its cache.
  */

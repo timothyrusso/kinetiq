@@ -15,7 +15,7 @@
  * `upsertSnapshot` is the whole reason a completed workout is still readable in five years.
  * The activity recorded at finish time stores `exerciseId` plus the name; the details screen
  * resolves id → snapshot. Freeze nothing, and a mid-workout addition becomes a row that can
- * never be looked up once the provider's cache is gone — with nothing stored to repair it
+ * never be looked up once the provider's cache is gone: with nothing stored to repair it
  * from. Upsert rather than insert, because an exercise added to a routine earlier is already
  * in the table, and re-freezing it is correct (same current data), not a conflict.
  *
@@ -25,7 +25,7 @@
  * `@/workout/session`), so the snapshot write is awaited *before* `addExercise` publishes: by
  * the time the row is visible on screen, the row that makes it readable also exists. That
  * first write is the only asynchronous step, and it is the only one worth a `try` at the call
- * site — a failure propagates rather than being swallowed, because "it did not appear" and "it
+ * site: a failure propagates rather than being swallowed, because "it did not appear" and "it
  * appeared but its details are gone forever" are different failures, and only the second one
  * is silent.
  */
@@ -36,7 +36,7 @@ import { addExercise, getActiveSession, setActiveIndex } from '@/workout/session
 import type { Exercise } from '@/domain/types';
 
 export type AddSessionExerciseInput = {
-  /** A provider row — resolved, not just an id: the freeze needs the data it carries. */
+  /** A provider row: resolved, not just an id: the freeze needs the data it carries. */
   exercise: Exercise;
   /**
    * The user's preferred rest, used only because an exercise arriving from the live library
@@ -65,13 +65,13 @@ export async function addExerciseToSession(
 
   // Re-checked after the await: the sheet stays open over the session screen, so the workout
   // can have been discarded or finished while that write was in flight. `addExercise` guards
-  // this too, but silently — returning `true` here would then report success for a workout
+  // this too, but silently: returning `true` here would then report success for a workout
   // that no longer exists.
   const live = getActiveSession();
   if (live === null) return false;
 
   // One item through the same builder a real workout starts from, so a row added mid-session
-  // cannot come out shaped differently from one the routine would have produced — same rep
+  // cannot come out shaped differently from one the routine would have produced: same rep
   // parsing, same 1RM pass, same set numbering.
   const item = toDraftItem(
     input.exercise.id,

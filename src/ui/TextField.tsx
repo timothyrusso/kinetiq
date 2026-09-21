@@ -4,7 +4,7 @@
  *
  * - **Focus is a state, not a guess.** `onFocus`/`onBlur` drive the ring and the
  *   background tint. Android also fires blur for reasons unrelated to the field
- *   losing intent, so the ring is cleared on `onBlur` only — never inferred from a
+ *   losing intent, so the ring is cleared on `onBlur` only: never inferred from a
  *   keyboard event.
  * - **Keyboard avoidance is per-platform.** iOS needs `padding` because the keyboard
  *   overlays the window; Android's `adjustResize` already shrinks the window, so a
@@ -55,7 +55,7 @@ type OwnProps = {
   /** Validation copy. Also flips the field to the danger palette. */
   error?: string | null;
   hint?: string;
-  /** Trailing unit, e.g. `kg` — inside the box so the number and its unit read together. */
+  /** Trailing unit, e.g. `kg`: inside the box so the number and its unit read together. */
   unit?: string;
   accessibilityLabel?: string;
   disabled?: boolean;
@@ -181,7 +181,7 @@ export const TextField = forwardRef<TextFieldHandle, TextFieldProps>(function Te
           }}
           {...rest}
         />
-        {/* AFTER the input, not before it. A unit of measure follows its number — "178 cm",
+        {/* AFTER the input, not before it. A unit of measure follows its number, "178 cm",
             not "cm 178", which is what the leading affix produced on the height field and
             read as a stray word before the value. A leading affix is right for a currency
             symbol, and nothing in this app uses one. */}

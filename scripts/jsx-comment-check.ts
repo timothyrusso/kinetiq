@@ -1,17 +1,16 @@
 /**
- * Finds comments written as JSX children — which typecheck clean and then crash at runtime.
+ * Finds comments written as JSX children: which typecheck clean and then crash at runtime.
  *
  *   npm run check:jsx
  *
  * Why this exists when `tsc --noEmit` already runs: inside JSX, `//` is not a comment. The parser
  * reads it as two characters of *text*, React Native then throws "Text strings must be rendered
- * within a <Text> component", and the user meets a red box on a screen they were trying to use —
- * with the type checker entirely green. It happened in `app/workout/cardio.tsx` while removing a
+ * within a <Text> component", and the user meets a red box on a screen they were trying to use, * with the type checker entirely green. It happened in `app/workout/cardio.tsx` while removing a
  * `SectionHeader` eyebrow: the comment explaining why the prop was gone was itself rendered. A
  * first version of this script guessed at it from line shapes and missed the very case it was
  * written for, so it asks the TypeScript parser instead, which cannot guess wrong.
  *
- * What it detects: a `JsxText` node whose content begins with `//` or `/*` — i.e. the characters
+ * What it detects: a `JsxText` node whose content begins with `//` or `/*`: i.e. the characters
  * actually reached a text position. `{/* … *\/}` is a `JsxExpression`, not `JsxText`, so correct
  * JSX comments are not flagged, and comments outside JSX are invisible to this walk.
  *
@@ -44,7 +43,7 @@ let filesScanned = 0;
 for (const dir of DIRS) {
   for (const file of walk(join(ROOT, dir))) {
     const text = readFileSync(file, 'utf8');
-    // Skip parsing entirely for files with no comment start — the common case, and this stays fast.
+    // Skip parsing entirely for files with no comment start: the common case, and this stays fast.
     if (!text.includes('//') && !text.includes('/*')) {
       filesScanned += 1;
       continue;

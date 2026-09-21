@@ -9,7 +9,7 @@
  * to land. That matters doubly here because wger's `name__search` is pg_trgm fuzzy
  * matching: short queries are fast, longer ones scan more trigrams, so late
  * responses really do arrive out of order. Without the signal, a slow answer for
- * "bench" can overwrite the results for "bench press" — the stale overwrite the
+ * "bench" can overwrite the results for "bench press": the stale overwrite the
  * brief forbids. TanStack *also* discards a result whose key no longer matches, so
  * the two guards overlap deliberately: one stops the wasted work, the other stops
  * the wrong render.
@@ -96,14 +96,14 @@ function selectPages(data: {
  * outlasts a browsing session.
  *
  * Named rather than inlined because the detail query below also waits five minutes and means
- * something *different* by it — a single exercise is unlikely to change, not "a tab switch is
+ * something *different* by it: a single exercise is unlikely to change, not "a tab switch is
  * cheap". Two identical literals with two different justifications invite someone to
  * "deduplicate" them into one constant that is quietly wrong about both.
  */
 const EXERCISE_LIST_STALE_MS = 5 * 60_000;
 
 /**
- * Taxonomy changes on the order of months, and two callers ask for it — the hook and the
+ * Taxonomy changes on the order of months, and two callers ask for it: the hook and the
  * pre-warm that runs before the filter sheet opens. They must agree or the pre-warm warms
  * something that is already cold by the time the sheet reads it, which is the entire failure
  * mode of a speculative fetch.
@@ -116,7 +116,7 @@ const TAXONOMY_STALE_MS = 24 * 60 * 60_000;
  * The gate is not an optimisation, it is the difference between a tab that costs nothing until
  * it is opened and one that fetches the whole wger catalog during app launch. `NativeTabs`
  * renders a real UITabBarController, and every tab's screen is MOUNTED when the bar is created
- * — there is no `lazy` option, because the platform does not have one. Measured after that
+ *: there is no `lazy` option, because the platform does not have one. Measured after that
  * switch: a cold launch sent five wger requests before the user had touched anything, for a
  * tab they might never open.
  */
@@ -186,10 +186,10 @@ export function useExerciseSearch(filter: ExerciseFilter, active = true) {
 /**
  * Taxonomy is 8 + 12 + 15 rows and effectively static, so it gets the longest stale
  * time in the app and is prefetched as soon as the exercise tab is first focused. A
- * failure must never block searching — filters are optional, so the UI hides them
+ * failure must never block searching: filters are optional, so the UI hides them
  * rather than erroring.
  */
-/** @param active see `useExerciseSearch` — the same mount-is-not-focus problem. */
+/** @param active see `useExerciseSearch`: the same mount-is-not-focus problem. */
 export function useExerciseTaxonomy(active = true) {
   const provider = getExerciseProvider();
   return useQuery({
@@ -212,8 +212,8 @@ export function useExerciseTaxonomy(active = true) {
  *
  * ## Three sources, and the screen says which one it used
  *
- * An id reaches this screen from four places — a search row, a routine item, a set in
- * the activity history, a deep link — and where it came from decides what the app is
+ * An id reaches this screen from four places: a search row, a routine item, a set in
+ * the activity history, a deep link: and where it came from decides what the app is
  * able to say about it.
  *
  * - A **stored snapshot** exists for everything the user ever added to a routine (and
@@ -238,7 +238,7 @@ export type ExerciseDetailState = {
   exercise: Exercise | null;
   /** Where `exercise` came from; `'none'` exactly when it is null. */
   from: ExerciseDetailSource;
-  /** Whether this id could be fetched at all — false for `local:` ids. */
+  /** Whether this id could be fetched at all: false for `local:` ids. */
   fetchable: boolean;
   /** True only while there is *nothing* to show. With content up, use `isFetching`. */
   isLoading: boolean;
@@ -337,7 +337,7 @@ export function useExerciseResolution(id: string | null): ExerciseDetailState {
  * Pull a full `Exercise` for `id` out of whichever list query holds it.
  *
  * A scan rather than a lookup, because the filter that produced the tapped row is not
- * handed to the detail route — and putting it in the URL would make cache mechanics part
+ * handed to the detail route: and putting it in the URL would make cache mechanics part
  * of the app's addressing, and break the back gesture on every filter change. The scan is
  * bounded to list queries by the `['exercises','list']` prefix, and `getQueriesData` is a
  * synchronous cache read: a few small array walks at render time, no I/O, no subscription.

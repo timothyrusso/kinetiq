@@ -1,5 +1,5 @@
 /**
- * Notifications — the rest-timer alert, the weekly reminder, and the OS permission that
+ * Notifications: the rest-timer alert, the weekly reminder, and the OS permission that
  * decides whether either of them can exist.
  *
  * ## Three switches, three different meanings
@@ -15,13 +15,12 @@
  *
  * `syncTrainingReminder` rebuilds the schedule from scratch: cancel, then schedule at most
  * one DATE trigger. It is idempotent and cheap, so every change here calls it immediately
- * rather than deferring — a reminder you just configured that only appears after a restart is
+ * rather than deferring: a reminder you just configured that only appears after a restart is
  * indistinguishable from one that was never saved.
  *
  * ## The one case where it deliberately does *not* re-sync
  *
- * Cancelling means `cancelAllScheduledNotificationsAsync`, which cannot be selective —
- * expo-notifications has no cancel-by-purpose. Mid-workout, the notification that is about to
+ * Cancelling means `cancelAllScheduledNotificationsAsync`, which cannot be selective, * expo-notifications has no cancel-by-purpose. Mid-workout, the notification that is about to
  * fire is a rest-timer alert the user is currently relying on. Re-syncing the *weekly*
  * reminder in that moment would silence the rest buzz to change a date days away, so when a
  * session is active the schedule is left alone and the screen says so in plain words. It is
@@ -99,7 +98,7 @@ export default function SettingsNotificationsScreen() {
    * Commit settings, then make the device match them.
    *
    * Every mutation on this screen goes through here so there is exactly one place that
-   * decides whether the schedule is rebuilt — the mid-session exception cannot be forgotten by
+   * decides whether the schedule is rebuilt: the mid-session exception cannot be forgotten by
    * a control that forgot to call it.
    */
   const commit = useCallback(
@@ -191,7 +190,7 @@ export default function SettingsNotificationsScreen() {
                     <View style={styles.note}>
                       <Txt variant="caption" tone="muted">
                         This is off because iOS has not allowed notifications yet. Your rest
-                        timer still counts down on screen — you just have to look at it.
+                        timer still counts down on screen: you just have to look at it.
                       </Txt>
                     </View>
                   </>
@@ -210,7 +209,7 @@ export default function SettingsNotificationsScreen() {
                   </Txt>
                   <Txt variant="micro" tone="faint">
                     Follows the timer on the Training screen. There is no separate length here,
-                    and there is deliberately no second switch — two controls for one countdown
+                    and there is deliberately no second switch: two controls for one countdown
                     is how you end up with a rest timer that says 90 and buzzes at 60.
                   </Txt>
                   {enabled && granted ? (
@@ -345,7 +344,7 @@ export default function SettingsNotificationsScreen() {
                   {deferred ? (
                     <View style={[styles.note, { backgroundColor: theme.colors.accentSoft }]}>
                       <Txt variant="caption" tone="default">
-                        You are mid-session, so the schedule was saved but not re-armed — your
+                        You are mid-session, so the schedule was saved but not re-armed: your
                         rest timer keeps the alert it already has. It updates when the session
                         ends.
                       </Txt>
@@ -367,7 +366,7 @@ export default function SettingsNotificationsScreen() {
  * The OS answer, stated as the separate fact it is.
  *
  * `status === 'denied'` is the interesting case: iOS stops asking after the first refusal, so
- * the button here cannot fix it — only send the user to Settings. Showing a "Allow" button in
+ * the button here cannot fix it: only send the user to Settings. Showing a "Allow" button in
  * that state is the classic dead-end, so the copy says where to go instead of offering a tap
  * that does nothing.
  */
@@ -481,13 +480,13 @@ function reminderHint(reminder: ReminderSettings, enabled: boolean, granted: boo
   return `${describeDays(reminder.days)} at ${formatClock(reminder.minuteOfDay)}.`;
 }
 
-/** "Mon, Wed, Fri" / "Mon–Fri" / "Every day", from an ISO day set. */
+/** "Mon, Wed, Fri" / "Mon-Fri" / "Every day", from an ISO day set. */
 function describeDays(days: readonly number[]): string {
   const names = DAYS.filter((d) => days.includes(d.iso)).map((d) => d.label);
   if (names.length === 7) return 'Every day';
   if (names.length === 1) return names[0] ?? 'No days';
 
-  // A run of consecutive ISO days is a range, and "Mon–Fri" is what a person would say.
+  // A run of consecutive ISO days is a range, and "Mon-Fri" is what a person would say.
   const sorted = [...days].sort((a, b) => a - b);
   const contiguous = sorted.every(
     (d, i) => i === 0 || d === (sorted[i - 1] ?? Number.NaN) + 1,
@@ -495,7 +494,7 @@ function describeDays(days: readonly number[]): string {
   if (contiguous && sorted.length > 2) {
     const first = DAYS.find((d) => d.iso === sorted[0])?.label;
     const last = DAYS.find((d) => d.iso === sorted[sorted.length - 1])?.label;
-    if (first && last) return `${first}–${last}`;
+    if (first && last) return `${first}-${last}`;
   }
   return names.join(', ');
 }

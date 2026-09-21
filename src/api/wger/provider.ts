@@ -13,7 +13,7 @@
  *  - Search is `name__search` (pg_trgm): fuzzy and relevance-ranked, so
  *    "bech press" finds Bench Press. Plain `search` / `term` / `q` / `name`
  *    exist as parameters but are ignored by the server, which is worse than a
- *    400 — it looks like it works and returns the whole catalog.
+ *    400: it looks like it works and returns the whole catalog.
  *  - `language__code` narrows *which exercises* have a translation in those
  *    languages; it does not strip other languages from `translations[]`. We
  *    therefore still resolve display strings ourselves, and we send the user's
@@ -41,8 +41,8 @@ import {
 const BASE_URL = 'https://wger.de/api/v2/';
 
 /**
- * Page size. wger's rows are heavy — every row carries translations in ~16
- * languages plus hydrated media, measured at ~8 KB per row — so a page is about
+ * Page size. wger's rows are heavy: every row carries translations in ~16
+ * languages plus hydrated media, measured at ~8 KB per row: so a page is about
  * 200 KB. Doubling the page roughly doubles parse time and memory for rows
  * nobody has scrolled to yet.
  */
@@ -98,7 +98,7 @@ export class WgerExerciseProvider implements ExerciseProvider {
 
   /**
    * Resolves the device language to wger's numeric ids. The mapping is fetched
-   * once per process and shared — concurrent callers await the same promise, so
+   * once per process and shared: concurrent callers await the same promise, so
    * a cold start does not fire the request three times. A failure clears the
    * promise so the next call retries instead of latching onto English forever.
    */
@@ -200,7 +200,7 @@ export class WgerExerciseProvider implements ExerciseProvider {
   }
 
   /**
-   * Categories, equipment and muscles. Three tiny requests in parallel — the
+   * Categories, equipment and muscles. Three tiny requests in parallel: the
    * API has no combined taxonomy endpoint, and `Promise.all` means one round
    * trip's latency, not three.
    */

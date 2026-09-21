@@ -1,12 +1,12 @@
 /**
- * Workout tab — the front door to training.
+ * Workout tab: the front door to training.
  *
  * ## Ordered by what the user is mid-way through
  *
  * Two states, one priority: an in-flight session goes first (it is unfinished and
  * time-sensitive), then routines, then the library. A screen that keeps leading with
  * "start something new" while a set sits half-completed is asking to be abandoned, so the
- * resume card is not a banner appended to a list — it *is* the first thing on screen.
+ * resume card is not a banner appended to a list: it *is* the first thing on screen.
  *
  * ## A scroll view, not a list
  *
@@ -28,13 +28,13 @@
  * `routes.cardio()` reachable from Profile alone, which buried a whole training mode behind a
  * settings-looking screen. The split is also honest about what the two are: a routine is a plan
  * you follow from a list, cardio is an activity you go out and do, and the entry points read
- * differently for that reason — pick a plan versus put your phone in your pocket.
+ * differently for that reason: pick a plan versus put your phone in your pocket.
  *
  * ## No history list
  *
  * Activities owns history. Repeating it here would be a second list with a second sort and
  * no second purpose. What this tab can answer that Activities cannot is "which routines am
- * I actually running, and when did I last do each?" — so that lives on the routine rows.
+ * I actually running, and when did I last do each?": so that lives on the routine rows.
  */
 import { useCallback, useMemo, useState } from 'react';
 import {
@@ -75,7 +75,7 @@ type Order = 'recent' | 'name';
 
 const ORDER_SEGMENTS: readonly { value: Order; label: string }[] = [
   { value: 'recent', label: 'Recent' },
-  { value: 'name', label: 'A–Z' },
+  { value: 'name', label: 'A-Z' },
 ];
 
 /** Six is two rows of three on a compact phone and reads as a sample, not a list. */
@@ -272,7 +272,7 @@ export default function WorkoutScreen() {
   );
 }
 
-/** The "pick up where you left off" card. Deliberately loud — the only urgent thing here. */
+/** The "pick up where you left off" card. Deliberately loud: the only urgent thing here. */
 function ResumeCard({
   routineName,
   paused,
@@ -335,14 +335,14 @@ function ResumeCard({
  *
  * A tappable card with a Start button inside it has to swallow the inner press to avoid
  * firing both, and RN's responder system makes that fiddly to get right on Android. Two
- * separate targets — the name block opens, Start starts — is unambiguous to read and to
+ * separate targets: the name block opens, Start starts: is unambiguous to read and to
  * hit, and needs no event plumbing at all.
  */
 function LastTrainedCard({ routine, onOpen }: { routine: Routine; onOpen: () => void }) {
   const performedAt = routine.lastPerformedAt ?? routine.createdAt;
   // The card, not the button, shows the refusal: squeezed under a `Start` button the line
   // would be two clipped words, and this is the one case where the button correctly did
-  // nothing — it has to be readable, not merely present.
+  // nothing: it has to be readable, not merely present.
   const [refused, setRefused] = useState(false);
   return (
     <View style={styles.section}>
@@ -367,7 +367,7 @@ function LastTrainedCard({ routine, onOpen }: { routine: Routine; onOpen: () => 
         </Row>
         {refused ? (
           <Txt variant="caption" tone="danger" style={{ marginTop: spacing.sm }}>
-            Nothing to train yet — open this routine and add an exercise.
+            Nothing to train yet: open this routine and add an exercise.
           </Txt>
         ) : null}
       </Card>
@@ -379,7 +379,7 @@ function LastTrainedCard({ routine, onOpen }: { routine: Routine; onOpen: () => 
  * Starting a workout is a navigation, not a mutation.
  *
  * `startSession` is synchronous over an in-memory store and persists on its own; the session
- * screen reads the same store. `useStartRoutine` owns the whole sequence — the same one the
+ * screen reads the same store. `useStartRoutine` owns the whole sequence: the same one the
  * routine screen runs, which is the point: two entry points that build entries slightly
  * differently, or that read a default rest time from different places, is how a user ends up
  * with a different workout depending on which of two identical buttons they happened to tap.
@@ -422,8 +422,7 @@ function StartButton({ routine, onRefused }: { routine: Routine; onRefused: () =
  *
  * A different shape from the routine rows on purpose: a routine is chosen, cardio is begun, so
  * this is one large target with the activity kinds named on it rather than a row with a button
- * on the right. It also carries the "why is distance sometimes estimated" line in one place —
- * better here, where it is read before a session, than on the results screen, where it is
+ * on the right. It also carries the "why is distance sometimes estimated" line in one place, * better here, where it is read before a session, than on the results screen, where it is
  * read after one.
  */
 function CardioCard({ onPress, style }: { onPress: () => void; style?: StyleProp<ViewStyle> }) {
@@ -492,7 +491,7 @@ function LibraryPreview({
       ) : failed ? (
         <Txt variant="caption" tone="muted">
           The catalog is remote, so browsing needs a connection. Your saved routines are
-          unaffected — each one carries its own frozen copy of every exercise in it.
+          unaffected: each one carries its own frozen copy of every exercise in it.
         </Txt>
       ) : (
         <View style={styles.grid}>
@@ -526,7 +525,7 @@ function LibraryPreview({
 /**
  * Sessions per routine.
  *
- * Deliberately not volume or minutes — those belong on Progress, which derives them from
+ * Deliberately not volume or minutes: those belong on Progress, which derives them from
  * activity history over a date range. The honest question here is *which routines actually
  * get run*, and that is countable from the routine rows themselves: no extra query, and
  * nothing that could disagree with the Progress tab.

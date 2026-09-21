@@ -78,7 +78,7 @@ export type StrengthSet = {
 };
 
 export type StrengthEntry = {
-  /** Snapshot id — see `ExerciseSnapshot`. */
+  /** Snapshot id: see `ExerciseSnapshot`. */
   exerciseId: string;
   exerciseName: string;
   /** Present for seeded/legacy rows; snapshots are authoritative. */

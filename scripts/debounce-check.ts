@@ -6,9 +6,7 @@
  * word with `--delay-ms 20` and saw six requests, which looks exactly like a broken
  * debounce. But it is not evidence: iOS character delivery through the automation layer has
  * its own pace, and `--delay-ms` is a floor, not a metronome. If the characters arrive more
- * than 220 ms apart, one commit per character is the debounce WORKING. The two hypotheses —
- * "the debounce is broken" and "the automator types slower than the debounce window" —
- * produce identical ledgers on a device and cannot be separated there.
+ * than 220 ms apart, one commit per character is the debounce WORKING. The two hypotheses, * "the debounce is broken" and "the automator types slower than the debounce window", * produce identical ledgers on a device and cannot be separated there.
  *
  * They can be separated here, because exerciseFilters.ts imports nothing platform-specific:
  * keystrokes can be delivered on a schedule this file controls, to the microsecond.
@@ -40,7 +38,7 @@ function check(name: string, ok: boolean, detail = ''): void {
     console.log(`  ok   ${name}`);
   } else {
     failed += 1;
-    console.log(`  FAIL ${name}${detail ? ` — ${detail}` : ''}`);
+    console.log(`  FAIL ${name}${detail ? `, ${detail}` : ''}`);
   }
 }
 
@@ -68,7 +66,7 @@ function watchCommits(): { queries: string[]; stop: () => void } {
 async function main(): Promise<void> {
   const WORD = 'lateral raise';
 
-  console.log('\n— keystrokes inside the window must collapse to one commit —');
+  console.log('\n: keystrokes inside the window must collapse to one commit, ');
   resetExerciseFilter();
   let w = watchCommits();
   // 30 ms apart: a third of the 220 ms window, i.e. continuous typing by any standard.
@@ -76,7 +74,7 @@ async function main(): Promise<void> {
     setExerciseQuery(WORD.slice(0, i));
     await sleep(30);
   }
-  // The draft must be ahead immediately — the input shows this, not the committed value.
+  // The draft must be ahead immediately: the input shows this, not the committed value.
   check(
     'draft runs ahead of the committed filter while typing',
     getExerciseFilterState().draft === WORD && getExerciseFilterState().filter.query === '',
@@ -95,7 +93,7 @@ async function main(): Promise<void> {
   );
   w.stop();
 
-  console.log('\n— typing slower than the window commits per pause (correct, not a bug) —');
+  console.log('\n: typing slower than the window commits per pause (correct, not a bug), ');
   resetExerciseFilter();
   w = watchCommits();
   for (const part of ['lat', 'eral', ' raise']) {
@@ -105,7 +103,7 @@ async function main(): Promise<void> {
   check('three settled pauses produce three commits', w.queries.length === 3, `got ${w.queries.length}`);
   w.stop();
 
-  console.log('\n— a tap must not wait for the debounce —');
+  console.log('\n: a tap must not wait for the debounce, ');
   resetExerciseFilter();
   w = watchCommits();
   setExerciseMuscleId(7);
@@ -118,7 +116,7 @@ async function main(): Promise<void> {
   check('equipment chip commits synchronously', getExerciseFilterState().filter.equipmentId === 3);
   w.stop();
 
-  console.log('\n— clearing must cancel a commit that was already scheduled —');
+  console.log('\n: clearing must cancel a commit that was already scheduled, ');
   resetExerciseFilter();
   w = watchCommits();
   setExerciseQuery('deadlift');
@@ -136,7 +134,7 @@ async function main(): Promise<void> {
   );
   w.stop();
 
-  console.log('\n— a word typed then cleared inside the window must never reach the network —');
+  console.log('\n: a word typed then cleared inside the window must never reach the network, ');
   resetExerciseFilter();
   w = watchCommits();
   for (const ch of 'squat') {

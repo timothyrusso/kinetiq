@@ -5,7 +5,7 @@
  * surface it draws, for two things it renders itself and cannot be styled away: the
  * `cardStyle` defaults of native-stack and the accessibility traits of its back
  * gesture. Handing it the default blue-white palette would mean the navigation
- * primitives disagree with the app they contain — visible as a white flash behind a
+ * primitives disagree with the app they contain: visible as a white flash behind a
  * dark screen during a native push on iOS.
  *
  * Built from `themeFor` rather than a hook so this stays a module constant: these two

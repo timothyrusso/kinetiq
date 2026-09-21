@@ -2,14 +2,14 @@
  * Wire shapes for the wger Workout Manager API (https://wger.de/en/software/api).
  *
  * These mirror what the server actually returns, verified against live
- * responses — they are not guesses, and nothing outside `src/api` may import
+ * responses: they are not guesses, and nothing outside `src/api` may import
  * them. Everything the rest of the app sees is mapped into `@/domain/types`.
  *
  * Verified behaviours worth knowing before editing:
  *  - `exerciseinfo` list rows hydrate `images[]` and `videos[]` *fully* (URLs,
  *    thumbnails, codecs), so a detail screen needs no second request and a list
  *    never issues an N+1 per row.
- *  - `exerciseimage` / `video` do **not** filter by `exercise_base` — the param
+ *  - `exerciseimage` / `video` do **not** filter by `exercise_base`: the param
  *    is accepted and silently ignored (count stays at the full 374 / 78). Media
  *    can therefore only be obtained nested, which is exactly what we do, so
  *    there is deliberately no media index here.
@@ -38,7 +38,7 @@ export type WgerMuscle = {
 
 export type WgerImage = {
   id: number;
-  /** Base exercise id — the row belongs to the *base*, not the variation. */
+  /** Base exercise id: the row belongs to the *base*, not the variation. */
   exercise: number;
   exercise_uuid?: string | null;
   image: string;
@@ -57,11 +57,11 @@ export type WgerVideo = {
   duration?: string | null;
   width?: number;
   height?: number;
-  /** e.g. "hevc" / "h264" — matters because HEVC will not decode on many Android devices. */
+  /** e.g. "hevc" / "h264": matters because HEVC will not decode on many Android devices. */
   codec?: string | null;
 };
 
-/** Author notes are objects, not strings — `{id, translation, comment}`. */
+/** Author notes are objects, not strings, `{id, translation, comment}`. */
 export type WgerNote = { id: number; translation?: number; comment?: string | null };
 
 export type WgerTranslation = {
@@ -110,7 +110,7 @@ export type WgerLanguage = {
   full_name_en?: string;
 };
 
-/** Bare `{results}` — taxonomy endpoints paginate, but all fit in one page. */
+/** Bare `{results}`: taxonomy endpoints paginate, but all fit in one page. */
 export type WgerTaxonomyResponse = WgerListResponse<WgerNamedEntity>;
 
 export type WgerMuscleResponse = WgerListResponse<WgerMuscle>;

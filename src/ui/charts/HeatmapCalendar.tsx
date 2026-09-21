@@ -1,5 +1,5 @@
 /**
- * Consistency heatmap — the GitHub-style training grid.
+ * Consistency heatmap: the GitHub-style training grid.
  *
  * Weeks run left to right, days top to bottom, which is the orientation people already
  * know; the alternative (days as columns) reads as a calendar and invites misreading. The
@@ -7,7 +7,7 @@
  * from drifting a column off.
  *
  * Cells are memoised pressables with an index-derived key. On a 26-week grid that is ~180
- * of them, which is fine in a screen body and would not be inside a FlashList row — so this
+ * of them, which is fine in a screen body and would not be inside a FlashList row: so this
  * component is for screen bodies and cards, not list cells.
  */
 import { memo, useMemo } from 'react';
@@ -25,7 +25,7 @@ const DAY_LABELS = ['M', '', 'W', '', 'F', '', 'S'];
 export type HeatmapDay = {
   /** Local calendar date, `yyyy-MM-dd`. */
   date: string;
-  /** Minutes trained, sessions, or any load measure — only its ratio to `maxValue` is used. */
+  /** Minutes trained, sessions, or any load measure: only its ratio to `maxValue` is used. */
   value: number;
 };
 

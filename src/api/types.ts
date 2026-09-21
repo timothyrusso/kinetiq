@@ -3,7 +3,7 @@
  *
  * Screens and query hooks depend on this interface only. Swapping wger for a
  * self-hosted catalog, a paid provider or a bundled fixture means writing one
- * new class and changing one line in `src/api/index.ts` — no screen, hook or
+ * new class and changing one line in `src/api/index.ts`: no screen, hook or
  * repository changes, and no response shapes leaking anywhere else.
  */
 import type { Exercise, ExerciseFilter, ExercisePage, ExerciseTaxonomy } from '@/domain/types';

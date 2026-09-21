@@ -72,8 +72,7 @@ export function totalVolumeKg(entries: readonly StrengthEntry[]): number {
  * Planned load for a *program*: Σ sets × weight, over a routine's rows.
  *
  * The sibling of `totalVolumeKg`, which is the same sum over sets actually performed. The
- * two must stay side by side in this file because their whole value is being comparable —
- * a progress screen that computes the planned figure with a different rule than the performed
+ * two must stay side by side in this file because their whole value is being comparable, * a progress screen that computes the planned figure with a different rule than the performed
  * one shows a "completion percentage" that means nothing.
  *
  * Bodyweight rows contribute zero, which is correct for load and not a bug: tonnage is the
@@ -215,7 +214,7 @@ export function dayKey(date: Date | number): string {
 
 /**
  * Consecutive-day streak counting from the most recent activity. A day that has
- * not happened yet does not break the streak — "today" is only broken once it is
+ * not happened yet does not break the streak, "today" is only broken once it is
  * over, which matches how every streak product behaves.
  */
 export function computeStreak(
@@ -269,7 +268,7 @@ function dayBefore(date: Date): Date {
  * The rounding belongs here rather than in the label, because "seconds" is what this
  * function's name promises: a raw `(endsAt - now) / 1000` leaked the millisecond
  * remainder into the countdown (`2:59.9799999999999`) and into the ±15s adjusters,
- * where it was silently re-rounded by `setRestTimer` — right answer, wrong arithmetic,
+ * where it was silently re-rounded by `setRestTimer`: right answer, wrong arithmetic,
  * visible in the UI. Ceiling so the last partial second still reads `1` and the dock
  * disappears exactly at the deadline, not half a second early.
  */

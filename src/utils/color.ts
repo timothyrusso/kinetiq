@@ -3,7 +3,7 @@
  *
  * ## Why this exists at all
  *
- * The map's route line is coloured by pace — one colour per coordinate — which means
+ * The map's route line is coloured by pace: one colour per coordinate: which means
  * interpolating between two brand colours in code rather than picking one from the palette.
  * Every other colour in the app comes from `theme.colors`; this is the one place a colour is
  * *computed*, and it is kept here so the arithmetic lives in one file rather than being
@@ -11,7 +11,7 @@
  *
  * ## Gamma
  *
- * Mixing in sRGB — the naive thing — makes the midpoint of a green→red ramp a muddy olive,
+ * Mixing in sRGB: the naive thing: makes the midpoint of a green→red ramp a muddy olive,
  * because sRGB values are perceptually warped. Mixing in linear light puts the midpoint where
  * the eye expects it. The cost is six exponentiations per interpolation, which for a 400-point
  * route is nothing, and it is the reason the pace ramp reads as a gradient rather than two
@@ -67,7 +67,7 @@ function toSrgb(linear: number): number {
 /**
  * Blend two colours in linear light.
  *
- * Falls back to picking the nearer input when either will not parse — a caller passing an
+ * Falls back to picking the nearer input when either will not parse: a caller passing an
  * `rgba()` string gets a hard step instead of a blend, which is a better outcome than a screen
  * that refuses to draw its route line.
  */
@@ -107,7 +107,7 @@ export function ramp(stops: readonly string[], t: number, fallback: string): str
  *
  * ## The `'worklet'` directive
  *
- * This runs inside `useAnimatedStyle` — a collapsing header fades its frosted backing in over
+ * This runs inside `useAnimatedStyle`: a collapsing header fades its frosted backing in over
  * scroll, which computes a colour per frame on the UI thread. Reanimated serialises a worklet
  * by stringifying its body, so anything it calls has to be a *literal* of that function or carry
  * its own `'worklet'` directive; a plain imported helper is `undefined` on the other side, and

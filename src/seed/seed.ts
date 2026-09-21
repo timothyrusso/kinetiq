@@ -5,7 +5,7 @@
  * written as a `local` snapshot with a locally minted id, so a seeded routine is
  * exactly as offline-safe as one the user built from the remote catalog. Nothing
  * here touches the network, and deleting this module would leave the rest of the
- * app working — it would just start empty.
+ * app working: it would just start empty.
  *
  * Randomness is seeded (mulberry32), so the same install shape produces the same
  * history. That makes screenshots, QA scripts and bug reports comparable.
@@ -166,7 +166,7 @@ function buildRoute(
   return points;
 }
 
-/** Kilometre splits with a slight negative split — better charts, and honest. */
+/** Kilometre splits with a slight negative split: better charts, and honest. */
 function buildSplits(
   rng: () => number,
   count: number,
@@ -200,19 +200,19 @@ type PlanTemplate = {
 
 const PLANS: readonly PlanTemplate[] = [
   {
-    name: 'Push — Heavy',
+    name: 'Push · Heavy',
     description: 'Bench-led pressing with overhead volume behind it. Full rests on the first lift.',
     keys: ['bench-press', 'overhead-press', 'incline-dumbbell-press', 'lateral-raise', 'cable-pushdown'],
     sets: [5, 4, 3, 3, 3],
   },
   {
-    name: 'Pull — Heavy',
+    name: 'Pull · Heavy',
     description: 'Deadlifts first while fresh, then rows and vertical pulling.',
     keys: ['conventional-deadlift', 'bent-over-row', 'pull-up', 'ez-bar-curl', 'hanging-leg-raise'],
     sets: [5, 4, 4, 3, 3],
   },
   {
-    name: 'Legs — Squat Focus',
+    name: 'Legs · Squat Focus',
     description: 'Back squat top set plus back-off volume, single-leg work at the end.',
     keys: ['barbell-back-squat', 'romanian-deadlift', 'bulgarian-split-squat', 'leg-press', 'hanging-leg-raise'],
     sets: [5, 3, 3, 3, 3],
@@ -268,7 +268,7 @@ function buildEntry(
 
 const RUN_TITLES = [
   'Morning loop along the Arno',
-  'Tempo — 3 × 1 km',
+  'Tempo, 3 × 1 km',
   'Easy recovery jog',
   'Hill repeats at San Miniato',
   'Long run',
@@ -383,7 +383,7 @@ function buildStrengthActivity(
  *
  * The window runs Monday-to-Monday and its last week is the one the user is
  * standing in. Laying the normal schedule across it would date a Thursday lift
- * or a Saturday run *after* today, and `push` would then drop it — leaving a
+ * or a Saturday run *after* today, and `push` would then drop it: leaving a
  * visible, empty current week while the six weeks behind it look busy. Home
  * would open on "0 of 4 this week" above a full-looking history, which reads as
  * a broken summary rather than a quiet week. So the final loop reuses the
@@ -472,7 +472,7 @@ function buildRoutines(createdAt: number): Routine[] {
     items: plan.keys.map<RoutineItem>((key, index) => {
       const source = exerciseByKey.get(key);
       // `snapshotFor` caches by key and history runs first, so this date is a
-      // fallback rather than the value that usually survives — but it must still
+      // fallback rather than the value that usually survives: but it must still
       // be a date the routine could have known about, which `createdAt` is.
       const snapshot = snapshotFor(key, createdAt);
       return {
@@ -480,7 +480,7 @@ function buildRoutines(createdAt: number): Routine[] {
         exerciseId: snapshot.exerciseId,
         exerciseName: snapshot.name,
         sets: plan.sets[index] ?? 3,
-        reps: index === 0 ? '5' : '8–10',
+        reps: index === 0 ? '5' : '8-10',
         weightKg: source?.bodyweight ? 0 : roundTo(source?.baseWeightKg ?? 20, 1),
         restSeconds: source?.restSeconds ?? 90,
         notes: null,

@@ -4,7 +4,7 @@
  *
  * There is no route for adding an exercise to a running workout. It is a sheet the session
  * screen owns (`ExercisePickerSheet`), because the thing being chosen has to arrive back as a
- * value — and a pushed route hands values back through the URL or through a store, which on
+ * value: and a pushed route hands values back through the URL or through a store, which on
  * the one screen in the app that must not lose state is the wrong trade.
  *
  * ## Why `app/workout/` and not `app/(workout)/workout/`
@@ -18,16 +18,16 @@
  * first, which would shadow the tab. The group would then have to own `/workout` itself,
  * i.e. re-host the tab, and the whole `TAB_ROUTES` model falls apart. Un-grouped files
  * under a path the tab also contributes is how Expo ships tabs plus detail routes, and it
- * is what `app/_layout.tsx` already expects — it declares `<Stack.Screen name="workout" />`
+ * is what `app/_layout.tsx` already expects: it declares `<Stack.Screen name="workout" />`
  * on the assumption that the path exists as a top-level subtree.
  *
  * ## Card, not sheet
  *
  * Inherited from the root layout's `workout` screen (see the note there): these screens still
- * navigate onward — on finish, the session replaces itself with the log of completed workouts
- * rather than popping back into a routine tab that no longer knows what just happened — and a
- * `modal` presentation cannot navigate. The bottom-sheet *feel* — rounded top corners,
- * slide-from-below — comes from the transition, which does not need `presentation` to look
+ * navigate onward: on finish, the session replaces itself with the log of completed workouts
+ * rather than popping back into a routine tab that no longer knows what just happened: and a
+ * `modal` presentation cannot navigate. The bottom-sheet *feel*: rounded top corners,
+ * slide-from-below: comes from the transition, which does not need `presentation` to look
  * like one.
  *
  * ## No `contentStyle` here
@@ -44,7 +44,7 @@ export default function WorkoutLayout() {
       {/*
         The player. `gestureEnabled: false` on iOS, deliberately.
 
-        The interactive back gesture would let a swipe discard an unfinished workout — and
+        The interactive back gesture would let a swipe discard an unfinished workout: and
         the one moment someone swipes back is the moment they reach for their phone between
         sets. There is no confirmation to intercept it with either: `expo-router` cannot
         veto a native pop, so the only options are "lose the workout" or "no gesture".
@@ -60,8 +60,8 @@ export default function WorkoutLayout() {
         The recorder. Same reasoning as the player, and it applies *after* Start is pressed:
         once a session is live, the only exits on screen are Stop and Discard, because a swipe
         that appears to cancel six kilometres is the failure this route exists to prevent.
-        (Nothing is genuinely lost by leaving — the recorder is a module singleton and keeps
-        running — but a gesture that looks destructive has to go, even when it is not.)
+        (Nothing is genuinely lost by leaving: the recorder is a module singleton and keeps
+        running: but a gesture that looks destructive has to go, even when it is not.)
       */}
       <Stack.Screen
         name="cardio"

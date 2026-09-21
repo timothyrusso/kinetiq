@@ -7,7 +7,7 @@
  * returning one blob. Split anyway, keyed by what actually invalidates them:
  * `summary(4)` and `summary(12)` are different windows the user switches between, and a
  * single blob would refetch everything to change one number. `heatmap` has no range at
- * all — it is always "the last however-many weeks" — so it changes only when history
+ * all: it is always "the last however-many weeks": so it changes only when history
  * changes.
  *
  * ## Why the window is a count of weeks, not a date range
@@ -16,7 +16,7 @@
  * re-read the database on every day boundary. A week count is stable across days, and
  * the start date is derived *inside* the query from `now`, so "last 4 weeks" recomputes
  * against the current clock while keeping its cache slot. The cost is that a summary
- * fetched before midnight is stale after it — which `staleTime` handles, and which is
+ * fetched before midnight is stale after it: which `staleTime` handles, and which is
  * exactly the behaviour the user expects from a "this week" card.
  */
 import { useQuery } from '@tanstack/react-query';
@@ -67,7 +67,7 @@ export type TrainingSummary = {
   bestStreak: number;
   /** Days with a workout inside the window / days elapsed in the window, 0…1. */
   consistency: number;
-  /** True when the user has no activities at all — a different empty state from "no activities in this range". */
+  /** True when the user has no activities at all: a different empty state from "no activities in this range". */
   hasAnyHistory: boolean;
 };
 
@@ -76,7 +76,7 @@ export type HeatmapDay = {
   dayStart: number;
   workouts: number;
   durationSeconds: number;
-  /** 0 none · 1 short · 2 moderate · 3 long — a bucketed intensity for colour. */
+  /** 0 none · 1 short · 2 moderate · 3 long: a bucketed intensity for colour. */
   level: 0 | 1 | 2 | 3;
 };
 
@@ -93,7 +93,7 @@ export type TrainingHeatmap = {
   spanWeeks: number;
 };
 
-/** 30 minutes is where "did something" stops reading as a scratch — the bucket boundary the ring colours use. */
+/** 30 minutes is where "did something" stops reading as a scratch: the bucket boundary the ring colours use. */
 const MODERATE_MINUTES = 30;
 const LONG_MINUTES = 75;
 
@@ -144,7 +144,7 @@ export function useTrainingSummary(rangeWeeks: number) {
       }
 
       // Elapsed days rather than `rangeWeeks * 7`, so "this week" on a Monday reads as 1
-      // day of 1 elapsed rather than 0 of 7 — a fresh window with no workouts yet should
+      // day of 1 elapsed rather than 0 of 7: a fresh window with no workouts yet should
       // not look like a 0% month.
       const elapsedDays = Math.max(
         1,
@@ -229,7 +229,7 @@ export function useTrainingHeatmap() {
  *
  * Read from the `records` table rather than recomputed from history. `finishSession`
  * already compares a workout against everything prior and commits the winners, so the
- * table *is* the computed answer — recomputing it here would walk every strength entry on
+ * table *is* the computed answer: recomputing it here would walk every strength entry on
  * the Progress screen to reproduce a comparison that happened once, on the write, when the
  * full history was already loaded.
  *
@@ -243,7 +243,7 @@ export function usePersonalRecords(limit = 12) {
     queryFn: async (): Promise<PersonalRecord[]> => {
       const records = await recordRepository.all();
       // `all()` is already ordered by achieved_at DESC; the sort is defensive rather than
-      // load-bearing — it keeps the slice honest if the repository's ordering ever changes.
+      // load-bearing: it keeps the slice honest if the repository's ordering ever changes.
       return [...records].sort((a, b) => b.achievedAt - a.achievedAt).slice(0, limit);
     },
   });
@@ -263,7 +263,7 @@ function longestStreak(activities: readonly Activity[]): number {
     if (previous === undefined || current === undefined) continue;
     const gap = Math.round((current - previous) / 86_400_000);
     // A gap of exactly one day continues the streak; anything larger restarts it. DST
-    // shifts the boundary by an hour, which the round absorbs — a naive `!== 86400000`
+    // shifts the boundary by an hour, which the round absorbs: a naive `!== 86400000`
     // comparison breaks the streak on the first Sunday of November.
     run = gap === 1 ? run + 1 : 1;
     if (run > best) best = run;

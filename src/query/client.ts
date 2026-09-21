@@ -21,8 +21,8 @@ import { setupQueryAdapters, type QueryAdapters } from './adapters';
 
 /**
  * How long a fresh result stays fresh. Two minutes is long enough that turning
- * over every tab in the app costs zero requests — the brief explicitly asks for
- * that — and short enough that returning from a gym basement picks up new data
+ * over every tab in the app costs zero requests: the brief explicitly asks for
+ * that: and short enough that returning from a gym basement picks up new data
  * without an explicit pull.
  */
 const STALE_TIME_MS = 2 * 60_000;
@@ -33,7 +33,7 @@ const STALE_TIME_MS = 2 * 60_000;
  *
  * The distinction that matters: a 429 from wger is a real rate limit and
  * `retryAfterSeconds` tells us how long to wait, while an offline error must not
- * be retried at all — the connection is gone, and hammering it drains battery and
+ * be retried at all: the connection is gone, and hammering it drains battery and
  * makes a dead network look like a slow one. Offline recovery is the `online`
  * manager's job: it resumes paused mutations and refetches pending queries the
  * moment the interface comes back.
@@ -68,12 +68,12 @@ export function createQueryClient(): QueryClient {
   return new QueryClient({
     // Every mutation in the app reports here. The default is that a rejected
     // mutation surfaces only through the `isError` flag on whichever hook called
-    // it, and a screen that reads only `isPending` — which is to say, every screen
-    // here — shows a spinner that stops spinning and a sheet that may as well have
+    // it, and a screen that reads only `isPending`: which is to say, every screen
+    // here: shows a spinner that stops spinning and a sheet that may as well have
     // succeeded. A failed write to disk then looks exactly like a successful one;
     // the notes save did precisely this, and the only evidence was data the user
     // could not see. The error is logged as an object because the stack names the
-    // call site, which a `mutationKey` would only approximate — so the ten
+    // call site, which a `mutationKey` would only approximate: so the ten
     // mutations stay key-free and the log is still attributable.
     mutationCache: new MutationCache({
       onError: (error) => {
@@ -87,8 +87,8 @@ export function createQueryClient(): QueryClient {
         // not generate unnecessary repeated API requests". Tab switches keep screens
         // mounted (so focus would be the leak) and every push/pop remounts a detail
         // screen (so mount would be the leak). Cross-feature freshness instead goes
-        // through explicit invalidation — finishing a workout invalidates activity
-        // and progress keys — plus pull-to-refresh, which is always available.
+        // through explicit invalidation: finishing a workout invalidates activity
+        // and progress keys: plus pull-to-refresh, which is always available.
         refetchOnReconnect: false,
         refetchOnMount: false,
         refetchOnWindowFocus: false,
@@ -96,7 +96,7 @@ export function createQueryClient(): QueryClient {
         retryDelay,
         // An error that survives retries stays on screen as an error state; a
         // stale-but-successful result would be nicer, but only where we have one
-        // to show — see the exercise browser's `isPlaceholderData` handling.
+        // to show: see the exercise browser's `isPlaceholderData` handling.
         throwOnError: false,
       },
       // Mutations here are local-disk writes; a retry would replay a partial
@@ -111,8 +111,8 @@ let adapters: QueryAdapters | null = null;
 
 /**
  * The app-wide client. Created eagerly rather than inside a provider so that
- * non-component code — the workout session engine, prefetch on screen focus, the
- * post-workout invalidation — reaches the same instance without prop drilling.
+ * non-component code: the workout session engine, prefetch on screen focus, the
+ * post-workout invalidation: reaches the same instance without prop drilling.
  */
 export function getQueryClient(): QueryClient {
   if (!client) client = createQueryClient();

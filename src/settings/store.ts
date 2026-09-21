@@ -53,7 +53,7 @@ async function persist(next: SettingsState): Promise<void> {
     ]);
   } catch (error) {
     // A failed write leaves the in-memory values intact for this run; saying so
-    // is all we can do — reverting the UI to values the user never chose would be
+    // is all we can do: reverting the UI to values the user never chose would be
     // worse than a preference that reverts on next launch.
     console.warn('[settings] could not persist', error);
   }

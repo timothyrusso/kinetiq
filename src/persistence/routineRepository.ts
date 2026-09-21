@@ -3,7 +3,7 @@
  *
  * The important invariant lives in `save`: a routine is written together with
  * frozen `ExerciseSnapshot`s for every item, in one transaction. That is what
- * makes "my routines work on a plane" true — rendering a routine never needs the
+ * makes "my routines work on a plane" true: rendering a routine never needs the
  * network, and a half-saved routine can never be observed.
  */
 import { getDatabase } from './database';
@@ -79,7 +79,7 @@ export const routineRepository = {
 
   /**
    * Inserts or replaces a routine and its items atomically. Item list is
-   * replaced wholesale — simpler and safer than diffing, and routine item counts
+   * replaced wholesale: simpler and safer than diffing, and routine item counts
    * are small enough that it costs nothing.
    */
   async save(draft: RoutineDraft): Promise<Routine> {
@@ -115,7 +115,7 @@ export const routineRepository = {
       // This is why adding a NEWLY discovered wger exercise to a routine could not be saved,
       // while adding one that happened to be in the seed worked: the seeded rows were already
       // in `exercises`, so the foreign key found them. The screen said "Could not save. Nothing
-      // was lost" — true, and no hint that the cause was ordering.
+      // was lost": true, and no hint that the cause was ordering.
       //
       // It is the offline promise in miniature: the snapshot is the copy that lets a routine
       // open with no network, so it must exist before anything points at it.

@@ -4,7 +4,7 @@
  * Lives in `ui/` beside `rows.tsx` rather than in the route file, for the same reason the
  * routine and exercise rows do: these are shaped by the domain (a set is reps × weight × a
  * completed flag, not a generic list item) but hold no state of their own. Keeping them
- * here is what lets `app/workout/session.tsx` stay a screen — it owns navigation and the
+ * here is what lets `app/workout/session.tsx` stay a screen: it owns navigation and the
  * session engine's calls; these own pixels.
  *
  * ## Why there is no keyboard in the list
@@ -46,7 +46,7 @@ import { ConfirmSheet, Sheet, SheetFooter, SheetSection } from './Sheet';
  * important half.
  *
  * `isTarget` outlines the next unticked set, which answers "which one am I on?" without
- * making anyone count — the single most common glance mid-set. It is an outline, not a
+ * making anyone count: the single most common glance mid-set. It is an outline, not a
  * filled row, because a filled row would compete with the filled *done* state.
  */
 export const SetRow = memo(function SetRow({
@@ -165,8 +165,7 @@ export const SetRow = memo(function SetRow({
  * The exercise being trained, with its sets.
  *
  * The header carries the two things a lifter checks between sets: what they did last time,
- * and how many sets are banked. Everything else — muscle group, equipment, instructions —
- * is on the exercise's own screen; repeating it here would push the set rows below the
+ * and how many sets are banked. Everything else: muscle group, equipment, instructions, * is on the exercise's own screen; repeating it here would push the set rows below the
  * fold, and the set rows are where the tapping happens.
  *
  * A cue from the routine shows as plain text and is *not* editable here. The session engine
@@ -197,7 +196,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   /**
    * Rendered verbatim. The caller decides whether to say "Last time 82.5 kg × 5", "No
    * previous sessions yet", or nothing, because only the caller knows whether the history
-   * query has answered — and "no previous data" before it has is a lie.
+   * query has answered: and "no previous data" before it has is a lie.
    */
   previousLine: string | null;
   isCurrent: boolean;
@@ -281,8 +280,8 @@ export const ExerciseBlock = memo(function ExerciseBlock({
 
       <View style={styles.sets}>
         {entry.sets.map((set, setIndex) => (
-          // Keyed on position, deliberately. Sets are positional by definition — "set 3"
-          // means the third one — so a key that followed content would remount the row and
+          // Keyed on position, deliberately. Sets are positional by definition, "set 3"
+          // means the third one: so a key that followed content would remount the row and
           // replay its entrance every time a rep changed.
           <SetRow
             key={setIndex}
@@ -344,7 +343,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
  * Editing one set: three steppers, no text fields, and no OK button.
  *
  * `Stepper` writes through on every press, so the sheet is a surface for adjusting, not a
- * form to submit — closing it *is* committing, which is why the only footer control says
+ * form to submit: closing it *is* committing, which is why the only footer control says
  * Done and never Cancel. A text field here would need a Done key, a blur, and a rule for
  * what "62." means when the sheet closes mid-keystroke; three steppers need none of that.
  *
@@ -403,7 +402,7 @@ export function SetEditorSheet({
         />
         {set.weightKg === 0 ? (
           <Txt variant="micro" tone="faint" style={{ marginTop: spacing.sm }}>
-            Bodyweight — no external load recorded.
+            Bodyweight: no external load recorded.
           </Txt>
         ) : null}
       </SheetSection>
@@ -447,7 +446,7 @@ export function SetEditorSheet({
  *
  * Pinned to the bottom of the window rather than left in the scroll: a timer that scrolls
  * off-screen is a timer that gets forgotten, and the entire point of a countdown is that
- * you stop watching it. Drag-to-dismiss is deliberately absent — this floats over set rows,
+ * you stop watching it. Drag-to-dismiss is deliberately absent: this floats over set rows,
  * and a sheet-style pan here would swallow taps on whatever sat underneath.
  *
  * The bar is a determinate linear track, not a ring. A ring needs an SVG arc for an honest
@@ -546,7 +545,7 @@ export const RestDock = memo(function RestDock({
  * Removing an exercise from a workout in progress.
  *
  * Confirmed, unlike skipping. Skipping leaves the exercise in the list with its sets
- * un-ticked — recoverable, so no prompt. Removing deletes the entry and the sets already
+ * un-ticked: recoverable, so no prompt. Removing deletes the entry and the sets already
  * banked against it, so it goes through the same confirm path as discarding the workout.
  */
 export function RemoveExerciseSheet({
@@ -575,7 +574,7 @@ export function RemoveExerciseSheet({
   );
 }
 
-/** Sets done over sets planned — the progress the bar under the player's header reports. */
+/** Sets done over sets planned: the progress the bar under the player's header reports. */
 export function SessionProgressBar({ ratio, theme }: { ratio: number; theme: Theme }) {
   return (
     <View style={[styles.progressTrack, { backgroundColor: withAlpha(theme.colors.text, 0.1) }]}>

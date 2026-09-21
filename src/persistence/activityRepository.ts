@@ -59,7 +59,7 @@ export const activityRepository = {
     }
     if (query.search?.trim()) {
       // The search field in front of the user says "Session name, notes, exercise", so all
-      // three have to match here — a screen that promises exercise filtering and quietly
+      // three have to match here: a screen that promises exercise filtering and quietly
       // matches only titles is worse than one that never claimed it.
       //
       // Strength sets are one JSON blob per session, so exercise names live inside
@@ -67,7 +67,7 @@ export const activityRepository = {
       // reasons, in order of weight: this library's SQLite is built from a vendored
       // amalgamation whose flags I cannot verify from here, and a missing JSON function
       // would throw and take the entire list down, whereas the cost of the loose match is
-      // that a term can also hit a muscle group or — for a digit-heavy term — a rep count.
+      // that a term can also hit a muscle group or: for a digit-heavy term: a rep count.
       // A slightly wide result set is a smaller failure than a broken screen, and history is
       // local, so if precision ever matters the fix is a name index at migration time, not a
       // function that has to exist at runtime.
@@ -113,7 +113,7 @@ export const activityRepository = {
     return row?.n ?? 0;
   },
 
-  /** Seeding guard — refuses to re-seed over a database the user has used. */
+  /** Seeding guard: refuses to re-seed over a database the user has used. */
   async isEmpty(): Promise<boolean> {
     return (await this.count()) === 0;
   },
@@ -135,7 +135,7 @@ export const activityRepository = {
   async update(activity: Activity): Promise<void> {
     // `toParams` is ordered for `INSERT_SQL`, whose *first* column is `id`. This statement
     // writes the other 22 columns and matches on that leading value, so the id has to travel
-    // to the end of the argument list — `slice(0, -1)` is the trap: it drops `created_at`,
+    // to the end of the argument list, `slice(0, -1)` is the trap: it drops `created_at`,
     // keeps `id`, and every value then binds one column early. `kind` receives
     // `seed_mu9sy8cm1u86sez`, the `NOT NULL` check refuses it, and the row is never written.
     const [, ...written] = toParams(activity);

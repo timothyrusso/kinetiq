@@ -1,21 +1,21 @@
 /**
- * Home — the daily answer to "did I train, and am I getting anywhere?"
+ * Home: the daily answer to "did I train, and am I getting anywhere?"
  *
  * ## Order, which is the whole design
  *
  * Four questions, answered top to bottom in the order people ask them: *did I train*
  * (ring against goal, streak), *how much this week* (the metric grid), *what did I do*
  * (recent sessions), *is it working* (the six-week load chart, then the mix). The donut
- * is last and smallest on purpose — it is interesting once a month and noise the rest
+ * is last and smallest on purpose: it is interesting once a month and noise the rest
  * of the time.
  *
  * ## Why the FlashList owns the scroll
  *
  * There is no outer `ScrollView`. The collapsing header reads the list's own scroll
- * offset, and a wrapper cannot reach inside a list the caller owns — while nesting a
+ * offset, and a wrapper cannot reach inside a list the caller owns: while nesting a
  * virtualised list in a scroll view defeats the virtualisation. So the header is an
- * absolutely-positioned sibling overlay, and everything else — hero, summary cards,
- * rows — is list content: the hero scrolls away, the cards scroll in, and the whole
+ * absolutely-positioned sibling overlay, and everything else: hero, summary cards,
+ * rows: is list content: the hero scrolls away, the cards scroll in, and the whole
  * screen stays one recycling surface. `ListHeaderComponent` is where that content goes,
  * which also means it is measured once and recycled as a unit rather than per row.
  *
@@ -24,7 +24,7 @@
  * The recent list is fetched at 60 rows and used twice: the top 7 render, and all 60
  * feed the current streak. Fetching a second, longer list purely to count consecutive
  * days would be a second pass over the same table for one integer, and capping the
- * streak query at 7 would silently report a 12-day streak as 7 — wrong in exactly the
+ * streak query at 7 would silently report a 12-day streak as 7: wrong in exactly the
  * direction the user is proud of.
  */
 import { useCallback, useMemo } from 'react';
@@ -62,7 +62,7 @@ import {
   type UnitSystem,
 } from '@/utils/format';
 
-/** Rows actually shown. The fetched set is longer — see the header note on streaks. */
+/** Rows actually shown. The fetched set is longer: see the header note on streaks. */
 const RECENT_VISIBLE = 7;
 const RECENT_FETCHED = 60;
 
@@ -94,7 +94,7 @@ export default function HomeScreen() {
 
   const loading = summaryQuery.isPending && !summaryQuery.isError;
   // `weeks` is oldest-first, so the current week is the *last* entry. See the contract in
-  // `useProgress.ts` — reading index 0 instead shows a week four (or seven) ago as today,
+  // `useProgress.ts`: reading index 0 instead shows a week four (or seven) ago as today,
   // with numbers plausible enough that nothing looks broken.
   const week = summary?.weeks.at(-1);
   const remaining = goal - (week?.workouts ?? 0);
@@ -246,7 +246,7 @@ export default function HomeScreen() {
       />
       {/* No resume pill here: `TabBarWithPill` owns it, for every tab. Home used to mount
           its own, and since the tab bar renders behind this scene rather than inside it,
-          both drew at once — two pills overlapping on the one screen where that was
+          both drew at once: two pills overlapping on the one screen where that was
           visible. One owner, and it is the one that is not a scene. */}
     </View>
   );
@@ -279,7 +279,7 @@ function HomeSummary({
   const previous = summary.weeks.at(-2);
 
   // The last six weeks, oldest on the left. `WeekSummary.label` is "Sep 1", which is what a
-  // weekly bar wants: labelling by weekday — as this did — puts "Mon" under all six bars,
+  // weekly bar wants: labelling by weekday: as this did: puts "Mon" under all six bars,
   // because every week in the array starts on the same weekday.
   const bars: BarPoint[] = useMemo(
     () =>
@@ -300,7 +300,7 @@ function HomeSummary({
       }
     }
     // Sessions, not minutes: `byKind` is a count the summary already computed. Turning it
-    // into minutes would need the rows, and the rows are a different query — a donut that
+    // into minutes would need the rows, and the rows are a different query: a donut that
     // disagrees with the list under it is worse than a donut measuring something simpler.
     return KIND_ORDER.filter((kind) => (byKind.get(kind) ?? 0) > 0).map((kind) => ({
       kind,
@@ -348,14 +348,14 @@ function HomeSummary({
               value={
                 (week?.distanceMeters ?? 0) > 0
                   ? formatDistance(week?.distanceMeters ?? 0, units, 1)
-                  : '—'
+                  : '-'
               }
             />
           </Row>
           <Row gap="lg" style={{ marginTop: spacing.md }}>
             <MetricCell
               label="Volume"
-              value={(week?.volumeKg ?? 0) > 0 ? `${compactNumber(week?.volumeKg ?? 0)} kg` : '—'}
+              value={(week?.volumeKg ?? 0) > 0 ? `${compactNumber(week?.volumeKg ?? 0)} kg` : '-'}
             />
             <MetricCell label="Calories" value={compactNumber(Math.round(week?.caloriesKcal ?? 0))} />
           </Row>
@@ -414,8 +414,8 @@ function MetricCell({ label, value }: { label: string; value: string }) {
 /**
  * The streak line under the greeting.
  *
- * Phrased so the sentence is true in every state — no history, history but today off,
- * mid-streak — rather than a template that prints "0 day streak" on a fresh install.
+ * Phrased so the sentence is true in every state: no history, history but today off,
+ * mid-streak: rather than a template that prints "0 day streak" on a fresh install.
  * That string is the most demoralising thing a fitness app can say to someone who has
  * just opened it for the first time.
  */

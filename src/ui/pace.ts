@@ -19,7 +19,7 @@
  *
  * `relative` colours against the activity's own distribution rather than the absolute anchors:
  * the fastest kilometre gets the hot end, the slowest the cool end. That is the honest default
- * for a user comparing *this* run to *itself* — hills show up — where the absolute scale makes a
+ * for a user comparing *this* run to *itself*: hills show up: where the absolute scale makes a
  * hilly run look uniformly "slow" and tells them nothing they could act on.
  */
 import { palette } from '@/theme/tokens';
@@ -40,9 +40,9 @@ const ANCHORS: Partial<Record<ActivityKind, readonly [number, number]>> = {
 export type PaceColourMode = 'absolute' | 'relative';
 
 export type PaceDomain = {
-  /** Colour at t=0 — the *slowest* end. */
+  /** Colour at t=0: the *slowest* end. */
   slowSecPerKm: number;
-  /** Colour at t=1 — the *fastest* end. */
+  /** Colour at t=1: the *fastest* end. */
   fastSecPerKm: number;
 };
 
@@ -64,7 +64,7 @@ export function paceDomainFor(kind: ActivityKind): PaceDomain {
  *
  * `domain` is inverted from intuition on purpose: a *lower* pace value is a *faster* effort and
  * so belongs at the hot end. Every caller passes seconds-per-kilometre, the app's canonical
- * pace unit, including rides — convert to m/s for display, not for colouring.
+ * pace unit, including rides: convert to m/s for display, not for colouring.
  */
 export function paceColor(secPerKm: number, domain: PaceDomain): string {
   if (!Number.isFinite(secPerKm) || secPerKm <= 0) return STOPS[0];
@@ -77,7 +77,7 @@ export function paceColor(secPerKm: number, domain: PaceDomain): string {
  * Colours one per coordinate, for `MapPolyline.strokeColors`, which requires exactly one
  * colour per point.
  *
- * Pace at a point is not a primitive — it is the *segment* it closes, and a segment made of two
+ * Pace at a point is not a primitive: it is the *segment* it closes, and a segment made of two
  * fixes 90 seconds apart is either a rest stop or a sprint depending on the distance between
  * them. So pace comes from distance over elapsed, and implausible values (a tunnel, a paused
  * phone, a corrupted fix) inherit the previous point's colour instead of painting a
@@ -138,7 +138,7 @@ function midPace(
 export const PACE_RAMP_STOPS: readonly string[] = STOPS;
 
 /**
- * The ramp's midpoint, for callers that need one neutral colour — a fallback when a segment's
+ * The ramp's midpoint, for callers that need one neutral colour: a fallback when a segment's
  * pace cannot be derived, where "the middle of the ramp" is honest and "the first stop" would
  * read as a real measurement of a slow effort.
  */

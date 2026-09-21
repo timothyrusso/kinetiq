@@ -1,12 +1,12 @@
 /**
- * Workout history — the full log of everything finished, and the landing screen after a
+ * Workout history: the full log of everything finished, and the landing screen after a
  * session is saved.
  *
  * ## Why this is a screen and not just the Activities tab
  *
  * Two `router.replace` calls in `app/workout/session.tsx` land here the moment a workout is
  * saved. A finish has to go *somewhere* that is not the screen you were just sweating on, and
- * it has to go somewhere that immediately shows the thing you just did — otherwise "did that
+ * it has to go somewhere that immediately shows the thing you just did: otherwise "did that
  * save?" stays a question. So this screen is written around the newest session: newest first,
  * today's group on top, and reached by `replace` so the finished workout is not one gesture
  * away from being re-finished.
@@ -27,7 +27,7 @@
  * ## Totals are computed over the window, not read from the cache
  *
  * `useActivityList` returns totals for the whole filtered set. Printing those beside a 30-day
- * heading would put "182 sessions" above a list showing nine — the kind of inconsistency that
+ * heading would put "182 sessions" above a list showing nine: the kind of inconsistency that
  * makes people distrust every other number on screen. So the visible rows are summed here, in
  * one pass, from the same objects the rows render.
  *
@@ -35,7 +35,7 @@
  *
  * The post-workout sheet can claim records because `finishSession` computes them and returns
  * them in memory. Reopening that activity later cannot: `codec.ts` reads `personalRecords` as
- * an empty array, because the `records` table keeps only the *current* best per exercise — the
+ * an empty array, because the `records` table keeps only the *current* best per exercise: the
  * history of which session earned which record is not stored. Deriving a badge from the current
  * records table would mark every session that contains an exercise you hold a record on, not
  * the one that set it, which is wrong for every row except the newest. Progress reads the
@@ -46,7 +46,7 @@
  * There is no pagination because there is nothing to paginate: the whole history is in SQLite
  * on this device and one query returns it in a few milliseconds. If the log ever grows past a
  * few thousand rows, the fix belongs in `activityRepository.list` (a `limit`, plus windowed
- * rendering) — not in this file, and the FlashList already keeps only the visible rows alive.
+ * rendering): not in this file, and the FlashList already keeps only the visible rows alive.
  */
 import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -75,7 +75,7 @@ import { spacing } from '@/theme/tokens';
 const BOTTOM_SPACE = 96;
 const DAY_MS = 86_400_000;
 
-/** Rolling windows, labelled by what they actually are — see `windowStart`. */
+/** Rolling windows, labelled by what they actually are: see `windowStart`. */
 type Range = '7d' | '30d' | '365d' | 'all';
 
 const RANGES: readonly { value: Range; label: string }[] = [
@@ -93,7 +93,7 @@ const RANGES: readonly { value: Range; label: string }[] = [
  * data. Nobody loses anything to a window that slides.
  *
  * The day boundary is local midnight and the window is inclusive of today, so "7 days" means
- * the seven calendar days a user counts back on a calendar, not 168 wall-clock hours — a
+ * the seven calendar days a user counts back on a calendar, not 168 wall-clock hours: a
  * session from 08:00 this morning is inside a window opened at 20:00 tonight, which is what
  * anyone expects from a fitness log.
  */
@@ -219,7 +219,7 @@ export default function WorkoutHistoryScreen() {
     : visible.length === 0
       ? 'Nothing in this range'
       : // Three segments at most. This renders into a fixed-height bar that also carries the
-        // Search button, and `numberOfLines={1}` truncates whatever does not fit — with four
+        // Search button, and `numberOfLines={1}` truncates whatever does not fit: with four
         // segments that landed mid-number ("24 sessions · 17h 21m · 127.6…"), which reads as
         // a broken value rather than as an abbreviated summary. Count and duration always
         // apply; the third is whichever of distance or volume this range actually has, and
@@ -309,7 +309,7 @@ export default function WorkoutHistoryScreen() {
               ) : list.flat.length === 0 ? (
                 <EmptyState
                   title="No sessions yet"
-                  message="Finish a workout or record a run and it lands here — route, splits, every set."
+                  message="Finish a workout or record a run and it lands here: route, splits, every set."
                   icon="activities"
                   actionLabel="Start a workout"
                   onAction={() => router.replace(routes.workoutTab())}

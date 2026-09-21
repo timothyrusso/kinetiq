@@ -15,7 +15,7 @@
  *
  * Considered and rejected: a drag-to-reorder row. Building one means a pan gesture that
  * does not steal the list's own vertical scroll, a translating row that must not fight
- * FlashList's recycling, and haptics at the right moment — every one of them a class of
+ * FlashList's recycling, and haptics at the right moment: every one of them a class of
  * bug that only surfaces on a device under a real thumb. `ListRow` already forwards
  * `onLongPress`, so the honest long-press menu is available with no gesture code at all.
  * Up/down controls are the same operation, reachable one-handed, work in a screen reader,
@@ -191,15 +191,15 @@ function RowButton({
  *
  * The steppers write through, so this sheet is a surface for adjusting rather than a form
  * to submit: closing it *is* committing. That is what makes it safe on the saved-routine
- * screen, where each press goes straight to SQLite — there is no half-entered state for a
+ * screen, where each press goes straight to SQLite: there is no half-entered state for a
  * backdrop tap or the back gesture to interrupt, and no "discard changes?" prompt to get
  * wrong. A text field for weight would need a Done key, a blur, and a rule for what "62."
  * means when the sheet closes mid-keystroke.
  *
  * ## Weight is entered in the user's unit and converted exactly once
  *
- * On the way out, in the `onChange` that writes. Converting on the way in as well — and
- * again on close — is how a units-aware form ends up with a field reading 135 while the
+ * On the way out, in the `onChange` that writes. Converting on the way in as well: and
+ * again on close: is how a units-aware form ends up with a field reading 135 while the
  * stepper is quietly stepping kilograms.
  */
 export const ItemEditorSheet = memo(function ItemEditorSheet({
@@ -268,7 +268,7 @@ export const ItemEditorSheet = memo(function ItemEditorSheet({
         />
         {item.weightKg === 0 ? (
           <Txt variant="micro" tone="faint" style={{ marginTop: spacing.sm }}>
-            Bodyweight — no external load planned.
+            Bodyweight: no external load planned.
           </Txt>
         ) : null}
       </SheetSection>
@@ -340,7 +340,7 @@ export const ItemEditorSheet = memo(function ItemEditorSheet({
  *
  * Weight is the only number here the unit setting changes, so it is the only one
  * formatted; reps and sets are unit-free. A missing snapshot costs the muscle name and
- * nothing else — which is exactly why the exercise name is stored on the item.
+ * nothing else: which is exactly why the exercise name is stored on the item.
  */
 export function itemSubtitle(
   item: RoutineItem,

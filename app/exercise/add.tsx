@@ -1,5 +1,5 @@
 /**
- * Add an exercise to a routine — the bridge between the remote library and the user's
+ * Add an exercise to a routine: the bridge between the remote library and the user's
  * own training.
  *
  * ## Reached as a modal, not a sheet
@@ -13,7 +13,7 @@
  * ## The exercise arrives by id, and the store is written in the same breath
  *
  * `useAddRoutineExercise` freezes an `ExerciseSnapshot` into the same transaction that
- * inserts the item — which is the entire reason a routine still opens on a plane. The
+ * inserts the item: which is the entire reason a routine still opens on a plane. The
  * consequence for this screen is that the exercise has to be a resolved `Exercise`
  * before saving, so it resolves through the same hook the detail screen uses rather than
  * trusting the name that arrived in the params.
@@ -26,7 +26,7 @@
  *
  * Weight is typed as text (tapping a stepper to 62.5 kg is tedious) but stored as
  * kilograms. Both facts are kept straight by doing everything the user sees in *their*
- * unit — the field, the stepper, the step grid — and converting exactly once, at the
+ * unit: the field, the stepper, the step grid: and converting exactly once, at the
  * moment the item is built. Mixing the two is the classic bug in a units-aware form: the
  * field says 135, the stepper is secretly stepping in kilograms, and the third tap
  * produces 182.
@@ -211,7 +211,7 @@ export default function AddExerciseScreen() {
                 <EmptyState
                   icon="info"
                   title="This exercise could not be loaded"
-                  message="The app has to know an exercise before it can be added — otherwise the routine would save an item with no name, no instructions and no picture, permanently."
+                  message="The app has to know an exercise before it can be added: otherwise the routine would save an item with no name, no instructions and no picture, permanently."
                   actionLabel="Go back"
                   onAction={() => router.dismiss()}
                 />
@@ -286,7 +286,7 @@ export default function AddExerciseScreen() {
                       label="Description"
                       value={draft.description}
                       onChangeText={field('description')}
-                      placeholder="Optional — what this session is for"
+                      placeholder="Optional: what this session is for"
                       placeholderTextColor={theme.colors.textFaint}
                       returnKeyType="done"
                       autoCapitalize="sentences"
@@ -421,7 +421,7 @@ export default function AddExerciseScreen() {
                     }
                   />
                   <Txt variant="caption" tone="faint" align="center">
-                    Targets are a plan, not a limit — every set can be changed while you train.
+                    Targets are a plan, not a limit: every set can be changed while you train.
                   </Txt>
                 </Column>
                 <Gap size={Platform.OS === 'ios' ? spacing.md : spacing.xl} />

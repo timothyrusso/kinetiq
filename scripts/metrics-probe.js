@@ -18,7 +18,7 @@ const dist = find(/^[\d.,]+ ?(m|km)$/);
 const kcal = find(/^\d[\d,]* kcal$/);
 const pace = find(/^[\d.:]+ ?(\/km|km\/h)$/);
 const pos = find(/^\d+$/);
-  // The control is a `Button` node, not `StaticText` — scanning only text nodes
+  // The control is a `Button` node, not `StaticText`: scanning only text nodes
   // made this column read empty on a panel that plainly showed "Pause".
   const ctlNode = data.nodes.find(
     (n) => /^(Pause|Resume|Stop and save|Saving…)$/.test(n.label ?? '') && n.rect,

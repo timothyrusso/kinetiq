@@ -6,12 +6,12 @@
  * would otherwise look like over-engineering.
  *
  * 1. **Distance must not be naive.** Summing haversine between consecutive GPS
- *    fixes inflates distance badly — a parked phone with 15 m of accuracy
+ *    fixes inflates distance badly: a parked phone with 15 m of accuracy
  *    "runs" several hundred metres in ten minutes. So a fix must beat two
  *    gates to count: `accuracy <= GPS_ACCURACY_FLOOR_M`, and a segment longer
  *    than `GPS_MIN_SEGMENT_M`, which discards jitter without discarding real
  *    motion at walking pace. Both gates, and the arithmetic justifying their
- *    exact values, are in `./gps.ts` — this file only calls in and asks what a
+ *    exact values, are in `./gps.ts`: this file only calls in and asks what a
  *    fix is worth. Fixes that fail still move the marker dot; they just don't
  *    add distance. When no fix ever passes the gates, the readout falls back to
  *    elapsed × plausible pace and says so.
@@ -92,7 +92,7 @@ export type LocationPermissionStatus =
   | 'granted'
   /** The user said no. The UI explains and offers the manual-entry path. */
   | 'denied'
-  /** Not asked yet — the recorder asks when it starts. */
+  /** Not asked yet: the recorder asks when it starts. */
   | 'undetermined'
   /** iOS "Reduced accuracy" or Android "Approximate location". Distance drifts. */
   | 'reduced';
@@ -107,7 +107,7 @@ export type CardioDegradation =
  * Where a recording is. Deliberately has no `finished` / `discarded`: a recording that
  * ended *is* idle, because there is nothing left to render or resume, and `finish()` and
  * `discard()` are the only writers of those outcomes. Two dead states would give the screen
- * a third thing to branch on — and since nothing ever set `idle` again, every terminal value
+ * a third thing to branch on: and since nothing ever set `idle` again, every terminal value
  * fell through to the live panel with a null draft, so "Record another" landed on a recorder
  * that had nothing running. Whether a save or a discard just happened is the *screen's*
  * business, and it already tracks that locally.
@@ -157,7 +157,7 @@ export type CardioSnapshot = {
 };
 
 // ---------------------------------------------------------------------------
-// Pure helpers. Device-free by design — but for the GPS maths itself, see ./gps.ts.
+// Pure helpers. Device-free by design: but for the GPS maths itself, see ./gps.ts.
 // ---------------------------------------------------------------------------
 
 export function degradationMessage(reason: CardioDegradation): string {
@@ -167,7 +167,7 @@ export function degradationMessage(reason: CardioDegradation): string {
     case 'services-off':
       return 'Location services are switched off on this device.';
     case 'no-signal':
-      return 'Waiting for a GPS signal — distance is estimated until one arrives.';
+      return 'Waiting for a GPS signal: distance is estimated until one arrives.';
     case 'reduced-accuracy':
       return 'Precise location is off, so distance will drift.';
   }
@@ -217,7 +217,7 @@ class CardioRecorder {
   private resumable: CardioDraft | null = null;
   private lastError: string | null = null;
   private watch: LocationSubscription | null = null;
-  /** Last point that passed the gates — the next segment is measured from it. */
+  /** Last point that passed the gates: the next segment is measured from it. */
   private lastAccepted: RoutePoint | null = null;
   private lastTickAt = 0;
   private flushTimer: ReturnType<typeof setInterval> | null = null;
@@ -262,7 +262,7 @@ class CardioRecorder {
         await writeState(DRAFT_KEY, null);
       } else {
         // The process died while recording. Nothing is running now, so the
-        // accumulator has to absorb the gap up to the crash — but only up to
+        // accumulator has to absorb the gap up to the crash: but only up to
         // the cap, because after that the phone was in a pocket, not on a run.
         const stalledSince = draft.pausedAt ?? draft.startedAt;
         const gapSeconds = draft.pausedAt
@@ -375,7 +375,7 @@ class CardioRecorder {
 
   /**
    * Adopts an interrupted draft so the user can continue where they left off.
-   * Route and totals carry over verbatim; only the clock restarts — and it
+   * Route and totals carry over verbatim; only the clock restarts: and it
    * restarts paused, so they can read the summary before it starts ticking.
    */
   async recover(): Promise<void> {
@@ -400,7 +400,7 @@ class CardioRecorder {
 
   /**
    * Stops recording and writes the activity. Returns null when there is nothing
-   * worth saving — the caller turns that into a "that was under 20 seconds,
+   * worth saving: the caller turns that into a "that was under 20 seconds,
    * discard?" prompt rather than silently creating junk history.
    */
   async finish(): Promise<{ activityId: string; distanceMeters: number } | null> {
@@ -490,8 +490,7 @@ class CardioRecorder {
   // -- sampling ------------------------------------------------------------
 
   /**
-   * Foreground subscription. On iOS this is also the background path —
-   * `UIBackgroundModes: location` keeps the subscription alive. Android stops
+   * Foreground subscription. On iOS this is also the background path, * `UIBackgroundModes: location` keeps the subscription alive. Android stops
    * delivering to a JS subscription once the activity is gone, so Android also
    * registers the headless task below and both funnel into `applyFix`.
    */
@@ -624,8 +623,7 @@ class CardioRecorder {
    * Whether a running draft has gone unreasonably long without a usable fix.
    *
    * Checked from the flush tick, not only from fix handling. The old code raised
-   * `no-signal` from inside `applyFix`, which meant the case it exists to describe —
-   * a GPS that never delivers — was the one case that could never trigger it. A phone
+   * `no-signal` from inside `applyFix`, which meant the case it exists to describe, * a GPS that never delivers: was the one case that could never trigger it. A phone
    * in a tunnel, a simulator with no feed, or a chip that simply stays silent produced a
    * session that estimated distance from time and *never said so*: the panel showed
    * "Waiting for a fix" forever while `degradedReason` stayed null. Same fault, two
@@ -635,7 +633,7 @@ class CardioRecorder {
     // Only when the sky is genuinely silent. If permission is off or location
     // services are disabled, the missing fixes already have an owner, and
     // "waiting for a signal" is then a second, partly false description of the
-    // same fault — nothing is being waited for, because nothing can arrive. The
+    // same fault: nothing is being waited for, because nothing can arrive. The
     // first message is the actionable one, so it must not be doubled.
     if (draft.degradations.includes('permission-denied')) return false;
     if (draft.degradations.includes('services-off')) return false;

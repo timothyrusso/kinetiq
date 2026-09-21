@@ -2,7 +2,7 @@
 // Do the QA scripts actually agree with the harness they import?
 //
 // This exists because the same bug happened twice: a script was rewritten against a harness
-// API that had changed under it — one destructured `pressText` before lib exported it, another
+// API that had changed under it: one destructured `pressText` before lib exported it, another
 // used `TABS.home` when the keys are the visible labels (`Home`). Both are invisible to
 // `tsc`, because these are plain node scripts importing a CommonJS module, and both killed a
 // device run ten minutes in, after the simulator had already been driven into a specific
@@ -71,7 +71,7 @@ for (const rel of scripts) {
 
   // The other half of the same bug: lib exports the name, the script calls it, and the
   // destructure at the top simply never mentions it. `pressText` was imported and unused while
-  // `nodes` was called and absent — bothCommonJS skew tsc cannot see, and both die at runtime.
+  // `nodes` was called and absent: bothCommonJS skew tsc cannot see, and both die at runtime.
   if (destructure) {
     const have = new Set(destructure[1].split(',').map((x) => x.trim()).filter(Boolean));
     const libFns = Object.keys(L).filter((k) => typeof L[k] === 'function');
@@ -83,7 +83,7 @@ for (const rel of scripts) {
 
   for (const key of [...src.matchAll(/TABS\.([A-Za-z_$][\w$]*)/g)].map((m) => m[1])) {
     if (!(key in L.TABS)) {
-      fail(`${rel}: TABS has no "${key}" — the keys are the visible tab labels: ${Object.keys(L.TABS).join(', ')}`);
+      fail(`${rel}: TABS has no "${key}": the keys are the visible tab labels: ${Object.keys(L.TABS).join(', ')}`);
     }
   }
 
@@ -91,14 +91,13 @@ for (const rel of scripts) {
   // not-found screen and the script times out waiting for a heading. The route names are the
   // ones the app's own navigation module exports.
   const routes = new Set([...src.matchAll(/open\(\s*'([\w[\]/.-]*)'/g)].map((m) => m[1]));
-  // Built from the router's own file tree rather than a list someone has to remember to edit —
-  // a hardcoded allow-list was half the reason this guard existed, and it went stale the first
+  // Built from the router's own file tree rather than a list someone has to remember to edit, // a hardcoded allow-list was half the reason this guard existed, and it went stale the first
   // time a screen was added. `app/(tabs)/x.tsx` is reachable as `x`, `app/x.tsx` as `x`, a
   // dynamic `[id]` segment matches any one segment, and groups in parens are transparent.
   for (const r of routes) if (!routeExists(r)) {
-    fail(`${rel}: open('${r}') matches no screen under app/ — mistyped or deleted route`);
+    fail(`${rel}: open('${r}') matches no screen under app/: mistyped or deleted route`);
   }
 }
 
-console.log(bad ? `\nFAIL — ${bad} broken reference(s)` : 'PASS — every QA script resolves against the harness');
+console.log(bad ? `\nFAIL, ${bad} broken reference(s)` : 'PASS: every QA script resolves against the harness');
 process.exit(bad ? 1 : 0);

@@ -33,7 +33,7 @@ export type QueryLogEntry = {
 export type QueryLogSnapshot = {
   version: number;
   entries: readonly QueryLogEntry[];
-  /** Total fetches per key since launch — the "did tab switching re-request?" answer. */
+  /** Total fetches per key since launch: the "did tab switching re-request?" answer. */
   fetchCounts: ReadonlyMap<string, number>;
   inflight: number;
 };

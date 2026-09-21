@@ -69,7 +69,7 @@ export function isPromiseLike(value: unknown): value is Promise<unknown> {
   );
 }
 
-/** Deterministic 32-bit hash — seeds sample data and stable chart jitter. */
+/** Deterministic 32-bit hash: seeds sample data and stable chart jitter. */
 export function hashString(input: string): number {
   let h = 2166136261;
   for (let i = 0; i < input.length; i += 1) {
@@ -108,7 +108,7 @@ let counter = 0;
 
 /**
  * Collision-safe id for local rows. Ordered by construction, so lists sorted by
- * id keep insertion order — unlike random UUIDs.
+ * id keep insertion order: unlike random UUIDs.
  */
 export function localId(prefix = 'id'): string {
   counter = (counter + 1) % 0xffff;
@@ -123,7 +123,7 @@ export function sleep(ms: number): Promise<void> {
   });
 }
 
-/** Removes keys whose value is undefined — keeps API query strings clean. */
+/** Removes keys whose value is undefined: keeps API query strings clean. */
 export function compact<T extends Record<string, unknown>>(obj: T): Partial<T> {
   const out: Partial<T> = {};
   for (const [key, value] of Object.entries(obj)) {

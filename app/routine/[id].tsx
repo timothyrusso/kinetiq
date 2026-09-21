@@ -1,8 +1,7 @@
 /**
  * A saved routine: the plan, and the controls around it.
  *
- * Reached from the Workout tab, the routines list, the workout picker and — via `replace` —
- * from the builder that just created it. `routine/_layout.tsx` registers this one as a card
+ * Reached from the Workout tab, the routines list, the workout picker and: via `replace`, * from the builder that just created it. `routine/_layout.tsx` registers this one as a card
  * rather than a modal so the browse → open → train → back loop keeps the stack underneath it.
  *
  * ## Every edit writes on change, and there is no Done button
@@ -18,7 +17,7 @@
  *
  * Everything on this screen comes from SQLite. The exercises were frozen into the local
  * `exercises` table when they were added (`useAddRoutineExercise` → `snapshotOf`), so with no
- * network this screen renders the same — names, thumbnails, muscle groups, instructions. It
+ * network this screen renders the same: names, thumbnails, muscle groups, instructions. It
  * makes no request to the exercise API, ever, and there is no pull-to-refresh, because there
  * is nothing remote to refresh. Opening a routine on a plane is not a degraded mode; it is the
  * normal mode. The one place a network is needed is adding a *new* exercise, and the picker
@@ -27,8 +26,8 @@
  * ## Previous performance lives on the session screen, not here
  *
  * It would be reasonable to print "last time: 3 × 95 kg" beside each row, and it deliberately
- * is not here. That number is already rendered where it is used — while the set is being
- * entered, in `app/workout/session.tsx` — and computing it means scanning the last 24 workouts.
+ * is not here. That number is already rendered where it is used: while the set is being
+ * entered, in `app/workout/session.tsx`: and computing it means scanning the last 24 workouts.
  * A plan screen that reads 24 activities to decorate itself gets slower as history grows, for a
  * number the user is not deciding anything with yet. `timesCompleted` and `lastPerformedAt` are
  * columns on the routine this screen already loads, so it still says when the routine was last
@@ -127,7 +126,7 @@ export default function RoutineDetailScreen() {
    *
    * Any session, not only one started from this routine. Two live sessions would mean two rest
    * timers and two elapsed clocks, and the store holds one at a time, so starting a second
-   * would silently replace the first — destroying a workout the user is mid-way through. The
+   * would silently replace the first: destroying a workout the user is mid-way through. The
    * honest answer is to send them to the session that exists.
    */
   const liveSession =
@@ -155,7 +154,7 @@ export default function RoutineDetailScreen() {
   const move = useCallback(
     (from: number, to: number) => {
       if (routine === null) return;
-      // The whole list rather than a from/to pair — see `useReorderRoutine`. The ids come from
+      // The whole list rather than a from/to pair: see `useReorderRoutine`. The ids come from
       // the rows on screen, which is what the user was looking at when they tapped.
       void reorder
         .mutateAsync({ id: routine.id, orderedItemIds: orderedIdsOf(moveItem(items, from, to)) })
@@ -174,7 +173,7 @@ export default function RoutineDetailScreen() {
       // Fire-and-forget, deliberately. `ItemEditorSheet`'s steppers fire on every tap, so
       // tracking a pending state here would put a spinner behind each press and make the sheet
       // feel broken; the write is a one-row indexed update in a device-local database. A failure
-      // is still surfaced — it just is not allowed to interrupt the interaction.
+      // is still surfaced: it just is not allowed to interrupt the interaction.
       void setItem.mutateAsync({ routineId: routine.id, itemId, patch }).catch(() => {
         setFailed('That change did not save. Try it again.');
         haptics.warning();
@@ -199,8 +198,8 @@ export default function RoutineDetailScreen() {
   const doAdd = useCallback(
     (exercise: Exercise) => {
       if (routine === null) return;
-      // The opening targets come from `defaultItemTarget` — the same function the draft store
-      // calls — so a row added here and a row added in the builder cannot start out different.
+      // The opening targets come from `defaultItemTarget`: the same function the draft store
+      // calls: so a row added here and a row added in the builder cannot start out different.
       void addExercise
         .mutateAsync({
           routineId: routine.id,
@@ -242,7 +241,7 @@ export default function RoutineDetailScreen() {
       .then(() => {
         setSheet(null);
         haptics.medium();
-        // Back where they came from, except when this screen *is* the entry point — a deep link
+        // Back where they came from, except when this screen *is* the entry point: a deep link
         // from a notification has nothing to return to, and a back button that does nothing is
         // worse than landing on the tab that lists routines.
         if (router.canGoBack()) router.back();
@@ -437,7 +436,7 @@ export default function RoutineDetailScreen() {
                   })}
                 </View>
                 <Txt variant="caption" tone="faint" style={{ paddingHorizontal: spacing.lg }}>
-                  Tap a row to change its sets, reps, weight or rest — changes save as you make
+                  Tap a row to change its sets, reps, weight or rest: changes save as you make
                   them. The arrows reorder the routine.
                 </Txt>
               </Column>
@@ -534,7 +533,7 @@ export default function RoutineDetailScreen() {
           title={`Delete “${routine.name}”?`}
           message={
             routine.timesCompleted > 0
-              ? `You have completed it ${routine.timesCompleted} ${pluralWord(routine.timesCompleted, 'time')}. Those workouts stay in your history and your progress — only the plan is removed.`
+              ? `You have completed it ${routine.timesCompleted} ${pluralWord(routine.timesCompleted, 'time')}. Those workouts stay in your history and your progress: only the plan is removed.`
               : 'This routine has never been completed, and nothing else will reference it once it is gone.'
           }
           confirmLabel="Delete routine"
@@ -583,7 +582,7 @@ function Stat({ label, value }: { label: string; value: string }) {
  * One line in the "more" sheet.
  *
  * `NavRow` with its chevron suppressed: these are actions, not destinations, and a chevron
- * promises a screen that is not there. `ListRow` would be wrong in the other direction — it
+ * promises a screen that is not there. `ListRow` would be wrong in the other direction: it
  * would put the row's own horizontal padding inside a sheet that already has padding, and the
  * three rows would sit narrower than the sheet's title.
  */
@@ -621,8 +620,8 @@ function ActionRow({
 /**
  * Rename, as a sheet with a form.
  *
- * Not `OptionSheet`, which closes itself the instant an option is chosen — right for picking a
- * unit, useless for typing one — and not a pushed screen, because the name is one field and a
+ * Not `OptionSheet`, which closes itself the instant an option is chosen: right for picking a
+ * unit, useless for typing one: and not a pushed screen, because the name is one field and a
  * route for one field is a lot of navigation for very little.
  *
  * Local `name` state rather than a write to the repository per keystroke: a routine's name
@@ -693,7 +692,7 @@ function RenameSheet({
 
 /* ----------------------------------------------------------------- helpers -- */
 
-/** Planned volume, in the unit the user reads — or the words that replace the number. */
+/** Planned volume, in the unit the user reads: or the words that replace the number. */
 function formatPlanned(volumeKg: number, units: 'metric' | 'imperial'): string {
   if (volumeKg === 0) return 'Bodyweight';
   return `${trimNumber(weightValue(volumeKg, units), 0)} ${weightUnit(units)}`;

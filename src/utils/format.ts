@@ -25,7 +25,7 @@ const LB_PER_KG = 2.2046226218;
 
 /** Trims trailing zeros: 5.00 -> "5", 5.40 -> "5.4", 5.42 -> "5.42" */
 export function trimNumber(value: number, maxFractionDigits = 2): string {
-  if (!Number.isFinite(value)) return '—';
+  if (!Number.isFinite(value)) return '-';
   return value.toLocaleString('en-US', {
     minimumFractionDigits: 0,
     maximumFractionDigits: maxFractionDigits,
@@ -33,13 +33,13 @@ export function trimNumber(value: number, maxFractionDigits = 2): string {
 }
 
 export function fixed(value: number, digits = 1): string {
-  if (!Number.isFinite(value)) return '—';
+  if (!Number.isFinite(value)) return '-';
   return value.toFixed(digits);
 }
 
 /** 1234 -> "1,234" · 1234567 -> "1.23M" */
 export function compactNumber(value: number): string {
-  if (!Number.isFinite(value)) return '—';
+  if (!Number.isFinite(value)) return '-';
   const abs = Math.abs(value);
   if (abs >= 1_000_000) return `${trimNumber(value / 1_000_000, 1)}M`;
   if (abs >= 10_000) return `${trimNumber(value / 1000, 1)}k`;
@@ -65,7 +65,7 @@ export function formatDuration(totalSeconds: number, separator: ':' | "'" = ':')
   return separator === "'" ? `${m}'${pad(sec)}` : `${pad(m)}:${pad(sec)}`;
 }
 
-/** 3661 -> "1h 01m" · 2920 -> "48m" — for compact chips. */
+/** 3661 -> "1h 01m" · 2920 -> "48m": for compact chips. */
 export function formatDurationCompact(totalSeconds: number): string {
   const s = Math.max(0, Math.round(totalSeconds));
   const h = Math.floor(s / 3600);
@@ -95,12 +95,12 @@ export function distanceUnit(system: UnitSystem): string {
 /**
  * A distance with its unit: "5.20 km", "420 m", "3.2 mi", "180 ft".
  *
- * ALWAYS carries the unit, because the unit is not a constant — a short effort reads as
+ * ALWAYS carries the unit, because the unit is not a constant: a short effort reads as
  * metres and a long one as kilometres, so a caller cannot append the right one from the
  * system alone. This used to return a bare number for long distances while still returning
  * "420 m" for short ones, and both halves of that were wrong in their own way: the activity
  * list rendered a naked "0.18", its screen-reader label said "Morning run. 0.18 in 1m", and
- * `formatDistanceWithUnit` — which appended the unit itself — produced "420 m km" for
+ * `formatDistanceWithUnit`: which appended the unit itself: produced "420 m km" for
  * anything under 100 metres.
  *
  * Where the unit is already on screen (a table column headed KM), use `distanceValue`,
@@ -124,18 +124,18 @@ export function paceValue(secondsPerKm: number, system: UnitSystem): number {
 
 /** 312 s/km -> "5:12 /km" · imperial converts to s/mi. */
 export function formatPace(secondsPerKm: number, system: UnitSystem): string {
-  if (!Number.isFinite(secondsPerKm) || secondsPerKm <= 0) return '—';
+  if (!Number.isFinite(secondsPerKm) || secondsPerKm <= 0) return '-';
   return `${formatDuration(paceValue(secondsPerKm, system))} /${distanceUnit(system)}`;
 }
 
 export function formatPaceShort(secondsPerKm: number, system: UnitSystem): string {
-  if (!Number.isFinite(secondsPerKm) || secondsPerKm <= 0) return '—';
+  if (!Number.isFinite(secondsPerKm) || secondsPerKm <= 0) return '-';
   return formatDuration(paceValue(secondsPerKm, system));
 }
 
 /** m/s -> "11.6 km/h" / "7.2 mph" */
 export function formatSpeed(metersPerSecond: number, system: UnitSystem, digits = 1): string {
-  if (!Number.isFinite(metersPerSecond) || metersPerSecond <= 0) return '—';
+  if (!Number.isFinite(metersPerSecond) || metersPerSecond <= 0) return '-';
   const kmh = metersPerSecond * 3.6;
   return system === 'metric'
     ? `${kmh.toFixed(digits)} km/h`
@@ -172,7 +172,7 @@ export function weightUnit(system: UnitSystem): string {
   return system === 'metric' ? 'kg' : 'lb';
 }
 
-/** 82.5 kg -> "82.5 kg" / "182 lb" — imperial rounds, half-pounds are noise. */
+/** 82.5 kg -> "82.5 kg" / "182 lb": imperial rounds, half-pounds are noise. */
 export function formatWeight(kg: number, system: UnitSystem): string {
   if (!Number.isFinite(kg) || kg <= 0) return system === 'metric' ? '0 kg' : '0 lb';
   return system === 'metric'
@@ -193,7 +193,7 @@ export function toKilograms(value: number, system: UnitSystem): number {
  * - Going out, an imperial value is stored in kg, so 60 kg is 132.277… lb. Showing that
  *   verbatim makes a control whose step is 2.5 sit on a number its own steps cannot produce,
  *   and the next tap appears to change the weight by nothing. Rounding to the nearest tenth
- *   — or to a whole number when the step is a whole number — keeps the displayed value on
+ *: or to a whole number when the step is a whole number: keeps the displayed value on
  *   the grid the step moves along.
  * - Coming back, the division produces another long decimal, and storing it means two
  *   routines that are both "135 lb" differ at the sixth significant figure and never compare
@@ -213,7 +213,7 @@ export function weightFromDisplayValue(value: number, system: UnitSystem): numbe
   return Number(toKilograms(value, system).toFixed(2));
 }
 
-/** Weight step for steppers — 1 kg / 2.5 lb, the plates people actually own. */
+/** Weight step for steppers, 1 kg / 2.5 lb, the plates people actually own. */
 export function weightStep(system: UnitSystem): number {
   return system === 'metric' ? 1 : 2.5;
 }
@@ -222,14 +222,14 @@ export function weightStep(system: UnitSystem): number {
  * The number a programmed rep target means when a single number is needed.
  *
  * A routine stores reps as text because people program ranges ("5-8"), singles ("1+"), and
- * efforts that are not numbers at all ("AMRAP"). Anything that needs arithmetic — the
+ * efforts that are not numbers at all ("AMRAP"). Anything that needs arithmetic: the
  * planned-volume figure, the session-length estimate, the stepper on the editor sheet, the
- * first set the workout engine opens with — takes the leading integer.
+ * first set the workout engine opens with: takes the leading integer.
  *
  * The fallback is 8, not 0: "AMRAP" still occupies roughly a set's worth of time and a real
  * effort, and reading it as zero would report a five-exercise routine as a two-minute one
  * and offer a stepper starting at nothing. The 100 cap is what makes the value safe to hand
- * to a stepper whose maximum is 100 — without it, a stray "1000" in stored data would open a
+ * to a stepper whose maximum is 100: without it, a stray "1000" in stored data would open a
  * control that cannot represent the number it was given.
  */
 export function repsFromRange(reps: string): number {
@@ -313,7 +313,7 @@ export function formatClock(minutesFromMidnight: number): string {
   return TIME_FMT.format(new Date(2024, 0, 1, h24, m));
 }
 
-/** "Today" · "Yesterday" · "Mon" · "12 Mar" — relative first, then absolute. */
+/** "Today" · "Yesterday" · "Mon" · "12 Mar": relative first, then absolute. */
 export function formatRelativeDay(date: DateInput, now: DateInput = new Date()): string {
   const d = toDate(date);
   const diff = daysBetween(d, now);
@@ -336,7 +336,7 @@ export function formatMonth(date: DateInput): string {
   return MONTH_FMT.format(date);
 }
 
-/** "3 days ago" · "just now" — for activity cards. */
+/** "3 days ago" · "just now": for activity cards. */
 export function formatAgo(date: DateInput, now: DateInput = new Date()): string {
   const seconds = Math.max(0, (toDate(now).getTime() - toDate(date).getTime()) / 1000);
   if (seconds < 3600) return 'just now';
@@ -375,7 +375,7 @@ export function joinMiddleDot(parts: Array<string | null | undefined>): string {
 }
 
 /**
- * `"2 exercises"`, `"1 exercise"` — the number included.
+ * `"2 exercises"`, `"1 exercise"`: the number included.
  *
  * Two near-identical jobs used to hide behind one name called `pluralize`, and half the
  * call sites assumed the other half's contract: a template would write
@@ -389,7 +389,7 @@ export function countNoun(count: number, singular: string, plural = `${singular}
 }
 
 /**
- * `"exercises"`, `"exercise"` — the number *not* included, for when the template already
+ * `"exercises"`, `"exercise"`: the number *not* included, for when the template already
  * prints it, which is most of the time: the count is usually a separate, styled, or
  * localised piece (`4,562 kg`, `4,562 <Txt>sets</Txt>`).
  */

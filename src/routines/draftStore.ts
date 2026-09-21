@@ -5,7 +5,7 @@
  *
  * The builder is a modal. Modals in this app get keyboard-avoidance treatment, and more to
  * the point a user mid-way through assembling five exercises can background the app to
- * check a previous weight — the exact scenario the brief calls out as must-not-lose. A
+ * check a previous weight: the exact scenario the brief calls out as must-not-lose. A
  * `useState` array goes with the unmounted tree.
  *
  * The second reason is subtler and is the one that decides the shape: *the sheet*. Adding an
@@ -19,7 +19,7 @@
  *
  * No persistence, and no autosave. A half-built routine is not data the user asked to keep:
  * they pressed "New routine", and if they back out of it, the correct outcome is that
- * nothing was created. The screen asks for confirmation instead — see `isDirty`. Persisting
+ * nothing was created. The screen asks for confirmation instead: see `isDirty`. Persisting
  * drafts would also mean a restore path, a "resume draft" affordance, and a cleanup rule for
  * drafts nobody returns to, which is three problems to solve a case the confirm prompt
  * already covers. This is the one place in the app where *not* persisting is the correct
@@ -30,8 +30,8 @@
  * Same shape as the workout session store (see `src/workout/session.ts`): a module singleton,
  * a listener set, and actions that are plain functions rather than dispatched actions. The
  * alternative is genuinely reasonable here and was rejected on line count: a reducer plus an
- * action union for eleven operations is ~90 lines of plumbing whose only benefit — a
- * serialisable log of every transition — is not something any screen reads.
+ * action union for eleven operations is ~90 lines of plumbing whose only benefit: a
+ * serialisable log of every transition: is not something any screen reads.
  */
 import { useSyncExternalStore } from 'react';
 
@@ -47,7 +47,7 @@ import {
 export type DraftStatus = 'idle' | 'ready' | 'saving' | 'saved';
 
 export type RoutineDraftState = {
-  /** Null until the first exercise is added or the name is typed — the empty state. */
+  /** Null until the first exercise is added or the name is typed: the empty state. */
   status: DraftStatus;
   /** Set once the user has typed a name or added a row; drives the discard prompt. */
   touched: boolean;
@@ -62,8 +62,7 @@ export type RoutineDraftState = {
   items: RoutineItem[];
   /**
    * Frozen library data for the exercises added from the remote search, keyed by exercise id.
-   * An array in insertion order because that is the shape `RoutineDraft.snapshots` takes —
-   * saving is a pass-through rather than a conversion.
+   * An array in insertion order because that is the shape `RoutineDraft.snapshots` takes, * saving is a pass-through rather than a conversion.
    */
   snapshots: ExerciseSnapshot[];
   /** Rest seconds to give a newly added row; the caller seeds it from Settings. */
@@ -125,7 +124,7 @@ export function getRoutineDraft(): RoutineDraftState {
  * Open the builder.
  *
  * Always resets first. Leaving the previous draft behind is the bug where you add an
- * exercise, back out, press New routine again and find the old list — with a name that
+ * exercise, back out, press New routine again and find the old list: with a name that
  * belongs to a routine you cancelled.
  *
  * There is deliberately no "seed this from an existing routine" option. Duplicating a
@@ -154,7 +153,7 @@ export function setDraftRestDefault(seconds: number): void {
 /**
  * Add an exercise to the draft.
  *
- * Returns nothing, but refuses a duplicate silently — see `containsExercise`. The snapshot
+ * Returns nothing, but refuses a duplicate silently: see `containsExercise`. The snapshot
  * is frozen here, at the moment the user chose the exercise, which is the same rule the
  * saved-routine path uses (`useAddRoutineExercise` calls `snapshotOf` in its mutation): the
  * point is that the routine you built from wger data in October still shows that data in
@@ -197,7 +196,7 @@ export function updateDraftItem(itemId: string, patch: Partial<ItemTarget>): voi
  *
  * The generic `moveItem` returns an unchanged copy for an out-of-range destination rather
  * than clamping. That is right here: the only destinations come from the row's own up/down
- * controls, which are disabled at the ends of the list, so the case is unreachable — and if
+ * controls, which are disabled at the ends of the list, so the case is unreachable: and if
  * it were ever reached, "nothing moved" beats "moved somewhere the user did not ask".
  */
 export function moveDraftItem(from: number, to: number): void {
@@ -213,7 +212,7 @@ export function removeDraftItem(itemId: string): void {
   });
 }
 
-/** Duplicate a row directly below itself — the fastest way to build a superset progression. */
+/** Duplicate a row directly below itself: the fastest way to build a superset progression. */
 export function duplicateDraftItem(itemId: string): void {
   const index = state.items.findIndex((item) => item.id === itemId);
   const source = state.items[index];
@@ -250,7 +249,7 @@ export function markDraftSaveFailed(): void {
  * A typed space in the name field counts. That sounds strict, and it is the right trade:
  * the prompt's cost is one tap for someone who meant to cancel, and not prompting's cost is
  * a lost ten-minute routine. What makes it tolerable is that the check is on
- * `touched`, so merely *opening* the builder — browsing it, closing it — never prompts.
+ * `touched`, so merely *opening* the builder: browsing it, closing it: never prompts.
  */
 export function isDraftDirty(): boolean {
   return state.items.length > 0 || state.name.trim().length > 0;
@@ -261,7 +260,7 @@ export function isDraftDirty(): boolean {
  *
  * An unnamed routine with no exercises has no reason to exist; an unnamed routine *with*
  * exercises does (the name can be fixed later, and the default is derived from the first
- * exercise). So the list, not the name, is the gate — and the name field shows a hint
+ * exercise). So the list, not the name, is the gate: and the name field shows a hint
  * rather than an error, because requiring a name before allowing any work is how forms
  * discourage people from starting.
  */

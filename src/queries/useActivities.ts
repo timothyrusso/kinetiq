@@ -29,7 +29,7 @@ export type ActivityGroup = {
 
 export type ActivityListView = {
   groups: ActivityGroup[];
-  /** Same rows, ungrouped — what a virtualised flat list wants. */
+  /** Same rows, ungrouped: what a virtualised flat list wants. */
   flat: Activity[];
   totalDurationSeconds: number;
   totalVolumeKg: number;
@@ -190,7 +190,7 @@ export function useRecentActivities(limit = 6) {
 
 /**
  * Detail is fetched by id rather than read out of the list cache: the list uses
- * `LIST_COLUMNS` (no route points, no split rows — a 300-point route per row would
+ * `LIST_COLUMNS` (no route points, no split rows: a 300-point route per row would
  * make scrolling a chore), and a detail screen needs the full blob. The id-only key
  * also means opening the same activity from Home, from the list or from a deep link
  * is one entry.

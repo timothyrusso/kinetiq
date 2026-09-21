@@ -1,5 +1,5 @@
 /**
- * Raw design tokens. Both palettes are authored independently — the light theme
+ * Raw design tokens. Both palettes are authored independently: the light theme
  * is a warm-paper system with its own accent ramp, not an inversion of dark.
  *
  * Anything a component needs should be reached through the semantic `Theme`
@@ -44,7 +44,7 @@ export const palette = {
   black: '#000000',
 } as const;
 
-/** Activity accents — stable across both themes, tuned for legibility per mode. */
+/** Activity accents: stable across both themes, tuned for legibility per mode. */
 export type ActivityTone = 'volt' | 'spark' | 'azure' | 'coral' | 'plum';
 
 /**
@@ -54,7 +54,7 @@ export type ActivityTone = 'volt' | 'spark' | 'azure' | 'coral' | 'plum';
  * before and why headings and body never quite looked related.
  *
  * `display` is 800 rather than 700 because at 34pt and above a bold that reads
- * strong at 15pt goes soft — the ramp has to keep climbing as the size does.
+ * strong at 15pt goes soft: the ramp has to keep climbing as the size does.
  *
  * JetBrains Mono survives for exactly one reason: digits that must not reflow
  * as they change (the timer, live pace). Inter's proportional figures make a

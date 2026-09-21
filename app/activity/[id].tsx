@@ -1,5 +1,5 @@
 /**
- * Activity detail — one session, read back.
+ * Activity detail: one session, read back.
  *
  * ## One screen, two shapes
  *
@@ -13,7 +13,7 @@
  * ## Absence is rendered, never invented
  *
  * A treadmill run has no route. A session tracked with the watch left at home has no heart
- * rate. Every such gap renders a dash plus one line saying why that is normal — rather than
+ * rate. Every such gap renders a dash plus one line saying why that is normal: rather than
  * a `0`, a flat line, or a section that quietly vanishes and leaves the user wondering
  * whether the app lost their data. The distinction between "you did zero" and "we did not
  * measure" is the difference between a training log and a lying one. That is also why
@@ -25,7 +25,7 @@
  * `RouteMap` draws an SVG trace immediately and puts a native tile view over it only once
  * tiles can genuinely render (see `src/ui/RouteMap.tsx`). This screen's only job is to not
  * claim a route exists when nothing usable was traced, so it asks the same helper the map
- * will itself use — the "is there a route" test then cannot disagree with the drawing.
+ * will itself use: the "is there a route" test then cannot disagree with the drawing.
  *
  * ## Editing notes is a sheet, not an inline field
  *
@@ -135,7 +135,7 @@ export default function ActivityDetailScreen() {
       // null` in the schema, and an empty string would make every edited row look annotated.
       { id: activityId, notes: trimmed.length === 0 ? null : trimmed },
       // `onSuccess`, not `onSettled`. Closing on settle closes on *failure* too, and
-      // the draft lives only in this screen's state — the user's typed paragraph would
+      // the draft lives only in this screen's state: the user's typed paragraph would
       // vanish while the note it describes stayed unwritten. On failure the sheet stays
       // up, the field keeps its text, and the reason appears under it.
       { onSuccess: () => setNotesDraft(null) },
@@ -147,7 +147,7 @@ export default function ActivityDetailScreen() {
     removeActivity.mutate(activityId, {
       // Navigating *before* the mutation settles would drop the user onto a list that
       // still shows the row; on success they land on a list that already agrees. On
-      // failure the sheet stays up — the row is still there, and so is the chance to
+      // failure the sheet stays up: the row is still there, and so is the chance to
       // retry or back out.
       onSuccess: () => {
         setConfirmingDelete(false);
@@ -164,7 +164,7 @@ export default function ActivityDetailScreen() {
   return (
     <>
       {/* A fade rather than a push: this screen is reached from Home, from the list and
-          from Progress, and its content is a full-bleed surface — a horizontal slide would
+          from Progress, and its content is a full-bleed surface: a horizontal slide would
           flash the previous list's rows past the hero number. */}
       <Stack.Screen options={{ animation: 'fade_from_bottom' }} />
       <DetailScreen
@@ -227,7 +227,7 @@ export default function ActivityDetailScreen() {
         >
           {/* Not wrapped in `SheetSection`: the header already says "Session notes", and
               `TextField` prints its own label above the box. Both at once reads as "NOTES /
-              NOTES" — the section title and the field label are the same word twice, in two
+              NOTES": the section title and the field label are the same word twice, in two
               colours, two lines apart. `SheetFooter` still supplies the divider below. */}
           <TextField
             label="Notes"
@@ -242,7 +242,7 @@ export default function ActivityDetailScreen() {
             autoFocus
             placeholder="How did it feel? What would you change next time?"
             hint="Stored on this device alongside the activity."
-            // The write is a disk write, and disks fail — full storage, a row deleted
+            // The write is a disk write, and disks fail: full storage, a row deleted
             // from another screen, a migration that did not run. Without this the
             // sheet would simply refuse to close, which reads as an app that ignores
             // the Save button. Naming the reason turns a mystery into a retry.
@@ -391,7 +391,7 @@ const KIND_LABEL: Record<ActivityKind, string> = {
   yoga: 'Yoga',
 };
 
-/** Badge *purposes*, not colours — the theme owns the hue, this owns the meaning. */
+/** Badge *purposes*, not colours: the theme owns the hue, this owns the meaning. */
 const KIND_TONE: Record<ActivityKind, 'accent' | 'info' | 'success' | 'warning'> = {
   run: 'accent',
   ride: 'info',
@@ -472,7 +472,7 @@ function CardioBody({
                 </Txt>
                 <Txt variant="caption" tone="muted">
                   Nothing was traced. An indoor session and a GPS fix that never arrived both
-                  look like this — duration, pace and splits below are still exact.
+                  look like this: duration, pace and splits below are still exact.
                 </Txt>
               </Column>
             </Row>
@@ -662,7 +662,7 @@ function SplitTable({
             </Txt>
             {showHeart ? (
               <Txt variant="caption" tone="muted" align="right" style={styles.cell}>
-                {split.heartRate !== null ? split.heartRate : '—'}
+                {split.heartRate !== null ? split.heartRate : '-'}
               </Txt>
             ) : null}
             {showClimb ? (
@@ -791,8 +791,8 @@ function StrengthBody({
                     <Txt variant="caption" tone="muted">
                       {RECORD_LABEL[record.kind]}
                       {record.previousValue === null
-                        ? ' — first of its kind'
-                        : ` — up from ${formatRecordValue(record.kind, record.previousValue, units)}`}
+                        ? ': first of its kind'
+                        : `: up from ${formatRecordValue(record.kind, record.previousValue, units)}`}
                     </Txt>
                   </Column>
                   <Txt variant="headline" weight="700">
@@ -919,7 +919,7 @@ function NotesBlock({ activity, onEdit }: { activity: Activity; onEdit: () => vo
         </Txt>
       </Card>
       {/* `ActionRow` paints its own surface, padding and chevron, so it is a row on this
-          screen rather than something wrapped in a second card — nesting the two gives a
+          screen rather than something wrapped in a second card: nesting the two gives a
           card inside a card with two radii that do not line up. */}
       <ActionRow
         title={hasNotes ? 'Edit notes' : 'Add notes'}
@@ -936,7 +936,7 @@ function NotesBlock({ activity, onEdit }: { activity: Activity; onEdit: () => vo
  *
  * Seeded rows say so in the first four words. The app ships with a history so the charts
  * have a shape on first launch, and a user who later found their "first run" was fabricated
- * would reasonably distrust every other number in here — so the honest label costs one line
+ * would reasonably distrust every other number in here: so the honest label costs one line
  * of copy and buys the credibility of the other thirty.
  */
 function ProvenanceBlock({ activity, theme }: { activity: Activity; theme: Theme }) {
@@ -975,8 +975,7 @@ function ProvenanceBlock({ activity, theme }: { activity: Activity; theme: Theme
 /* ---------------------------------------------------------------- pieces -- */
 
 /**
- * One metric cell. The "`null` means unmeasured" contract is the point of the component —
- * see the file header.
+ * One metric cell. The "`null` means unmeasured" contract is the point of the component, * see the file header.
  */
 function Metric({ label, value, note }: { label: string; value: string | null; note?: string }) {
   const missing = value === null;
@@ -984,7 +983,7 @@ function Metric({ label, value, note }: { label: string; value: string | null; n
     <Column gap="xxs">
       <MetricLabel label={label} />
       <Txt variant="numeralSm" weight="700" tone={missing ? 'faint' : 'default'} numberOfLines={1}>
-        {missing ? '—' : value}
+        {missing ? '-' : value}
       </Txt>
       {note || missing ? (
         <Txt variant="micro" tone="faint" numberOfLines={2}>
@@ -1034,13 +1033,13 @@ function heaviestCompletedSet(sets: readonly StrengthSet[]): StrengthSet | null 
 /**
  * A set's estimated ceiling, or a dash.
  * `estimatedOneRepMax` answers `null` for bodyweight work and for rep ranges past 15, where
- * Epley is extrapolating rather than estimating — and printing an invented ceiling above a
+ * Epley is extrapolating rather than estimating: and printing an invented ceiling above a
  * set of 25 bodyweight reps is exactly the invented number this screen exists to avoid.
  */
 function oneRepMaxLabel(set: StrengthSet, units: UnitSystem): string {
-  if (!set.completed) return '—';
+  if (!set.completed) return '-';
   const max = set.estimated1rm ?? estimatedOneRepMax(set.weightKg, set.reps);
-  return max === null ? '—' : formatWeight(max, units);
+  return max === null ? '-' : formatWeight(max, units);
 }
 
 /** Chart axis labels are a handful of characters; the full name belongs in `detail`. */

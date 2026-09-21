@@ -4,7 +4,7 @@
  * `Stack`/`Row` exist so a screen states its arrangement once instead of
  * repeating flexDirection/align/gap triples, and so the gap vocabulary is the
  * spacing scale rather than whatever number looked right. They are plain `View`s
- * with a memoised style — not smart components — because a layout wrapper that
+ * with a memoised style: not smart components: because a layout wrapper that
  * subscribes to context is a wrapper that re-renders on a theme change.
  *
  * These take theme *values* as props where a value is data (a card's tone) and
@@ -33,7 +33,7 @@ type Gap = keyof typeof spacing;
 /**
  * The alignment vocabulary callers write. `'end'` rather than Yoga's `'flex-end'`
  * because this file exists to speak design language, and because `alignItems` and
- * `alignSelf` disagree about which of the two spellings they accept — normalising
+ * `alignSelf` disagree about which of the two spellings they accept: normalising
  * here means no component ever has to remember which prop it is on.
  */
 export type Align = 'start' | 'center' | 'end' | 'stretch' | 'baseline';
@@ -124,7 +124,7 @@ export const Row = memo(function Row({
   );
 });
 
-/** Pushes everything after it to the far edge — `flex: 1` under a clearer name. */
+/** Pushes everything after it to the far edge, `flex: 1` under a clearer name. */
 export const Spacer = memo(function Spacer() {
   return <View style={{ flex: 1 }} />;
 });
@@ -159,7 +159,7 @@ export const Divider = memo(function Divider({
 /**
  * Hairlines are a classic mobile bug: a hard 0.5 is correct on a 2x screen and
  * invisible on a 1x one. `StyleSheet.hairlineWidth` is the platform's own answer,
- * and it is a device constant rather than theme state — hence a module-level
+ * and it is a device constant rather than theme state: hence a module-level
  * read rather than a hook.
  */
 
@@ -167,7 +167,7 @@ export const Divider = memo(function Divider({
  * The card. `tone` is the only intentional surface variation: `sunken` reads as
  * a value inside a container, `accent` as something the user should act on.
  * Shadows are declared for both platforms (elevation on Android) because the
- * alternative — no depth on Android — makes the light theme look unfinished.
+ * alternative: no depth on Android: makes the light theme look unfinished.
  */
 export const Card = memo(function Card({
   children,
@@ -257,7 +257,7 @@ function cardSurface(
  * content: the tab bar, the workout footer.
  *
  * It has to be a **sibling** of the content rather than its parent, because a blur
- * surface that *contains* children re-blurs on every child update — which is exactly
+ * surface that *contains* children re-blurs on every child update: which is exactly
  * the press feedback that needs to stay cheap. So a caller puts this first inside an
  * absolutely positioned container and lets its own children sit on top.
  *
@@ -270,7 +270,7 @@ export const OverlaySurface = memo(function OverlaySurface({
   edge = 'top',
 }: {
   theme: Theme;
-  /** Which edge the hairline goes on — the side that meets the content. */
+  /** Which edge the hairline goes on: the side that meets the content. */
   edge?: 'top' | 'bottom';
 }) {
   // Written as a conditional rather than a computed key: an object with a computed
@@ -287,9 +287,9 @@ export const OverlaySurface = memo(function OverlaySurface({
       }}
     />
   );
-  // Liquid Glass, where the OS has it (iOS 26+). This is the real system material — it
+  // Liquid Glass, where the OS has it (iOS 26+). This is the real system material: it
   // refracts and specularly highlights the content scrolling under it, which a blur cannot
-  // do — so it gets NO opaque base: an opaque layer underneath would be the one thing that
+  // do: so it gets NO opaque base: an opaque layer underneath would be the one thing that
   // defeats it. No hairline either; the material carries its own edge, and Apple's own glass
   // bars do not draw one.
   //
@@ -328,7 +328,7 @@ export const OverlaySurface = memo(function OverlaySurface({
 /**
  * Is Liquid Glass available on this device?
  *
- * Resolved once, lazily — not at module scope. This module is imported by the tab bar, which
+ * Resolved once, lazily: not at module scope. This module is imported by the tab bar, which
  * is on the first frame, and asking a native module a question before it has registered
  * answers wrong rather than throwing. Cached because the answer cannot change at runtime.
  */

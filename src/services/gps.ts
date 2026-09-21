@@ -2,15 +2,15 @@
  * The maths of a trail: which GPS fixes to believe, how far apart they are, and how
  * the result is cut into splits and thinned for storage.
  *
- * This file deliberately imports nothing platform-specific — no `react-native`, no
- * `expo-location` — so the whole anti-jitter policy can be exercised directly in node
+ * This file deliberately imports nothing platform-specific: no `react-native`, no
+ * `expo-location`: so the whole anti-jitter policy can be exercised directly in node
  * against synthetic fixes. That matters more here than almost anywhere else in the
  * app: the acceptance rules below decide whether a run reads 5.0 km or 6.4 km, and
  * neither the simulator nor a unit-test runner can produce a real satellite sky. A
  * device proves that fixes *arrive*; only a table like the ones in this file's
  * docstrings proves what gets done with them.
  *
- * `location.ts` owns the device — permissions, subscriptions, the durable draft, the
+ * `location.ts` owns the device: permissions, subscriptions, the durable draft, the
  * headless task. It answers *where am I*; this file answers *what is that worth*.
  */
 
@@ -27,8 +27,8 @@ import { mean } from '@/utils/functional';
 /** A fix must be this good (or better) before it contributes distance. */
 export const GPS_ACCURACY_FLOOR_M = 24;
 /**
- * Segments below this are GPS jitter. 4 m at ~2 samples/second is 8 m/s — well
- * above any human pace — so real motion passes and wobble does not. Below ~0.8
+ * Segments below this are GPS jitter. 4 m at ~2 samples/second is 8 m/s: well
+ * above any human pace: so real motion passes and wobble does not. Below ~0.8
  * m/s (a slow walk) some segments get skipped, which under-reads distance by a
  * few percent; that is the correct trade, because the failure mode of a lower
  * floor is a run that reads 1.5 km longer than it was.
@@ -43,19 +43,19 @@ export const MAX_STORED_POINTS = 2000;
  * Whether a fix is trustworthy, in order of preference: the device's own speed
  * estimate (derived from Doppler, so immune to position jitter), then a pace
  * sanity check. `null` means the platform gave no speed, which is not a
- * rejection — the caller still has the segment-length floor.
+ * rejection: the caller still has the segment-length floor.
  *
  * A reported speed of *exactly* zero is treated as a cross-check rather than a
  * ceiling. It is the device asserting it is not moving, and a hop longer than the
- * jitter floor contradicts that — which is precisely the artefact that inflates a
- * phone left on a seat: positions wander 5–15 m every second at a perfectly good
+ * jitter floor contradicts that: which is precisely the artefact that inflates a
+ * phone left on a seat: positions wander 5-15 m every second at a perfectly good
  * reported accuracy, and each hop clears a bare length floor. Real motion almost
  * never reports exactly 0.0, so what this gives up is a slow walk whose Doppler
  * reading dropped to zero, the same class of loss `GPS_MIN_SEGMENT_M` already
  * accepts deliberately.
  *
- * **What this deliberately does not catch.** A large *position* error — urban
- * multipath putting the fix 100 m off while the runner holds a true 3 m/s — is
+ * **What this deliberately does not catch.** A large *position* error: urban
+ * multipath putting the fix 100 m off while the runner holds a true 3 m/s: is
  * accepted, because Doppler sits near the top of its band and the positions are
  * what we sum. Catching it needs a ceiling scaled by reported accuracy
  * (`speed × dt + accuracy`), and no threshold like that can be calibrated from a
@@ -80,8 +80,8 @@ export function isPlausiblePace(
 
 /**
  * Distance to add for one candidate fix, or 0 when it is rejected. This is the
- * whole anti-jitter policy in one function, so it can be reasoned about — and
- * argued with — without reading a class.
+ * whole anti-jitter policy in one function, so it can be reasoned about: and
+ * argued with: without reading a class.
  */
 export function acceptedSegmentMeters(
   previous: RoutePoint | null,
@@ -128,7 +128,7 @@ export function buildSplits(route: readonly RoutePoint[]): ActivitySplit[] {
 
 /**
  * Fallback distance for a session with no usable GPS: a plausible easy effort.
- * Clamps its input the way `estimateCalories` does — both are exported as pure
+ * Clamps its input the way `estimateCalories` does: both are exported as pure
  * helpers, and a fallback that can return negative metres is only safe because of
  * something a caller happens to do, which is the kind of safety that breaks when a
  * second caller appears.
@@ -150,7 +150,7 @@ export function displayRoute(route: readonly RoutePoint[], max = 400): LatLng[] 
 }
 
 /**
- * Ramer–Douglas-Peucker is overkill for storage; even sampling keeps the shape
+ * Ramer-Douglas-Peucker is overkill for storage; even sampling keeps the shape
  * honest and is cheaper to reason about. The endpoint is always preserved so
  * the recorded finish position is exact.
  */

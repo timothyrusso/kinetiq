@@ -1,5 +1,5 @@
 /**
- * Development console — fault injection and request accounting. `__DEV__` only.
+ * Development console: fault injection and request accounting. `__DEV__` only.
  *
  * ## Why this is app UI rather than a CLI flag or a unit test
  *
@@ -15,19 +15,19 @@
  * ## The count field is load-bearing, not convenience
  *
  * `RETRY_BUDGET` in `src/query/client.ts` retries a server error twice and a 429 three
- * times. Arming *one* failure is therefore invisible — the retry succeeds and no screen ever
+ * times. Arming *one* failure is therefore invisible: the retry succeeds and no screen ever
  * changes. Someone who reaches for this screen to "see the error state", arms one shot, and
  * sees nothing concludes the error handling is broken. So arming is one tap per kind, and the
  * tap sends one more request than that kind's own retry budget: enough to exhaust it, derived
  * from the budget rather than remembered. That is the only reason the budget is exported at
- * all, and the comment on it says so — a debug screen reading a tuning constant beats a
+ * all, and the comment on it says so: a debug screen reading a tuning constant beats a
  * debug screen restating it, which is the sort of fact that quietly rots.
  *
  * ## No "send a request" button
  *
  * Every number in the ledger has to be something the app did on its own. A request fired from
  * here is a request the app would never send, so a count that includes it is evidence about
- * this screen rather than about the app — and once it is in the ledger it cannot be
+ * this screen rather than about the app: and once it is in the ledger it cannot be
  * distinguished from the real ones. The fault is armed here and spent in the app, which is
  * also what makes it worth arming: the point is the error state on the screen that hit it, not
  * the fact that a promise can reject.
@@ -35,7 +35,7 @@
  * ## No live counters, and no pull-to-refresh either
  *
  * The fault status and the request ledger render from a snapshot taken on focus and after
- * each action — never from a timer. A polling readout on the screen whose purpose is to
+ * each action: never from a timer. A polling readout on the screen whose purpose is to
  * detect request loops would be a screen generating work on the clock it is measuring.
  * Pull-to-refresh is the same hazard dressed up as a gesture, and it does not communicate
  * that the list is a snapshot; a button labelled "Refresh counters" does.
@@ -138,7 +138,7 @@ export default function DevScreen() {
 
   /**
    * Reads the counters. Called on focus and after anything that could change them, never on
-   * a timer — see the module header.
+   * a timer: see the module header.
    */
   const readCounters = useCallback(() => {
     setStatus(faultSummary());
@@ -151,7 +151,7 @@ export default function DevScreen() {
   useFocusEffect(readCounters);
 
   /**
-   * Arms a kind for long enough to reach the error state — which is NOT one request.
+   * Arms a kind for long enough to reach the error state: which is NOT one request.
    *
    * Two lower bounds, both learned by measurement rather than assumed:
    *  - `budget + 1`, because the retries are the requests that succeed *after* a failure, so a
@@ -162,7 +162,7 @@ export default function DevScreen() {
    *    screen heals mid-flight: the offline check reported "the app ignored the fault" for three
    *    runs while the injector was arming one failure against the whole burst.
    *
-   * No notice of its own — the status line above already says what is armed and over how many
+   * No notice of its own: the status line above already says what is armed and over how many
    * requests, and restating it in a second line below is two places for one fact to disagree.
    */
   const arm = useCallback(
@@ -213,7 +213,7 @@ export default function DevScreen() {
       queryClient.clear();
       const result = await seedIfEmpty();
       // The seed owns two settings (weekly goal, default rest) that its history was built
-      // around, and the wipe emptied the settings table — so the store is re-read from disk
+      // around, and the wipe emptied the settings table: so the store is re-read from disk
       // rather than left holding the values the wipe just invalidated.
       const settings = await readSettingsSnapshot();
       hydrateSettings(settings);
@@ -222,7 +222,7 @@ export default function DevScreen() {
       setNotice({
         text: result
           ? `Restored ${countNoun(result.activities, 'activity', 'activities')}, ${countNoun(result.routines, 'routine')} and ${countNoun(result.records, 'personal record', 'personal records')}.`
-          : 'Nothing was seeded — activity rows were present again before it ran.',
+          : 'Nothing was seeded: activity rows were present again before it ran.',
         tone: 'ok',
       });
       haptics.success();
@@ -260,7 +260,7 @@ export default function DevScreen() {
                     icon={armed === null ? 'checkCircle' : 'warning'}
                     tone={armed === null ? 'ok' : 'bad'}
                     // `faultSummary()` always returns a sentence, including the disarmed
-                    // one ("No fault armed — requests go to wger normally."), so there is no
+                    // one ("No fault armed: requests go to wger normally."), so there is no
                     // null case to cover. The `??` fallback that used to sit here could never
                     // render and worded the same state differently, which is exactly the kind
                     // of second copy that a check then goes looking for and never finds.
@@ -283,7 +283,7 @@ export default function DevScreen() {
             {/* ------------------------------------------------------------- arming */}
             <View>
               {/* Not "then open Exercises": these faults hold until consumed, so arming one
-              on this screen and *then* navigating is the point — the first request the
+              on this screen and *then* navigating is the point: the first request the
               app makes afterwards is the one that fails. A heading naming one screen
               makes the others look unaffected. */}
           <SectionHeader title="Arm a failure" eyebrow="Consumed by the next request" />
@@ -292,7 +292,7 @@ export default function DevScreen() {
                   <Txt variant="caption" tone="muted">
                     Each button arms enough failures to exhaust that kind’s retry budget, so one tap
                     is enough to reach an error state. Arming a single request on a transient kind
-                    would show nothing at all — the retry succeeds and the screen never changes.
+                    would show nothing at all: the retry succeeds and the screen never changes.
                   </Txt>
                   <Divider inset={0} />
                   {FAULTS.map((fault, index) => (
@@ -376,7 +376,7 @@ export default function DevScreen() {
                       <Divider inset={0} />
                       <Txt variant="caption" tone="muted">
                         The repeated-request check: open Exercises, note the counts, leave to Home and
-                        come back. They must not move — a fresh cache entry is good for five minutes.
+                        come back. They must not move: a fresh cache entry is good for five minutes.
                         Typing a new search *should* raise the page count once, not once per
                         keystroke.
                       </Txt>
@@ -406,7 +406,7 @@ export default function DevScreen() {
                   <Txt variant="body">Schema v{schema ?? 'unknown'}</Txt>
                   <Txt variant="micro" tone="faint">
                     The version this install actually migrated to, read from the database rather than
-                    from the target constant — which is the only way a failed or half-applied
+                    from the target constant: which is the only way a failed or half-applied
                     migration would show itself.
                   </Txt>
                 </Stack>
@@ -419,13 +419,13 @@ export default function DevScreen() {
               <Card>
                 <Stack gap="lg">
                   <Txt variant="caption" tone="muted">
-                    Erases everything and writes the seeded thirteen weeks back — ending in the
-                    current week, so Home shows a real streak rather than an empty one — so a
+                    Erases everything and writes the seeded thirteen weeks back: ending in the
+                    current week, so Home shows a real streak rather than an empty one: so a
                     destructive QA run is recoverable without reinstalling the app. Settings go with
                     it: the seed owns the weekly goal and default rest its history was built around.
                   </Txt>
                   <Txt variant="micro" tone="faint">
-                    Deliberately not offered from About, which leaves the app genuinely empty — a
+                    Deliberately not offered from About, which leaves the app genuinely empty: a
                     wipe that silently refilled itself would be the most confusing possible outcome
                     of a wipe.
                   </Txt>
@@ -512,7 +512,7 @@ function LedgerRow({ path, count }: { path: string; count: number }) {
       style={styles.ledger}
       // One element per row, counting in its label. The two texts read fine with eyes and badly
       // with anything else: on device, no snapshot mode reported the `×N` beside the path, so a
-      // screen reader walking this ledger heard a list of endpoints with no numbers — and the
+      // screen reader walking this ledger heard a list of endpoints with no numbers: and the
       // number is the whole finding. `accessible` is what merges children in RN (there is no
       // `accessibilityElement`; that is UIKit).
       accessible
@@ -521,8 +521,8 @@ function LedgerRow({ path, count }: { path: string; count: number }) {
       <Txt variant="monoSm" style={styles.ledgerPath} numberOfLines={1}>
         {path}
       </Txt>
-      {/* A repeat is not automatically a bug — a paginated list legitimately sends one
-          request per page — so nothing here is red. It is a number to read, not a verdict to
+      {/* A repeat is not automatically a bug: a paginated list legitimately sends one
+          request per page: so nothing here is red. It is a number to read, not a verdict to
           argue with. Amber means "look at this", not "this failed". */}
       <Txt variant="monoSm" color={count > 3 ? theme.colors.warning : undefined}>
         ×{count}
@@ -562,7 +562,7 @@ function StatusLine({
  * The version this install actually migrated to.
  *
  * Asked of the database rather than imported as `TARGET_SCHEMA_VERSION`, because the point of
- * printing it is what *this* install has been through — a constant can only report what the
+ * printing it is what *this* install has been through: a constant can only report what the
  * code was written against, which is precisely the case that matters (a downgrade, a
  * half-applied migration). Read in a `useState` initialiser rather than an effect so it never
  * flashes 'reading…' on a number that was never in question, and a failure returns `null`
@@ -579,22 +579,22 @@ function StatusLine({
  *     /api/v2/equipment/ ×1   /api/v2/exercisecategory/ ×1   /api/v2/exerciseinfo/ ×1
  *     /api/v2/language/ ×1    /api/v2/muscle/ ×1
  *
- * — the page itself plus the four taxonomy lookups that let rows render names instead of ids.
+ *: the page itself plus the four taxonomy lookups that let rows render names instead of ids.
  * (A *subsequent* search is smaller, `exerciseinfo ×2`, because the taxonomies are already
  * cached. The cold open is the number that matters here, because it is the larger one and the
  * one an error state has to survive.)
  *
- * This said three, and cited a measurement that was never taken — it came from a ledger parser
+ * This said three, and cited a measurement that was never taken: it came from a ledger parser
  * that was silently dropping rows, so it under-reported every count it produced. Three was
  * therefore too small to do the job this constant exists for. Multiplied by the server kind's
  * retry budget it armed 9 failures against a load that makes up to 15 attempts, so the last
  * attempts landed on a healthy network, the list populated, and the full-screen error state was
  * simply unreachable from the dev tools. Verified on device: with 9 armed, the tab renders 909
- * exercises and never shows an error — the app recovering correctly from a partial outage, and
+ * exercises and never shows an error: the app recovering correctly from a partial outage, and
  * the injector failing to inject a whole one.
  *
  * Multiplied by the kind's retry attempts at the call site, so "arm a 500" means *every* request
- * this screen makes, for *every* attempt it will make — which is what a user reading an error
+ * this screen makes, for *every* attempt it will make: which is what a user reading an error
  * state needs, and what a QA script needs to be able to assert one.
  */
 const FAULT_BURST_REQUESTS = 5;

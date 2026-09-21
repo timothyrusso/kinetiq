@@ -3,8 +3,8 @@
  *
  * Three rules, each because the alternative has a cost a user can feel.
  *
- * 1. Anything driven by a gesture or a scroll — a header collapsing, a sheet
- *    being dragged, the marker on a live run — is a *derived value* or an
+ * 1. Anything driven by a gesture or a scroll: a header collapsing, a sheet
+ *    being dragged, the marker on a live run: is a *derived value* or an
  *    animated style reading a shared value, so the JS thread can be blocked by a
  *    network response and the animation still hits its frames.
  * 2. Nothing here animates `width`/`height` of content that has children to
@@ -13,7 +13,7 @@
  *    "expandable card" implementations.
  * 3. Reduced motion is honoured here, once. `ReduceMotion.System` handles the
  *    native side for springs and timings; `useReducedMotion` covers the cases
- *    where we must branch in JS — skipping a stagger, jumping to the end state.
+ *    where we must branch in JS: skipping a stagger, jumping to the end state.
  *    The information an animation carried still arrives; it arrives immediately.
  */
 import { useCallback, useEffect, useMemo, useRef } from 'react';
@@ -40,7 +40,7 @@ import { motion } from '@/theme/tokens';
 
 // `clamp` comes from Reanimated, not `utils/functional`, and the difference is not style: every
 // call site below is inside a worklet, which is serialised to a string and re-evaluated on the UI
-// thread. A plain JS import is `undefined` there — `tsc` approves it, and the app throws
+// thread. A plain JS import is `undefined` there, `tsc` approves it, and the app throws
 // "undefined is not a function" at the first scroll frame. Reanimated's is declared `'worklet'`.
 // There is no JS-side `clamp` use in this file to reconcile against; if one is ever added, import
 // the other one under a distinct name rather than swapping this one back.
@@ -58,7 +58,7 @@ export const pressSpring = {
   reduceMotion: ReduceMotion.System,
 } as const;
 
-/** Things settling into place — sheets, expanding rows, snapping steppers. */
+/** Things settling into place: sheets, expanding rows, snapping steppers. */
 export const settleSpring = {
   damping: 24,
   stiffness: 220,
@@ -107,10 +107,10 @@ export function useHeaderCollapse(
   const { distance = 88, surface, hairline } = options;
   const progress = useCollapseProgress(scrollY, distance);
 
-  /** True once the bar has fully collapsed — the point to swap in a compact title. */
+  /** True once the bar has fully collapsed: the point to swap in a compact title. */
   const collapsed = useDerivedValue(() => progress.value > 0.82);
 
-  // Only the backing is animated — never the bar's own `opacity`, which would
+  // Only the backing is animated: never the bar's own `opacity`, which would
   // also hide the compact title inside it.
   const barStyle = useAnimatedStyle(() => {
     const t = progress.value;
@@ -143,7 +143,7 @@ export function useHeaderCollapse(
  * Deliberately not `utils/color`'s `withAlpha`, which remains the one to use anywhere a worklet
  * is not involved. Reanimated stringifies a worklet and re-evaluates it on the UI thread, where
  * it can only reach functions from *its own module* or from a package Reanimated whitelists; a
- * project-module import is unreachable either way you mark it — unmarked it is `undefined`,
+ * project-module import is unreachable either way you mark it: unmarked it is `undefined`,
  * marked `'worklet'` it becomes a Remote Function and throws "Tried to synchronously call a
  * Remote Function" the moment a worklet calls it synchronously. `tsc` accepts all of these and
  * the app only finds out on the first scroll frame, which is why this is a duplicate rather
@@ -178,7 +178,7 @@ function withAlpha(hex: string, alpha: number): string {
  * be certain the gesture sees the current answer.
  *
  * `onDismiss` is a JS function and the gesture body is a worklet, so the crossing uses
- * `runOnJS` — invoking a captured JS function directly from a worklet aborts the
+ * `runOnJS`: invoking a captured JS function directly from a worklet aborts the
  * process rather than throwing.
  */
 export function useSheetDrag(options: {
@@ -268,7 +268,7 @@ export function useSheetDrag(options: {
     transform: [{ translateY: translateY.value }],
   }));
 
-  /** Backing that fades as the sheet lifts off — a scrim that recedes with the sheet. */
+  /** Backing that fades as the sheet lifts off: a scrim that recedes with the sheet. */
   const backdropStyle = useAnimatedStyle(() => ({
     opacity: clamp(1 - translateY.value / 320, 0, 1),
   }));
@@ -318,7 +318,7 @@ export function useSpin(duration = 850): ReturnType<typeof useAnimatedStyle> {
   return useAnimatedStyle(() => ({ transform: [{ rotate: `${angle.value}rad` }] }));
 }
 
-/** Breathing opacity — the dot on a live-recording pill. */
+/** Breathing opacity: the dot on a live-recording pill. */
 export function usePulse(period = 1500, min = 0.32): AnimatedStyle<ViewStyle> {
   const phase = useSharedValue(0);
   useEffect(() => {
@@ -345,7 +345,7 @@ export const AnimatedPressable = createAnimatedComponent(Pressable);
 /**
  * Skeleton shimmer. One shared value drives a translate across the whole
  * skeleton block, so a page of six placeholder rows costs one animation rather
- * than six — and they sweep together, which reads as one surface rather than a
+ * than six: and they sweep together, which reads as one surface rather than a
  * pile of independent widgets.
  */
 export function useShimmer(width: number, period = 1250) {
@@ -444,8 +444,8 @@ export function useSwap(key: string | number, duration = motion.base) {
 // ---------------------------------------------------------------------------
 
 /**
- * Eases a number toward a target so a value the user reads — volume, a rep
- * count, the big distance readout mid-run — rolls instead of snapping.
+ * Eases a number toward a target so a value the user reads: volume, a rep
+ * count, the big distance readout mid-run: rolls instead of snapping.
  * Re-targeting mid-roll continues from wherever it is, which is what makes fast
  * edits feel physical rather than glitchy. Render it with `<Animated.Text>`.
  */
@@ -466,7 +466,7 @@ export function useRollingValue(initial = 0) {
   return { value, set, snap };
 }
 
-/** Eased progress ring/Bar target — the primitive behind every chart. */
+/** Eased progress ring/Bar target: the primitive behind every chart. */
 export function useEasedTarget(target: number, duration = motion.deliberate): SharedValue<number> {
   const reduced = useReducedMotion();
   const value = useSharedValue(reduced ? target : 0);

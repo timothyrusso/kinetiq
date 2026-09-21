@@ -3,14 +3,14 @@
  *
  * Used by expo-router's per-route `ErrorBoundary` export and by the root class
  * boundary. Both exist because React's rule is that an error with no boundary above it
- * unmounts the entire tree — a blank app with no message, which is the single worst
+ * unmounts the entire tree: a blank app with no message, which is the single worst
  * failure a user can be left with.
  *
  * ## Deliberately not `Txt`
  *
  * The themed primitives reach for `useAppTheme()`, which reads the settings store, which
  * reads a database. If the failure *is* the store or the theme, a themed error screen
- * throws while reporting the throw — and a boundary's boundary is a crash, not an error
+ * throws while reporting the throw: and a boundary's boundary is a crash, not an error
  * screen. So this file takes its colours as a parameter and renders plain `Text`.
  *
  * The `theme` prop rather than a hook for the same reason: the caller decides how

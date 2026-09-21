@@ -4,7 +4,7 @@
  * The schema is versioned in `PRAGMA user_version` and every step is a
  * transaction, so a crash mid-migration leaves the previous version intact
  * rather than a half-applied schema. Adding a column later means appending one
- * entry to MIGRATIONS — never editing an existing step.
+ * entry to MIGRATIONS: never editing an existing step.
  */
 import * as SQLite from 'expo-sqlite';
 
@@ -160,8 +160,7 @@ export const MIGRATIONS: readonly Migration[] = [
     // create the new row and leave the old one stranded, so the user's preference
     // would silently reset to pace on next launch. Move it first, keep the
     // timestamp, and drop the old row only once the value has landed. `OR IGNORE`
-    // means an install that already wrote under the new key keeps what it wrote —
-    // which can happen if a build from this branch ran before the migration did.
+    // means an install that already wrote under the new key keeps what it wrote, // which can happen if a build from this branch ran before the migration did.
     version: 4,
     up: async (db) => {
       await db.execAsync(`
@@ -267,8 +266,8 @@ export function isDatabaseOpen(): boolean {
  * The schema version this install actually migrated to, read from the database itself.
  *
  * The point of asking the file rather than importing `SCHEMA_VERSION` is that the two can
- * disagree — a downgrade, a half-applied migration, a build that changed the target without
- * migrating — and the disagreement is exactly what a developer needs to see. Kept here rather
+ * disagree: a downgrade, a half-applied migration, a build that changed the target without
+ * migrating: and the disagreement is exactly what a developer needs to see. Kept here rather
  * than in each screen that displays it, so a `PRAGMA` is not something UI code has to know the
  * spelling of.
  *

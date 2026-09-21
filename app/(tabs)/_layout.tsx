@@ -1,10 +1,10 @@
 /**
- * Bottom tabs — the real one.
+ * Bottom tabs: the real one.
  *
  * `NativeTabs` renders a `UITabBarController` on iOS and a `BottomNavigationView` on Android,
  * so the bar is the platform's own rather than a drawn imitation of it. On iOS 26 that means
- * genuine Liquid Glass — the system material, its scroll-edge behaviour, the minimise-on-scroll
- * gesture and the tab-bar accessory slot — none of which can be reproduced by putting a glass
+ * genuine Liquid Glass: the system material, its scroll-edge behaviour, the minimise-on-scroll
+ * gesture and the tab-bar accessory slot: none of which can be reproduced by putting a glass
  * view behind five `Pressable`s, which is what this file used to do.
  *
  * ## What the custom bar was buying, and where each piece went
@@ -14,8 +14,7 @@
  *    accessory inside a hand-drawn bar; this is the real thing.
  *  - The sliding accent indicator: gone, deliberately. The system bar has its own selection
  *    treatment, and a second indicator drawn on top would fight it.
- *  - Icons: SF Symbols on iOS and Material glyphs on Android, via one `Icon` carrying both —
- *    no icon-font dependency, since both sets are built into their platform. Every SF Symbol
+ *  - Icons: SF Symbols on iOS and Material glyphs on Android, via one `Icon` carrying both, *    no icon-font dependency, since both sets are built into their platform. Every SF Symbol
  *    chosen here exists at or below iOS 16.0, this app's deployment target: `dumbbell` would
  *    have been the obvious pick for Workout and is iOS 17+, so it would render as a blank
  *    square on the floor of our support range.
@@ -89,7 +88,7 @@ export default function TabsLayout() {
  * The live-workout pill, in the system's accessory slot.
  *
  * Its own component because the session republishes once a second while a workout runs; kept
- * inline, that tick would re-render the whole tab layout — and therefore the navigator — every
+ * inline, that tick would re-render the whole tab layout: and therefore the navigator: every
  * second. Split, the tick re-renders the pill and nothing else.
  */
 function WorkoutAccessory() {

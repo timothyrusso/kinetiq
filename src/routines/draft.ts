@@ -3,8 +3,8 @@
  *
  * ## Why this is a module and not screen code
  *
- * Two screens assemble the same list — the new-routine builder (in memory, saved once) and
- * the routine screen (already on disk, written per change) — and both need to turn a chosen
+ * Two screens assemble the same list: the new-routine builder (in memory, saved once) and
+ * the routine screen (already on disk, written per change): and both need to turn a chosen
  * exercise into a row, and a list of rows into the shape the repository and the reorder
  * mutation take. Duplicating that across two files means one of them drifts, and drift here
  * is a data bug, not a visual one: two defaults for a new row, or two orders sent to the
@@ -22,7 +22,7 @@
  *   different file from the same routine's completed volume.
  * - Reordering: the generic `moveItem` in `utils/functional`. A version of this module
  *   carried its own that clamped an out-of-range destination, written for a drag-to-reorder
- *   row that was then rejected — with up/down controls disabled at the ends of the list, the
+ *   row that was then rejected: with up/down controls disabled at the ends of the list, the
  *   clamp was unreachable code defended by a comment describing a gesture the app does not
  *   have.
  * - Which number a rep range means: `utils/format`'s `repsFromRange`, the single answer the
@@ -73,7 +73,7 @@ export function defaultItemTarget(defaultRestSeconds: number): ItemTarget {
  * A target plus the exercise it belongs to, in the shape a routine list holds.
  *
  * The name is stored on the row, not looked up: `exerciseName` is what lets a saved routine
- * still render its rows when no snapshot was ever frozen — an older row, a row imported
+ * still render its rows when no snapshot was ever frozen: an older row, a row imported
  * before snapshots existed, or one whose remote exercise has since vanished. Drawing the row
  * would otherwise mean inventing a label, and inventing exercise data is the one thing this
  * app does not do.
@@ -103,7 +103,7 @@ export function orderedIdsOf(items: readonly RoutineItem[]): string[] {
 /** A row plus the frozen library data behind it, which may legitimately be absent. */
 export type ItemRow = {
   item: RoutineItem;
-  /** Null when no snapshot was ever stored for this exercise — see the row's fallback. */
+  /** Null when no snapshot was ever stored for this exercise: see the row's fallback. */
   snapshot: ExerciseSnapshot | null;
 };
 

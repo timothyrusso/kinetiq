@@ -3,8 +3,7 @@
  *
  * ## Why bootstrap gates rendering instead of running alongside it
  *
- * The alternative — mount the navigator and let each screen await what it needs —
- * is what most RN apps do, and it is why they flash default-font text for 300ms,
+ * The alternative: mount the navigator and let each screen await what it needs, * is what most RN apps do, and it is why they flash default-font text for 300ms,
  * render the light theme for one frame of a dark-mode launch, and let a screen mount
  * against a closed database. It also hides the worst failure behind a spinner that
  * eventually resolves into an error boundary nobody designed.
@@ -27,7 +26,7 @@
  * launch screen and says so, offering a retry and an explicit, confirm-gated data
  * reset. Rendering the real app with a closed database would trade one dead screen
  * for a dozen screens each throwing their own "Database accessed before
- * openDatabase() resolved" — strictly harder to diagnose, and not something the user
+ * openDatabase() resolved": strictly harder to diagnose, and not something the user
  * can act on from a phone.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -91,7 +90,7 @@ const splash = createSplashController();
 
 /**
  * Called at module scope, not in an effect. The native splash is torn down the moment
- * React's first frame lands, and an effect runs *after* commit — by which point the
+ * React's first frame lands, and an effect runs *after* commit: by which point the
  * handoff has already happened and the frame it was meant to protect has already
  * flashed. This is the only module-level side effect in the app, and it is the one
  * thing that genuinely has to be one.
@@ -133,8 +132,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   }, [attempt]);
 
   // The AppState subscription lives here rather than in the root layout so it attaches
-  // exactly once, above the navigator, and cannot be torn down by a stack change —
-  // the workout clock depends on seeing every background transition.
+  // exactly once, above the navigator, and cannot be torn down by a stack change, // the workout clock depends on seeing every background transition.
   useEffect(() => installAppLifecycle(), []);
 
   if (phase === 'ready') {
@@ -168,7 +166,7 @@ function LaunchSurface({ dark, slow, onRetry }: { dark: boolean; slow: boolean; 
     setResetFailed(false);
     try {
       // Best-effort: if the database never opened there is nothing to clear, and the
-      // retry will hit the same underlying problem — which the fatal screen will then
+      // retry will hit the same underlying problem: which the fatal screen will then
       // name with the real message instead of this generic one.
       await clearAllUserData();
     } catch {
@@ -275,7 +273,7 @@ function FatalScreen({ error, onRetry }: { error: unknown; onRetry: () => void }
 /* ------------------------------------------------------------------- pieces -- */
 
 /**
- * Matches the native splash exactly — `themeFor` is the only source for the launch
+ * Matches the native splash exactly, `themeFor` is the only source for the launch
  * colour, so app.json, this frame and the first rendered screen cannot disagree.
  */
 function LaunchFrame({ dark, children }: { dark: boolean; children?: React.ReactNode }) {
@@ -351,7 +349,7 @@ const styles = StyleSheet.create({
 /* ------------------------------------------------------------- diagnostics -- */
 
 /**
- * Dev/settings readout of what bootstrap actually did — schema version moved, whether
+ * Dev/settings readout of what bootstrap actually did: schema version moved, whether
  * this was a first run, whether a workout was restored.
  *
  * It exists because "the app lost my workout" is unanswerable without it. Everything

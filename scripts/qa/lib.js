@@ -11,12 +11,12 @@
  *     `open` clears the session's dev-server binding and the client can then load THAT
  *     bundle, where every kinetiq link looks broken. Every open passes METRO.
  *
- *   - A SNAPSHOT LISTS WHAT IS MOUNTED, NOT WHAT IS ON SCREEN — and RN recycles aggressively.
+ *   - A SNAPSHOT LISTS WHAT IS MOUNTED, NOT WHAT IS ON SCREEN: and RN recycles aggressively.
  *     Measured on the dev screen: a freshly-opened list reports 66 nodes with no ledger
  *     section in them at all (never mounted); one pan mounts it; two more reaches the bottom,
  *     where it reports `Grouped by path` at y = -31 (mounted, scrolled above the viewport);
  *     pan back up and most of it unmounts again. So `snapshot contains "Reset"` is not a
- *     question with a stable yes/no answer — it depends where you last scrolled. Everything
+ *     question with a stable yes/no answer: it depends where you last scrolled. Everything
  *     here therefore asks about *visible* nodes (`visible()`), and scrolling is direction
  *     aware, because a node above you is not reached by swiping up.
  *
@@ -55,17 +55,17 @@ function sh(cmd, { allowFail = false } = {}) {
 const sleep = (s) => sh(`sleep ${s}`);
 
 /**
- * The accessibility tree, or a loud failure — never a quiet empty list.
+ * The accessibility tree, or a loud failure: never a quiet empty list.
  *
  * The runner has a watchdog on accessibility capture, and a heavy or animating screen trips it:
  * the next call answers `RUNNER_BUSY` instead of a tree. The old body swallowed that and
  * returned `[]`, so a snapshot that FAILED was indistinguishable from a screen with nothing on
- * it — and every caller here treats an empty tree as "the app rendered nothing". One run
+ * it: and every caller here treats an empty tree as "the app rendered nothing". One run
  * reported the cold-start search as never rendering while a screenshot of that exact moment
  * showed "53 exercises for squat" and a full list. The app was fine; the read was not.
  *
  * So a busy runner is retried rather than believed. If it never answers, the return is still
- * `[]` — callers cannot be rewritten to handle an exception here — but the reason is printed,
+ * `[]`: callers cannot be rewritten to handle an exception here: but the reason is printed,
  * which is the difference between debugging the app and debugging the harness.
  */
 function nodes({ tries = 4 } = {}) {
@@ -76,7 +76,7 @@ function nodes({ tries = 4 } = {}) {
       const parsed = JSON.parse(raw);
       if (parsed.success === false) {
         last = parsed.error?.code ?? 'UNKNOWN';
-        // Busy is transient by definition — the runner is finishing the previous capture.
+        // Busy is transient by definition: the runner is finishing the previous capture.
         if (last === 'RUNNER_BUSY') {
           sleep(3);
           continue;
@@ -89,7 +89,7 @@ function nodes({ tries = 4 } = {}) {
       sleep(1);
     }
   }
-  console.log(`   (snapshot unavailable after ${tries} attempts: ${last} — reading as empty)`);
+  console.log(`   (snapshot unavailable after ${tries} attempts: ${last}: reading as empty)`);
   return [];
 }
 
@@ -115,7 +115,7 @@ const onScreen = (text) => nodes().filter((n) => (n.label ?? '').includes(text) 
 const labels = () => nodes().filter((n) => n.label && visible(n)).map((n) => n.label.trim());
 
 /**
- * "Is this text on this screen?" — scrolling top to bottom to find out.
+ * "Is this text on this screen?": scrolling top to bottom to find out.
  *
  * Named for what it does, because a single-snapshot `has()` would answer differently at
  * different scroll offsets, which is the worst possible property for an assertion to have.
@@ -150,7 +150,7 @@ function hasAnywhere(...needles) {
   return needles.every((needle) => text.includes(needle));
 }
 
-/** "Is this visible without touching anything?" — for polling a screen you are already on. */
+/** "Is this visible without touching anything?": for polling a screen you are already on. */
 const has = (...needles) => {
   const t = labels();
   return needles.every((needle) => t.some((x) => x.includes(needle)));
@@ -182,7 +182,7 @@ function signature() {
 }
 
 /**
- * One scroll step — deliberately a SHORT swipe.
+ * One scroll step: deliberately a SHORT swipe.
  *
  * A swipe is a fling, and the content keeps moving after the finger lifts. Measured on the dev
  * screen, travel per gesture:
@@ -199,7 +199,7 @@ function signature() {
  * sampled frame on its way past. It costs ~3x more gestures to cover the same distance, which is
  * the correct trade: a slow scroll finds the row, a fast one reports it missing.
  *
- * `agent-device scroll` would be the obvious alternative and does not work here — it reports
+ * `agent-device scroll` would be the obvious alternative and does not work here: it reports
  * "Scrolled down by 240px" and the ScrollView does not move.
  */
 const PAN_STEP = 80;
@@ -224,7 +224,7 @@ function scrollTop({ max = 12 } = {}) {
   //
   // It is not trusted on its own, because it is view-dependent: on the dev screen the same
   // command reports success and moves nothing. So the pan loop still runs afterwards as the
-  // guarantee — it exits after one comparison when the list really is at the top, so the cost
+  // guarantee: it exits after one comparison when the list really is at the top, so the cost
   // when the native call worked is a single snapshot.
   sh('npx agent-device scroll top --settle 2>&1', { allowFail: true });
   sleep(1);
@@ -242,14 +242,13 @@ function scrollTop({ max = 12 } = {}) {
  * Bring a node matching `want` on screen and return it.
  *
  * Direction matters and the obvious implementation gets it wrong: a match mounted at y = -31
- * is *behind* you, and swiping up — which is what "keep scrolling to find it" looks like —
- * moves it further away. So: if a match exists above the viewport, pan up; otherwise pan
+ * is *behind* you, and swiping up: which is what "keep scrolling to find it" looks like, * moves it further away. So: if a match exists above the viewport, pan up; otherwise pan
  * down until either it becomes visible, or a pan changes nothing and it is genuinely absent.
  */
 function seek(want, { max = 24 } = {}) {
   // Start from a known position when the target is not mounted anywhere in the tree. A screen
   // remembers where it was scrolled, so re-opening the dev screen after a scroll-to-bottom read
-  // put the fault rows *above* the viewport, unmounted and therefore absent from the tree — and
+  // put the fault rows *above* the viewport, unmounted and therefore absent from the tree: and
   // the loop below walks DOWNWARD, so it reported "never found row" on a row that had pressed
   // fine seconds earlier. The few upward pans it does make cannot outrun its own
   // bottom-detection on a three-page screen. Rewinding costs two seconds; a misattributed
@@ -287,11 +286,11 @@ function dismissDevMenu() {
  * Three screens are not the app and each needs a different response, so each is named
  * rather than reported as "the route failed": the dev-server picker (recoverable: press the
  * saved 8083 row), expo's dev menu (recoverable: Close), and a genuinely unrouted link
- * (a real bug — fail).
+ * (a real bug: fail).
  *
  * `expectText` is a viewport read first and a full scan only as a fallback. Leading with a
- * scan was correct in principle — a screen whose hero is mounted but whose content is still
- * arriving should not be called landed — and ruinous in practice: a scan walks a list to its
+ * scan was correct in principle: a screen whose hero is mounted but whose content is still
+ * arriving should not be called landed: and ruinous in practice: a scan walks a list to its
  * bottom and back, so every navigation cost ~90 s, and on the exercise list it *paged* the
  * list as a side effect of merely arriving. After two viewport reads come up empty the scan
  * is worth its cost, because at that point something really is slow or missing.
@@ -305,7 +304,7 @@ function dismissDevMenu() {
  *   genuinely need to search, and only off the measurement path.
  */
 /**
- * `home` is the tab group's index, so it has no path of its own — `kinetiq://home` is a link
+ * `home` is the tab group's index, so it has no path of its own, `kinetiq://home` is a link
  * to nowhere and lands on the feature-level not-found screen. The app is correct about that;
  * the harness was wrong to ask. Mapping the name to the bare scheme means scripts can name the
  * screen they want instead of remembering which of them is an index.
@@ -316,7 +315,7 @@ function dismissDevMenu() {
  * Worth its own check because a dead bundler is indistinguishable, from the device, from a broken
  * app: the client cannot fetch a bundle, so it falls back to the Expo dev-server picker, and every
  * navigation after that lands on the picker instead of a screen. A whole run once reported "still
- * on the dev-server picker after reconnecting to 8083" — true, and useless, because the thing it
+ * on the dev-server picker after reconnecting to 8083": true, and useless, because the thing it
  * was reconnecting to had exited. `/status` answers `packager-status:running`; anything else on
  * that port is somebody else's server and must not be pressed into service (8081 on this machine
  * belongs to another project, and loading ITS bundle is how a kinetiq run ends up driving a
@@ -333,7 +332,7 @@ const ROUTE_PATHS = { home: '' };
  * @param soft navigate, but answer `false` instead of failing when we cannot land. For cleanup
  *   only: a teardown that cannot reach the dev screen must not convert a PASS into exit 1, and
  *   an `onExit` hook that calls `fail()` aborts the remaining cleanups with it. A measurement
- *   step wants the hard failure — a step that never landed is not a measurement.
+ *   step wants the hard failure: a step that never landed is not a measurement.
  */
 function open(route, expectText, { scan: allowScan = false, soft = false } = {}) {
   if (route in ROUTE_PATHS) route = ROUTE_PATHS[route];
@@ -353,7 +352,7 @@ function open(route, expectText, { scan: allowScan = false, soft = false } = {})
     // a broken screen rather than a busy tool.
     if (/DEVICE_IN_USE/.test(out) && !recoveredSession) {
       recoveredSession = true;
-      console.log('   agent-device session is holding the device — closing it and retrying');
+      console.log('   agent-device session is holding the device: closing it and retrying');
       sh('npx agent-device close --session default 2>&1', { allowFail: true });
       sleep(2);
       out = deepLink();
@@ -365,14 +364,14 @@ function open(route, expectText, { scan: allowScan = false, soft = false } = {})
       if (!metroAlive()) {
         return refused(
           'the app is on the Expo dev-server picker because Metro is not answering on 8083. ' +
-            'Nothing is wrong with the app or this route — start the bundler ' +
+            'Nothing is wrong with the app or this route: start the bundler ' +
             '(`npx expo start --port 8083`) and re-run. Do not point it at 8081; that is ' +
             "another project's server, and its bundle is a different app.",
         );
       }
       if (recoveredPicker) return refused(`still on the dev-server picker after reconnecting to 8083`);
       recoveredPicker = true;
-      console.log('   app is on the dev-server picker — reconnecting to 8083');
+      console.log('   app is on the dev-server picker: reconnecting to 8083');
       // By ref, not by selector. This used to press `text^="http://127.0.0.1:8083"`, and
       // `text^` is not a selector key agent-device has (id, role, text, label, value, … are);
       // every attempt returned INVALID_ARGS, so the recovery never once pressed anything and
@@ -394,9 +393,9 @@ function open(route, expectText, { scan: allowScan = false, soft = false } = {})
       continue;
     }
     if (onDevMenu()) {
-      if (recoveredMenu) return refused('expo dev menu returned after being dismissed — investigate');
+      if (recoveredMenu) return refused('expo dev menu returned after being dismissed: investigate');
       recoveredMenu = true;
-      console.log('   expo dev menu is covering the app — dismissing it');
+      console.log('   expo dev menu is covering the app: dismissing it');
       dismissDevMenu();
       out = deepLink();
       sleep(4);
@@ -408,11 +407,10 @@ function open(route, expectText, { scan: allowScan = false, soft = false } = {})
     // Both of the app's two not-found screens count. The router's own catches a missing route;
     // the feature-level one (`app/_not-found.tsx`) catches a link the router accepted but no
     // screen claimed, and the two have different copy. Checking for one literal string meant a
-    // typo'd route spent the full polling budget on it and then reported "never saw the hero" —
-    // true, but it hides the actual reason, which is printed right there on screen.
+    // typo'd route spent the full polling budget on it and then reported "never saw the hero", // true, but it hides the actual reason, which is printed right there on screen.
     if (isNotFound(t)) {
       return refused(
-        `"${route}" resolved to a not-found screen (${t.find(isNotFound).slice(0, 60)}) — ` +
+        `"${route}" resolved to a not-found screen (${t.find(isNotFound).slice(0, 60)}), ` +
           'unrouted or mistyped deep link',
       );
     }
@@ -421,13 +419,13 @@ function open(route, expectText, { scan: allowScan = false, soft = false } = {})
     }
     sleep(2);
   }
-  // A caller who passed expectText asked a question — "prove we are on that screen" — and a
+  // A caller who passed expectText asked a question, "prove we are on that screen": and a
   // false answer to it is not a state worth continuing in. Returning false used to let scripts
   // carry on, and they did: one ran its offline routine audit against the Workout tab because
   // the navigation before it had quietly failed, and reported "routine vanished" about screens
   // it had never looked at. Failing here attributes the problem to the navigation, which is
   // where it is, instead of to the app several steps later.
-  return refused(`never saw "${expectText}" after opening "${route}" — refusing to continue`);
+  return refused(`never saw "${expectText}" after opening "${route}": refusing to continue`);
 }
 
 /**
@@ -435,7 +433,7 @@ function open(route, expectText, { scan: allowScan = false, soft = false } = {})
  *
  * `fail()` exits, and a device does not forget what a dead script left behind. Every check in
  * this folder that arms a fault, edits a routine or types into a search box has to undo it, or
- * the next check inherits the state and reports it as a defect in the app — which is precisely
+ * the next check inherits the state and reports it as a defect in the app: which is precisely
  * how a fault-matrix run died mid-case and the next one's baseline search came back failed,
  * producing "the baseline never committed" about a perfectly healthy network. Registered here,
  * run on every exit path, including a plain `process.exit` from fail().
@@ -465,7 +463,7 @@ process.on('exit', runCleanups);
  */
 /**
  * These two navigate, and every caller of `clearFaultQuietly` is an `onExit` hook. Failing
- * there would exit 1 over a teardown — turning a genuine PASS into a red run — and would abort
+ * there would exit 1 over a teardown: turning a genuine PASS into a red run: and would abort
  * the remaining cleanups with it, so the second half of a script's tidying never happens. Soft
  * by definition: print why the device could not be reached, report what is knowable (unknown =
  * false), and let the verdict stand on what was actually measured.
@@ -494,12 +492,12 @@ function clearFaultQuietly() {
  * `simctl terminate` is not backgrounding (which keeps the process and its timers alive) and
  * not a reload (which keeps the JS module registry, and therefore any module-level state a bug
  * is hiding in). It removes the process, so anything still standing afterwards came out of the
- * database — which is the property under test.
+ * database: which is the property under test.
  *
  * The session is closed first on purpose: the tool keeps its attachment across a terminate, and
  * then reports an app that is running but unreachable as a run of empty snapshots. Several
  * minutes of polling nothing, for a "the screen is blank" finding. Close, terminate, launch, and
- * let `open` re-attach — it now recovers a held device instead of timing out on it.
+ * let `open` re-attach: it now recovers a held device instead of timing out on it.
  */
 const SIMULATOR_UDID = process.env.SIMULATOR_UDID ?? '0C66B8BE-737D-4E57-A6DA-4B015C03953E';
 const BUNDLE_ID = process.env.BUNDLE_ID ?? 'app.kinetiq.mobile';
@@ -512,12 +510,12 @@ function restartApp() {
   }
   sleep(8);
   // Re-attaching is deliberately NOT done here. The agent-device session survives a terminate
-  // and then holds a dead attachment — every snapshot comes back empty and reads as a blank
+  // and then holds a dead attachment: every snapshot comes back empty and reads as a blank
   // app. Closing it from here raced the launch instead (open() then hit DEVICE_IN_USE against
   // the session it had just deleted). `open()` owns that whole recovery: it recognises
   // DEVICE_IN_USE in its own output, closes the stale session once, and retries. So restartApp
-  // stops at the launch, and the caller's first `open` — which navigates AND proves the landing
-  // screen — is the thing that waits for the cold start to have actually rendered.
+  // stops at the launch, and the caller's first `open`: which navigates AND proves the landing
+  // screen: is the thing that waits for the cold start to have actually rendered.
   return true;
 }
 
@@ -528,7 +526,7 @@ function restartApp() {
  * on screen whether it was persisted or re-derived from an in-memory cache, and "is the row
  * actually gone, or just filtered out of the list?" is unanswerable from pixels. The database is
  * the only witness with standing for those, and it is a plain file the simulator keeps on this
- * disk — so a check can ask it directly instead of trusting the screen that is being tested.
+ * disk: so a check can ask it directly instead of trusting the screen that is being tested.
  *
  * Verified on device rather than assumed: the file is in WAL mode, and a `-readonly` open of a
  * WAL database succeeds here (the `-shm` file is present) and returns rows three times in a row
@@ -563,7 +561,7 @@ function dbQuery(sql) {
 /**
  * Run a WRITE against the app's database. Cleanup only.
  *
- * `dbQuery` opens read-only on purpose, and everything that reads should keep using it — a
+ * `dbQuery` opens read-only on purpose, and everything that reads should keep using it: a
  * check that can mutate the thing it is measuring is not a check. This exists for exactly one
  * job: removing rows a previous aborted run left behind, which cannot be done through the UI
  * because the run died before reaching its own teardown.
@@ -602,7 +600,7 @@ function dbCol(sql) {
  *     nodes. A check reading the screen after typing sees `Next keyboard / Padding-Left / q`
  *     and concludes the app rendered nothing.
  *   - every pan here swipes at y=600..520, which is INSIDE the keyboard. `scrollTop` and `seek`
- *     stop scrolling the list and start stroking keys — one run typed a stray "q" into the app
+ *     stop scrolling the list and start stroking keys: one run typed a stray "q" into the app
  *     with its own scroll gesture.
  *   - worst, the keyboard screen is heavy enough to trip the runner's accessibility-capture
  *     watchdog, after which every snapshot answers RUNNER_BUSY. That is unrecoverable from
@@ -614,13 +612,13 @@ function dbCol(sql) {
  * UNSUPPORTED_OPERATION on iOS; `keyboard return` works only while the runner is idle, which
  * is exactly when it is not needed.
  *
- * The default target is the horizontal centre just under the nav bar — a title on every screen
+ * The default target is the horizontal centre just under the nav bar: a title on every screen
  * this harness types on. Pass `blurAt` for a screen where that would hit a control.
  */
 function fillField(ref, text, { blurAt = '201 120' } = {}) {
   sh(`npx agent-device fill @${ref} ${JSON.stringify(text)} 2>&1`, { allowFail: true });
   sleep(1);
-  // `blurAt: null` means "leave the keyboard up" — for a bottom SHEET there is often no safe
+  // `blurAt: null` means "leave the keyboard up": for a bottom SHEET there is often no safe
   // point to tap at all. Above the sheet is the backdrop, which dismisses it and takes the
   // commit button along; inside the sheet, below the field, is the keyboard, and tapping that
   // types a character. A rename committed as "… IIg" because the blur point landed on the g
@@ -641,13 +639,13 @@ function fail(msg) {
  * Press a real button by its label, scrolling to it first.
  *
  * Also accepts `text^="…"` to mean "press the node whose label STARTS WITH this", for the cases
- * where an exact label is ambiguous — a routine row and its own title node share text, and
+ * where an exact label is ambiguous: a routine row and its own title node share text, and
  * `label="X"` throws AMBIGUOUS_MATCH.
  *
  * `text^=` is this harness's own shorthand, NOT an agent-device selector. It looks like one,
  * which is the trap: agent-device supports id, role, text, label, value, appname, windowtitle
  * and the state flags, and anything else is INVALID_ARGS. Passing `text^=` straight through
- * therefore always failed — silently, wherever a caller ignored the result — so it is resolved
+ * therefore always failed: silently, wherever a caller ignored the result: so it is resolved
  * here, against a snapshot, and pressed by ref.
  */
 function pressLabel(label) {
@@ -655,8 +653,7 @@ function pressLabel(label) {
     ? (n) => (n.label ?? '').includes(label.split('"')[1] ?? '')
     : (n) => (n.label ?? '').trim() === label;
   // Only hand the selector straight to agent-device when it is one agent-device HAS. The
-  // supported keys are id, role, text, label, value, appname, windowtitle and the state flags —
-  // `text^=` is not among them and comes back INVALID_ARGS every time, so trying it first just
+  // supported keys are id, role, text, label, value, appname, windowtitle and the state flags, // `text^=` is not among them and comes back INVALID_ARGS every time, so trying it first just
   // buys a guaranteed-failing subprocess before the fallback does the real work.
   const supported = /^(id|role|text|label|value|appname|windowtitle)=/.test(label);
   if (supported) {
@@ -667,9 +664,9 @@ function pressLabel(label) {
       return true;
     }
   }
-  // Prefer an actual control. A label is frequently carried by more than one node — the
+  // Prefer an actual control. A label is frequently carried by more than one node: the
   // Workout tab has "New routine" on both the top-right Button (38pt wide) and an `Other`
-  // container spanning the whole screen — and `seek` returns whichever comes first in tree
+  // container spanning the whole screen: and `seek` returns whichever comes first in tree
   // order. Pressing the container is a no-op that REPORTS SUCCESS, so the caller believes it
   // navigated and then asserts against the screen it never left. That is exactly how the CRUD
   // gate failed its first run: "pressed New routine: true", still on the Workout tab.
@@ -690,7 +687,7 @@ function pressLabel(label) {
 /**
  * Tap the centre of whatever shows this text.
  *
- * The fallback for pressables that are not exposed as buttons at all — the fault rows on
+ * The fallback for pressables that are not exposed as buttons at all: the fault rows on
  * the dev screen are custom cards, so `press 'label="No connection"'` fails on them, while a
  * tap inside the row's bounds works. Prefer `pressLabel` for a real Button, and `pressRow`
  * for a titled card, because a coordinate tap can land on a neighbouring row; this one is
@@ -712,8 +709,7 @@ function pressText(text) {
  *
  * Needed because several rows here are custom cards: the dev screen's failure armers each
  * show a title as plain text and a button labelled just `Arm`, so no selector names the
- * *row*. Matching by geometry — the nearest such button below the title, both on screen —
- * is how the screen actually groups them, and it cannot grab the wrong row the way a tap on
+ * *row*. Matching by geometry: the nearest such button below the title, both on screen, * is how the screen actually groups them, and it cannot grab the wrong row the way a tap on
  * the title can.
  */
 function pressRow(title, buttonLabel = 'Arm') {
@@ -725,10 +721,10 @@ function pressRow(title, buttonLabel = 'Arm') {
     }
     // Buttons sit level with or just under the title they belong to; the next row is ~100pt
     // away, so 70pt is comfortably inside one row and safely outside the next. Both have to
-    // be on screen — a partly-scrolled card is the one case where this can grab a neighbour.
+    // be on screen: a partly-scrolled card is the one case where this can grab a neighbour.
     // The same control relabels itself: "Arm" before it is armed, "Armed" after. Matching one
       // literal string meant a fault left armed by an earlier run made this report "no such
-      // button" on a row that was plainly there and plainly armed — and the caller then armed
+      // button" on a row that was plainly there and plainly armed: and the caller then armed
       // nothing, searched, saw results, and accused the app of not injecting faults. Accept the
       // whole label family so an already-armed row is treated as armed, which is what it is.
     const wants = Array.isArray(buttonLabel) ? buttonLabel : [buttonLabel];
@@ -751,7 +747,7 @@ function pressRow(title, buttonLabel = 'Arm') {
 }
 
 /**
- * Switch tab by name. The keys are the tab labels (`Exercises`, not `exercises`) — a wrong
+ * Switch tab by name. The keys are the tab labels (`Exercises`, not `exercises`): a wrong
  * case used to produce `tap undefined`, which agent-device rejected as a malformed target and
  * the run died ten minutes in. Case-insensitive so the label is the only spelling to remember,
  * and a loud throw rather than a bad tap.
@@ -760,18 +756,18 @@ function pressRow(title, buttonLabel = 'Arm') {
  * Switch tabs, by LABEL first.
  *
  * The bar is now a real `UITabBarController` (`NativeTabs`), so each destination is a `Button`
- * carrying its own label — which the hand-drawn bar never was; its items were `Other` nodes
+ * carrying its own label: which the hand-drawn bar never was; its items were `Other` nodes
  * with no accessible name, and coordinates were the only way to reach them.
  *
  * Coordinates remain as a fallback, and they are no longer quite right: the Liquid Glass bar
  * is a capsule inset from the screen edges, so the centres measured at
  * (62, 131, 200, 270, 340) x 822 rather than the old (50, 125, 201, 277, 352) x 810. The old
- * values still land inside the new hit areas — Profile is the closest call at 12pt off — but
+ * values still land inside the new hit areas, Profile is the closest call at 12pt off: but
  * only by luck, which is the argument for pressing the label the system now exposes.
  */
 function tab(name) {
   const key = Object.keys(TABS).find((k) => k.toLowerCase() === String(name).toLowerCase());
-  if (!key) throw new Error(`no such tab "${name}" — known: ${Object.keys(TABS).join(', ')}`);
+  if (!key) throw new Error(`no such tab "${name}": known: ${Object.keys(TABS).join(', ')}`);
   const button = nodes().find((n) => n.type === 'Button' && (n.label ?? '').trim() === key && n.ref);
   if (button) {
     const out = sh(`npx agent-device press '@${button.ref}' 2>&1`, { allowFail: true });
@@ -789,7 +785,7 @@ function tab(name) {
  * Scans rather than snapshots, because the ledger is a variable-length list inside a long
  * scrolling screen and its rows mount and unmount as you pass them. The total is the sum of
  * the per-path rows, not the header's eyebrow, so it does not matter which stop mounted
- * which row — but it does mean the count is of *paths the app has hit*, which is the number
+ * which row: but it does mean the count is of *paths the app has hit*, which is the number
  * the claim is written against.
  *
  * Read it from the dev screen, and take the baseline from the dev screen too: anything the
@@ -798,27 +794,24 @@ function tab(name) {
 function ledger(label) {
   // Walk to the ledger's OWN screen rather than assuming the caller is standing on it. The
   // first version assumed it: the first time a caller read counters after a tab switch,
-  // scan() scrolled the *exercise list* hunting for a ledger section that was never there —
-  // paging the list and charging those page fetches to whatever was being measured. The dev
+  // scan() scrolled the *exercise list* hunting for a ledger section that was never there, // paging the list and charging those page fetches to whatever was being measured. The dev
   // screen is what reads the counters, so the dev screen is where the read happens; it sends
   // no requests of its own, so navigating there costs the measurement nothing.
   open('dev', 'Developer');
   // Seek to the ledger's own heading rather than scanning the whole page. A scan is the right
   // tool for "does this text exist anywhere", and the wrong one here: callers read these
   // counters several times a run, and a full scan (bottom, then back to the top) cost more
-  // than the navigation step it was there to measure. One pan past the heading is enough —
-  // the group list is short and sits directly under it.
+  // than the navigation step it was there to measure. One pan past the heading is enough, // the group list is short and sits directly under it.
   // ── Walk the whole section from the top, every time ───────────────────────────────────────
   // Not `seek` + a pan. Seek stops at the first match and leaves the list wherever that happened
   // to be, so each read started from a different scroll offset and saw a different subset of a
   // recycling list. Measured, three consecutive reads of one unchanged ledger: total=5, then
-  // total=1, then "never came into view". Those are the same screen read from three positions —
-  // and the middle one is the dangerous shape, because a partial read is indistinguishable from
+  // total=1, then "never came into view". Those are the same screen read from three positions, // and the middle one is the dangerous shape, because a partial read is indistinguishable from
   // a real number and every ceiling here is an upper bound.
   //
   // So: go to the top, then pan down until the section's LAST element is on screen, unioning what
-  // each stop mounts. `Refresh counters` is that element — it renders in both the empty and the
-  // populated state, and it sits below every LedgerRow — so seeing it is proof the walk went past
+  // each stop mounts. `Refresh counters` is that element: it renders in both the empty and the
+  // populated state, and it sits below every LedgerRow: so seeing it is proof the walk went past
   // all the rows rather than stopping among them.
   scrollTop({ max: 8 });
   const seen = new Map();
@@ -848,9 +841,9 @@ function ledger(label) {
   // ── Read one row per a11y label: "/api/v2/x/, 3 requests" ─────────────────────────────────
   // Two earlier versions tried to find the count and put it with the path. First by list order
   // (wrong: iOS reports many of these nodes more than once, so the label after a path is often a
-  // duplicate of something else). Then by geometry — same y, larger x (wrong for a dumber reason:
-  // there is no count node to find. Probed on device, `×N` appeared in NO snapshot mode — not
-  // plain, not `--raw`, not `--no-limit` — while the path beside it did). Both failures showed up
+  // duplicate of something else). Then by geometry: same y, larger x (wrong for a dumber reason:
+  // there is no count node to find. Probed on device, `×N` appeared in NO snapshot mode: not
+  // plain, not `--raw`, not `--no-limit`: while the path beside it did). Both failures showed up
   // the same way, which is the reason this reading is strict: rows vanish silently, `total` reads
   // LOW, and a LOW total is how a real retry loop slips under a ceiling.
   //
@@ -867,7 +860,7 @@ function ledger(label) {
     if (prev !== undefined && prev !== count) {
       // One path showing two counts in a single read means the frame was torn mid-update, and
       // averaging or picking either would be inventing a number.
-      fail(`the ledger shows "${path}" at both ${prev} and ${count} requests in one read — re-read it`);
+      fail(`the ledger shows "${path}" at both ${prev} and ${count} requests in one read: re-read it`);
     }
     rows.set(path, count);
   }
@@ -881,7 +874,7 @@ function ledger(label) {
     fail(
       `the ledger shows ${orphans.length} path(s) with no count anywhere ` +
         `(${[...new Set(orphans)].join(', ')}). LedgerRow is meant to expose one accessible ` +
-        'element per row ("path, N requests"); a bare path means that label is gone — so totals ' +
+        'element per row ("path, N requests"); a bare path means that label is gone: so totals ' +
         'here would be short, and a short total is how a request loop passes a ceiling.',
     );
   }
@@ -889,7 +882,7 @@ function ledger(label) {
     // Distinguishes "the tab genuinely sent nothing" from "I could not read this screen at all",
     // which is the difference between a pass and a broken harness.
     fail(
-      'the ledger produced no rows and did not say "Nothing sent since" — either the ledger ' +
+      'the ledger produced no rows and did not say "Nothing sent since": either the ledger ' +
         'scrolled out of view or its labels changed shape.',
     );
   }

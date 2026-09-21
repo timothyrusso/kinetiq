@@ -7,7 +7,7 @@
  * (category / muscle / equipment), and an exercise's detail screen ("more like this",
  * which narrows to that exercise's muscle group). Kept in the tab, that means either
  * prop-drilling through a router that passes no props, or serialising the whole filter into
- * the URL — and a URL-borne filter means every chip tap rewrites history, so the back
+ * the URL: and a URL-borne filter means every chip tap rewrites history, so the back
  * gesture walks backwards through filter changes instead of out of the screen. Back should
  * leave. A store makes the filter the app-level fact it actually is: it survives the round
  * trip to a detail screen, which is what every real fitness app does and what a user
@@ -18,7 +18,7 @@
  * The query key must be the thing that settles, so that TanStack Query owns the request it
  * triggers. So the store keeps two values: `draft`, which is what the text field shows and
  * updates on every keystroke, and `filter`, which is what queries key on and updates
- * 220 ms after typing stops. A chip or a sheet selection commits immediately — waiting
+ * 220 ms after typing stops. A chip or a sheet selection commits immediately: waiting
  * 220 ms to apply a tap reads as lag, while waiting on *typing* is the whole point.
  *
  * Splitting draft from committed also means the input can honestly report that it is ahead
@@ -90,7 +90,7 @@ export function setExerciseEquipmentId(equipmentId: number | null): void {
   commit({ equipmentId });
 }
 
-/** Clears everything, including any pending commit — "Clear filters" is instant. */
+/** Clears everything, including any pending commit, "Clear filters" is instant. */
 export function resetExerciseFilter(): void {
   if (timer !== null) {
     clearTimeout(timer);

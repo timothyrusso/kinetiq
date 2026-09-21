@@ -1,5 +1,5 @@
 /**
- * RouteMap — the route on a map, over the trace that backs it.
+ * RouteMap: the route on a map, over the trace that backs it.
  *
  * ## Two layers, deliberately
  *
@@ -7,18 +7,18 @@
  * and the map is layered on top of it only when it can genuinely render. The reason is the
  * brief's own constraint: an unavailable map must degrade, not break. A screen whose only route
  * affordance is a `MapView` shows a grey rectangle to anyone offline, on a device whose Maps SDK
- * cannot start, or in a build with no key — and none of those are distinguishable from "your
+ * cannot start, or in a build with no key: and none of those are distinguishable from "your
  * route was not saved".
  *
  * Keeping the trace mounted *underneath* rather than switching between `map ? A : B` costs an
- * invisible SVG. What it buys is that a mid-session failure — tiles stopping, the SDK throwing
- * after a backgrounding — reveals something meaningful on the same frame, with no remount of two
+ * invisible SVG. What it buys is that a mid-session failure: tiles stopping, the SDK throwing
+ * after a backgrounding: reveals something meaningful on the same frame, with no remount of two
  * different native view trees at exactly the moment the app is least stable.
  *
  * ## The key situation, stated plainly
  *
  * Kinetiq ships no Google Maps key, and the vendored config plugin removes the Android
- * `API_KEY` metadata when none is supplied — so `PROVIDER_GOOGLE` on Android is a guaranteed
+ * `API_KEY` metadata when none is supplied: so `PROVIDER_GOOGLE` on Android is a guaranteed
  * runtime failure, and there is no key to pass anyway. iOS therefore uses Apple Maps, which
  * needs no key and honours `userInterfaceStyle`. Android gets the trace: the shape, the pace
  * colours and the endpoints, which is most of what a map was there to communicate.
@@ -59,7 +59,7 @@ const MAP_READY_TIMEOUT_MS = 6000;
 
 /**
  * Whether a tile layer can be drawn in this build. Platform-derived, because it is a
- * configuration fact rather than a preference — see the header for why Android has no key.
+ * configuration fact rather than a preference: see the header for why Android has no key.
  */
 const MAPS_ENABLED = Platform.OS === 'ios';
 
@@ -103,7 +103,7 @@ export const RouteMap = memo(function RouteMap({
   }, []);
 
   /**
-   * The thinned coordinates, their colours, and the region that frames them — from one memo.
+   * The thinned coordinates, their colours, and the region that frames them: from one memo.
    *
    * Thinning happens here rather than upstream because the trace needs the *full* route: a pace
    * colour is a distance-over-time between neighbours, so computing it on a 4×-thinned route
@@ -124,7 +124,7 @@ export const RouteMap = memo(function RouteMap({
   const start = route[0];
   const finish = route[route.length - 1];
   // Strength and yoga have recorded positions but no meaningful pace, so the trace there is a
-  // single colour — colouring it would imply the gym lap was slow.
+  // single colour: colouring it would imply the gym lap was slow.
   const traceColoured = kind === 'run' || kind === 'ride' || kind === 'walk';
 
   const mapWanted =

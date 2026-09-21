@@ -14,7 +14,7 @@ const ROOT = path.resolve(__dirname, '..');
 const OUT = path.join(ROOT, 'assets');
 const BRAND = path.join(OUT, 'brand');
 
-/** Brand ramp — must stay in sync with src/theme/tokens.ts */
+/** Brand ramp: must stay in sync with src/theme/tokens.ts */
 const C = {
   ink: '#07090F',
   inkAlt: '#0D1220',
@@ -44,7 +44,7 @@ const MARK_STROKES: readonly (readonly (readonly [number, number])[])[] = [
  * coordinates, and the shared gradients must therefore be
  * `gradientUnits="userSpaceOnUse"`: with the default objectBoundingBox units a
  * purely vertical stroke has a zero-width bbox, and the spec says such a
- * gradient paints nothing — the stem silently disappears from every asset.
+ * gradient paints nothing: the stem silently disappears from every asset.
  * userSpaceOnUse also means all three strokes sample one continuous gradient,
  * so the volt→spark ramp has no seam at the junctions.
  */
@@ -73,7 +73,7 @@ function markGeometry(opts: {
     </g>`;
 }
 
-/** The mark gradient in grid space — see `markGeometry` for why userSpaceOnUse. */
+/** The mark gradient in grid space: see `markGeometry` for why userSpaceOnUse. */
 function markGradient(id = 'mark'): string {
   return `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="12" y1="88" x2="88" y2="12">
       <stop offset="0" stop-color="${C.volt}"/>
@@ -88,7 +88,7 @@ function markPlacement(size: number, ratio: number) {
   return { scale, translate: [offset, offset] as const };
 }
 
-/** Full-bleed app icon (opaque, no transparency — App Store requirement). */
+/** Full-bleed app icon (opaque, no transparency, App Store requirement). */
 function iconSvg(size: number, opts: { rounded?: boolean } = {}): string {
   const { rounded = true } = opts;
   const r = rounded ? size * 0.225 : 0;
@@ -119,7 +119,7 @@ function iconSvg(size: number, opts: { rounded?: boolean } = {}): string {
     <rect width="${size}" height="${size}" fill="url(#glow)"/>
     <rect width="${size}" height="${size}" fill="url(#glow2)"/>
     ${
-      /* faint 24px grid — the "training grid" motif used across the dashboard */
+      /* faint 24px grid: the "training grid" motif used across the dashboard */
       gridLines(size)
     }
     ${markGeometry({ stroke: 'url(#mark)', width: 10, ...mark })}
@@ -204,7 +204,7 @@ function splashImage(size: number, appearance: 'dark' | 'light'): string {
 </svg>`;
 }
 
-/** Flat launch field — the grid has to be dark on paper, light on ink. */
+/** Flat launch field: the grid has to be dark on paper, light on ink. */
 function fieldImage(size: number, appearance: 'dark' | 'light'): string {
   const dark = appearance === 'dark';
   const background = dark ? C.ink : '#F6F7F4';

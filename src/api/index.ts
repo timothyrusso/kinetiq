@@ -1,7 +1,7 @@
 /**
  * The single place that decides which exercise backend is live.
  *
- * Everything else — query hooks, screens, the routine picker — imports
+ * Everything else: query hooks, screens, the routine picker: imports
  * `getExerciseProvider()` and depends only on the `ExerciseProvider` port. To
  * move off wger, write a new adapter and change the factory below; nothing else
  * in the app knows wger exists.

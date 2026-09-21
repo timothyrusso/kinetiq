@@ -3,7 +3,7 @@
  *
  * Two reasons for the indirection. The user can turn feedback off in settings,
  * and a call site that checks the flag itself will forget to somewhere. And the
- * vocabulary here — `setComplete`, `guard` — describes what happened in the
+ * vocabulary here, `setComplete`, `guard`: describes what happened in the
  * workout, so tuning the feel of the app means editing this file rather than
  * hunting through screens.
  *
@@ -11,7 +11,7 @@
  * checked, a PR landed, a destructive swipe committed) and never accompany
  * something that already makes a sound or animates. Most importantly, they do
  * not fire on scroll, on every keystroke, or on anything the system already
- * clicks — a phone that buzzes constantly is a phone that gets turned off.
+ * clicks: a phone that buzzes constantly is a phone that gets turned off.
  */
 import {
   notificationAsync,

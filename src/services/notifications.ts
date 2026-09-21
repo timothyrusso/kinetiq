@@ -2,8 +2,7 @@
  * Local notifications: the rest-timer alert and the weekly training reminder.
  *
  * Everything about permissions lives here, and the golden rule is that a
- * denial must degrade, never block. The rest timer is a countdown in the app —
- * it runs on a deadline stored in the session, so it completes and reports zero
+ * denial must degrade, never block. The rest timer is a countdown in the app, * it runs on a deadline stored in the session, so it completes and reports zero
  * whether or not a notification ever arrives. Notifications make it better
  * (you can put the phone down), not required.
  *
@@ -78,7 +77,7 @@ export async function readNotificationPermission(): Promise<NotificationPermissi
 
 /**
  * Asks the system, once. Callers must be prepared for `granted: false` and keep
- * the feature working — see the module header.
+ * the feature working: see the module header.
  */
 export async function requestNotificationPermission(): Promise<NotificationPermission> {
   try {
@@ -99,7 +98,7 @@ function withChannel(trigger: NotificationTriggerInput | null): NotificationTrig
  * `null` when nothing was posted (permission denied, or the native call refused).
  *
  * Returning the id is not decoration. expo-notifications cannot cancel by tag, so
- * `cancelAllScheduledNotificationsAsync` is the only blunt instrument — and using it
+ * `cancelAllScheduledNotificationsAsync` is the only blunt instrument: and using it
  * to retract a rest-timer alert would also delete the weekly training reminder. The
  * id is the only handle there is to undo exactly one scheduled notification.
  */
@@ -129,7 +128,7 @@ async function post(
  * `delaySeconds` must be the **remaining** seconds, not the rest's configured length:
  * `TIME_INTERVAL` counts from now, so re-arming a rest that already ran 40 of its 90
  * seconds with `90` would push the alert a minute and a half into the future. That is also
- * why the caller arms at the *start* of the rest rather than when the timer expires — by
+ * why the caller arms at the *start* of the rest rather than when the timer expires: by
  * then the app is foregrounded and ticking, and an alert nobody needed would fire.
  *
  * Returns the scheduled identifier, or `null` when nothing was posted. Callers keep the id
@@ -147,7 +146,7 @@ export async function notifyRestComplete(
       body:
         nextLabel.length > 0
           ? `${exerciseName} is done. Next up: ${nextLabel}.`
-          : `${exerciseName} is done — you are finished here.`,
+          : `${exerciseName} is done: you are finished here.`,
     },
     { type: SchedulableTriggerInputTypes.TIME_INTERVAL, seconds },
   );
@@ -155,15 +154,14 @@ export async function notifyRestComplete(
 
 /**
  * A PR deserves the one celebratory notification the app sends. Immediate (a `null`
- * trigger posts now), so there is nothing to retract and the identifier is of no use —
- * returned anyway, because `post` returns it and a second signature would be a second
+ * trigger posts now), so there is nothing to retract and the identifier is of no use, * returned anyway, because `post` returns it and a second signature would be a second
  * thing to keep honest.
  */
 export async function notifyPersonalRecord(
   exerciseName: string,
   detail: string,
 ): Promise<string | null> {
-  return post({ title: `New record — ${exerciseName}`, body: detail }, null);
+  return post({ title: `New record, ${exerciseName}`, body: detail }, null);
 }
 
 /**
@@ -171,7 +169,7 @@ export async function notifyPersonalRecord(
  * offers to prove delivery works.
  *
  * Deliberately its own function rather than a call to `notifyRestComplete`: that one builds a
- * body about the next exercise, so a test built on it reads "Test alert is done — you are
+ * body about the next exercise, so a test built on it reads "Test alert is done: you are
  * finished here", which is worse than no test at all. Immediate (a `null` trigger), so there
  * is nothing to retract and no identifier to keep.
  */
@@ -194,7 +192,7 @@ export async function notifySettingsTest(): Promise<string | null> {
  * it, skipping a rest could not silence the buzz without also unpublishing a reminder the
  * user asked for.
  *
- * Never throws, and a `null` argument is a no-op — which is what "nothing was armed" looks
+ * Never throws, and a `null` argument is a no-op: which is what "nothing was armed" looks
  * like coming out of `notifyRestComplete`.
  */
 export async function cancelScheduledNotification(identifier: string | null): Promise<void> {
@@ -269,13 +267,13 @@ export async function syncTrainingReminder(
   // The reminder's own identifier is deliberately not returned: it is not something the
   // caller can act on, and the cancellation above is what keeps at most one of these
   // alive. That blunt cancellation also sweeps an armed rest alert if one is in flight
-  // when the app comes back to the foreground — a missed buzz, in a situation where the
+  // when the app comes back to the foreground: a missed buzz, in a situation where the
   // user has just unlocked their phone and can see the timer. Accepted, because the
   // alternative is a scheduler that can leave two reminders behind.
   return { scheduled: identifier !== null, nextDate: next };
 }
 
-/** Clears everything this app scheduled — used when the master switch flips off. */
+/** Clears everything this app scheduled: used when the master switch flips off. */
 export async function clearScheduledNotifications(): Promise<void> {
   try {
     await cancelAllScheduledNotificationsAsync();
@@ -288,7 +286,7 @@ let handlerInstalled = false;
 
 /**
  * A notification that arrives while the app is open is dropped unless a handler
- * says what to do with it — so without this, the rest timer would go quiet
+ * says what to do with it: so without this, the rest timer would go quiet
  * exactly when the user is most likely looking at their phone, mid-set.
  *
  * Announcing everything in the foreground is right here: a rest timer ending

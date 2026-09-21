@@ -4,7 +4,7 @@
  * A tab screen's sheet cannot rise above the tab bar, and this is the one place the
  * layout could not solve with z-index: `TabBar` is painted by the navigator, in a
  * different view hierarchy than the scene the sheet lives in, so no `zIndex` the sheet
- * sets reaches it. The cost was concrete — the bar occupies the bottom 60+inset points,
+ * sets reaches it. The cost was concrete: the bar occupies the bottom 60+inset points,
  * which is exactly where a sheet's footer sits, so "Delete this session?" rendered with
  * its Cancel and Delete buttons *underneath* the bar, and a tap in that band switched
  * tab instead of dismissing the sheet.
@@ -44,7 +44,7 @@ function acquire(): () => void {
  *
  * The StrictMode double-invoke is the reason for the release guard: React runs
  * mount → unmount → mount in development, and a careless release would leave the count
- * at −1, which `> 0` reads the same as zero — but the second acquire then pairs with
+ * at −1, which `> 0` reads the same as zero: but the second acquire then pairs with
  * nothing, and the bar stays hidden after the sheet closes.
  */
 export function useSheetPresence(): void {

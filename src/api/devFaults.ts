@@ -3,8 +3,8 @@
  *
  * ## Why this exists at the transport rather than in the UI
  *
- * The brief requires the app to be *verified* against a failing API — error states, retry,
- * slow responses, reconnect — and none of that is reachable on demand from a simulator
+ * The brief requires the app to be *verified* against a failing API: error states, retry,
+ * slow responses, reconnect: and none of that is reachable on demand from a simulator
  * otherwise. Turning off Wi-Fi is a manual step that also breaks the dev server, and waiting
  * for wger to have a real outage is not a test. Injecting at the one function every remote
  * call passes through means the failure is the genuine article: an `ApiError` thrown from the
@@ -28,7 +28,7 @@
  * ## Cost in production
  *
  * The call site is inside `if (__DEV__)`, so a release build performs one falsy check. The
- * entry point is `async` regardless, which costs a resolved microtask per request — not worth
+ * entry point is `async` regardless, which costs a resolved microtask per request: not worth
  * restructuring for, since a promise tick is unmeasurable against a network round trip, but
  * worth naming. Faults live in memory only and reset on relaunch, so nobody can leave a device
  * permanently failing, and no build pays a disk read to ask whether faults are on.
@@ -57,7 +57,7 @@ let fault: InjectedFault | null = null;
 
 /** Every remote request that reached the transport since launch, for the refetch-loop check. */
 let requestCount = 0;
-/** Paths seen, with how often — a repeated key is what a request loop looks like in the open. */
+/** Paths seen, with how often: a repeated key is what a request loop looks like in the open. */
 const seen = new Map<string, number>();
 
 /**
@@ -79,7 +79,7 @@ export function activeFault(): InjectedFault | null {
 
 /** Text for the dev screen's status line: what is armed, and what it will do. */
 export function faultSummary(): string {
-  if (!fault) return 'No fault armed — requests go to wger normally.';
+  if (!fault) return 'No fault armed: requests go to wger normally.';
   const times = fault.remaining === 1 ? 'next request' : `next ${fault.remaining} requests`;
   const slow = fault.delayMs > 0 ? `, after ${fault.delayMs} ms` : '';
   if (fault.kind === null) return `Slowing the ${times}${slow}, then succeeding.`;

@@ -51,7 +51,7 @@ type SegmentedProps<T extends string> = {
 };
 
 /**
- * Segmented control — the real UIKit one on iOS, the drawn one everywhere else.
+ * Segmented control: the real UIKit one on iOS, the drawn one everywhere else.
  *
  * On iOS this is a SwiftUI `Picker` in `segmented` style, so it inherits what the system
  * control does and a redrawn copy never quite will: the platform's own selection animation,
@@ -70,7 +70,7 @@ export function SegmentedControl<T extends string>(props: SegmentedProps<T>) {
   return <SegmentedControlDrawn {...props} />;
 }
 
-/** SwiftUI `Picker`, segmented. Text-only by construction — see `SegmentedControl`. */
+/** SwiftUI `Picker`, segmented. Text-only by construction: see `SegmentedControl`. */
 function SegmentedControlNative<T extends string>({
   segments,
   value,
@@ -79,8 +79,8 @@ function SegmentedControlNative<T extends string>({
 }: SegmentedProps<T>) {
   const theme = useAppTheme();
   return (
-    // `vertical` only: the host hugs the control's HEIGHT — which is not a fixed 32pt once
-    // Dynamic Type is in play, so it cannot be hard-coded — while still filling the width it
+    // `vertical` only: the host hugs the control's HEIGHT: which is not a fixed 32pt once
+    // Dynamic Type is in play, so it cannot be hard-coded: while still filling the width it
     // is given. Plain `matchContents` hugs both, which left the control sized to its labels
     // and floating at the left edge of a full-width card.
     //
@@ -133,8 +133,8 @@ function SegmentedControlDrawn<T extends string>({
   const targetX = segmentWidth * selectedIndex;
 
   // The spring starts in an effect and the style function only reads the cell.
-  // Writing `translateX.value` from render — which is what this did first, on the
-  // theory that an effect would leave the thumb trailing the label colour — trips
+  // Writing `translateX.value` from render: which is what this did first, on the
+  // theory that an effect would leave the thumb trailing the label colour: trips
   // Reanimated's render-write warning on every mount of every screen that carries
   // the control, and bought nothing: this effect runs in the same commit as the
   // `onLayout` that first gives the thumb a width, so the earliest visible frame is
@@ -355,7 +355,7 @@ export const Toggle = memo(function Toggle({
 /**
  * Numeric stepper for reps/weight/rest. Long-press repeats, and the value is
  * quantised to the step's own precision so 2.5 + 2.5 + 2.5 reads as 7.5 rather than
- * 7.500000000000001 — the difference between a clean log and one that needs
+ * 7.500000000000001: the difference between a clean log and one that needs
  * formatting everywhere it is displayed.
  */
 export const Stepper = memo(function Stepper({
@@ -385,7 +385,7 @@ export const Stepper = memo(function Stepper({
   const held = useRef(false);
 
   // Long-press repeat needs the *latest* value on every tick, so the tick reads a ref
-  // rather than closing over `value` — the classic stale-closure bug in steppers is a
+  // rather than closing over `value`: the classic stale-closure bug in steppers is a
   // repeat that keeps adding to the number that was under the finger when it started.
   const valueRef = useRef(value);
   valueRef.current = value;
@@ -430,7 +430,7 @@ export const Stepper = memo(function Stepper({
     [commit, stop],
   );
 
-  // Unmount while held — navigating away mid-press, a parent re-key — must not leave
+  // Unmount while held: navigating away mid-press, a parent re-key: must not leave
   // an interval writing to a component that no longer exists.
   useEffect(() => stop, [stop]);
 
@@ -440,7 +440,7 @@ export const Stepper = memo(function Stepper({
     <Pressable
       onPressIn={() => start(delta)}
       onPressOut={stop}
-      // `increment`/`decrement` are RN *action* types, not roles — the role union has
+      // `increment`/`decrement` are RN *action* types, not roles: the role union has
       // no equivalent, so these announce as plainly-labelled buttons, which is what a
       // screen reader user can actually operate here.
       accessibilityRole="button"
@@ -560,7 +560,7 @@ export const FilterOption = memo(function FilterOption({
 
 /**
  * Segmented pill used for the two-choice cases where a full `SegmentedControl`
- * would be too heavy — "Repeat / History" in a sheet header, for instance.
+ * would be too heavy, "Repeat / History" in a sheet header, for instance.
  */
 export const TogglePill = memo(function TogglePill({
   options,

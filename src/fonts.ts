@@ -2,7 +2,7 @@
  * Font loading, kept out of the provider tree so bootstrap can await it as one
  * of several independent readiness gates.
  *
- * Inter is the app's typeface. It is a UI face designed for screens — tall
+ * Inter is the app's typeface. It is a UI face designed for screens: tall
  * x-height, open apertures, and unambiguous 1/l/I and 0/O, which matters on a
  * screen read at arm's length mid-set. It also ships the full weight ramp the
  * design uses, so hierarchy comes from one family rather than from mixing
@@ -11,7 +11,7 @@
  * Five weights, not the whole matrix: every extra face is download size the
  * first launch pays for, and italics are never used in this UI.
  *
- * JetBrains Mono stays for one job only — values that must not reflow as their
+ * JetBrains Mono stays for one job only: values that must not reflow as their
  * digits change (the running timer, live pace). Proportional digits make a
  * timer jitter on every tick; that is a mechanical requirement, not a style
  * choice, so it keeps its own face.

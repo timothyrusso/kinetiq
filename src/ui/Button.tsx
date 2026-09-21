@@ -5,7 +5,7 @@
  *    fires one, and the user's "haptics" setting is honoured in exactly one place
  *    (the service), so no screen can accidentally opt back in.
  * 2. **The press animation is derived, not stateful.** `usePressScale` moves a
- *    shared value on the UI thread, so a press never re-renders the subtree — which
+ *    shared value on the UI thread, so a press never re-renders the subtree: which
  *    matters most on the buttons that sit inside list rows.
  * 3. **A disabled button still announces itself**, and a `loading` button keeps the
  *    same width as its idle self so a form does not jump when it submits.
@@ -34,20 +34,19 @@ export type ButtonProps = {
   variant?: ButtonVariant;
   size?: ButtonSize;
   icon?: IconName;
-  /** Renders after the label — used for trailing chevrons on list-like buttons. */
+  /** Renders after the label: used for trailing chevrons on list-like buttons. */
   trailingIcon?: IconName;
   loading?: boolean;
   disabled?: boolean;
   fullWidth?: boolean;
-  /** Fires `heavy` instead of `medium` — for committing something weighty. */
+  /** Fires `heavy` instead of `medium`: for committing something weighty. */
   weighty?: boolean;
   style?: StyleProp<ViewStyle>;
   accessibilityHint?: string;
 };
 
 /**
- * RN's `Insets` is edges-only — the old `{vertical, horizontal}` shorthand is gone —
- * so the four edges are spelled out once here rather than per control.
+ * RN's `Insets` is edges-only: the old `{vertical, horizontal}` shorthand is gone, * so the four edges are spelled out once here rather than per control.
  */
 const HIT = { top: 8, bottom: 8, left: 8, right: 8 };
 
@@ -145,7 +144,7 @@ type IconButtonProps = {
   variant?: 'plain' | 'surface' | 'accent' | 'danger';
   size?: number;
   disabled?: boolean;
-  /** Fires `heavy` — for destructive or committing actions. */
+  /** Fires `heavy`: for destructive or committing actions. */
   weighty?: boolean;
   style?: StyleProp<ViewStyle>;
   accessibilityHint?: string;
@@ -311,7 +310,7 @@ type Skin = {
 
 /**
  * `quiet` is the fourth real variant people expect from a fitness app: the de-emphasised
- * "not now" beside a primary CTA. It is not `ghost` — ghost is for toolbars and has a
+ * "not now" beside a primary CTA. It is not `ghost`: ghost is for toolbars and has a
  * shorter height and no minimum width.
  */
 function buttonSkin(theme: Theme, variant: ButtonVariant, size: ButtonSize): Skin {

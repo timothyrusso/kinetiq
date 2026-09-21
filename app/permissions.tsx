@@ -1,5 +1,5 @@
 /**
- * Permissions — the two things iOS and Android decide on the app's behalf, in one place,
+ * Permissions: the two things iOS and Android decide on the app's behalf, in one place,
  * stated as facts about the device rather than as checkboxes the app owns.
  *
  * ## Why this screen exists separately from Settings
@@ -28,7 +28,7 @@
  *
  * ## The simulator caveat, said out loud
  *
- * On a simulator, location is whatever you set in the debug menu — it does not drift, does not
+ * On a simulator, location is whatever you set in the debug menu: it does not drift, does not
  * lose signal, and does not report the accuracy floor real hardware has. The last section says
  * so, because the alternative is a reviewer concluding the GPS filtering code is dead weight when
  * it is only unexercised.
@@ -153,7 +153,7 @@ export default function PermissionsScreen() {
                 </Stack>
               </Card>
 
-              {/* The no-permission path is a feature, not an error screen — so it gets its own
+              {/* The no-permission path is a feature, not an error screen: so it gets its own
                   card rather than a sentence inside the permission card. */}
               {location === 'granted' ? null : (
                 <View style={styles.after}>
@@ -163,7 +163,7 @@ export default function PermissionsScreen() {
                       <Txt variant="caption" tone="muted">
                         Strength sessions are unaffected. A run or ride still records elapsed
                         time, effort and a route-free summary, with distance estimated from how
-                        long you moved — less accurate, but the session is not lost.
+                        long you moved: less accurate, but the session is not lost.
                       </Txt>
                     </Stack>
                   </Card>
@@ -351,7 +351,7 @@ const LOCATION_COPY: Record<LocationPermissionStatus, string> = {
   granted:
     'Used only while an activity is being recorded: elapsed positions become your route, distance and pace.',
   undetermined:
-    'You have not been asked yet. The recorder asks the first time you start a run, ride or walk — and works without an answer.',
+    'You have not been asked yet. The recorder asks the first time you start a run, ride or walk: and works without an answer.',
   reduced:
     'Precise location is off, so the app receives an approximate position. Sessions record, and distance will drift from the truth.',
   denied:
@@ -370,7 +370,7 @@ const LOCATION_EYEBROW: Record<LocationPermissionStatus, string> = {
  *
  * This card is here because the absence of a permission prompt is information a user cannot
  * otherwise get: they may assume a fitness app reads HealthKit or tracks them in the background
- * because nothing said otherwise. Each line is a promise that is currently true — checked
+ * because nothing said otherwise. Each line is a promise that is currently true: checked
  * against the `expo.plugins` list in app.json, not against intent.
  */
 const NEVER_ASKED: readonly { title: string; detail: string }[] = [

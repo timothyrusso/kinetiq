@@ -1,5 +1,5 @@
 /**
- * Chart geometry — pure functions, no React, no React Native.
+ * Chart geometry: pure functions, no React, no React Native.
  *
  * Everything that computes a coordinate lives here so it can be reasoned about (and
  * got right) once. The components in this folder only ever *draw* what comes out of
@@ -132,7 +132,7 @@ export function linePath(points: Point[]): string {
  * Area path: the line, closed down to `baselineY`.
  *
  * The baseline is a parameter rather than "the bottom" because a series that dips
- * below its own zero should close at zero, not at the axis — otherwise the fill
+ * below its own zero should close at zero, not at the axis: otherwise the fill
  * appears to float above nothing.
  */
 export function areaPath(points: Point[], baselineY: number): string {
@@ -199,7 +199,7 @@ export function arcPath(
   const start = polar(cx, cy, radius, startAngle);
   const end = polar(cx, cy, radius, endAngle);
   const sweep = endAngle - startAngle;
-  // A full circle cannot be drawn as a single arc — start and end coincide and the
+  // A full circle cannot be drawn as a single arc: start and end coincide and the
   // renderer draws nothing. Callers clamp to a hair under 2π; this is the guard.
   const largeArc = Math.abs(sweep) > Math.PI ? 1 : 0;
   return `M${round(start.x)} ${round(start.y)} A${round(radius)} ${round(radius)} 0 ${largeArc} 1 ${round(end.x)} ${round(end.y)}`;
@@ -243,7 +243,7 @@ function round(v: number): number {
  *
  * Filling is the whole point. A weekly chart built from a grouped map has a hole where
  * a quiet week was, and a hole in a bar chart reads as a rendering bug rather than as
- * "you did not train that week" — the single most misleading thing a fitness chart can
+ * "you did not train that week": the single most misleading thing a fitness chart can
  * do is make an absence look like a zero-length bar with no label.
  */
 export function bucketize<T>(

@@ -38,8 +38,7 @@ export function isLocalExerciseId(id: string): boolean {
  *
  * The exercise detail screen renders its header before it knows what the exercise *is*,
  * and it has to put something in the bar: the navigation title cannot wait for a network
- * round trip without the whole screen flashing an empty bar. This is that something —
- * `wger:1234` becomes "Exercise 1234" (the same wording the wger mapper falls back to, so
+ * round trip without the whole screen flashing an empty bar. This is that something, * `wger:1234` becomes "Exercise 1234" (the same wording the wger mapper falls back to, so
  * the two agree), and a locally-authored id becomes its own key with the prefix dropped.
  *
  * It is a title for the header bar only. Nothing should mistake it for the exercise's

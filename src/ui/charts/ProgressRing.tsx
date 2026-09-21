@@ -1,9 +1,9 @@
 /**
- * Progress ring — weekly goal, goal completion, a single session's target.
+ * Progress ring: weekly goal, goal completion, a single session's target.
  *
  * The arc is regenerated per frame through `useAnimatedProps` rather than drawn as a
  * dashed circle. The two look identical; the path version is the one that also supports a
- * dial that is not a full turn, and it is the same code path — so there is no reason to
+ * dial that is not a full turn, and it is the same code path: so there is no reason to
  * take the dasharray shortcut.
  *
  * The inner label fades in on the *ring's own* shared value instead of doing a numeric
@@ -165,7 +165,7 @@ export const ProgressRing = memo(function ProgressRing({
 
 /**
  * A ring segment for the dial variants, in the same 0→1-of-a-turn space `sweepTo` uses.
- * Exported so a gauge — a 270° dial with the number in the gap — is a caller-side
+ * Exported so a gauge: a 270° dial with the number in the gap: is a caller-side
  * `strokeDasharray` away rather than a second component.
  */
 export function ringArc(
@@ -185,7 +185,7 @@ export function ringArc(
  * The arc maths, again, deliberately.
  *
  * `arcPath`/`sweepTo`/`clamp01` in `geometry.ts` are the canonical implementation and stay
- * canonical for everything rendered on the JS thread — `ringArc` above, the single-ring path,
+ * canonical for everything rendered on the JS thread, `ringArc` above, the single-ring path,
  * the heatmap. These three exist because a worklet is stringified and re-evaluated on the UI
  * thread, where it can only reach functions from *its own module* or from a package Reanimated
  * whitelists. Importing the shared ones fails twice over, and the two failures look unrelated:
@@ -199,7 +199,7 @@ function arcFromTurns(centre: number, radius: number, fromTurn: number, toTurn: 
   'worklet';
   const clamp = (v: number): number => (v < 0 ? 0 : v > 1 ? 1 : v);
   const r = (v: number): number => Math.round(v * 100) / 100;
-  // 0.9999 of a turn, not 1: a single SVG arc command cannot close a circle — start and end
+  // 0.9999 of a turn, not 1: a single SVG arc command cannot close a circle: start and end
   // coincide and the renderer draws nothing.
   const sweep = (t: number): number => -Math.PI / 2 + Math.min(clamp(t), 0.9999) * Math.PI * 2;
   const a = sweep(fromTurn);

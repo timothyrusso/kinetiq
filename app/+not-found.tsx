@@ -3,7 +3,7 @@
  *
  * ## When this is reachable
  *
- * Not through the app's own chrome — every internal link goes through `routes` in
+ * Not through the app's own chrome: every internal link goes through `routes` in
  * `src/navigation/nav.ts`, and a mistyped path there stops being invisible the moment the
  * generated route types exist. It is reachable through a deep link (`kinetiq://progresss`),
  * through a link that outlived a rename, and through a stale notification after a reminder's
@@ -15,7 +15,7 @@
  * Because the person most likely to see this screen is the person who can do something about
  * it. "No screen at `/settings/units2`" identifies the mistake; "Page not found" identifies
  * nothing. It is `faint` and small so a real user is not read a filename by VoiceOver before
- * they are offered a way out — the buttons come first in the tree for that reason.
+ * they are offered a way out: the buttons come first in the tree for that reason.
  */
 import { StyleSheet, View } from 'react-native';
 import { router, usePathname } from 'expo-router';
@@ -65,7 +65,7 @@ export default function NotFoundScreen() {
             icon="home"
             onPress={() => router.replace(tabHref(0))}
           />
-          {/* Only offered when there is somewhere to go — a back button that silently no-ops
+          {/* Only offered when there is somewhere to go: a back button that silently no-ops
               reads as a second bug on top of the first. */}
           {router.canGoBack() ? (
             <Button label="Go back" variant="secondary" fullWidth onPress={() => router.back()} />

@@ -1,12 +1,12 @@
 /**
- * Application bootstrap — every imperative step that has to be true before the
+ * Application bootstrap: every imperative step that has to be true before the
  * first frame is worth drawing, kept out of the component file so the ordering can
  * be reviewed as a list.
  *
  * ## The constraint that shapes the order
  *
  * An error boundary cannot catch what `useEffect` throws. Effects run after commit,
- * so their errors reach the global handler — on a dev build a red box over a
+ * so their errors reach the global handler: on a dev build a red box over a
  * half-built UI, on a production build a logged error and an app that keeps
  * rendering something wrong. Bootstrap therefore cannot be "run some effects and
  * hope". It is one async function that either returns or rejects, and a component
@@ -16,12 +16,12 @@
  * ## Ordering rules
  *
  * 1. **Database first.** Almost everything downstream reads from it, and opening it
- *    runs the migrations — the only step that can permanently change on-disk state,
+ *    runs the migrations: the only step that can permanently change on-disk state,
  *    so it is deliberately the earliest thing allowed to fail.
  * 2. **Config before consumers.** The exercise provider is configured before any
  *    query can run, and the query adapters are installed before the first subscriber
  *    attaches. Installing them after the first mount would leave the app's first
- *    screen without focus/online wiring — precisely the bug that shows up as "why is
+ *    screen without focus/online wiring: precisely the bug that shows up as "why is
  *    it refetching when I switch tabs".
  * 3. **Cheap before expensive.** Fonts and the first-run seed are the two slow steps,
  *    and nothing downstream awaits them, so they overlap with each other and with
@@ -33,8 +33,8 @@
  *    during bootstrap because the user may have changed it in the OS while the app
  *    was closed, and everything downstream reads the store rather than asking again.
  *
- * Steps that merely *should* happen and cannot break the app — the notification
- * handler, the reminder schedule, interrupted-recording recovery — catch in place,
+ * Steps that merely *should* happen and cannot break the app: the notification
+ * handler, the reminder schedule, interrupted-recording recovery: catch in place,
  * so one absent native module never becomes a fatal startup error.
  */
 import { ActivityIndicator, AppState, StyleSheet, View } from 'react-native';
@@ -85,7 +85,7 @@ export type BootstrapOutcome = {
   /** What the database actually did, surfaced on the settings screen's diagnostics row. */
   database: DatabaseOpenResult;
   settings: SettingsState;
-  /** The theme the launch chrome was painted with. Diagnostics only — do not branch on it. */
+  /** The theme the launch chrome was painted with. Diagnostics only: do not branch on it. */
   launchTheme: 'light' | 'dark';
   /** Rows created by the first-run seed, or null when the database already had data. */
   seeded: SeedSummary | null;
@@ -98,8 +98,8 @@ export type BootstrapOutcome = {
 /**
  * Longest the splash may stay up before we show the app anyway. A real cold start
  * here is ~600ms (fonts dominate); five seconds is not generosity, it is the point
- * at which something is genuinely wedged — an unavailable storage service, a disk
- * stall — and a spinner that never ends is a worse failure than a UI that renders
+ * at which something is genuinely wedged: an unavailable storage service, a disk
+ * stall: and a spinner that never ends is a worse failure than a UI that renders
  * and then shows per-feature error states.
  */
 export const BOOTSTRAP_DEADLINE_MS = 5_000;
@@ -124,7 +124,7 @@ export function createSplashController(): { preventAutoHide: () => void; hide: (
       try {
         // Unawaited on purpose. Awaiting at module scope would put a promise
         // rejection in front of React's own error handling. This build of
-        // expo-splash-screen takes no options — the hide animation is whatever the
+        // expo-splash-screen takes no options: the hide animation is whatever the
         // native splash declares in app.json, which is also why the config there
         // matters more than anything set here.
         void SplashScreen.preventAutoHideAsync();
@@ -198,7 +198,7 @@ export async function readSettingsSnapshot(): Promise<SettingsState> {
   // Device truth, not the user's preference. Two separate flags by design: the
   // switch in Settings means "I want these", this means "the OS is letting us", and
   // conflating them is how an app ends up claiming notifications are on when they
-  // are not. A denial never blocks anything — the rest timer keeps counting on
+  // are not. A denial never blocks anything: the rest timer keeps counting on
   // screen, it just goes quietly.
   const permission = await readNotificationPermission();
 
@@ -229,7 +229,7 @@ export async function runBootstrap(systemDark: boolean): Promise<BootstrapOutcom
   void startNetworkStatus();
   void installQueryAdapters();
 
-  // 4. The handler must exist before any notification can be scheduled — including
+  // 4. The handler must exist before any notification can be scheduled: including
   //    the reminder two steps down.
   installNotificationHandler();
 
@@ -269,7 +269,7 @@ export async function runBootstrap(systemDark: boolean): Promise<BootstrapOutcom
   // the user did not train, so letting it keep counting would bank time that never
   // happened. `beginTick()` is accurate (it restarts `lastTickAt` from *now*, so
   // there is no phantom gap), but an auto-running timer is still a lie about intent
-  // — one tap to resume is the correct cost. This is deliberately `pauseSession()`
+  //: one tap to resume is the correct cost. This is deliberately `pauseSession()`
   // and not `handleAppState('background')`: that function is idempotent for a
   // restore, and using it here would read like it mattered while doing nothing.
   if (session) pauseSession();
@@ -295,7 +295,7 @@ export function installAppLifecycle(): () => void {
   const subscription = AppState.addEventListener('change', (next: AppStateStatus) => {
     // 'unknown' and 'extension' are real AppStateStatus values the session store has
     // no opinion about. Both mean "not the foreground, do not bank time", which is
-    // exactly what the background branch does — so collapsing them is behaviour, not
+    // exactly what the background branch does: so collapsing them is behaviour, not
     // a cast.
     handleAppState(next === 'active' || next === 'inactive' ? next : 'background');
 
@@ -316,12 +316,12 @@ export function installAppLifecycle(): () => void {
 }
 
 /**
- * The launch screen — the last thing drawn before the app is, in both directions.
+ * The launch screen: the last thing drawn before the app is, in both directions.
  *
  * Not a spinner on a blank page: the wordmark sits on the *exact* canvas colour the
  * app will use in this theme, which is what makes the splash cross-fade read as one
  * continuous surface rather than a handoff. The indicator is the native one on
- * purpose — a custom mark would need fonts, and the fonts are the thing still
+ * purpose: a custom mark would need fonts, and the fonts are the thing still
  * loading.
  */
 export function LaunchScreen({ dark }: { dark: boolean }) {

@@ -1,5 +1,5 @@
 /**
- * Progress — what a stretch of training actually looked like.
+ * Progress: what a stretch of training actually looked like.
  *
  * ## Two controls, and what each one governs
  *
@@ -9,10 +9,10 @@
  * entries instead of fighting over one, and switching to "12 months" here does not
  * silently change what Home computes. It also means three rapid taps across three ranges
  * fire three queries that each land in their own cache slot, arriving in any order without
- * one overwriting another — which is what a key-per-window cache is for, and why there is
+ * one overwriting another: which is what a key-per-window cache is for, and why there is
  * no debounce or pending-value juggling in this file.
  *
- * Neither control touches the heatmap (fixed at 26 weeks — see `useTrainingHeatmap`) or the
+ * Neither control touches the heatmap (fixed at 26 weeks: see `useTrainingHeatmap`) or the
  * records. A record is a fact about all of history, not about a window, so that section's
  * eyebrow says "All time" rather than letting a chip imply otherwise.
  *
@@ -28,7 +28,7 @@
  * `useTrainingSummary` returns weeks **oldest-first**, which is both what the charts want
  * (left to right is time, so the array maps onto the x-axis with no adaptation) and what
  * `slice(-6)` means. "This week" is therefore `weeks.at(-1)`. Getting this backwards fails
- * silently — the numbers stay plausible, they are just four weeks out of date — so the
+ * silently: the numbers stay plausible, they are just four weeks out of date: so the
  * contract is stated in `useProgress.ts` where the array is built, and repeated here only to
  * say that nothing in this file reverses it.
  *
@@ -44,7 +44,7 @@
  *
  * `hasAnyHistory` separates "you have never logged a workout" from "not in this window". The
  * first is onboarding and needs a button that creates something. The second is a factual
- * sentence about four quiet weeks whose remedy is a longer range — telling someone to "start
+ * sentence about four quiet weeks whose remedy is a longer range: telling someone to "start
  * a workout" when they have twenty behind them reads as a bug. So they are two different
  * states, not one with conditional copy.
  */
@@ -179,7 +179,7 @@ export default function ProgressScreen() {
               </Stack>
             ) : summaryQuery.isError && summary === undefined ? (
               // History lives in the local database, so a failure here is a read failure
-              // rather than a connection one — the copy has to say that, or someone waits
+              // rather than a connection one: the copy has to say that, or someone waits
               // for a signal that was never the problem.
               <ErrorState
                 error={summaryQuery.error}
@@ -226,7 +226,7 @@ export default function ProgressScreen() {
                     {/* Measured *inside* the card, so the chart is handed its own real
                         width directly. Subtracting a hard-coded card padding from the
                         outer width would quietly go wrong the day the card's padding
-                        changed — the layout event already knows the answer. */}
+                        changed: the layout event already knows the answer. */}
                     <View onLayout={onChartLayout}>
                       <MeasureChart
                         summary={summary}
@@ -302,7 +302,7 @@ function TotalsCard({
   const totals = summary.totals;
 
   if (totals.workouts === 0) {
-    // History exists — the caller checked `hasAnyHistory` — this window is just empty. The
+    // History exists: the caller checked `hasAnyHistory`: this window is just empty. The
     // remedy is a wider range, so this says so instead of offering to start a workout.
     return (
       <EmptyState
@@ -317,7 +317,7 @@ function TotalsCard({
   const perWeek = totals.workouts / Math.max(1, summary.rangeWeeks);
   const target = Math.max(1, goal);
   // The goal is a weekly *rate*, so the shortfall has to be stated against the range as a
-  // whole. "24 of 12 weeks" — comparing sessions to weeks — is the bug this avoids.
+  // whole. "24 of 12 weeks": comparing sessions to weeks: is the bug this avoids.
   const shortfall = Math.round(summary.rangeWeeks * target - totals.workouts);
   const cardio = totals.distanceMeters > 0;
   const weighted = totals.volumeKg > 0;
@@ -337,12 +337,12 @@ function TotalsCard({
         />
         <Metric
           label="Distance"
-          value={cardio ? formatDistance(totals.distanceMeters, units) : '—'}
+          value={cardio ? formatDistance(totals.distanceMeters, units) : '-'}
           note={cardio ? 'From cardio sessions' : 'No cardio logged'}
         />
         <Metric
           label="Volume"
-          value={weighted ? formatWeight(totals.volumeKg, units) : '—'}
+          value={weighted ? formatWeight(totals.volumeKg, units) : '-'}
           note={weighted ? 'From strength sessions' : 'No weighted work'}
         />
       </MetricGrid>
@@ -367,7 +367,7 @@ function TotalsCard({
       <Txt variant="micro" tone="faint" style={{ marginTop: spacing.lg }}>
         {shortfall <= 0
           ? `At or above your goal of ${target} ${pluralWord(target, 'session')} a week across this range.`
-          : `Your goal is ${target} ${pluralWord(target, 'session')} a week — this range is ${shortfall} ${pluralWord(shortfall, 'session')} short of it.`}
+          : `Your goal is ${target} ${pluralWord(target, 'session')} a week: this range is ${shortfall} ${pluralWord(shortfall, 'session')} short of it.`}
       </Txt>
     </Card>
   );
@@ -523,7 +523,7 @@ function DistributionCard({ summary }: { summary: TrainingSummary }) {
       }
     }
     // Sessions, not minutes. `byKind` is a per-week count the summary already computed;
-    // minutes would need the activity rows — a different query, and a second source of
+    // minutes would need the activity rows: a different query, and a second source of
     // truth for one screen. A donut that disagrees with the list beside it is worse than
     // one measuring something simpler and matching it exactly.
     return KIND_ORDER.filter((kind) => (totals.get(kind) ?? 0) > 0).map((kind) => ({
@@ -565,7 +565,7 @@ function ConsistencyCard({
   const theme = useAppTheme();
 
   // A `null` day is a day that has not happened yet. The grid's own convention for that is
-  // an empty `date`, which it draws as a dotted placeholder — precisely the right meaning.
+  // an empty `date`, which it draws as a dotted placeholder: precisely the right meaning.
   // So nulls become empty-date zeros rather than being dropped: dropping one shifts every
   // later weekday out of its column, and the entire point of a calendar grid is that Monday
   // stays on one line.
@@ -668,7 +668,7 @@ function RecordsCard({
           onPress={() => router.push(routes.exerciseDetail(record.exerciseId))}
           accessibilityHint="Opens this exercise"
           // `padding='xxs'` gives the card no vertical rhythm of its own, so rows draw
-          // their own separators — the same convention `NavRow` uses inside a grouped card.
+          // their own separators: the same convention `NavRow` uses inside a grouped card.
           style={index > 0 ? separator(theme.colors.hairline) : undefined}
         />
       ))}
@@ -691,7 +691,7 @@ const styles = StyleSheet.create({
 
 /**
  * The hairline `NavRow` draws between grouped rows, as a style rather than a prop, because
- * `ListRow` deliberately has no `topDivider` slot — it is a list row, not a settings row.
+ * `ListRow` deliberately has no `topDivider` slot: it is a list row, not a settings row.
  *
  * Deliberately outside `StyleSheet.create`: a function in there widens the whole map's
  * inferred value type to `ViewStyle | TextStyle | ImageStyle`, and every plain style beside

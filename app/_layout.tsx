@@ -4,7 +4,7 @@
  * ## What mounts where, and why that order is load-bearing
  *
  * `AppProviders` sits *outside* `Stack`, not inside it. Bootstrap has to gate the
- * navigator itself, not just its first screen — a `Stack` that mounts while the database
+ * navigator itself, not just its first screen: a `Stack` that mounts while the database
  * is still opening creates scenes, and scenes run their queries. Putting the gate below
  * the navigator would mean the gate's own error screen is rendered by a navigator that
  * may already have thrown.
@@ -65,7 +65,7 @@ function ThemedRoot() {
           {/*
             Set here rather than per-screen. `expo-status-bar` merges multiple mounted
             `<StatusBar>`s in mount order, so a screen-level bar and a root-level bar that
-            disagree resolve to whichever mounted last — during a transition that is a coin
+            disagree resolve to whichever mounted last: during a transition that is a coin
             flip. Screens with a genuinely opposite need (a full-bleed photo header) can
             still mount their own and win while focused.
           */}
@@ -80,7 +80,7 @@ function ThemedRoot() {
           >
             <Stack.Screen name="(tabs)" />
             {/* `workout` is a card, not a sheet: it hosts nested push screens (session →
-                exercise picker → history), which a `modal` presentation would trap — a
+                exercise picker → history), which a `modal` presentation would trap: a
                 sheet cannot push, and the usual workaround (a nested stack inside the
                 sheet) buys a grabber bar and costs back-gesture reliability. The
                 bottom-sheet *feel* comes from the rounded top corners, the slide-from-below
@@ -111,17 +111,17 @@ function ThemedRoot() {
 }
 
 /**
- * Route-level error boundary — expo-router calls this for anything thrown while rendering
+ * Route-level error boundary: expo-router calls this for anything thrown while rendering
  * a route, including this layout.
  *
  * What it must not do is what expo-router's built-in default does: render a red box in
  * development and a blank screen in production. This one keeps the app's chrome, names the
- * failure, and offers the two actions that actually help — retry, or go Home.
+ * failure, and offers the two actions that actually help: retry, or go Home.
  *
  * `themeFor(systemIsDark())` rather than `useAppTheme()` because if the throw came *from*
  * the settings store, a boundary reading that store would throw while reporting the throw.
- * Falling back to the system scheme costs exactly one thing — a user who forced light mode
- * inside a dark-system OS sees a dark error screen — and buys immunity to the failure being
+ * Falling back to the system scheme costs exactly one thing: a user who forced light mode
+ * inside a dark-system OS sees a dark error screen: and buys immunity to the failure being
  * reported.
  */
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
@@ -144,7 +144,7 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
  *
  * `useColorScheme()` is the right tool inside the app and the wrong one here: it returns
  * `null` until the native value arrives, so a boundary using it renders one theme and then
- * flips — the exact flash the launch background exists to prevent. `Appearance` is the
+ * flips: the exact flash the launch background exists to prevent. `Appearance` is the
  * synchronous native read; the two agree in steady state, and this path only runs once
  * something has already gone wrong.
  */

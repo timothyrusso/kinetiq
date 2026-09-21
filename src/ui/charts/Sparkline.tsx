@@ -1,5 +1,5 @@
 /**
- * Sparkline — the smallest honest chart.
+ * Sparkline: the smallest honest chart.
  *
  * No axes, no labels, no tooltip: it answers "up or down, and how jagged" in forty
  * pixels. Because nothing is read off it numerically, this is the one place a
@@ -49,7 +49,7 @@ export const Sparkline = memo(function Sparkline({
   color?: string;
   fill?: boolean;
   strokeWidth?: number;
-  /** Off for sparklines inside a list — fifty entering at once is noise, not polish. */
+  /** Off for sparklines inside a list: fifty entering at once is noise, not polish. */
   animate?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
@@ -62,7 +62,7 @@ export const Sparkline = memo(function Sparkline({
 
   const { line, area, length } = useMemo(() => {
     // A single value becomes a two-point flat rule: an empty chart reads as a bug,
-    // and a dot reads as a mistake, but a flat line reads as "unchanged" — true.
+    // and a dot reads as a mistake, but a flat line reads as "unchanged": true.
     const safe = values.length === 1 ? [values[0] ?? 0, values[0] ?? 0] : values;
     if (safe.length === 0 || width <= 0) return { line: '', area: '', length: 0 };
     const scale = createScale({

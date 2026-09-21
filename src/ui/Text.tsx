@@ -8,7 +8,7 @@
  * freehands `fontSize: 17` the hierarchy starts to drift screen by screen.
  *
  * `variant` chooses weight, size, line height and tracking together, because
- * those four are only correct as a set — Inter at 34 needs tighter leading AND
+ * those four are only correct as a set, Inter at 34 needs tighter leading AND
  * negative tracking, while the same face at 11 needs neither; separating them
  * guarantees someone gets one of the four wrong.
  */
@@ -21,7 +21,7 @@ import { useAppTheme, type Theme } from '@/theme/theme';
  * The scale. Every row carries its own `track` (letter-spacing in points),
  * because Inter is drawn loose enough to survive an 11pt caption and that same
  * spacing reads slack at 44pt. Tracking tightens as size climbs and opens
- * slightly below 13pt — the correction the family is designed to want, and the
+ * slightly below 13pt: the correction the family is designed to want, and the
  * difference between "uses Inter" and "set in Inter".
  *
  * `mono` rows are never tracked: fixed-width digits exist so a ticking value
@@ -148,7 +148,7 @@ export const Txt = memo(function Txt({
       color: color ?? toneColor(theme, tone),
       ...(align ? { textAlign: align } : null),
       ...(weight ? { fontWeight: weight } : null),
-      // The variant's optical tracking, unless the caller overrides it — which all-caps
+      // The variant's optical tracking, unless the caller overrides it: which all-caps
       // labels do, since capitals need opening up where lowercase needs tightening.
       letterSpacing: tracking ?? spec.track,
       ...(uppercase ? { textTransform: 'uppercase' as const } : null),
@@ -160,7 +160,7 @@ export const Txt = memo(function Txt({
 });
 
 /**
- * One string built from differently-styled runs — "12 **sets** · 4,820 kg".
+ * One string built from differently-styled runs, "12 **sets** · 4,820 kg".
  *
  * Composing these as sibling `Txt` in a `Row` breaks text layout (they cannot
  * wrap together), so nested `Text` is the only correct RN answer. `t` is the

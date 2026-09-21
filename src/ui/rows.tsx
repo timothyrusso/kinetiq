@@ -153,7 +153,7 @@ export const ListRow = memo(function ListRow({
   showChevron?: boolean;
   /** Full-width second tier: a chip row, a mini chart, a stepper. */
   bottomAccessory?: React.ReactNode;
-  /** Right-column body, replacing nothing — sits opposite the title block. */
+  /** Right-column body, replacing nothing: sits opposite the title block. */
   body?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   accessibilityHint?: string;
@@ -291,7 +291,7 @@ export const NavRow = memo(function NavRow({
   );
 });
 
-/** Activity row — the shape the Activities tab is measured in. */
+/** Activity row: the shape the Activities tab is measured in. */
 export const ActivityRow = memo(function ActivityRow({
   activity,
   theme,
@@ -512,7 +512,7 @@ export function initials(name: string): string {
   const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? '') : '';
   const out = `${first}${last}`.toUpperCase();
   // An empty monogram renders as an empty circle; a dash says "no name set".
-  return out.length > 0 ? out : '—';
+  return out.length > 0 ? out : ', ';
 }
 
 /**
@@ -575,7 +575,7 @@ export function summarizeExerciseNames(names: string[], max = 3): string {
   return rest > 0 ? `${head} +${rest}` : head;
 }
 
-/** The best available image for a snapshot — thumb first, art second. */
+/** The best available image for a snapshot: thumb first, art second. */
 export function thumbUriOf(snapshot: ExerciseSnapshot): string | null {
   return snapshot.thumbnailUrl ?? snapshot.imageUrl;
 }

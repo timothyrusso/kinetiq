@@ -1,5 +1,5 @@
 /**
- * Exercises tab — browse, search and filter the remote catalog.
+ * Exercises tab: browse, search and filter the remote catalog.
  *
  * ## What this screen promises the network
  *
@@ -20,7 +20,7 @@
  *
  * The header says "N exercises" from the provider's `total`, because a filtered catalog that
  * says nothing about how many it found leaves the user guessing whether the filter worked.
- * When `total` is absent — the port allows it — no count is shown rather than one estimated
+ * When `total` is absent: the port allows it: no count is shown rather than one estimated
  * from loaded pages, which would be a number that changes as you scroll.
  *
  * ## A row tap must not wait on a fetch
@@ -75,7 +75,7 @@ export default function ExercisesScreen() {
   const settling = useIsQuerySettling();
   // Mounted is not the same as on screen. `NativeTabs` is a real UITabBarController and mounts
   // every tab's screen when the bar is built, so without this gate the catalog was fetched
-  // during app launch for a tab the user may never open — measured at five wger requests before
+  // during app launch for a tab the user may never open: measured at five wger requests before
   // the first interaction. Focus is the condition that actually means "someone is looking at
   // this", and it also parks the query while the user is elsewhere.
   const focused = useIsFocused();
@@ -122,7 +122,7 @@ export default function ExercisesScreen() {
 
   // Depend on the primitives, not on `search`: the hook returns a fresh result object every
   // render, so `[search]` re-created this callback on every keystroke, scroll position and
-  // focus change — and FlashList re-binds `onEndReached` each time its identity moves. The
+  // focus change: and FlashList re-binds `onEndReached` each time its identity moves. The
   // guards below still read current values, because the closure is rebuilt whenever one flips.
   const { hasMore, isFetchingNextPage, loadNextPage } = search;
   const onEndReached = useCallback(() => {
@@ -240,8 +240,8 @@ export default function ExercisesScreen() {
               <SkeletonList rows={7} />
             </View>
           ) : search.error !== null ? (
-            // `ErrorState` already distinguishes offline from a server fault — different
-            // icon, different copy — so this screen only supplies the subject line. The
+            // `ErrorState` already distinguishes offline from a server fault: different
+            // icon, different copy: so this screen only supplies the subject line. The
             // offline copy it uses is the promise this app makes: saved routines survive.
             <ErrorState
               error={search.error}
@@ -277,7 +277,7 @@ export default function ExercisesScreen() {
 /**
  * The filter sheet.
  *
- * It owns no state of its own — every selection writes straight to the store. A sheet that
+ * It owns no state of its own: every selection writes straight to the store. A sheet that
  * buffered a draft filter and had an Apply button would need a second copy of the filter and
  * a diff to know whether anything had changed. Writing through means "what you see is what
  * the list is", and the list behind the scrim updates live, which is the feedback that makes
@@ -313,7 +313,7 @@ function FilterSheet({ onClose }: { onClose: () => void }) {
       {taxonomy.isError ? (
         <Txt variant="caption" tone="muted">
           The list of filters could not be loaded, so there are none to pick. Searching still
-          works — filters are optional.
+          works: filters are optional.
         </Txt>
       ) : null}
       <Button label="Show all exercises" variant="secondary" onPress={resetExerciseFilter} />
@@ -341,7 +341,7 @@ function TaxonPicker({
       </Txt>
     );
   }
-  // An empty group is hidden rather than shown empty: "Equipment — Any" with nothing after
+  // An empty group is hidden rather than shown empty: "Equipment · Any" with nothing after
   // it reads as a broken fetch, when in fact the provider just has none for this install.
   if (taxons.length === 0) return null;
   return (
@@ -370,9 +370,9 @@ function TaxonPicker({
  *
  * Keeping the old rows visible while a new query runs is the right trade for a search field,
  * but it leaves two states with no on-screen evidence: a refetch in flight, and a refetch that
- * failed while readable rows stay on screen. The second one is the dangerous pair — the user
+ * failed while readable rows stay on screen. The second one is the dangerous pair: the user
  * has no reason to suspect the list they are looking at is not the answer to the filter they
- * just set — so it gets a warning tone and its own retry, not just a badge.
+ * just set: so it gets a warning tone and its own retry, not just a badge.
  */
 function FetchNotice({
   searching,
@@ -390,7 +390,7 @@ function FetchNotice({
           <Badge label="Outdated results" tone="warning" />
           {/* The badge alone is not an explanation. Sighted or not, "OUTDATED RESULTS" next to a
               list does not say that the newest search failed and these rows answer the PREVIOUS
-              one — and this is the branch where knowing that matters most. The sibling
+              one: and this is the branch where knowing that matters most. The sibling
               "Updating" branch below says so in a sentence; this one used to leave the amber to
               carry it, which also meant the state was communicated by colour alone. */}
           <Txt variant="micro" tone="faint">
@@ -448,8 +448,8 @@ function ListFooter({
 function exerciseSubtitle(exercise: Exercise): string {
   const shown = exercise.primaryMuscles.slice(0, 2);
   const muscles = shown.join(', ');
-  // Drop the category when a muscle already said it. wger's taxonomies overlap — "Arnold
-  // Shoulder Press" is category Shoulders with primary muscle Shoulders — and the naive join
+  // Drop the category when a muscle already said it. wger's taxonomies overlap, "Arnold
+  // Shoulder Press" is category Shoulders with primary muscle Shoulders: and the naive join
   // rendered "Shoulders · Shoulders", which reads as a duplication bug rather than as two
   // facts that happen to coincide. Compared case-insensitively because the two taxonomies are
   // maintained separately and are not guaranteed to agree on capitalisation.

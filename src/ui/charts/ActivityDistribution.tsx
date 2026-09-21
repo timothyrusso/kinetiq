@@ -1,5 +1,5 @@
 /**
- * Activity distribution — where the week's training actually went.
+ * Activity distribution: where the week's training actually went.
  *
  * A donut is only honest with few slices and a shared denominator, so this component owns
  * both constraints: it collapses anything past the four largest kinds into "Other" and it
@@ -35,7 +35,7 @@ const GAP_RAD = 0.045;
 
 export type DistributionSlice = {
   kind: ActivityKind;
-  /** Minutes, volume, sessions — whatever the caller is counting. Only ratios are used. */
+  /** Minutes, volume, sessions: whatever the caller is counting. Only ratios are used. */
   value: number;
 };
 
@@ -157,7 +157,7 @@ export const ActivityDistribution = memo(function ActivityDistribution({
               strokeLinecap="round"
               fill="none"
               // 2πr · 0.9999 matches the hair-under-full arc `sweepTo` produces everywhere
-              // else, and the dash is measured by hand because `pathLength` is SVG2 — which
+              // else, and the dash is measured by hand because `pathLength` is SVG2: which
               // react-native-svg does not implement.
               strokeDasharray={`${circumference}`}
               strokeDashoffset={0}

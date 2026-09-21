@@ -2,13 +2,13 @@
  * Activity → text, in the user's units.
  *
  * `ActivityRow` deliberately takes its `headline` and `subtitle` already formatted.
- * That looks like a leak at first — the row has the activity, so why make the caller
- * format it? — but it is the right cut for one reason: which metric deserves the
+ * That looks like a leak at first: the row has the activity, so why make the caller
+ * format it?: but it is the right cut for one reason: which metric deserves the
  * headline position depends on the kind *and* on settings, and a row that guessed
  * would be wrong half the time. A ride reads as distance to a runner and as average
  * speed to a cyclist; a lift has neither, and its interesting number is volume.
  *
- * So the decision lives here, once, as pure functions — not duplicated across Home,
+ * So the decision lives here, once, as pure functions: not duplicated across Home,
  * the Activities tab and a routine's history, and not inside a component that would
  * then need the unit settings handed to it anyway.
  */
@@ -109,7 +109,7 @@ export type SplitRow = {
   label: string;
   distanceLabel: string;
   durationSeconds: number;
-  /** Already in min/km or min/mi — a split row should not be doing unit maths. */
+  /** Already in min/km or min/mi: a split row should not be doing unit maths. */
   paceLabel: string;
   heartRate: number | null;
   elevationGainMeters: number;
@@ -176,7 +176,7 @@ export function minutesByKind(activities: readonly Activity[]): Map<ActivityKind
   return map;
 }
 
-/** "3 runs, 2 lifts" — the sentence a weekly summary wants, in a stable kind order. */
+/** "3 runs, 2 lifts": the sentence a weekly summary wants, in a stable kind order. */
 export function kindBreakdown(activities: readonly Activity[]): string {
   const counts = new Map<ActivityKind, number>();
   for (const activity of activities) {

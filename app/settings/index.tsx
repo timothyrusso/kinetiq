@@ -1,5 +1,5 @@
 /**
- * Settings — the profile editor, and the way into the three sections too big to sit inline.
+ * Settings: the profile editor, and the way into the three sections too big to sit inline.
  *
  * ## What is deliberately *not* here
  *
@@ -9,7 +9,7 @@
  * changes. Repeating it here would put two switches in charge of one setting, and a hub that
  * duplicates a tab is a hub that eventually disagrees with it.
  *
- * The weekly goal is on Profile for the same reason — it is a target you look at, not a
+ * The weekly goal is on Profile for the same reason: it is a target you look at, not a
  * preference you set and forget.
  *
  * ## Why the profile fields are on this screen and not on the tab
@@ -19,14 +19,14 @@
  * would mean the tab owns both a display and a form for the same three values, and the form
  * half would need to be dismissed. Here the values load once into local draft state, the
  * user can put the form in any broken state they like, and nothing reaches the store until
- * Save — so a half-typed height can never render as someone's height.
+ * Save: so a half-typed height can never render as someone's height.
  *
  * ## Draft state, and why Save exists at all
  *
  * Every other setting in the app commits on change, because every other setting is a toggle
  * or a segmented control: there is no such thing as a half-toggled switch. Text fields are
  * different. An empty name is not a name the user chose, and committing per keystroke means
- * the app briefly believes their name is `""` — which `normaliseSettings` would then quietly
+ * the app briefly believes their name is `""`: which `normaliseSettings` would then quietly
  * rewrite to "Athlete" on the next reload. So text fields are a draft, and Save is the
  * commit point. Numbers use the same rule, for the same reason: `heightCm` of `1` is a valid
  * keystroke on the way to `181`.
@@ -35,11 +35,11 @@
  *
  * `normaliseSettings` rebuilds `profile` on every write, and the store preserves object
  * identity only when the value is unchanged. Sending all three fields every time would
- * therefore notify every `useSettings(s => s.profile)` reader — the tab's avatar, height
- * line and age — when only the height moved. The store already handles that correctly
+ * therefore notify every `useSettings(s => s.profile)` reader: the tab's avatar, height
+ * line and age: when only the height moved. The store already handles that correctly
  * (identity is preserved when the values match), so this could send all three and be fine.
  * It sends a diff anyway, for one concrete reason: the empty-name case. An untouched name
- * field must not send `name: ''`, because normalise would turn that into "Athlete" — which
+ * field must not send `name: ''`, because normalise would turn that into "Athlete": which
  * is right for a genuine empty submission and wrong for a field the user never opened.
  */
 import { useCallback, useMemo, useState } from 'react';
@@ -166,7 +166,7 @@ function draftOf(profile: Profile): Draft {
  *
  * `key` is not needed to reset it: the store's profile is only ever changed by this form, so
  * after a successful save the draft already matches what the user typed. Leaving the screen
- * mid-edit and coming back re-mounts it from the store, which is the correct behaviour — a
+ * mid-edit and coming back re-mounts it from the store, which is the correct behaviour: a
  * discard you never confirmed is still a discard, so the draft is not kept anywhere.
  */
 function ProfileForm({
@@ -261,7 +261,7 @@ function ProfileForm({
  *
  * Deliberately not "disable Save silently": a disabled button with no reason next to it
  * sends someone hunting through fields that are all fine. The empty-name case is the common
- * one, and it is also the case where an error message would be noise — an empty name simply
+ * one, and it is also the case where an error message would be noise: an empty name simply
  * means "not changed", so Save is disabled and nothing is red.
  */
 function validate(draft: Draft): Partial<Record<keyof Draft, string>> | null {

@@ -1,5 +1,5 @@
 /**
- * Exercise detail — what the library says about one movement, and what *you* have
+ * Exercise detail: what the library says about one movement, and what *you* have
  * done with it.
  *
  * ## The screen is a provenance report as much as a description
@@ -8,15 +8,14 @@
  * deep link, and the app's knowledge differs by route: a search row carries a video URL
  * the store never kept; a stored snapshot carries everything except that video; an
  * exercise never seen before needs the network or it needs nothing at all. So one line
- * under the hero says which of those the user is looking at. That is not decoration —
- * "Offline copy saved 12 May" explains why there is no video before the user goes looking
+ * under the hero says which of those the user is looking at. That is not decoration, * "Offline copy saved 12 May" explains why there is no video before the user goes looking
  * for one, and it gives the "check for updates" button a purpose instead of a mystery.
  *
  * ## Nothing is inferred to fill a gap
  *
  * wger returns no description for a large share of its catalog, and the seeded exercises
- * deliberately have none either. That renders as a named silence — "the library has no
- * description for this one" — rather than a blank card, an invented cue, or a section
+ * deliberately have none either. That renders as a named silence, "the library has no
+ * description for this one": rather than a blank card, an invented cue, or a section
  * that quietly vanishes. The same rule governs the anatomy caveat, the missing art (a
  * designed monogram, never a grey square), and an empty records list.
  *
@@ -27,7 +26,7 @@
  * ends: the top one because the bar's glyphs sit over whatever background wger's diagram
  * happens to have, the bottom one so technical-drawing white doesn't end on a hard edge
  * against the page. With no art, the slot keeps roughly the same proportions and holds a
- * composition instead — the layout never changes shape between the two states, so an
+ * composition instead: the layout never changes shape between the two states, so an
  * exercise without a picture doesn't look broken.
  *
  * ## Chips are actions, not labels
@@ -36,7 +35,7 @@
  * hamstrings, on the tab, so the change is visible. They are not badges pretending to be
  * buttons. The taxonomy id behind a name comes from the cached taxonomy; when that lookup
  * can't resolve (taxonomy never loaded, or a name the taxonomy stopped using), the chip
- * still opens the library — searching the words the user just tapped — because a control
+ * still opens the library: searching the words the user just tapped: because a control
  * that is inert is indistinguishable from one that is broken.
  */
 import { useCallback, useMemo } from 'react';
@@ -125,7 +124,7 @@ export default function ExerciseDetailScreen() {
     (name: string) => {
       const match = taxonomy.data?.muscles.find((taxon) => taxon.name === name);
       // An unresolvable name still opens the library, searching the words the user
-      // tapped — approximate, but visible and honest, unlike an inert chip.
+      // tapped: approximate, but visible and honest, unlike an inert chip.
       if (match) setExerciseMuscleId(match.id);
       else setExerciseQuery(name);
       openLibrary();
@@ -146,7 +145,7 @@ export default function ExerciseDetailScreen() {
   const browseVariations = useCallback(() => {
     if (exercise === null) return;
     // Variation group ids are opaque UUIDs the search endpoint cannot take, so
-    // "similar" is delivered as a search on the exercise's own name — which returns
+    // "similar" is delivered as a search on the exercise's own name: which returns
     // the family plus near-neighbours, an honest superset rather than a fake filter.
     resetExerciseFilter();
     setExerciseQuery(exercise.name);
@@ -169,7 +168,7 @@ export default function ExerciseDetailScreen() {
   return (
     <>
       {/* Fade, matching the activity detail: this screen is pushed from four places and
-          its hero is full-bleed media — a horizontal slide would drag the previous
+          its hero is full-bleed media: a horizontal slide would drag the previous
           list's thumbnails across the photo. */}
       <Stack.Screen options={{ animation: 'fade_from_bottom' }} />
       <DetailScreen
@@ -273,7 +272,7 @@ export default function ExerciseDetailScreen() {
                     />
                     {exercise.secondaryMuscles.length > 0 ? (
                       <Txt variant="caption" tone="faint">
-                        Muscle assignments come from the library's own tagging — a guide to
+                        Muscle assignments come from the library's own tagging: a guide to
                         the movement's emphasis, not an anatomical claim about your body.
                       </Txt>
                     ) : null}
@@ -331,7 +330,7 @@ export default function ExerciseDetailScreen() {
                         <MetricGridCell
                           value={
                             history.history.lastPerformedAt === null
-                              ? '—'
+                              ? '-'
                               : formatAgo(history.history.lastPerformedAt)
                           }
                           label="Last performed"
@@ -511,7 +510,7 @@ function Hero({ exercise, topInset }: { exercise: Exercise; topInset: number }) 
       />
       {/* Scrims are `pointerEvents="none"` so neither swallows the interactive back
           gesture. The top one exists because the bar's glyphs sit over whatever
-          background wger's diagram happens to have — an unbacked light glyph on a white
+          background wger's diagram happens to have: an unbacked light glyph on a white
           technical drawing is unreadable. The bottom fades to the page so the image
           doesn't end on a hard edge against the first card. */}
       <LinearGradient
@@ -554,7 +553,7 @@ function Provenance({
         </Txt>
         {/* A Text with role="button" rather than a nested Touchable: it sits in a line of
             text-width content, and VoiceOver reads the label as its own element either
-            way — this way there is one less layout wrapper. */}
+            way: this way there is one less layout wrapper. */}
         <Txt
           variant="caption"
           weight="700"

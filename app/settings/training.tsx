@@ -1,13 +1,13 @@
 /**
- * Training preferences — the settings that decide what the app *does* during a session,
+ * Training preferences: the settings that decide what the app *does* during a session,
  * as opposed to what it looks like or what units it prints.
  *
  * ## Why these are not on the Profile tab
  *
  * The tab carries the settings you consult: units, appearance, the weekly goal. Those are all
  * one control and all readable at a glance. These are a group you visit once and forget, and
- * adding five rows to the tab would push the history entry and the workout preferences — the
- * things actually used daily — below the fold.
+ * adding five rows to the tab would push the history entry and the workout preferences: the
+ * things actually used daily: below the fold.
  *
  * ## No Save button, anywhere in this group
  *
@@ -23,7 +23,7 @@
  * Rest time gets both. The chips are the four answers that cover most people and can be hit
  * with a thumb while carrying a dumbbell; the stepper exists because "75 seconds" is a real
  * choice and a preset list is not allowed to be the only legal set of answers. Selecting a
- * chip moves the stepper, and the stepper leaving a preset value deselects the chips — one
+ * chip moves the stepper, and the stepper leaving a preset value deselects the chips: one
  * source of truth, two ways to reach it.
  *
  * ## Pace versus speed is a segmented control, not a switch
@@ -48,7 +48,7 @@ import { formatDurationCompact } from '@/utils/format';
 /** The two readings of the same run. A string union because `Segment<T extends string>`. */
 type ReadingMode = 'pace' | 'speed';
 
-/** The same bounds the store clamps to — see the module header. */
+/** The same bounds the store clamps to: see the module header. */
 const REST_MIN = 15;
 const REST_MAX = 600;
 const GOAL_MIN = 1;
@@ -87,7 +87,7 @@ export default function SettingsTrainingScreen() {
                 <Stack gap="lg">
                   <Txt variant="caption" tone="muted">
                     Where a new rest countdown starts. Change it for one exercise inside a
-                    routine, or skip it mid-session — this is only the default.
+                    routine, or skip it mid-session: this is only the default.
                   </Txt>
 
                   <Row gap="sm" style={styles.chips}>
@@ -156,8 +156,8 @@ export default function SettingsTrainingScreen() {
                   <Txt variant="strong">Pace or speed</Txt>
                   <Txt variant="caption" tone="muted">
                     {speedInsteadOfPace
-                      ? 'Speed is how fast you are going — 13.3 km/h.'
-                      : 'Pace is how long a kilometre takes — 4:30 /km.'}{' '}
+                      ? 'Speed is how fast you are going, 13.3 km/h.'
+                      : 'Pace is how long a kilometre takes, 4:30 /km.'}{' '}
                     The same run either way.
                   </Txt>
                   <SegmentedControl<ReadingMode>
@@ -183,7 +183,7 @@ export default function SettingsTrainingScreen() {
                 <Stack gap="lg">
                   <Txt variant="caption" tone="muted">
                     The ring on Home and the target line on Progress. Changing it never rewrites
-                    history — only what counts as on target from now on.
+                    history: only what counts as on target from now on.
                   </Txt>
                   <Row gap="sm" style={styles.chips}>
                     {GOAL_PRESETS.map((n) => (
