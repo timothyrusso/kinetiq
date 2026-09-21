@@ -63,7 +63,7 @@ import { EmptyState, ErrorState, SkeletonCard, SkeletonList } from '@/ui/states'
 import { TrendChart, type TrendPoint } from '@/ui/charts/TrendChart';
 import { ActivityDistribution, type DistributionSlice } from '@/ui/charts/ActivityDistribution';
 import { HeatmapCalendar, type HeatmapDay } from '@/ui/charts/HeatmapCalendar';
-import { useMeasuredWidth } from '@/ui/charts/Sparkline';
+import { useMeasuredWidth } from '@/ui/charts/useMeasuredWidth';
 import {
   usePersonalRecords,
   useTrainingHeatmap,

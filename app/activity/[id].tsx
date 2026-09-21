@@ -57,7 +57,7 @@ import { TextField } from '@/ui/TextField';
 import { EmptyState, ErrorState, SkeletonCard } from '@/ui/states';
 import { RouteMap } from '@/ui/RouteMap';
 import { TrendChart, type TrendPoint } from '@/ui/charts/TrendChart';
-import { useMeasuredWidth } from '@/ui/charts/Sparkline';
+import { useMeasuredWidth } from '@/ui/charts/useMeasuredWidth';
 import {
   useActivity,
   useDeleteActivity,

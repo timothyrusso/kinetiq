@@ -57,7 +57,7 @@ import { MetricLabel, Txt } from '@/ui/Text';
 import { Icon } from '@/ui/icons';
 import { EmptyState, ErrorState, SkeletonCard } from '@/ui/states';
 import { ProgressRing } from '@/ui/charts/ProgressRing';
-import { useMeasuredWidth } from '@/ui/charts/Sparkline';
+import { useMeasuredWidth } from '@/ui/charts/useMeasuredWidth';
 import { BarChart, type BarPoint } from '@/ui/charts/BarChart';
 import { useRoutines } from '@/queries/useRoutines';
 import { BROWSE_FILTER, useExerciseSearch } from '@/queries/useExercises';

@@ -44,7 +44,7 @@ import { Button } from '@/ui/Button';
 import { BarChart, type BarPoint } from '@/ui/charts/BarChart';
 import { ActivityDistribution, type DistributionSlice } from '@/ui/charts/ActivityDistribution';
 import { ProgressRing } from '@/ui/charts/ProgressRing';
-import { useMeasuredWidth } from '@/ui/charts/Sparkline';
+import { useMeasuredWidth } from '@/ui/charts/useMeasuredWidth';
 import { EmptyState, ErrorState, SkeletonCard, SkeletonList, ThemedRefreshControl } from '@/ui/states';
 import { useRecentActivities } from '@/queries/useActivities';
 import { useTrainingSummary, type TrainingSummary } from '@/queries/useProgress';
