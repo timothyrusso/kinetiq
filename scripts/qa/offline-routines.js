@@ -22,8 +22,11 @@
 //     left armed silently poisons every later run, which reads as a broken app.
 
 const {
-  fillField, CWD, sh, sleep, scan, has, open, fail, pressLabel, pressRow, ledger, nodes, visible, scrollTop, hasAnywhere, labels, seek, onExit, clearFaultQuietly, faultArmed,
+  forceEnglishUI,fillField, CWD, sh, sleep, scan, has, open, fail, pressLabel, pressRow, ledger, nodes, visible, scrollTop, hasAnywhere, labels, seek, onExit, clearFaultQuietly, faultArmed,
 } = require('./lib');
+
+// English, whatever the device or the user's setting: every assertion below matches English copy.
+forceEnglishUI();
 
 process.chdir(CWD);
 // Undo the fault on every exit path. A fault lives in the app's memory, so a script that dies

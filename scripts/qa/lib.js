@@ -630,6 +630,31 @@ function fillField(ref, text, { blurAt = '201 120' } = {}) {
   sleep(2);
 }
 
+/**
+ * Force the app into English, for the duration of the run.
+ *
+ * Every gate in this suite matches user-visible copy: "SEARCH EXERCISES", "Try again", "Start
+ * this workout". Once the app gained a language setting, those matches became locale dependent,
+ * and this machine's simulator is set to it-CH, so `language: 'system'` resolves to Italian and
+ * the whole suite failed on its first assertion with "never saw SEARCH EXERCISES" against a
+ * screen reading CERCA ESERCIZI.
+ *
+ * Written straight to the settings row rather than driven through the UI: tapping a segmented
+ * control costs a navigation and a snapshot per gate, and this has to happen before the first
+ * assertion of every gate, including the ones that start on a screen with no way to reach
+ * Settings. `hydrateSettings` reads this row on launch, so the value takes effect from the next
+ * restart, which every gate does anyway.
+ *
+ * It does NOT restore the previous value. The setting is the user's, and a gate that failed
+ * halfway would leave it half-restored; the run says plainly that it forces English, and
+ * switching back is one tap.
+ */
+function forceEnglishUI() {
+  const err = dbExec("insert into settings (key, value_json, updated_at) values ('settings.language', '\"en\"', "
+    + `${Date.now()}) on conflict(key) do update set value_json = '"en"', updated_at = ${Date.now()};`);
+  if (err) console.log(`   (could not force English: ${err.slice(0, 80)})`);
+}
+
 function fail(msg) {
   console.error(`   !! ${msg}`);
   process.exit(1);
@@ -899,6 +924,7 @@ module.exports = {
   CWD, METRO, TABS, VIEWPORT_HEIGHT, sh, sleep, nodes, labels, visible, onScreen, has, hasAnywhere,
   isNotFound, scan, seek, scrollTop, panDown, panUp, signature, open, fail, pressLabel, pressText,
   pressRow, tab, ledger, onExit, faultArmed, clearFaultQuietly, restartApp, dbQuery, dbCol, dbExec,
+  forceEnglishUI,
   fillField,
   metroAlive,
 };

@@ -13,6 +13,7 @@ import type { PersonalRecord, PersonalRecordKind } from '@/domain/types';
 export const SETTING_KEYS = {
   unitSystem: 'settings.units',
   themeMode: 'settings.theme',
+  language: 'settings.language',
   haptics: 'settings.haptics',
   notifications: 'settings.notifications',
   defaultRestSeconds: 'settings.defaultRestSeconds',

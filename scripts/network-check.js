@@ -28,7 +28,11 @@
 //     process zeroes it by forgetting it. That is fine: the baseline is taken after the
 //     cold start, from the screen's own Reset, so the measured window is exact.
 
-const { CWD, METRO, sh, sleep, nodes, visible, has, hasAnywhere, open, fail, pressText, ledger, scrollTop, tab } = require('./qa/lib');
+const {
+  forceEnglishUI,CWD, METRO, sh, sleep, nodes, visible, has, hasAnywhere, open, fail, pressText, ledger, scrollTop, tab } = require('./qa/lib');
+
+// English, whatever the device or the user's setting: every assertion below matches English copy.
+forceEnglishUI();
 
 process.chdir(CWD);
 

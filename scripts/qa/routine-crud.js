@@ -32,9 +32,12 @@
  * than sleeping a guessed number of seconds.
  */
 const {
-  fillField, tab, fail, onExit, pressLabel, seek, nodes, visible, sh, open,
+  forceEnglishUI,fillField, tab, fail, onExit, pressLabel, seek, nodes, visible, sh, open,
   sleep, restartApp, dbQuery, dbCol, dbExec,
 } = require('./lib');
+
+// English, whatever the device or the user's setting: every assertion below matches English copy.
+forceEnglishUI();
 
 const PREFIX = 'QA Circuit';
 const NAME = `${PREFIX} ${Date.now().toString().slice(-6)}`;

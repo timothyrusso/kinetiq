@@ -49,9 +49,12 @@
 //     bottom pages it, and those page fetches land in the ledger charged to the fault.
 
 const {
-  fillField, CWD, sh, sleep, open, fail, ledger, nodes, visible, seek, scrollTop,
+  forceEnglishUI,fillField, CWD, sh, sleep, open, fail, ledger, nodes, visible, seek, scrollTop,
   has, labels, pressLabel, pressRow, onExit, clearFaultQuietly, restartApp,
 } = require('./lib');
+
+// English, whatever the device or the user's setting: every assertion below matches English copy.
+forceEnglishUI();
 
 process.chdir(CWD);
 // Undo the fault on every exit path. A fault lives in the app's memory, so a script that dies

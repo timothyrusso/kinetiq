@@ -19,9 +19,12 @@
 // the check would pass by doing nothing. That is the failure mode this file exists to avoid:
 // a green run that measured nothing.
 const {
-  sh, sleep, nodes, visible, open, fail, ledger, panDown, scan,
+  forceEnglishUI,sh, sleep, nodes, visible, open, fail, ledger, panDown, scan,
   has, pressLabel, scrollTop, seek,
 } = require('./lib');
+
+// English, whatever the device or the user's setting: every assertion below matches English copy.
+forceEnglishUI();
 
 console.log('1. Cold-ish start on the exercise list.');
 open('exercises', 'Exercise');

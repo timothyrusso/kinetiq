@@ -30,10 +30,19 @@ const STEPS = [
   ['offline', ['scripts/qa/offline-routines.js']],
   ['network', ['scripts/network-check.js']],
   ['pagination', ['scripts/qa/pagination-check.js']],
+  // Last, because it is the only gate that WRITES. It creates, renames, duplicates and deletes
+  // its own routines, and it discards an in-progress session as setup; running it earlier would
+  // hand every later gate a database and a session state it did not expect.
+  ['crud', ['scripts/qa/routine-crud.js']],
 ];
 
 const only = process.argv[2];
 const steps = only ? STEPS.filter(([name]) => name === only) : STEPS;
+
+// Before anything runs. Every gate matches English copy, and this machine's simulator is
+// it-CH, so the app's `system` language resolves to Italian and the suite fails on its first
+// assertion against a screen it cannot read.
+require('./lib').forceEnglishUI();
 if (!steps.length) {
   console.error(`unknown step "${only}": known: ${STEPS.map(([n]) => n).join(', ')}`);
   process.exit(2);

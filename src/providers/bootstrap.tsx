@@ -104,10 +104,11 @@ export type BootstrapOutcome = {
  */
 export const BOOTSTRAP_DEADLINE_MS = 5_000;
 
-/** The keys that make up `SettingsState`, in the order they are mapped back below. */
+/** The keys that make up `SettingsState`. Order is irrelevant: they are read by key. */
 const SETTINGS_KEYS = [
   SETTING_KEYS.unitSystem,
   SETTING_KEYS.themeMode,
+  SETTING_KEYS.language,
   SETTING_KEYS.haptics,
   SETTING_KEYS.notifications,
   SETTING_KEYS.defaultRestSeconds,
@@ -175,24 +176,27 @@ export async function readSettingsSnapshot(): Promise<SettingsState> {
   // lookup below is a `SettingKey` read and not `SettingKey | ''`.
   const keys: SettingKey[] = [...SETTINGS_KEYS];
   const values = await readAllSettings(keys);
-  const at = (index: number): unknown => {
-    const key = keys[index];
-    return key === undefined ? undefined : values.get(key);
-  };
 
-  // `normaliseSettings` drops undefined keys, so an unset or unparseable row falls
-  // back to its default instead of becoming `undefined as boolean` in the store.
+  // Read by KEY, not by position. This was `at(0)`, `at(1)`, `at(2)`, indexed into the key
+  // array, which means inserting a setting anywhere but the end silently reassigns every field
+  // after it: adding `language` in second place would have loaded the theme into
+  // `hapticsEnabled` and shifted the rest down one. Nothing would have failed to compile,
+  // because the casts were already lying about the types.
+  //
+  // `normaliseSettings` drops undefined keys, so an unset or unparseable row falls back to its
+  // default instead of becoming `undefined as boolean` in the store.
   const settings = normaliseSettings({
-    unitSystem: at(0) as SettingsState['unitSystem'],
-    themeMode: at(1) as SettingsState['themeMode'],
-    hapticsEnabled: at(2) as boolean,
-    notificationsEnabled: at(3) as boolean,
-    defaultRestSeconds: at(4) as number,
-    autoStartRest: at(5) as boolean,
-    weeklyGoalWorkouts: at(6) as number,
-    showSpeedInsteadOfPace: at(7) as boolean,
-    profile: at(8) as SettingsState['profile'],
-    reminder: at(9) as SettingsState['reminder'],
+    unitSystem: values.get(SETTING_KEYS.unitSystem) as SettingsState['unitSystem'],
+    themeMode: values.get(SETTING_KEYS.themeMode) as SettingsState['themeMode'],
+    language: values.get(SETTING_KEYS.language) as SettingsState['language'],
+    hapticsEnabled: values.get(SETTING_KEYS.haptics) as boolean,
+    notificationsEnabled: values.get(SETTING_KEYS.notifications) as boolean,
+    defaultRestSeconds: values.get(SETTING_KEYS.defaultRestSeconds) as number,
+    autoStartRest: values.get(SETTING_KEYS.autoStartRest) as boolean,
+    weeklyGoalWorkouts: values.get(SETTING_KEYS.weeklyGoalWorkouts) as number,
+    showSpeedInsteadOfPace: values.get(SETTING_KEYS.showSpeedInsteadOfPace) as boolean,
+    profile: values.get(SETTING_KEYS.profile) as SettingsState['profile'],
+    reminder: values.get(SETTING_KEYS.reminder) as SettingsState['reminder'],
   });
 
   // Device truth, not the user's preference. Two separate flags by design: the
