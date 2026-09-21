@@ -60,11 +60,13 @@ import {
 import type { Exercise, Taxon } from '@/domain/types';
 import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
+import { useT } from '@/i18n/useT';
 import { spacing, screenGutter } from '@/theme/tokens';
 import { joinMiddleDot, pluralWord } from '@/utils/format';
 
 
 export default function ExercisesScreen() {
+  const { t } = useT();
   const router = useRouter();
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
@@ -131,7 +133,7 @@ export default function ExercisesScreen() {
 
   const listHeader = (
     <>
-      <CollapsibleHero header={header} eyebrow="Library" title="Exercises">
+      <CollapsibleHero header={header} eyebrow={t('exercises.eyebrow')} title={t('exercises.title')}>
         <Txt variant="caption" tone="muted" style={{ marginTop: spacing.xs }}>
           {search.total === null
             ? 'Search the wger catalog and add anything to a routine'
@@ -143,13 +145,13 @@ export default function ExercisesScreen() {
 
       <View style={styles.controls}>
         <TextField
-          label="Search exercises"
+          label={t('exercises.searchLabel')}
           value={draft}
           onChangeText={setExerciseQuery}
           placeholder="Deadlift, lat pulldown, lunges…"
           autoCorrect={false}
           returnKeyType="search"
-          accessibilityLabel="Search the exercise catalog"
+          accessibilityLabel={t('exercises.searchHint')}
           {...(settling ? { hint: 'Searching…' } : {})}
         />
 
@@ -196,7 +198,7 @@ export default function ExercisesScreen() {
     <View style={styles.root}>
       <CollapsibleHeader
         header={header}
-        title="Exercises"
+        title={t('exercises.title')}
         right={
           <BarAction
             icon="filter"
@@ -245,7 +247,7 @@ export default function ExercisesScreen() {
             // offline copy it uses is the promise this app makes: saved routines survive.
             <ErrorState
               error={search.error}
-              title="Exercise search unavailable"
+              title={t('exercises.unavailable')}
               onRetry={() => void search.refresh()}
             />
           ) : searching || activeCount > 0 ? (
@@ -383,11 +385,12 @@ function FetchNotice({
   failed: boolean;
   onRetry: () => void;
 }) {
+  const { t } = useT();
   if (failed) {
     return (
       <Row gap="md" align="center" justify="between">
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Badge label="Outdated results" tone="warning" />
+          <Badge label={t('exercises.outdated')} tone="warning" />
           {/* The badge alone is not an explanation. Sighted or not, "OUTDATED RESULTS" next to a
               list does not say that the newest search failed and these rows answer the PREVIOUS
               one: and this is the branch where knowing that matters most. The sibling
@@ -404,7 +407,7 @@ function FetchNotice({
   if (!searching) return null;
   return (
     <Row gap="sm" align="center">
-      <Badge label="Updating" tone="info" />
+      <Badge label={t('exercises.updating')} tone="info" />
       <Txt variant="micro" tone="faint">
         Showing the previous search while this one runs
       </Txt>

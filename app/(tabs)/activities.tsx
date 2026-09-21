@@ -55,6 +55,7 @@ import { activityDisplay } from '@/domain/display';
 import type { Activity, ActivityKind } from '@/domain/types';
 import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
+import { useT } from '@/i18n/useT';
 import { spacing, screenGutter } from '@/theme/tokens';
 import { compactNumber, formatDistance, formatDurationCompact } from '@/utils/format';
 import { toggleInArray } from '@/utils/functional';
@@ -83,6 +84,7 @@ const SORTS: readonly { value: ActivitySort; label: string }[] = [
 /** Clearance for the floating tab bar. */
 
 export default function ActivitiesScreen() {
+  const { t } = useT();
   const router = useRouter();
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
@@ -191,7 +193,7 @@ export default function ActivitiesScreen() {
 
   const listHeader = (
     <>
-      <CollapsibleHero header={header} eyebrow="History" title="Activities">
+      <CollapsibleHero header={header} eyebrow={t('activities.eyebrow')} title={t('activities.title')}>
         <Txt variant="caption" tone="muted" style={{ marginTop: spacing.xs }}>
           {summaryLine}
         </Txt>
@@ -202,7 +204,7 @@ export default function ActivitiesScreen() {
           label="Search"
           value={search}
           onChangeText={setSearch}
-          placeholder="Session name, notes, exercise"
+          placeholder={t('activities.searchPlaceholder')}
           autoCorrect={false}
           returnKeyType="search"
           accessibilityLabel="Search activities"
@@ -244,7 +246,7 @@ export default function ActivitiesScreen() {
           header directly under this bar, so a funnel button here would either open a sheet
           duplicating controls that are already on screen or, as it did, fire a press that
           set the search text to what it already was. A dead icon is worse than no icon. */}
-      <CollapsibleHeader header={header} title="Activities" />
+      <CollapsibleHeader header={header} title={t('activities.title')} />
 
       <FlashList
         data={rows}

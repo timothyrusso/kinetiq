@@ -123,7 +123,7 @@ export default function ProfileScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: bottomSpace }]}
         keyboardShouldPersistTaps="handled"
       >
-        <CollapsibleHero header={header} eyebrow="Profile" title={name || 'Athlete'}>
+        <CollapsibleHero header={header} eyebrow={t('profile.eyebrow')} title={name || 'Athlete'}>
           <Row gap="md" align="center">
             <Avatar name={name} theme={theme} size={62} />
             <Stack gap="xxs" style={{ flex: 1, minWidth: 0 }}>

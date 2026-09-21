@@ -64,6 +64,7 @@ import { BROWSE_FILTER, useExerciseSearch } from '@/queries/useExercises';
 import { routes } from '@/navigation/nav';
 import type { Routine } from '@/domain/types';
 import { useAppTheme } from '@/theme/theme';
+import { useT } from '@/i18n/useT';
 import { radius, spacing, screenGutter } from '@/theme/tokens';
 import { formatAgo, formatTimer } from '@/utils/format';
 import { useSettings } from '@/settings';
@@ -86,6 +87,7 @@ const CARD_PADDING = spacing.lg;
 const GRID_COLUMNS = 3;
 
 export default function WorkoutScreen() {
+  const { t } = useT();
   const router = useRouter();
   const theme = useAppTheme();
   const bottomSpace = useTabContentBottom();
@@ -151,8 +153,8 @@ export default function WorkoutScreen() {
     <View style={styles.root}>
       <CollapsibleHeader
         header={header}
-        title="Workout"
-        right={<BarAction icon="plus" label="New routine" onPress={openNewRoutine} />}
+        title={t('workout.title')}
+        right={<BarAction icon="plus" label={t('workout.newRoutine')} onPress={openNewRoutine} />}
       />
 
       <ScrollView
@@ -161,7 +163,7 @@ export default function WorkoutScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: bottomSpace }]}
         keyboardShouldPersistTaps="handled"
       >
-        <CollapsibleHero header={header} eyebrow="Train" title="Workout">
+        <CollapsibleHero header={header} eyebrow={t('workout.eyebrow')} title={t('workout.title')}>
           <Txt variant="caption" tone="muted" style={{ marginTop: spacing.xs }}>
             {routines.count === 0
               ? 'Build a routine once, run it forever'
@@ -197,7 +199,7 @@ export default function WorkoutScreen() {
 
         <View style={styles.section} onLayout={measureSection}>
           <SectionHeader
-            title="Your routines"
+            title={t('workout.yourRoutines')}
             eyebrow="Saved"
             {...(routines.count > 0 ? { count: routines.count } : {})}
             action={
@@ -427,9 +429,10 @@ function StartButton({ routine, onRefused }: { routine: Routine; onRefused: () =
  */
 function CardioCard({ onPress, style }: { onPress: () => void; style?: StyleProp<ViewStyle> }) {
   const theme = useAppTheme();
+  const { t } = useT();
   return (
     <View style={style}>
-      <SectionHeader title="Record an activity" eyebrow="Outdoors" />
+      <SectionHeader title={t('workout.recordActivity')} eyebrow="Outdoors" />
       <Card tone="flat" onPress={onPress} accessibilityLabel="Record a run, ride or walk. Opens the recorder.">
         <Row gap="lg" align="center">
           <View
