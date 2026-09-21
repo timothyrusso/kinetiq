@@ -115,15 +115,28 @@ if (!pressLabel('Add exercise') && !pressLabel('Add')) {
 sleep(3);
 const pickerTitle = seek((n) => (n.label ?? '').trim() === 'Add exercises');
 if (!pickerTitle) fail('the exercise picker did not open');
-// Scope the field to the SHEET. The picker is presented over the builder, and the builder's
-// own "Routine name" input stays in the tree behind it — higher up the screen, so it is also
-// the FIRST visible TextField. Taking that one typed the search term into the routine's name
-// field and left the picker empty, which then read as "the remote catalog never loaded".
-// Anything belonging to the sheet sits below its title.
+// Pick the field by its LABEL, not by where it sits. The picker is presented over the builder
+// and the builder's own "Routine name" input stays in the tree behind it, so "the first visible
+// TextField" is the wrong one — that typed the search term into the routine's name and left the
+// picker empty, which then read as "the remote catalog never loaded".
+//
+// Geometry was the second wrong answer: "below the sheet title" held only until the builder's
+// own top inset was fixed, after which the name field moved to y=162 and the sheet title was at
+// y=138 — so the name field was below the title too. Measured, this screen has exactly two
+// visible fields, labelled "Routine name" and "Search"; the label is the thing that actually
+// distinguishes them.
 const pick = nodes().find(
-  (n) => n.type === 'TextField' && visible(n) && (n.rect?.y ?? 0) > pickerTitle.rect.y,
+  (n) => n.type === 'TextField' && visible(n) && (n.label ?? '').trim() === 'Search',
 );
-if (!pick?.ref) fail('the picker is open but has no search field below its title');
+if (!pick?.ref) {
+  fail(
+    'the picker is open but has no field labelled "Search" — visible fields: ' +
+      nodes()
+        .filter((n) => n.type === 'TextField' && visible(n))
+        .map((n) => JSON.stringify(n.label))
+        .join(', '),
+  );
+}
 // Blur inside the sheet: the default tap point is above it, on the screen behind.
 fillField(pick.ref, TERM, { blurAt: `201 ${Math.round(pickerTitle.rect.y)}` });
 sleep(12);

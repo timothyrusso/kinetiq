@@ -108,6 +108,21 @@ export const routineRepository = {
         now,
       );
 
+      // SNAPSHOTS FIRST. `routine_items.exercise_id` is `REFERENCES exercises (id)` and the
+      // database runs with `PRAGMA foreign_keys = ON`, so an item inserted before its exercise
+      // exists violates the constraint and throws, taking the whole save with it.
+      //
+      // This is why adding a NEWLY discovered wger exercise to a routine could not be saved,
+      // while adding one that happened to be in the seed worked: the seeded rows were already
+      // in `exercises`, so the foreign key found them. The screen said "Could not save. Nothing
+      // was lost" — true, and no hint that the cause was ordering.
+      //
+      // It is the offline promise in miniature: the snapshot is the copy that lets a routine
+      // open with no network, so it must exist before anything points at it.
+      for (const snapshot of draft.snapshots ?? []) {
+        await upsertSnapshot(snapshot);
+      }
+
       await db.runAsync('DELETE FROM routine_items WHERE routine_id = ?', id);
       let position = 0;
       for (const item of draft.items) {
@@ -126,10 +141,6 @@ export const routineRepository = {
           item.notes,
           item.exerciseName.trim() || nameFor(item.exerciseId, draft.snapshots),
         );
-      }
-
-      for (const snapshot of draft.snapshots ?? []) {
-        await upsertSnapshot(snapshot);
       }
     });
 
