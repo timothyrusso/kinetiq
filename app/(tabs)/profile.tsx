@@ -300,7 +300,17 @@ function Stat({ label, value, note }: { label: string; value: string; note: stri
   const theme = useAppTheme();
   return (
     <Stack gap="xxs">
-      <Txt variant="numeral" style={{ color: theme.colors.text }}>
+      {/* One line, shrunk to fit. These cells are half the screen wide and a value like
+          "104.4 km" wraps at the space, which splits the number from its unit and pushes the
+          label below it out of alignment with the cell beside it. A metric that has to wrap is
+          a metric that should get smaller. */}
+      <Txt
+        variant="numeral"
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.75}
+        style={{ color: theme.colors.text }}
+      >
         {value}
       </Txt>
       <Txt variant="label" tone="muted">

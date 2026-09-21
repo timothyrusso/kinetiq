@@ -38,11 +38,12 @@ import { useAppTheme } from '@/theme/theme';
 import { useT } from '@/i18n/useT';
 import { ActiveWorkoutPill } from '@/ui/TabBar';
 import { formatDuration } from '@/utils/format';
-import { useWorkoutSession } from '@/workout/session';
+import { useWorkoutRunning, useWorkoutSession } from '@/workout/session';
 
 export default function TabsLayout() {
   const theme = useAppTheme();
   const { t } = useT();
+  const running = useWorkoutRunning();
 
   return (
     <NativeTabs
@@ -79,9 +80,16 @@ export default function TabsLayout() {
         <Label>{t('tabs.profile')}</Label>
       </NativeTabs.Trigger>
 
-      <NativeTabs.BottomAccessory>
-        <WorkoutAccessory />
-      </NativeTabs.BottomAccessory>
+      {/* Mounted only while a workout is running. Returning `null` from inside the accessory is
+          not enough: the slot itself still renders, and on iOS that is a full-width glass pill
+          sitting over the tab bar. In dark mode it read as a light bar across the bottom of the
+          screen with the tab labels hidden behind it. The boolean selector is what makes this
+          cheap, since the session republishes every second while a workout runs. */}
+      {running ? (
+        <NativeTabs.BottomAccessory>
+          <WorkoutAccessory />
+        </NativeTabs.BottomAccessory>
+      ) : null}
     </NativeTabs>
   );
 }
