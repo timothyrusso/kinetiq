@@ -42,7 +42,7 @@ import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
 import { spacing } from '@/theme/tokens';
 import {
-  formatDistanceWithUnit,
+  formatDistance,
   formatDurationCompact,
   pluralWord,
 } from '@/utils/format';
@@ -163,7 +163,7 @@ export default function ProfileScreen() {
               />
               <Stat
                 label="Distance"
-                value={totals === undefined ? '—' : formatDistanceWithUnit(totals.distanceMeters, unitSystem, 1)}
+                value={totals === undefined ? '—' : formatDistance(totals.distanceMeters, unitSystem, 1)}
                 note="run, ride, walk"
               />
               <Stat

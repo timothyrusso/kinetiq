@@ -92,6 +92,20 @@ export function distanceUnit(system: UnitSystem): string {
 }
 
 /** 5421 m -> "5.42 km" / "3.37 mi" */
+/**
+ * A distance with its unit: "5.20 km", "420 m", "3.2 mi", "180 ft".
+ *
+ * ALWAYS carries the unit, because the unit is not a constant — a short effort reads as
+ * metres and a long one as kilometres, so a caller cannot append the right one from the
+ * system alone. This used to return a bare number for long distances while still returning
+ * "420 m" for short ones, and both halves of that were wrong in their own way: the activity
+ * list rendered a naked "0.18", its screen-reader label said "Morning run. 0.18 in 1m", and
+ * `formatDistanceWithUnit` — which appended the unit itself — produced "420 m km" for
+ * anything under 100 metres.
+ *
+ * Where the unit is already on screen (a table column headed KM), use `distanceValue`,
+ * which returns the bare number in the system's primary unit.
+ */
 export function formatDistance(meters: number, system: UnitSystem, digits = 2): string {
   const perUnit = system === 'metric' ? KM : MILE_IN_METERS;
   if (meters < perUnit * 0.1) {
@@ -99,12 +113,9 @@ export function formatDistance(meters: number, system: UnitSystem, digits = 2): 
     if (system === 'metric') return `${Math.round(meters)} m`;
     return `${Math.round(meters * 3.280839895)} ft`;
   }
-  return `${(meters / perUnit).toFixed(digits)}`;
+  return `${(meters / perUnit).toFixed(digits)} ${distanceUnit(system)}`;
 }
 
-export function formatDistanceWithUnit(meters: number, system: UnitSystem, digits = 2): string {
-  return `${formatDistance(meters, system, digits)} ${distanceUnit(system)}`;
-}
 
 /** Canonical pace is seconds per kilometre. */
 export function paceValue(secondsPerKm: number, system: UnitSystem): number {

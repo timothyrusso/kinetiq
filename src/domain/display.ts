@@ -15,6 +15,7 @@
 import type { Activity, ActivityKind, ActivitySplit } from './types';
 import {
   compactNumber,
+  distanceValue,
   formatDistance,
   formatDurationCompact,
   formatPaceShort,
@@ -152,7 +153,7 @@ export function splitRows(
       // splits from partway through a session, and renumbering from 1 would claim
       // kilometres that were never timed.
       label: `${split.index + 1}`,
-      distanceLabel: formatDistance(split.distanceMeters, units, 2),
+      distanceLabel: distanceValue(split.distanceMeters, units).toFixed(2),
       durationSeconds: split.durationSeconds,
       paceLabel: formatPaceShort(split.paceSecPerKm, units),
       heartRate: split.heartRate,

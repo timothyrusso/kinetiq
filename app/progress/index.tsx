@@ -81,7 +81,7 @@ import { dayKey } from '@/domain/logic';
 import { KIND_ORDER } from '@/domain/display';
 import {
   countNoun,
-  formatDistanceWithUnit,
+  formatDistance,
   formatDurationCompact,
   formatShortDate,
   formatWeight,
@@ -337,7 +337,7 @@ function TotalsCard({
         />
         <Metric
           label="Distance"
-          value={cardio ? formatDistanceWithUnit(totals.distanceMeters, units) : '—'}
+          value={cardio ? formatDistance(totals.distanceMeters, units) : '—'}
           note={cardio ? 'From cardio sessions' : 'No cardio logged'}
         />
         <Metric
@@ -423,7 +423,7 @@ const MEASURES: Record<
   },
   distance: {
     value: (week) => week.distanceMeters / 1000,
-    format: (km, units) => formatDistanceWithUnit(km * 1000, units),
+    format: (km, units) => formatDistance(km * 1000, units),
     includeZero: false,
     caption: () => 'Distance covered per week',
     emptyLabel: 'No cardio logged in this range',
