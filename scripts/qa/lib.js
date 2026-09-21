@@ -237,6 +237,23 @@ function dismissDevMenu() {
  * the harness was wrong to ask. Mapping the name to the bare scheme means scripts can name the
  * screen they want instead of remembering which of them is an index.
  */
+/**
+ * Is our own Metro answering on 8083?
+ *
+ * Worth its own check because a dead bundler is indistinguishable, from the device, from a broken
+ * app: the client cannot fetch a bundle, so it falls back to the Expo dev-server picker, and every
+ * navigation after that lands on the picker instead of a screen. A whole run once reported "still
+ * on the dev-server picker after reconnecting to 8083" — true, and useless, because the thing it
+ * was reconnecting to had exited. `/status` answers `packager-status:running`; anything else on
+ * that port is somebody else's server and must not be pressed into service (8081 on this machine
+ * belongs to another project, and loading ITS bundle is how a kinetiq run ends up driving a
+ * foreign app).
+ */
+function metroAlive() {
+  const out = sh('curl -s --max-time 3 http://127.0.0.1:8083/status 2>&1', { allowFail: true });
+  return /packager-status:running/.test(out);
+}
+
 const ROUTE_PATHS = { home: '' };
 
 /**
@@ -270,10 +287,35 @@ function open(route, expectText, { scan: allowScan = false, soft = false } = {})
       continue;
     }
     if (t.some((x) => /DEVELOPMENT SERVERS|RECENTLY OPENED/.test(x))) {
+      // Diagnose before retrying. If the bundler is gone there is nothing on the other end of
+      // that row, and pressing it twice only turns an environment failure into a fake app bug.
+      if (!metroAlive()) {
+        return refused(
+          'the app is on the Expo dev-server picker because Metro is not answering on 8083. ' +
+            'Nothing is wrong with the app or this route — start the bundler ' +
+            '(`npx expo start --port 8083`) and re-run. Do not point it at 8081; that is ' +
+            "another project's server, and its bundle is a different app.",
+        );
+      }
       if (recoveredPicker) return refused(`still on the dev-server picker after reconnecting to 8083`);
       recoveredPicker = true;
       console.log('   app is on the dev-server picker — reconnecting to 8083');
-      sh(`npx agent-device press 'text^="http://127.0.0.1:8083"' 2>&1`, { allowFail: true });
+      // By ref, not by selector. This used to press `text^="http://127.0.0.1:8083"`, and
+      // `text^` is not a selector key agent-device has (id, role, text, label, value, … are);
+      // every attempt returned INVALID_ARGS, so the recovery never once pressed anything and
+      // the run blamed the app for staying on the picker. The row's own label carries the
+      // project name too ("Kinetiq, http://127.0.0.1:8083"), so match on a substring and press
+      // the node we actually found.
+      const entry = nodes().find(
+        (n) => (n.label ?? '').includes('127.0.0.1:8083') && n.ref,
+      );
+      if (!entry) {
+        return refused(
+          'the dev-server picker does not list http://127.0.0.1:8083, so there is nothing to ' +
+            'reconnect to. Start Metro on 8083 and re-run.',
+        );
+      }
+      sh(`npx agent-device press '@${entry.ref}' 2>&1`, { allowFail: true });
       sleep(18);
       out = deepLink();
       continue;
@@ -465,7 +507,12 @@ function pressLabel(label) {
   const want = label.startsWith('text') || label.startsWith('role')
     ? (n) => (n.label ?? '').includes(label.split('"')[1] ?? '')
     : (n) => (n.label ?? '').trim() === label;
-  if (label.startsWith('text') || label.startsWith('role')) {
+  // Only hand the selector straight to agent-device when it is one agent-device HAS. The
+  // supported keys are id, role, text, label, value, appname, windowtitle and the state flags —
+  // `text^=` is not among them and comes back INVALID_ARGS every time, so trying it first just
+  // buys a guaranteed-failing subprocess before the fallback does the real work.
+  const supported = /^(id|role|text|label|value|appname|windowtitle)=/.test(label);
+  if (supported) {
     // Let agent-device disambiguate itself where it can, once, before falling back.
     const out = sh(`npx agent-device press '${label}' 2>&1`, { allowFail: true });
     if (!/Error|INVALID|FAILED|AMBIGUOUS/.test(out)) {
@@ -685,4 +732,5 @@ module.exports = {
   CWD, METRO, TABS, VIEWPORT_HEIGHT, sh, sleep, nodes, labels, visible, onScreen, has, hasAnywhere,
   isNotFound, scan, seek, scrollTop, panDown, panUp, signature, open, fail, pressLabel, pressText,
   pressRow, tab, ledger, onExit, faultArmed, clearFaultQuietly, restartApp, dbQuery, dbCol,
+  metroAlive,
 };

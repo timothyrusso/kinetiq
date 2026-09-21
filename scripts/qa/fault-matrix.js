@@ -28,6 +28,17 @@
 // process, or the launcher shows anything chatty, that check catches it before any number below
 // means anything.
 //
+// ── A failed search has TWO failure surfaces, and which one you get is not a choice ─────────
+//
+// `keepPreviousData` means a query that already has rows keeps showing them when the next one
+// fails, so that failure cannot raise a full-screen error — it raises the warning banner over the
+// rows that are still there (`FetchNotice`, gated on `error !== null && items.length > 0`, while
+// the `ErrorState` lives in `ListEmptyComponent` and therefore needs the list to be EMPTY). The
+// two are mutually exclusive by length, and on this tab the list is never empty to begin with:
+// opening Exercises loads the whole catalog, so every search is a search-after-data. Which makes
+// the banner the expected surface for every case below, and the full-screen error reachable only
+// by failing the FIRST load — one extra case, armed before the tab is ever opened.
+//
 // Other traps already paid for:
 //   • The term must RETURN ROWS. Gibberish comes back as a successful empty result, and the
 //     "No exercises match" screen is then correct — a probe once armed a fault, searched for
@@ -123,11 +134,22 @@ function resetLedger(name) {
  * paths its own first page needs. Asserting that before faulting is what lets a later count of
  * N requests be read as a retry policy rather than as noise.
  */
-function coldStart(terms) {
+function coldStart(terms, { proveIdle = false } = {}) {
   restartApp();
   open('exercises', 'SEARCH EXERCISES');
   sleep(6);
-  resetLedger('cold start');
+  if (proveIdle) {
+    // Once per run: prove the app goes quiet and stays there. Every later case measures a
+    // BEFORE/AFTER delta around its own faulted search instead, which is immune to whatever
+    // the tab's prefetch happened to leave behind — so re-paying ~4 ledger reads (~40 s of
+    // device time) to settle before each of six cold starts would buy nothing.
+    resetLedger('cold start');
+  } else {
+    open('dev', 'Developer');
+    const reset = nodes().find((n) => (n.label ?? '').trim() === 'Reset');
+    if (reset) sh(`npx agent-device press '@${reset.ref}' 2>&1`, { allowFail: true });
+    sleep(1);
+  }
   const field = searchField();
   sh(`npx agent-device fill @${field.ref} ${terms[0]} 2>&1`, { allowFail: true });
   sleep(10);
@@ -143,10 +165,12 @@ function coldStart(terms) {
   // cold start. What matters is the converse: nothing that ISN'T part of opening this tab.
   const unexpected = paths.filter((p) => !/exerciseinfo|language|category|muscle|equipment/.test(p));
   if (unexpected.length) fail(`cold start sent unexpected paths: ${unexpected.join(', ')}`);
-  if (!paths.some((p) => p.includes('exerciseinfo'))) {
-    fail(`cold start sent no exercise-list request at all (${paths.join(', ')}) — the search ` +
-         'never reached the network, so nothing below can be attributed to a fault');
-  }
+  // NOTE: deliberately no assertion that some *particular* path appears here. The first draft
+  // required a path other than /exerciseinfo/ and failed a perfectly healthy cold start — five
+  // /exerciseinfo/ calls and one /language/ IS what this page's search sends. Proving the search
+  // reached the network is the `exercises for "…"` check above, which is the user-visible fact;
+  // a path-shape assertion on top of it just re-derives the same thing from a guess about
+  // request topology, and guesses about topology are what this file keeps getting wrong.
   // Deliberately NOT asserted here: whether the screen keeps old rows under a fault. The first
   // draft demanded the "Outdated results" badge at this point, and that was simply wrong about
   // the app — the badge appears when a search fails while previous rows are on screen, and there
@@ -157,22 +181,25 @@ function coldStart(terms) {
 }
 
 /**
- * The exercises tab's landmark is `SEARCH EXERCISES`, and it is upper-case because the section
- * label sets `uppercase` and iOS reports the *rendered* string as the accessibility label — the
- * source says "Search exercises". Asking for the source casing made every navigation to this tab
- * time out with "never saw it", on a screen that was plainly there. Same lesson as the ledger:
- * anchor on what the snapshot prints, not on what the JSX reads like.
+ * The search box, visible, ready to type into.
+ *
+ * What it is NOT: a node whose accessibility label reads `Search the exercise catalog`. A probe
+ * dumped the tree to find out, and the answer is two nodes, not one — the copy is reported on an
+ * `Other` node (agent-device merges the placeholder into it) while the node that accepts text is
+ * a `TextField` whose OWN label is `null`, because iOS takes a text input's name from the
+ * placeholder rather than from a label drawn separately above it. So the label is the proof the
+ * field is there, and the TextField is the thing you fill; conflating them is how a search script
+ * ends up typing into the wrong control and then reporting the app as unresponsive.
  */
-/** The search box, visible, ready to type into. */
 function searchField() {
   open('exercises', 'SEARCH EXERCISES');
   sleep(2);
   scrollTop({ max: 4 });
-  const byLabel = nodes().find(
-    (n) => n.type === 'TextField' && visible(n) && (n.label ?? '').includes(SEARCH_FIELD),
-  );
-  const field = byLabel ?? nodes().find((n) => n.type === 'TextField' && visible(n));
-  if (!field) fail('no visible search field on Exercises');
+  if (!nodes().some((n) => (n.label ?? '').includes(SEARCH_FIELD))) {
+    fail(`no "${SEARCH_FIELD}" text on the Exercises tab — not on the screen the harness expects`);
+  }
+  const field = nodes().find((n) => n.type === 'TextField' && visible(n));
+  if (!field) fail('the Exercises tab shows its search copy but has no TextField to fill');
   return field;
 }
 
@@ -187,7 +214,11 @@ function searchField() {
  * list left to scroll.
  */
 function below(text) {
-  return seek((n) => (n.label ?? '').includes(text), { max: 4 }) !== null;
+  const want = text.toLowerCase();
+  // Case-insensitive on purpose: `Badge` renders with `uppercase`, so "Outdated results" is
+  // reported to accessibility as OUTDATED RESULTS, and asking for the source casing found nothing
+  // on a screen that was showing it. Every section label on this tab has the same trap.
+  return seek((n) => (n.label ?? '').toLowerCase().includes(want), { max: 4 }) !== null;
 }
 
 /** Type a term and report which of the three possible outcomes the screen chose. */
@@ -200,14 +231,21 @@ function searchAndRead(term) {
   sleep(12);
   const out = {
     errorState: below('Exercise search unavailable'),
-    stale: below('Outdated results'),
+    // Substring, lower-cased, because `Badge` renders `uppercase`: the accessibility tree reports
+    // OUTDATED RESULTS, and asking for the source's mixed case is how five runs of this file
+    // reported "no failure surfaced at all" on a screen that was visibly surfacing one.
+    stale: below('outdated results'),
     empty: below('No exercises match'),
     results: has(`exercises for “${term}”`),
+    /** True once the fault is visible to the user, on either of the two surfaces it can take. */
+    get surfaced() {
+      return this.errorState || this.stale;
+    },
   };
   // Prove the keystroke became a SEARCH before concluding anything from what followed: a term
   // identical to the committed one fetches nothing, and the healthy screen that results would
   // otherwise be reported as "the injected fault produced no error state".
-  if (!out.errorState && !out.results && !out.stale && !out.empty) {
+  if (!out.surfaced && !out.results && !out.empty) {
     fail(
       `the search for "${term}" produced none of the four outcomes a committed search can have ` +
         `— screen: ${labels().slice(0, 8).join(' / ')}. Nothing below can be attributed to the fault.`,
@@ -244,8 +282,47 @@ console.log('── injected failures, and what the app does about each ──�
 // this file can promise a cold fixture — and the reason `onExit(clearFaultQuietly)` still matters
 // for the *next* script, which will not restart anything.
 console.log('0. baseline: one working search on a cold start');
-coldStart([TERM_BASE]);
-console.log('   baseline search works, cache proven cold');
+coldStart([TERM_BASE], { proveIdle: true });
+console.log('   baseline search works, cache proven cold, app goes quiet');
+
+// ── 1. The one situation where a failed search has NO rows to keep ─────────────────────────
+// Every other case in this file faults a search that follows a successful one, which means the
+// query has data and `keepPreviousData` keeps it on screen — the warning-banner path. The
+// full-screen error state has exactly one way to appear: the very first load of the tab, with
+// nothing cached behind it. That is also the situation a user meets on a dead train, and until
+// now nothing in the suite reached it, because reaching it needs the fault armed BEFORE the tab
+// is opened. 500 rather than offline: opening this tab spends requests on a status probe and the
+// taxonomy before the list's own, and a 5-request offline burst can be swallowed by the probe
+// (learned the hard way in offline-routines.js) where a 500's 15 cannot.
+console.log('\n1. first load of the tab, network already dead — the full-screen error state');
+restartApp();
+open('dev', 'Developer');
+if (!pressRow('Server error 500', ['Arm', 'Armed'])) fail('could not arm the fault before opening the tab');
+const armed = nodes().find((n) => /Failing the next/.test(n.label ?? ''));
+console.log(`   ${armed ? armed.label.trim() : '(no status line)'}`);
+// `soft`, and then proved: the deep link may land on a not-found screen for all this check
+// cares, so the assertion is the error state itself, not the route working.
+open('exercises', 'SEARCH EXERCISES', { soft: true });
+sleep(14);
+if (!below('Exercise search unavailable')) {
+  fail(
+    'a cold first load with the network dead showed no full-screen error state — screen reads: ' +
+      `${labels().slice(0, 8).join(' / ')}. This is the only path to that screen, and a blank or ` +
+      'permanently-spinning list here is exactly the dead screen the brief rules out.',
+  );
+}
+if (!pressLabel('Try again')) fail('the cold-load error state offered no pressable "Try again"');
+console.log('   full-screen error state, with its own retry');
+open('dev', 'Developer');
+if (!pressLabel('Stop injecting')) fail('the fault could not be cleared');
+sleep(2);
+open('exercises', 'SEARCH EXERCISES', { soft: true });
+if (!pressLabel('Try again')) fail('after recovery the error state lost its retry control');
+sleep(12);
+if (below('Exercise search unavailable')) {
+  fail('the list stayed broken after the fault was cleared and the user asked again — the error state is sticky');
+}
+console.log('   cleared the fault, pressed "Try again", and the list came back');
 
 for (const c of CASES) {
   console.log(`\n${c.row} — ${c.note}`);
@@ -260,11 +337,23 @@ for (const c of CASES) {
   const after = ledger(`${c.row} after`).total;
   const sent = after - before;
 
-  if (!seen.errorState) {
+  // Which surface the failure took is not a free choice — it is decided by whether the query has
+  // rows, and on this tab it always does (opening Exercises shows the whole catalog, so every
+  // search is a search-after-data). So the expected surface here is the warning banner over the
+  // retained rows, and the full-screen error belongs to case 0 below, where a cold first load
+  // fails with nothing to retain. Asserting `errorState` here asked for a screen the app cannot
+  // legally reach, and five runs duly reported the app as broken for it.
+  if (!seen.surfaced) {
     fail(
-      `"${c.row}" produced no error state (saw stale-banner=${seen.stale}, empty=${seen.empty}, ` +
-        `results=${seen.results}) after ${sent} request(s). A user in this situation sees a list ` +
-        'that quietly never updates.',
+      `"${c.row}" showed neither the warning banner nor the full-screen error ` +
+        `(empty=${seen.empty}, fresh results=${seen.results}) after ${sent} request(s). A user in ` +
+        'this situation sees a list that quietly never updates.',
+    );
+  }
+  if (seen.results && !seen.stale) {
+    fail(
+      `"${c.row}": the search for "${c.term}" rendered fresh results while a fault was armed, so ` +
+        'the fault never reached this request. Any count below would be measuring a healthy network.',
     );
   }
   const ceiling = c.attempts * 4 + 3;
@@ -272,14 +361,18 @@ for (const c of CASES) {
     fail(`"${c.row}" sent ${sent} requests; the budget is ${c.attempts} attempt(s) per call ` +
          `across the parallel calls a page makes (${ceiling} worst case). Uncontrolled retries.`);
   }
-  console.log(`   error state shown, ${sent} request(s) sent (ceiling ${ceiling})`);
+  const surface = seen.stale ? 'warning banner over retained rows' : 'full-screen error';
+  console.log(`   ${surface}, ${sent} request(s) sent (ceiling ${ceiling})`);
 
   // Recovery through the control the app itself offers, while the fault is still armed: a Retry
-  // that refetches into the same outage must land back in the error state without hanging.
-  if (!pressLabel('Try again')) fail(`"${c.row}": the error state offered no pressable Retry`);
+  // that refetches into the same outage must land back in a failure state without hanging. The
+  // two surfaces name their control differently — the banner's is `Retry`, the error state's is
+  // `Try again` — so press the one that is actually on screen rather than hoping.
+  const control = seen.stale ? 'Retry' : 'Try again';
+  if (!pressLabel(control)) fail(`"${c.row}": the ${surface} offered no pressable "${control}"`);
   sleep(10);
-  const retried = below('Exercise search unavailable');
-  console.log(`   Retry pressed into the same outage, still an error state: ${retried}`);
+  const retried = below('outdated results') || below('Exercise search unavailable');
+  console.log(`   "${control}" pressed into the same outage, still showing a failure: ${retried}`);
   if (!retried) {
     console.log('   (not fatal to this check: a retry that happens to catch the last armed ' +
                 'request can legitimately succeed — the fault is finite)');

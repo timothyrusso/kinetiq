@@ -59,6 +59,7 @@
     "qa:offline": "node scripts/qa/offline-routines.js",
     "qa:pagination": "node scripts/qa/pagination-check.js",
     "qa:faults": "node scripts/qa/fault-matrix.js",
+    "qa:crud": "node scripts/qa/routine-crud.js",
     "qa:all": "node scripts/qa/all.js"
   },
   "private": true
