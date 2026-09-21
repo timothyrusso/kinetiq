@@ -38,9 +38,10 @@ const { execSync } = require('child_process');
 
 const CWD = '/Users/trusso/Desktop/Projects/kinetiq';
 const METRO = '--metro-host 127.0.0.1 --metro-port 8083';
-// Tab-bar centres from a snapshot, not guessed. The items are `Other` nodes, so they cannot
-// be pressed by label and must be tapped by coordinate.
-const TABS = { Home: '50 810', Activities: '125 810', Workout: '201 810', Exercises: '277 810', Profile: '352 810' };
+// Fallback tab centres, measured from the live native bar (a Liquid Glass capsule inset from
+// the screen edges). `tab()` presses the labelled Button first; these are only used when that
+// is somehow unavailable.
+const TABS = { Home: '62 822', Activities: '131 822', Workout: '200 822', Exercises: '270 822', Profile: '340 822' };
 const VIEWPORT_HEIGHT = 874;
 
 function sh(cmd, { allowFail = false } = {}) {
@@ -694,9 +695,30 @@ function pressRow(title, buttonLabel = 'Arm') {
  * the run died ten minutes in. Case-insensitive so the label is the only spelling to remember,
  * and a loud throw rather than a bad tap.
  */
+/**
+ * Switch tabs, by LABEL first.
+ *
+ * The bar is now a real `UITabBarController` (`NativeTabs`), so each destination is a `Button`
+ * carrying its own label — which the hand-drawn bar never was; its items were `Other` nodes
+ * with no accessible name, and coordinates were the only way to reach them.
+ *
+ * Coordinates remain as a fallback, and they are no longer quite right: the Liquid Glass bar
+ * is a capsule inset from the screen edges, so the centres measured at
+ * (62, 131, 200, 270, 340) x 822 rather than the old (50, 125, 201, 277, 352) x 810. The old
+ * values still land inside the new hit areas — Profile is the closest call at 12pt off — but
+ * only by luck, which is the argument for pressing the label the system now exposes.
+ */
 function tab(name) {
   const key = Object.keys(TABS).find((k) => k.toLowerCase() === String(name).toLowerCase());
   if (!key) throw new Error(`no such tab "${name}" — known: ${Object.keys(TABS).join(', ')}`);
+  const button = nodes().find((n) => n.type === 'Button' && (n.label ?? '').trim() === key && n.ref);
+  if (button) {
+    const out = sh(`npx agent-device press '@${button.ref}' 2>&1`, { allowFail: true });
+    if (!/Error|INVALID|FAILED/.test(out)) {
+      sleep(1.5);
+      return out;
+    }
+  }
   return sh(`npx agent-device tap ${TABS[key]} 2>&1`, { allowFail: true });
 }
 

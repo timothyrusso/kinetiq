@@ -26,11 +26,13 @@ import { useWorkoutRunning } from '@/workout/session';
 /**
  * The tab bar's own height, excluding the safe area it sits above.
  *
- * Exported so `TabBar` and every screen that has to clear it read the SAME number. When this
- * was private to `TabBar.tsx`, the layout mirrored it by hand with a comment asking the next
- * person to keep them in sync, which is a promise a comment cannot keep.
+ * Measured from the live tree rather than guessed: the native `TabBar` node reports
+ * y=791 h=83 against an 874pt viewport, so 83 is the band it occupies INCLUDING the home
+ * indicator's safe area. It is not the old hand-drawn 60 — a floating Liquid Glass capsule has
+ * its own metrics — and it is not composed with `insets.bottom`, because the measurement
+ * already contains it.
  */
-export const TAB_BAR_HEIGHT = 60;
+export const TAB_BAR_HEIGHT = 83;
 
 /**
  * Vertical room the floating "workout in progress" pill needs above the bar: its own height
@@ -46,15 +48,11 @@ export const WORKOUT_PILL_SPACE = 44 + spacing.sm;
  * that drives the pill's own timer.
  */
 export function useTabContentBottom(extra = 0): number {
-  const insets = useSafeAreaInsets();
   const running = useWorkoutRunning();
-  return (
-    TAB_BAR_HEIGHT +
-    insets.bottom +
-    spacing.xl +
-    (running ? WORKOUT_PILL_SPACE : 0) +
-    extra
-  );
+  // The measured bar band, plus the bottom accessory when a workout is running (the system does
+  // not account for the accessory), plus breathing room so the last row is not flush against
+  // the glass. No `insets.bottom` term: TAB_BAR_HEIGHT already spans the home indicator.
+  return TAB_BAR_HEIGHT + spacing.xl + (running ? WORKOUT_PILL_SPACE : 0) + extra;
 }
 
 /**

@@ -165,7 +165,11 @@ if (!seek((n) => (n.label ?? '').includes(NAME), { max: 6 })) {
 console.log('3. survived a cold restart: on disk and listed on the Workout tab');
 
 // ── 4. Rename ────────────────────────────────────────────────────────────────────────────────
-if (!pressLabel(`text^="${NAME}, last trained"`)) fail(`could not open "${NAME}" from the list`);
+// The row's label is `"<name>. <subtitle>"` (src/ui/rows.tsx RoutineRow), NOT
+// `"<name>, last trained …"` — that wording belongs to `LastTrainedCard`, a different
+// component on the same screen. Verified against the live tree:
+//   "Push — Heavy. 5 exercises · 9x done · 3d ago"
+if (!pressLabel(`text^="${NAME}. "`)) fail(`could not open "${NAME}" from the list`);
 sleep(3);
 if (!pressLabel('Routine options')) fail('no options button on the routine screen');
 if (!seek((n) => (n.label ?? '') === 'Rename')) fail('the options sheet never appeared');
@@ -203,7 +207,7 @@ console.log(`5. duplicated with its ${items.length} item(s) intact`);
 for (const target of [`${RENAMED} copy`, RENAMED]) {
   tab('Workout');
   sleep(2);
-  if (!pressLabel(`text^="${target}, last trained"`)) fail(`could not reopen "${target}" to delete it`);
+  if (!pressLabel(`text^="${target}. "`)) fail(`could not reopen "${target}" to delete it`);
   sleep(3);
   if (!pressLabel('Routine options')) fail(`no options button on "${target}"`);
   if (!seek((n) => (n.label ?? '') === 'Delete routine')) fail('the options sheet never appeared for deletion');

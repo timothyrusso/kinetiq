@@ -1,164 +1,109 @@
 /**
- * Bottom tab bar — five destinations, one custom bar.
+ * Bottom tabs — the real one.
  *
- * ## Why `tabBar` is a custom component
+ * `NativeTabs` renders a `UITabBarController` on iOS and a `BottomNavigationView` on Android,
+ * so the bar is the platform's own rather than a drawn imitation of it. On iOS 26 that means
+ * genuine Liquid Glass — the system material, its scroll-edge behaviour, the minimise-on-scroll
+ * gesture and the tab-bar accessory slot — none of which can be reproduced by putting a glass
+ * view behind five `Pressable`s, which is what this file used to do.
  *
- * `@react-navigation/bottom-tabs` is vendored inside expo-router and its
- * `BottomTabBarProps` type is not re-exported from anywhere reachable, so the choice is
- * between an untyped `(props) => …` callback whose `descriptors` shape has to be guessed
- * and a headless bar driven by data the app already owns. The second is what happens here:
- * five entries declared once, in order, beside the five `Tabs.Screen` entries below, with
- * the active key derived from the live pathname rather than mirrored into state.
+ * ## What the custom bar was buying, and where each piece went
  *
- * It also buys what the stock bar cannot do without fighting it: the live-workout pill
- * floating above the bar, and a blur that follows the theme's `overlay` token instead of a
- * hard-coded system material.
+ *  - The live-workout pill: now `NativeTabs.BottomAccessory`, which on iOS 26 is the same slot
+ *    Apple Music puts its mini player in. It was previously a hand-positioned overlay, then an
+ *    accessory inside a hand-drawn bar; this is the real thing.
+ *  - The sliding accent indicator: gone, deliberately. The system bar has its own selection
+ *    treatment, and a second indicator drawn on top would fight it.
+ *  - Icons: SF Symbols on iOS and Material glyphs on Android, via one `Icon` carrying both —
+ *    no icon-font dependency, since both sets are built into their platform. Every SF Symbol
+ *    chosen here exists at or below iOS 16.0, this app's deployment target: `dumbbell` would
+ *    have been the obvious pick for Workout and is iOS 17+, so it would render as a blank
+ *    square on the floor of our support range.
  *
- * ## Why `headerShown: false` lives here and not only in the root layout
+ * ## Content insets
  *
- * The root `Stack` already sets `headerShown: false`, and that is *not* inherited: it applies
- * to the screens the root stack owns, including this group as one screen — it says nothing
- * about the screens *this* navigator owns. Left alone, bottom-tabs falls back to a
- * `Header` whose title is `getHeaderTitle(options, route.name)`, i.e. literally "index", and
- * that header paints an opaque bar across the top of every tab scene — over the large title
- * each screen draws itself, and over the settings control inside it. Each tab owns its header
- * (`CollapsibleHeader`), which is the only way a title can collapse on scroll; the navigator's
- * must stay off for that to be the only one.
- *
- * Home and Activities are where a user lands within the first second. Lazy-mounting them
- * makes the first tap pay a mount *and* a query, which reads as a slow app. Exercises is
- * lazy because it mounts a remote query that Home does not need at launch; Profile and
- * Workout for the same reason in reverse. The cost — two screens mounted cold — is bounded
- * and small, and it is the cost that makes the first tab switch feel instant.
+ * Every trigger sets `disableAutomaticContentInsets`, and the reason is consistency rather
+ * than preference. `Screen` is shared with the pushed screens, which have no tab bar and
+ * compute their own top padding from the safe area; left on, the system added its inset ON TOP
+ * of that and every tab screen's content started ~86pt too low. Opting out keeps exactly one
+ * code path for top insets across both kinds of screen. The bottom is then ours too, and
+ * `useTabContentBottom` reserves the measured bar (83pt at this viewport) plus the accessory.
  */
-import { useCallback } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Tabs, router, usePathname } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { NativeTabs } from 'expo-router/unstable-native-tabs';
+// `Icon` and `Label` are the shared primitives, exported from the package root rather than
+// from the native-tabs subpath.
+import { Icon, Label, router } from 'expo-router';
 
-import { routes, tabHref, tabKeyForPathname, type TabKey } from '@/navigation/nav';
+import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
-import { spacing } from '@/theme/tokens';
-import { ActiveWorkoutPill, TabBar, type TabItem } from '@/ui/TabBar';
-import { useAnySheetMounted } from '@/ui/sheetPresence';
+import { ActiveWorkoutPill } from '@/ui/TabBar';
 import { formatDuration } from '@/utils/format';
 import { useWorkoutSession } from '@/workout/session';
 
-/**
- * A tuple-shaped `const` so a missing or extra entry is a compile error rather than a bar
- * with four items and five screens. This order *is* the visual order.
- *
- * `exercises` uses `search` rather than a dumbbell-and-list hybrid because the tab's job is
- * discovery in the wger catalog, and the icon that promises that is the one the library has.
- */
-const TABS: readonly TabItem[] = [
-  // Icon names are constrained to the glyph set in `ui/icons.tsx`; `library` rather than
-  // `search` because this tab is a browse surface you can also search, not a search field.
-  { routeKey: 'index', label: 'Home', icon: 'home' },
-  { routeKey: 'activities', label: 'Activities', icon: 'activities' },
-  { routeKey: 'workout', label: 'Workout', icon: 'workout' },
-  { routeKey: 'exercises', label: 'Exercises', icon: 'library' },
-  { routeKey: 'profile', label: 'Profile', icon: 'profile' },
-] as const;
-
 export default function TabsLayout() {
-  const insets = useSafeAreaInsets();
-  const pathname = usePathname();
-
-  // Derived from the pathname and collapsed to a tab, so a push *within* a tab
-  // (`/activities` → `/activity/12`) does not re-render the bar, and a sheet that covers
-  // the tabs still reports the tab it was opened from — which is what keeps the bar lit on
-  // the right destination when the sheet closes.
-  const activeKey = tabKeyForPathname(pathname) ?? 'index';
-
-  const onSelect = useCallback((key: string) => {
-    const index = TABS.findIndex((item) => item.routeKey === key);
-    if (index < 0) return;
-    // `navigate`, not `push`: tapping the tab you are on must not stack a second copy, and
-    // moving between tabs must restore the previous scroll position rather than reset it.
-    // Both are `navigate` semantics; `push` gets neither.
-    router.navigate(tabHref(index));
-  }, []);
+  const theme = useAppTheme();
 
   return (
-    <Tabs
-      screenOptions={{ headerShown: false }}
-      tabBar={() => (
-        <TabBarWithPill activeKey={activeKey} onSelect={onSelect} bottomInset={insets.bottom} />
-      )}
+    <NativeTabs
+      // The app's accent, so the selected tab belongs to this product rather than to the
+      // system default blue.
+      tintColor={theme.colors.accent}
+      // iOS 26: the bar shrinks to a pill as the user scrolls down and returns on scroll up.
+      // This is the behaviour people now read as "a current iOS app".
+      minimizeBehavior="onScrollDown"
     >
-      <Tabs.Screen name="index" options={{ lazy: false }} />
-      <Tabs.Screen name="activities" options={{ lazy: false }} />
-      <Tabs.Screen name="workout" options={{ lazy: true }} />
-      <Tabs.Screen name="exercises" options={{ lazy: true }} />
-      <Tabs.Screen name="profile" options={{ lazy: true }} />
-    </Tabs>
+      <NativeTabs.Trigger name="index" disableAutomaticContentInsets>
+        <Icon sf={{ default: 'house', selected: 'house.fill' }} md="home" />
+        <Label>Home</Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="activities" disableAutomaticContentInsets>
+        {/* An ECG trace rather than a runner: this tab lists rides, walks and lifts too. */}
+        <Icon sf="waveform.path.ecg" md="monitor_heart" />
+        <Label>Activities</Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="workout" disableAutomaticContentInsets>
+        <Icon sf="figure.strengthtraining.traditional" md="fitness_center" />
+        <Label>Workout</Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="exercises" disableAutomaticContentInsets>
+        <Icon sf={{ default: 'square.grid.2x2', selected: 'square.grid.2x2.fill' }} md="grid_view" />
+        <Label>Exercises</Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="profile" disableAutomaticContentInsets>
+        <Icon sf={{ default: 'person', selected: 'person.fill' }} md="person" />
+        <Label>Profile</Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.BottomAccessory>
+        <WorkoutAccessory />
+      </NativeTabs.BottomAccessory>
+    </NativeTabs>
   );
 }
 
 /**
- * The bar plus the pill that floats above it.
+ * The live-workout pill, in the system's accessory slot.
  *
- * A separate component because the pill needs the live session, which ticks once per
- * second while a workout runs. Mounted beside `TabBar` inside the `tabBar` callback, that
- * per-second publish would re-render the bar's five items and restart the indicator spring
- * every tick. Split, the tick re-renders only the pill.
+ * Its own component because the session republishes once a second while a workout runs; kept
+ * inline, that tick would re-render the whole tab layout — and therefore the navigator — every
+ * second. Split, the tick re-renders the pill and nothing else.
  */
-function TabBarWithPill({
-  activeKey,
-  onSelect,
-  bottomInset,
-}: {
-  activeKey: TabKey;
-  onSelect: (key: string) => void;
-  bottomInset: number;
-}) {
+function WorkoutAccessory() {
   const theme = useAppTheme();
   const { session } = useWorkoutSession();
-  const running = session !== null && (session.status === 'active' || session.status === 'paused');
-  // Subscribed here rather than in `TabsLayout` so opening a sheet re-renders the bar and
-  // nothing above it — the navigator, and through it every mounted screen, stays put.
-  const sheetUp = useAnySheetMounted();
-
-  // Rendered INSIDE the bar's material rather than floating above it. As a floating sibling
-  // it covered whatever content sat beneath it — at rest on Home, the "Sessions over 8 weeks"
-  // heading — which reads as a rendering fault rather than as chrome. In the bar it shares the
-  // glass, and `useTabContentBottom` reserves exactly its height so content can still clear it.
-  const pill =
-    running && session && !sheetUp ? (
-      <View style={pillStyles.wrap} pointerEvents="box-none">
-        <ActiveWorkoutPill
-          label={session.routineName}
-          detail={
-            session.status === 'paused' ? 'Paused' : formatDuration(session.elapsedSeconds, ':')
-          }
-          onPress={() => {
-            router.push(routes.workoutSession());
-          }}
-          theme={theme}
-        />
-      </View>
-    ) : null;
-
+  if (session === null || (session.status !== 'active' && session.status !== 'paused')) return null;
   return (
-    <TabBar
-      items={[...TABS]}
-      activeKey={activeKey}
-      onSelect={onSelect}
-      bottomInset={bottomInset}
-      hidden={sheetUp}
-      accessory={pill}
+    <ActiveWorkoutPill
+      label={session.routineName}
+      detail={session.status === 'paused' ? 'Paused' : formatDuration(session.elapsedSeconds, ':')}
+      onPress={() => {
+        router.push(routes.workoutSession());
+      }}
+      theme={theme}
     />
   );
 }
-
-const pillStyles = StyleSheet.create({
-  // In normal flow now, inside the bar's material: it sits above the tab row and grows the
-  // bar rather than hovering over the screen.
-  wrap: {
-    alignItems: 'center',
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.xs,
-    paddingHorizontal: spacing.lg,
-  },
-});
