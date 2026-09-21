@@ -33,7 +33,7 @@
  * than sleeping a guessed number of seconds.
  */
 const {
-  fillField, tab, fail, onExit, pressLabel, seek, nodes, visible, sh,
+  fillField, tab, fail, onExit, pressLabel, seek, nodes, visible, sh, open,
   sleep, restartApp, dbQuery, dbCol, dbExec,
 } = require('./lib');
 
@@ -96,7 +96,13 @@ if (before.some((n) => n.startsWith('QA '))) {
 // Name FIRST, add the exercise second. The other order loses the name: opening the picker mounts
 // a sheet over the form, and the field that `nodes()` then reports as "the visible TextField" is
 // the picker's search box, so a fill meant for the name lands in the search instead.
+// Start from a cold app. This script drives sheets and pushed screens, and a previous run
+// that failed mid-flow leaves one of them on top — after which `tab()` has no tab bar to
+// press and the very first step reports "never found New routine", which reads as the Workout
+// tab being broken. The cache is memory-only, so a restart costs nothing but the launch.
+restartApp();
 tab('Workout');
+sleep(2);
 if (!pressLabel('New routine')) fail('could not reach the routine builder from the Workout tab');
 sleep(2);
 if (!seek((n) => (n.label ?? '') === 'Routine name')) fail('the routine builder never opened');
@@ -205,7 +211,11 @@ if (!pressLabel('Rename')) fail('could not choose Rename');
 const RENAMED = `${NAME} II`;
 const renameField = nodes().find((n) => n.type === 'TextField' && visible(n));
 if (!renameField?.ref) fail('the rename sheet has no field');
-fillField(renameField.ref, RENAMED);
+// No blur here. Above this sheet is the backdrop (tapping it dismisses the sheet and the
+// "Save name" button with it); below the field is the keyboard (tapping that types a
+// character — one run committed the name as "… IIg"). "Save name" stays reachable with the
+// keyboard up and commits the field itself, so pressing it is both the blur and the action.
+fillField(renameField.ref, RENAMED, { blurAt: null });
 sleep(1);
 if (!pressLabel('Save name')) fail('could not commit the rename');
 sleep(2);
@@ -233,8 +243,12 @@ if (Number(dupItems[0]?.[0]) < items.length) {
 console.log(`5. duplicated with its ${items.length} item(s) intact`);
 
 for (const target of [`${RENAMED} copy`, RENAMED]) {
-  tab('Workout');
-  sleep(2);
+  // Deep-link rather than tap the tab. Duplicating ends with `router.replace` onto the COPY's
+  // detail screen, which is a pushed route covering the tab bar — so there is no tab button to
+  // press, and the coordinate fallback lands on ordinary content. The run then reported the
+  // copy as missing from a list it had never navigated back to.
+  open('workout', undefined, { soft: true });
+  sleep(3);
   if (!pressLabel(`text^="${target}. "`)) fail(`could not reopen "${target}" to delete it`);
   sleep(3);
   if (!pressLabel('Routine options')) fail(`no options button on "${target}"`);

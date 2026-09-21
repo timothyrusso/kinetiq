@@ -601,6 +601,14 @@ function dbCol(sql) {
 function fillField(ref, text, { blurAt = '201 120' } = {}) {
   sh(`npx agent-device fill @${ref} ${JSON.stringify(text)} 2>&1`, { allowFail: true });
   sleep(1);
+  // `blurAt: null` means "leave the keyboard up" — for a bottom SHEET there is often no safe
+  // point to tap at all. Above the sheet is the backdrop, which dismisses it and takes the
+  // commit button along; inside the sheet, below the field, is the keyboard, and tapping that
+  // types a character. A rename committed as "… IIg" because the blur point landed on the g
+  // key. The sheet also slides up when the keyboard opens, so any coordinate computed from the
+  // pre-keyboard tree is stale by the time it is used. Callers in that position skip the blur
+  // and press the sheet's own button, which is still reachable and commits the field anyway.
+  if (blurAt === null) return;
   sh(`npx agent-device press ${blurAt} 2>&1`, { allowFail: true });
   sleep(2);
 }
