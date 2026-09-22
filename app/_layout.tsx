@@ -32,7 +32,7 @@ import { router, Stack, ThemeProvider, type ErrorBoundaryProps } from 'expo-rout
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { useHeaderOptions } from '@/navigation/headerOptions';
+import { formSheet, useHeaderOptions } from '@/navigation/headerOptions';
 import { NAV_DARK_THEME, NAV_LIGHT_THEME } from '@/navigation/theme';
 import { AppProviders } from '@/providers/AppProviders';
 import { GestureRoot } from '@/providers/bootstrap';
@@ -97,6 +97,20 @@ function ThemedRoot() {
               options={{ animation: 'slide_from_bottom', gestureEnabled: false }}
             />
             <Stack.Screen name="routine/new" options={{ presentation: 'modal' }} />
+            {/* Editors are routes presented as the platform's sheet. Each reads its input from
+                route params and writes through the store or query the screen underneath
+                already reads, so nothing is handed back across the navigation. */}
+            <Stack.Screen name="pick-exercise" options={formSheet('picker')} />
+            <Stack.Screen name="exercise/filters" options={formSheet('picker')} />
+            <Stack.Screen name="routine/item" options={formSheet('fit')} />
+            <Stack.Screen name="routine/rename" options={formSheet('fit')} />
+            <Stack.Screen name="activity/notes" options={formSheet('fit')} />
+            <Stack.Screen name="workout/notes" options={formSheet('fit')} />
+            <Stack.Screen name="workout/set" options={formSheet('fit')} />
+            <Stack.Screen
+              name="workout/records"
+              options={{ ...formSheet('fit'), gestureEnabled: false }}
+            />
             <Stack.Screen name="exercise/add" options={{ presentation: 'modal' }} />
             <Stack.Screen
               name="+not-found"

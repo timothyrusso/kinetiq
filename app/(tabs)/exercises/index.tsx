@@ -29,7 +29,7 @@
  * revalidates in the background. A tap that waited on the network to show a name the user
  * just read would feel broken, not careful.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent, TextInputFocusEventData } from 'react-native';
 import type { SearchBarCommands } from 'react-native-screens';
 import type { ExerciseFilter } from '@/domain/types';
@@ -47,7 +47,6 @@ import { Badge, Row } from '@/ui/layout';
 import { Chip } from '@/ui/controls';
 import { Txt } from '@/ui/Text';
 import { Button } from '@/ui/Button';
-import { Sheet } from '@/ui/Sheet';
 import { EmptyState, ErrorState, SkeletonList, ThemedRefreshControl } from '@/ui/states';
 import { useExerciseSearch, useExerciseTaxonomy } from '@/queries/useExercises';
 import {
@@ -84,7 +83,6 @@ export default function ExercisesScreen() {
   const focused = useIsFocused();
   const taxonomy = useExerciseTaxonomy(focused);
   const search = useExerciseSearch(filter, focused);
-  const [filterOpen, setFilterOpen] = useState(false);
 
   const activeCount = activeFilterCount(filter);
   const searching = filter.query.length > 0;
@@ -186,7 +184,7 @@ export default function ExercisesScreen() {
     searchRef.current?.clearText();
     resetExerciseFilter();
   }, []);
-  const openFilters = useCallback(() => setFilterOpen(true), []);
+  const openFilters = useCallback(() => router.push(routes.exerciseFilters()), [router]);
 
   const onEndReached = useCallback(() => {
     const seen = lastScroll.current;
@@ -229,7 +227,7 @@ export default function ExercisesScreen() {
               icon="filter"
               size="sm"
               selected={activeCount > 0}
-              onPress={() => setFilterOpen(true)}
+              onPress={openFilters}
             />
           </View>
           {activeCount > 0 ? (
@@ -344,109 +342,7 @@ export default function ExercisesScreen() {
         style={{ backgroundColor: theme.colors.background }}
       />
 
-      {filterOpen ? <FilterSheet onClose={() => setFilterOpen(false)} /> : null}
     </>
-  );
-}
-
-/**
- * The filter sheet.
- *
- * It owns no state of its own: every selection writes straight to the store. A sheet that
- * buffered a draft filter and had an Apply button would need a second copy of the filter and
- * a diff to know whether anything had changed. Writing through means "what you see is what
- * the list is", and the list behind the scrim updates live, which is the feedback that makes
- * a filter feel trustworthy.
- */
-function FilterSheet({ onClose }: { onClose: () => void }) {
-  const { t } = useT();
-  const taxonomy = useExerciseTaxonomy();
-  const { filter } = useExerciseFilter();
-
-  return (
-    <Sheet title={t('exerciseList.filterTitle')} onRequestClose={onClose}>
-      <TaxonPicker
-        title={t('exerciseList.category')}
-        taxons={taxonomy.data?.categories ?? []}
-        value={filter.categoryId}
-        onChange={setExerciseCategoryId}
-        loading={taxonomy.isPending}
-      />
-      <TaxonPicker
-        title={t('exerciseList.primaryMuscle')}
-        taxons={taxonomy.data?.muscles ?? []}
-        value={filter.muscleId}
-        onChange={setExerciseMuscleId}
-        loading={taxonomy.isPending}
-      />
-      <TaxonPicker
-        title={t('exerciseList.equipment')}
-        taxons={taxonomy.data?.equipment ?? []}
-        value={filter.equipmentId}
-        onChange={setExerciseEquipmentId}
-        loading={taxonomy.isPending}
-      />
-      {taxonomy.isError ? (
-        <Txt variant="caption" tone="muted">
-          {t('exerciseList.taxonomyFailed')}
-        </Txt>
-      ) : null}
-      <Button
-        label={t('exerciseList.showAll')}
-        variant="secondary"
-        onPress={resetExerciseFilter}
-      />
-    </Sheet>
-  );
-}
-
-function TaxonPicker({
-  title,
-  taxons,
-  value,
-  onChange,
-  loading,
-}: {
-  title: string;
-  taxons: readonly Taxon[];
-  value: number | null;
-  onChange: (next: number | null) => void;
-  loading: boolean;
-}) {
-  const { t } = useT();
-  if (loading) {
-    return (
-      <Txt variant="caption" tone="faint">
-        {t('exerciseList.loadingOptions', { what: title.toLowerCase() })}
-      </Txt>
-    );
-  }
-  // An empty group is hidden rather than shown empty: "Equipment · Any" with nothing after
-  // it reads as a broken fetch, when in fact the provider just has none for this install.
-  if (taxons.length === 0) return null;
-  return (
-    <View style={{ gap: spacing.sm }}>
-      <Txt variant="label" tone="muted" uppercase tracking={0.8}>
-        {title}
-      </Txt>
-      <View style={styles.chips}>
-        <Chip
-          label={t('exerciseList.any')}
-          size="sm"
-          selected={value === null}
-          onPress={() => onChange(null)}
-        />
-        {taxons.map((taxon) => (
-          <Chip
-            key={taxon.id}
-            label={taxon.name}
-            size="sm"
-            selected={value === taxon.id}
-            onPress={() => onChange(taxon.id)}
-          />
-        ))}
-      </View>
-    </View>
   );
 }
 

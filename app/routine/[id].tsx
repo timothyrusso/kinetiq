@@ -53,19 +53,13 @@ import { Card, Row, SectionHeader, Stack as Column } from '@/ui/layout';
 import { Txt } from '@/ui/Text';
 import { Icon } from '@/ui/icons';
 import { EmptyState, ErrorState, SkeletonList } from '@/ui/states';
-import { Sheet, SheetFooter } from '@/ui/Sheet';
-import { TextField } from '@/ui/TextField';
-import { ExercisePickerSheet } from '@/ui/exercisePicker';
-import { ItemEditorSheet, RoutineItemRow, type ItemPosition } from '@/ui/routineItems';
+import { RoutineItemRow, type ItemPosition } from '@/ui/routineItems';
 import {
-  useAddRoutineExercise,
   useDeleteRoutine,
   useDuplicateRoutine,
   useRemoveRoutineItem,
-  useRenameRoutine,
   useReorderRoutine,
   useRoutine,
-  useSetRoutineItem,
 } from '@/queries/useRoutines';
 import { useSettings } from '@/settings';
 import { useT } from '@/i18n/useT';
@@ -76,7 +70,7 @@ import { useAppTheme } from '@/theme/theme';
 import { spacing, screenGutter } from '@/theme/tokens';
 import { haptics } from '@/services/haptics';
 import { moveItem } from '@/utils/functional';
-import { defaultItemTarget, orderedIdsOf, pairItems, type ItemTarget } from '@/routines/draft';
+import { orderedIdsOf, pairItems } from '@/routines/draft';
 import { estimateMinutes, plannedVolumeKg } from '@/domain/logic';
 import {
   formatAgo,
@@ -84,9 +78,8 @@ import {
   weightUnit,
   weightValue,
 } from '@/utils/format';
-import type { Exercise } from '@/domain/types';
 
-type SheetKind = 'rename' | 'delete' | 'add' | 'editor' | null;
+type SheetKind = 'delete' | null;
 
 export default function RoutineDetailScreen() {
   const { t } = useT();
@@ -101,14 +94,10 @@ export default function RoutineDetailScreen() {
   const { session } = useWorkoutSession();
 
   const [sheet, setSheet] = useState<SheetKind>(null);
-  const [editorItemId, setEditorItemId] = useState<string | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
 
-  const setItem = useSetRoutineItem();
   const reorder = useReorderRoutine();
   const removeItem = useRemoveRoutineItem();
-  const addExercise = useAddRoutineExercise();
-  const rename = useRenameRoutine();
   const duplicate = useDuplicateRoutine();
   const destroy = useDeleteRoutine();
   const { start, busy: starting } = useStartRoutine();
@@ -117,16 +106,9 @@ export default function RoutineDetailScreen() {
   const rows = useMemo(() => pairItems(items, snapshots), [items, snapshots]);
   // A stable identity for "which exercises are in here", so the picker's `isIncluded` does not
   // change on every render and re-run the hook's memo.
-  const exerciseIds = useMemo(() => items.map((item) => item.exerciseId), [items]);
-  const isIncluded = useCallback(
-    (exerciseId: string) => exerciseIds.includes(exerciseId),
-    [exerciseIds],
-  );
 
   const volumeKg = plannedVolumeKg(items);
   const minutes = estimateMinutes(items);
-  const editorItem =
-    editorItemId === null ? null : (items.find((item) => item.id === editorItemId) ?? null);
 
   /**
    * A workout is already running.
@@ -174,20 +156,6 @@ export default function RoutineDetailScreen() {
     [items, reorder, routine, t],
   );
 
-  const changeItem = useCallback(
-    (itemId: string, patch: Partial<ItemTarget>) => {
-      if (routine === null) return;
-      // Fire-and-forget, deliberately. `ItemEditorSheet`'s steppers fire on every tap, so
-      // tracking a pending state here would put a spinner behind each press and make the sheet
-      // feel broken; the write is a one-row indexed update in a device-local database. A failure
-      // is still surfaced: it just is not allowed to interrupt the interaction.
-      void setItem.mutateAsync({ routineId: routine.id, itemId, patch }).catch(() => {
-        setFailed(t('routine.changeFailed'));
-        haptics.warning();
-      });
-    },
-    [routine, setItem, t],
-  );
 
   const dropItem = useCallback(
     (itemId: string) => {
@@ -202,26 +170,6 @@ export default function RoutineDetailScreen() {
     [removeItem, routine, t],
   );
 
-  const doAdd = useCallback(
-    (exercise: Exercise) => {
-      if (routine === null) return;
-      // The opening targets come from `defaultItemTarget`: the same function the draft store
-      // calls: so a row added here and a row added in the builder cannot start out different.
-      void addExercise
-        .mutateAsync({
-          routineId: routine.id,
-          exercise,
-          item: defaultItemTarget(defaultRest),
-        })
-        .catch(() => {
-          setFailed(t('routine.addFailed'));
-          haptics.warning();
-          return;
-        });
-      haptics.success();
-    },
-    [addExercise, defaultRest, routine, t],
-  );
 
   const doDuplicate = useCallback(() => {
     if (routine === null) return;
@@ -262,8 +210,20 @@ export default function RoutineDetailScreen() {
 
   const optionItems = useMemo<HeaderMenuItem[]>(
     () => [
-      { key: 'rename', label: t('routine.rename'), sf: 'pencil', onPress: () => setSheet('rename') },
-      { key: 'duplicate', label: t('routine.duplicate'), sf: 'plus.square.on.square', onPress: () => void doDuplicate() },
+      {
+        key: 'rename',
+        label: t('routine.rename'),
+        sf: 'pencil',
+        onPress: () => {
+          if (routine) router.push(routes.renameRoutine(routine.id));
+        },
+      },
+      {
+        key: 'duplicate',
+        label: t('routine.duplicate'),
+        sf: 'plus.square.on.square',
+        onPress: () => void doDuplicate(),
+      },
       {
         key: 'delete',
         label: t('routine.deleteRoutine'),
@@ -272,7 +232,7 @@ export default function RoutineDetailScreen() {
         onPress: () => setSheet('delete'),
       },
     ],
-    [doDuplicate, t],
+    [doDuplicate, routine, t],
   );
   const startRoutine = useCallback(() => {
     if (liveSession) {
@@ -398,7 +358,7 @@ export default function RoutineDetailScreen() {
             actionLabel={t('exercises.addExercise')}
             onAction={() => {
               haptics.light();
-              setSheet('add');
+              router.push(routes.pickExercise('routine', routine.id));
             }}
           />
         ) : (
@@ -414,7 +374,7 @@ export default function RoutineDetailScreen() {
                   icon="plus"
                   onPress={() => {
                     haptics.light();
-                    setSheet('add');
+                    router.push(routes.pickExercise('routine', routine.id));
                   }}
                   accessibilityHint={t('routine.addHint')}
                 />
@@ -424,10 +384,7 @@ export default function RoutineDetailScreen() {
                 bordered box around it would inset the dividers short of the edges. */}
             <View>
               {rows.map((row, index) => {
-                const open = () => {
-                  setEditorItemId(row.item.id);
-                  setSheet('editor');
-                };
+                const open = () => router.push(routes.routineItem('routine', row.item.id, routine.id));
                 const position: ItemPosition = {
                   index,
                   count: rows.length,
@@ -488,27 +445,6 @@ export default function RoutineDetailScreen() {
         </Column>
       </ScrollView>
 
-      {sheet === 'rename' ? (
-        <RenameSheet
-          initialName={routine.name}
-          busy={rename.isPending}
-          onRequestClose={() => setSheet(null)}
-          onSubmit={(name) => {
-            void rename
-              .mutateAsync({ id: routine.id, name })
-              .then(() => {
-                setSheet(null);
-                haptics.success();
-              })
-              .catch(() => {
-                setSheet(null);
-                setFailed(t('routine.renameFailed'));
-                haptics.warning();
-              });
-          }}
-        />
-      ) : null}
-
       {sheet === 'delete' ? (
         <ConfirmDialog
           visible
@@ -529,25 +465,6 @@ export default function RoutineDetailScreen() {
         />
       ) : null}
 
-      {sheet === 'add' ? (
-        <ExercisePickerSheet
-          isIncluded={isIncluded}
-          onPick={doAdd}
-          onClose={() => setSheet(null)}
-        />
-      ) : null}
-
-      {sheet === 'editor' && editorItem !== null ? (
-        <ItemEditorSheet
-          item={editorItem}
-          snapshot={snapshots.get(editorItem.exerciseId) ?? null}
-          units={units}
-          defaultRestSeconds={defaultRest}
-          onChange={(patch) => changeItem(editorItem.id, patch)}
-          onRemove={() => dropItem(editorItem.id)}
-          onRequestClose={() => setSheet(null)}
-        />
-      ) : null}
     </>
   );
 }
@@ -562,86 +479,6 @@ function Stat({ label, value }: { label: string; value: string }) {
       </Txt>
       <Txt variant="strong">{value}</Txt>
     </Column>
-  );
-}
-
-/**
- * Rename, as a sheet with a form.
- *
- * Not `OptionSheet`, which closes itself the instant an option is chosen: right for picking a
- * unit, useless for typing one: and not a pushed screen, because the name is one field and a
- * route for one field is a lot of navigation for very little.
- *
- * Local `name` state rather than a write to the repository per keystroke: a routine's name
- * appears in the routines list, the workout picker, the tab's "last trained" card and every
- * history row, so renaming on each character would invalidate all of those queries about twenty
- * times while someone types "Thursday". One commit, on Done.
- *
- * No `KeyboardAvoid`: the sheet is an absolute-fill overlay, and `Sheet` lifts that whole
- * overlay clear of the keyboard itself (see `AvoidingKeyboard`). Wrapping it in a second
- * avoider would compensate for a keyboard that has already been compensated for, and the
- * panel would sit twice the keyboard height above where the content actually is.
- */
-function RenameSheet({
-  initialName,
-  busy,
-  onSubmit,
-  onRequestClose,
-}: {
-  initialName: string;
-  busy: boolean;
-  onSubmit: (name: string) => void;
-  onRequestClose: () => void;
-}) {
-  const { t } = useT();
-  const [name, setName] = useState(initialName);
-  const [error, setError] = useState<string | null>(null);
-  const trimmed = name.trim();
-
-  const commit = () => {
-    if (trimmed.length === 0) {
-      // An inline error, not a disabled button: the field is empty, which is the reason, and
-      // saying so where the typing happened is faster to act on than a greyed-out control.
-      setError(t('routine.nameRequired'));
-      haptics.warning();
-      return;
-    }
-    setError(null);
-    onSubmit(trimmed);
-  };
-
-  return (
-    <Sheet
-      title={t('routine.renameTitle')}
-      // Says what else the name does, because it is the one consequence on this screen that is
-      // not visible from the field itself.
-      subtitle={t('routine.renameHint')}
-      onRequestClose={onRequestClose}
-    >
-      <TextField
-        label={t('routine.nameLabel')}
-        value={name}
-        onChangeText={(next) => {
-          setName(next);
-          if (error !== null) setError(null);
-        }}
-        error={error}
-        autoFocus
-        returnKeyType="done"
-        onSubmitEditing={commit}
-        accessibilityHint={t('routine.nameFieldHint')}
-      />
-      <SheetFooter>
-        <Button label={t('common.cancel')} variant="ghost" onPress={onRequestClose} />
-        <Button
-          label={t('routine.saveName')}
-          weighty
-          loading={busy}
-          style={{ flex: 1 }}
-          onPress={commit}
-        />
-      </SheetFooter>
-    </Sheet>
   );
 }
 

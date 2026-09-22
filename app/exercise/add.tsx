@@ -187,6 +187,7 @@ export default function AddExerciseScreen() {
           label: saving ? 'addExercise.adding' : 'addExercise.add',
           disabled: !canSave,
           variant: 'done',
+          tint: theme.colors.accent,
         })}
       </HeaderToolbar>
       <Screen>

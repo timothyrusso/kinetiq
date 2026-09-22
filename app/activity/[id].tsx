@@ -36,6 +36,7 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { routes } from '@/navigation/nav';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScreenHeader } from '@/ui/Screen';
@@ -54,10 +55,8 @@ import {
 } from '@/ui/layout';
 import { MetricLabel, Txt } from '@/ui/Text';
 import { Icon, type IconName } from '@/ui/icons';
-import { ActionRow, Button } from '@/ui/Button';
+import { ActionRow } from '@/ui/Button';
 import { ACTIVITY_ICON } from '@/ui/rows';
-import { Sheet, SheetFooter } from '@/ui/Sheet';
-import { TextField } from '@/ui/TextField';
 import { EmptyState, ErrorState, SkeletonCard } from '@/ui/states';
 import { RouteMap } from '@/ui/RouteMap';
 import { TrendChart, type TrendPoint } from '@/ui/charts/TrendChart';
@@ -65,7 +64,6 @@ import { useMeasuredWidth } from '@/ui/charts/useMeasuredWidth';
 import {
   useActivity,
   useDeleteActivity,
-  useUpdateActivityNotes,
 } from '@/queries/useActivities';
 // Record wording lives next to the record query, so this screen and the exercise detail
 // cannot drift into calling the same record two different things.
@@ -127,25 +125,8 @@ export default function ActivityDetailScreen() {
   // The draft *is* the open/closed flag: `null` means no sheet, a string (including `''`)
   // means an open one. Two pieces of state would be two ways to disagree about whether a
   // sheet is up.
-  const [notesDraft, setNotesDraft] = useState<string | null>(null);
 
   const removeActivity = useDeleteActivity();
-  const saveNotes = useUpdateActivityNotes();
-
-  const commitNotes = useCallback(() => {
-    if (activityId === null || notesDraft === null) return;
-    const trimmed = notesDraft.trim();
-    saveNotes.mutate(
-      // An emptied field clears the note rather than storing `""`: `notes` is `string |
-      // null` in the schema, and an empty string would make every edited row look annotated.
-      { id: activityId, notes: trimmed.length === 0 ? null : trimmed },
-      // `onSuccess`, not `onSettled`. Closing on settle closes on *failure* too, and
-      // the draft lives only in this screen's state: the user's typed paragraph would
-      // vanish while the note it describes stayed unwritten. On failure the sheet stays
-      // up, the field keeps its text, and the reason appears under it.
-      { onSuccess: () => setNotesDraft(null) },
-    );
-  }, [activityId, notesDraft, saveNotes]);
 
   const confirmDelete = useCallback(() => {
     if (activityId === null) return;
@@ -216,63 +197,10 @@ export default function ActivityDetailScreen() {
             units={units}
             showSpeed={showSpeed}
             theme={theme}
-            onEditNotes={() => setNotesDraft(activity.notes ?? '')}
+            onEditNotes={() => router.push(routes.activityNotes(activity.id))}
           />
         ) : null}
       </ScrollView>
-
-      {notesDraft !== null ? (
-        <Sheet
-          onRequestClose={() => setNotesDraft(null)}
-          title={t('activity.notesTitle')}
-          {...(activity ? { subtitle: activity.title } : {})}
-        >
-          {/* Not wrapped in `SheetSection`: the header already says "Session notes", and
-              `TextField` prints its own label above the box. Both at once reads as "NOTES /
-              NOTES": the section title and the field label are the same word twice, in two
-              colours, two lines apart. `SheetFooter` still supplies the divider below. */}
-          <TextField
-            label={t('activity.notesLabel')}
-            value={notesDraft}
-            onChangeText={(text) => {
-              // Typing again means the user is trying a second time, so the previous
-              // failure stops being true information about the field.
-              if (saveNotes.isError) saveNotes.reset();
-              setNotesDraft(text);
-            }}
-            multiline
-            autoFocus
-            placeholder={t('activity.notesPlaceholder')}
-            hint={t('activity.notesHint')}
-            // The write is a disk write, and disks fail: full storage, a row deleted
-            // from another screen, a migration that did not run. Without this the
-            // sheet would simply refuse to close, which reads as an app that ignores
-            // the Save button. Naming the reason turns a mystery into a retry.
-            {...(saveNotes.isError
-              ? {
-                  error:
-                    saveNotes.error instanceof Error
-                      ? saveNotes.error.message
-                      : t('activity.notesSaveFailed'),
-                }
-              : {})}
-          />
-          <SheetFooter>
-            <Button
-              label={t('common.cancel')}
-              variant="quiet"
-              onPress={() => setNotesDraft(null)}
-            />
-            <Button
-              label={t('common.save')}
-              variant="primary"
-              fullWidth
-              loading={saveNotes.isPending}
-              onPress={commitNotes}
-            />
-          </SheetFooter>
-        </Sheet>
-      ) : null}
 
       {confirmingDelete && activity ? (
         <ConfirmDialog

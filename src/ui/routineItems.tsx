@@ -30,7 +30,7 @@ import { Icon, type IconName } from '@/ui/icons';
 import { Row } from '@/ui/layout';
 import { Txt } from '@/ui/Text';
 import { Stepper } from '@/ui/controls';
-import { Sheet, SheetFooter, SheetSection } from '@/ui/Sheet';
+import { FormFooter, FormSection } from '@/ui/FormSheet';
 import { Button } from '@/ui/Button';
 import { haptics } from '@/services/haptics';
 import { useAppTheme } from '@/theme/theme';
@@ -205,14 +205,13 @@ function RowButton({
  * again on close: is how a units-aware form ends up with a field reading 135 while the
  * stepper is quietly stepping kilograms.
  */
-export const ItemEditorSheet = memo(function ItemEditorSheet({
+export const ItemEditorForm = memo(function ItemEditorForm({
   item,
   snapshot,
   units,
   defaultRestSeconds,
   onChange,
   onRemove,
-  onRequestClose,
 }: {
   item: RoutineItem;
   snapshot: ExerciseSnapshot | null;
@@ -220,7 +219,6 @@ export const ItemEditorSheet = memo(function ItemEditorSheet({
   defaultRestSeconds: number;
   onChange: (patch: Partial<ItemTarget>) => void;
   onRemove?: () => void;
-  onRequestClose: () => void;
 }) {
   const { t } = useT();
   const theme = useAppTheme();
@@ -229,12 +227,11 @@ export const ItemEditorSheet = memo(function ItemEditorSheet({
   const restingAtDefault = item.restSeconds === defaultRestSeconds;
 
   return (
-    <Sheet
-      onRequestClose={onRequestClose}
-      title={item.exerciseName}
-      subtitle={sheetSubtitle(item, snapshot)}
-    >
-      <SheetSection title={t('itemEditor.sets')}>
+    <>
+      <Txt variant="caption" tone="muted">
+        {sheetSubtitle(item, snapshot)}
+      </Txt>
+      <FormSection title={t('itemEditor.sets')}>
         <Stepper
           label={t('itemEditor.sets')}
           value={item.sets}
@@ -243,9 +240,9 @@ export const ItemEditorSheet = memo(function ItemEditorSheet({
           step={1}
           onChange={(sets) => onChange({ sets })}
         />
-      </SheetSection>
+      </FormSection>
 
-      <SheetSection title={t('itemEditor.reps')}>
+      <FormSection title={t('itemEditor.reps')}>
         <Stepper
           label={t('itemEditor.reps')}
           value={repsFromRange(item.reps)}
@@ -258,9 +255,9 @@ export const ItemEditorSheet = memo(function ItemEditorSheet({
         <Txt variant="micro" tone="faint" style={{ marginTop: spacing.sm }}>
           {t('itemEditor.rangesNote')}
         </Txt>
-      </SheetSection>
+      </FormSection>
 
-      <SheetSection title={t('itemEditor.weightIn', { unit: weightUnit(units) })}>
+      <FormSection title={t('itemEditor.weightIn', { unit: weightUnit(units) })}>
         <Stepper
           label={t('itemEditor.weightPerSet', { unit: weightUnit(units) })}
           value={displayWeight}
@@ -274,9 +271,9 @@ export const ItemEditorSheet = memo(function ItemEditorSheet({
             {t('itemEditor.bodyweightNote')}
           </Txt>
         ) : null}
-      </SheetSection>
+      </FormSection>
 
-      <SheetSection title={t('itemEditor.restBetweenSets')}>
+      <FormSection title={t('itemEditor.restBetweenSets')}>
         <Stepper
           label={t('itemEditor.restBetweenSets')}
           value={item.restSeconds}
@@ -295,13 +292,13 @@ export const ItemEditorSheet = memo(function ItemEditorSheet({
             {t('itemEditor.defaultRestNote')}
           </Txt>
         ) : null}
-      </SheetSection>
+      </FormSection>
 
       {snapshot !== null &&
       (snapshot.primaryMuscles.length > 0 ||
         snapshot.equipment.length > 0 ||
         snapshot.instructions !== null) ? (
-        <SheetSection title={t('itemEditor.fromLibrary')}>
+        <FormSection title={t('itemEditor.fromLibrary')}>
           <Row gap="sm" wrap>
             {snapshot.primaryMuscles.map((muscle) => (
               <Row key={muscle} gap="xs" style={tagStyle(theme.colors)}>
@@ -323,26 +320,15 @@ export const ItemEditorSheet = memo(function ItemEditorSheet({
               {snapshot.instructions}
             </Txt>
           ) : null}
-        </SheetSection>
+        </FormSection>
       ) : null}
 
-      <SheetFooter>
-        {onRemove === undefined ? null : (
-          <Button
-            label={t('itemEditor.remove')}
-            variant="danger"
-            icon="trash"
-            onPress={onRemove}
-          />
-        )}
-        <Button
-          label={t('itemEditor.done')}
-          onPress={onRequestClose}
-          weighty
-          style={{ flex: 1 }}
-        />
-      </SheetFooter>
-    </Sheet>
+      {onRemove === undefined ? null : (
+        <FormFooter>
+          <Button label={t('itemEditor.remove')} variant="danger" icon="trash" onPress={onRemove} />
+        </FormFooter>
+      )}
+    </>
   );
 });
 

@@ -40,8 +40,7 @@ import { Card, Row, SectionHeader, Stack as Column } from '@/ui/layout';
 import { Txt } from '@/ui/Text';
 import { Icon } from '@/ui/icons';
 import { EmptyState } from '@/ui/states';
-import { ExercisePickerSheet } from '@/ui/exercisePicker';
-import { ItemEditorSheet, RoutineItemRow } from '@/ui/routineItems';
+import { RoutineItemRow } from '@/ui/routineItems';
 import { estimateMinutes, plannedVolumeKg } from '@/domain/logic';
 import { useSaveRoutine } from '@/queries/useRoutines';
 import { useSettings } from '@/settings';
@@ -53,9 +52,7 @@ import { haptics } from '@/services/haptics';
 import { pairItems } from '@/routines/draft';
 import { useT } from '@/i18n/useT';
 import {
-  addDraftExercise,
   clearDraft,
-  containsExercise,
   draftToPayload,
   isDraftDirty,
   isDraftSavable,
@@ -68,7 +65,6 @@ import {
   setDraftDescription,
   setDraftName,
   setDraftRestDefault,
-  updateDraftItem,
   useRoutineDraft,
 } from '@/routines/draftStore';
 
@@ -82,8 +78,6 @@ export default function NewRoutineScreen() {
   const saveRoutine = useSaveRoutine();
   const navigation = useNavigation();
 
-  const [editorItemId, setEditorItemId] = useState<string | null>(null);
-  const [pickerOpen, setPickerOpen] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [blocked, setBlocked] = useState<string | null>(null);
 
@@ -110,9 +104,6 @@ export default function NewRoutineScreen() {
     () => pairItems(draft.items, snapshotByExerciseId),
     [draft.items, snapshotByExerciseId],
   );
-
-  const editorItem =
-    editorItemId === null ? null : (draft.items.find((item) => item.id === editorItemId) ?? null);
 
   const volumeKg = plannedVolumeKg(draft.items);
   const minutes = estimateMinutes(draft.items);
@@ -184,6 +175,7 @@ export default function NewRoutineScreen() {
           label: draft.status === 'saving' ? 'newRoutine.saving' : 'newRoutine.done',
           disabled: draft.status === 'saving',
           variant: 'done',
+          tint: theme.colors.accent,
         })}
       </HeaderToolbar>
       <KeyboardAvoid style={{ flex: 1 }}>
@@ -228,7 +220,7 @@ export default function NewRoutineScreen() {
               actionLabel={t('newRoutine.addExercise')}
               onAction={() => {
                 haptics.light();
-                setPickerOpen(true);
+                router.push(routes.pickExercise('draft'));
               }}
             />
           ) : (
@@ -244,7 +236,7 @@ export default function NewRoutineScreen() {
                     icon="plus"
                     onPress={() => {
                       haptics.light();
-                      setPickerOpen(true);
+                      router.push(routes.pickExercise('draft'));
                     }}
                   />
                 }
@@ -263,8 +255,8 @@ export default function NewRoutineScreen() {
                       count: rows.length,
                       onMove: (to) => moveDraftItem(index, to),
                     }}
-                    onPress={() => setEditorItemId(row.item.id)}
-                    onLongPress={() => setEditorItemId(row.item.id)}
+                    onPress={() => router.push(routes.routineItem('draft', row.item.id))}
+                    onLongPress={() => router.push(routes.routineItem('draft', row.item.id))}
                     onRemove={() => {
                       haptics.light();
                       removeDraftItem(row.item.id);
@@ -301,32 +293,6 @@ export default function NewRoutineScreen() {
           )}
         </ScrollView>
       </KeyboardAvoid>
-
-      {editorItem === null ? null : (
-        <ItemEditorSheet
-          item={editorItem}
-          snapshot={snapshotByExerciseId.get(editorItem.exerciseId) ?? null}
-          units={units}
-          defaultRestSeconds={defaultRest}
-          onChange={(patch) => updateDraftItem(editorItem.id, patch)}
-          onRemove={() => {
-            removeDraftItem(editorItem.id);
-            setEditorItemId(null);
-          }}
-          onRequestClose={() => setEditorItemId(null)}
-        />
-      )}
-
-      {pickerOpen ? (
-        <ExercisePickerSheet
-          isIncluded={containsExercise}
-          onPick={(exercise) => {
-            addDraftExercise(exercise);
-            haptics.success();
-          }}
-          onClose={() => setPickerOpen(false)}
-        />
-      ) : null}
 
       {confirmDiscard ? (
         <ConfirmDialog

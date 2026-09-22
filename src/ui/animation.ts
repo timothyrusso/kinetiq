@@ -16,15 +16,14 @@
  *    where we must branch in JS: skipping a stagger, jumping to the end state.
  *    The information an animation carried still arrives; it arrives immediately.
  */
-import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { Pressable, useWindowDimensions, type ViewStyle } from 'react-native';
+import { useCallback, useEffect, useMemo } from 'react';
+import { Pressable, type ViewStyle } from 'react-native';
 import {
   clamp,
   createAnimatedComponent,
   type AnimatedStyle,
   Easing,
   ReduceMotion,
-  runOnJS,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -34,7 +33,6 @@ import {
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
-import { Gesture } from 'react-native-gesture-handler';
 import { motion } from '@/theme/tokens';
 
 // `clamp` comes from Reanimated, not `utils/functional`, and the difference is not style: every
@@ -75,127 +73,6 @@ export const popSpring = {
 
 export const easeOut = Easing.out(Easing.cubic);
 export const easeInOut = Easing.inOut(Easing.quad);
-
-// ---------------------------------------------------------------------------
-// Gesture-driven
-// ---------------------------------------------------------------------------
-
-/**
- * Drag-to-dismiss for a bottom sheet, as a ready RNGH gesture plus the styles to
- * apply. A sheet is then a `GestureDetector` and three lines, and every dismissable
- * surface in the app throws, settles and rubber-bands identically.
- *
- * Two rules separate this from a hand-rolled sheet:
- * - Upward drags rubber-band instead of stopping dead; a surface that will not move at
- *   all reads as broken rather than as locked.
- * - Release dismisses on offset *or* velocity, so a short flick closes it.
- *
- * `enabled` is a *value* rather than a `canDismiss()` callback on purpose: a worklet
- * cannot call a JS function, and a captured callback would silently go stale. Passing
- * a boolean rebuilds the gesture, so a sheet that is mid-edit can lock dismissal and
- * be certain the gesture sees the current answer.
- *
- * `onDismiss` is a JS function and the gesture body is a worklet, so the crossing uses
- * `runOnJS`: invoking a captured JS function directly from a worklet aborts the
- * process rather than throwing.
- */
-export function useSheetDrag(options: {
-  onDismiss: () => void;
-  enabled?: boolean;
-}) {
-  const { onDismiss, enabled = true } = options;
-  const translateY = useSharedValue(0);
-  const startOffset = useRef(0);
-  const { height: screenHeight } = useWindowDimensions();
-
-  // Proportional but capped: 26 % of a 900 pt viewport is a long pull, and nobody
-  // wants to drag a sheet 230 pt to close it on a tablet.
-  const dismissOffset = Math.min(200, screenHeight * 0.26);
-
-  const begin = useCallback(
-    (current: number) => {
-      startOffset.current = current;
-    },
-    [],
-  );
-
-  const drag = useCallback(
-    (translationY: number) => {
-      const raw = startOffset.current + translationY;
-      // Pulling a sheet further up should feel tethered, not broken.
-      translateY.value = raw < 0 ? raw * 0.26 : raw;
-    },
-    [startOffset, translateY],
-  );
-
-  const settle = useCallback(
-    (dismiss: boolean) => {
-      if (dismiss) {
-        translateY.value = withTiming(
-          screenHeight,
-          { duration: motion.fast, easing: easeOut },
-          () => onDismiss(),
-        );
-      } else {
-        translateY.value = withSpring(0, settleSpring);
-      }
-    },
-    [onDismiss, screenHeight, translateY],
-  );
-
-  const release = useCallback(
-    (velocityY: number) => {
-      const offset = translateY.value;
-      settle(enabled && (velocityY > FLICK_VELOCITY || offset > dismissOffset));
-    },
-    [dismissOffset, enabled, settle, translateY],
-  );
-
-  // The worklet mirrors `drag`/`release` rather than calling them: those are JS
-  // closures, and a worklet cannot call them. Both paths read the same constants.
-  const gesture = useMemo(
-    () =>
-      Gesture.Pan()
-        .onChange((event) => {
-          'worklet';
-          const raw = translateY.value + event.changeY;
-          translateY.value = raw < 0 ? raw * RUBBER_BAND : raw;
-        })
-        .onEnd((event) => {
-          'worklet';
-          const offset = translateY.value;
-          const dismiss =
-            enabled && (offset > dismissOffset || event.velocityY > FLICK_VELOCITY);
-          if (dismiss) {
-            translateY.value = withTiming(
-              screenHeight,
-              { duration: motion.fast, easing: easeOut },
-              (finished) => {
-                'worklet';
-                if (finished) runOnJS(onDismiss)();
-              },
-            );
-          } else {
-            translateY.value = withSpring(0, settleSpring);
-          }
-        }),
-    [dismissOffset, enabled, onDismiss, screenHeight, translateY],
-  );
-
-  const style = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-  }));
-
-  /** Backing that fades as the sheet lifts off: a scrim that recedes with the sheet. */
-  const backdropStyle = useAnimatedStyle(() => ({
-    opacity: clamp(1 - translateY.value / 320, 0, 1),
-  }));
-
-  return { translateY, gesture, style, backdropStyle, begin, drag, release, dismissOffset };
-}
-
-const RUBBER_BAND = 0.26;
-const FLICK_VELOCITY = 850;
 
 /**
  * Press feedback: a slight scale-down while held. Every tappable surface uses

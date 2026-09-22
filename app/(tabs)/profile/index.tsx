@@ -146,7 +146,7 @@ export default function ProfileScreen() {
 
   return (
     <>
-      <ScreenHeader title={t('profile.title')} />
+      <ScreenHeader title={t('tabs.profile')} />
       <HeaderToolbar placement="right">
         {headerAction({ action: 'settings', onPress: openSettings, t, label: 'profileScreen.settings' })}
       </HeaderToolbar>
@@ -465,7 +465,7 @@ function formatNumber(value: number | undefined): string {
 }
 
 const styles = StyleSheet.create({
-  identity: { paddingHorizontal: screenGutter, paddingTop: spacing.md },
+  identity: { paddingHorizontal: screenGutter, paddingTop: spacing.md, paddingBottom: spacing.xl },
   content: { flexGrow: 1 },
   body: { paddingHorizontal: screenGutter, gap: spacing.lg },
 });

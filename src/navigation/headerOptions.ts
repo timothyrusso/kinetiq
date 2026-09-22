@@ -14,6 +14,7 @@ import { Platform } from 'react-native';
 import type { NativeStackNavigationOptions } from 'expo-router/native-stack';
 
 import { useAppTheme } from '@/theme/theme';
+import { radius } from '@/theme/tokens';
 
 export function useHeaderOptions(): NativeStackNavigationOptions {
   const theme = useAppTheme();
@@ -45,4 +46,20 @@ export function useHeaderOptions(): NativeStackNavigationOptions {
 export function useLargeTitleOptions(): NativeStackNavigationOptions {
   const base = useHeaderOptions();
   return useMemo(() => ({ ...base, headerLargeTitle: true }), [base]);
+}
+
+/**
+ * A route presented as the platform's own sheet.
+ *
+ * `[0.5, 1]` for pickers (a glance at half height, the whole list a drag away); `fit` for short
+ * forms, which size to their content. The grabber is always shown, because a sheet you can
+ * resize should say so. The radius is the app's largest, the same one the drawn sheets used.
+ */
+export function formSheet(detents: 'fit' | 'picker'): NativeStackNavigationOptions {
+  return {
+    presentation: 'formSheet',
+    sheetGrabberVisible: true,
+    sheetAllowedDetents: detents === 'fit' ? 'fitToContents' : [0.5, 1],
+    sheetCornerRadius: radius.xxl,
+  };
 }

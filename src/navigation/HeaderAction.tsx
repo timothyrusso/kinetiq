@@ -66,6 +66,11 @@ export type HeaderActionOptions = {
   disabled?: boolean;
   /** Marks a destructive or primary action the platform way (`done` is bold on iOS). */
   variant?: 'plain' | 'done' | 'prominent';
+  /**
+   * The colour of a `done` action. iOS 26 draws it as a filled capsule in the system blue
+   * unless told otherwise, and the bar's tint does not reach it.
+   */
+  tint?: string;
 };
 
 export function headerAction({
@@ -75,6 +80,7 @@ export function headerAction({
   label,
   disabled,
   variant,
+  tint,
 }: HeaderActionOptions): ReactElement | null {
   const row = HEADER_ACTIONS[action];
   if (row.iosOnly && Platform.OS !== 'ios') return null;
@@ -84,6 +90,7 @@ export function headerAction({
     accessibilityLabel: spoken,
     ...(disabled === undefined ? {} : { disabled }),
     ...(variant === undefined ? {} : { variant }),
+    ...(tint === undefined ? {} : { tintColor: tint }),
   };
   if (row.text) {
     return <Stack.Toolbar.Button key={action} {...shared}>{spoken}</Stack.Toolbar.Button>;

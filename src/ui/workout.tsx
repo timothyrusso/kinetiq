@@ -39,7 +39,7 @@ import { IconButton } from './Button';
 import { Row } from './layout';
 import { Stepper } from './controls';
 import { MetricLabel, Txt } from './Text';
-import { Sheet, SheetFooter, SheetSection } from './Sheet';
+import { FormFooter, FormSection } from './FormSheet';
 import { ConfirmDialog } from './controls/ConfirmDialog';
 import { useT } from '@/i18n/useT';
 
@@ -361,35 +361,29 @@ export const ExerciseBlock = memo(function ExerciseBlock({
  * RPE uses a stepper rather than a slider because a slider's hit region loses to a callus
  * at arm's length. RPE 0 means "not recorded", which is the default for most sets.
  */
-export function SetEditorSheet({
+export function SetEditorForm({
   entry,
   set,
   units,
   onChange,
   onRemove,
-  onRequestClose,
 }: {
   entry: StrengthEntry;
   set: StrengthSet;
   units: UnitSystem;
   onChange: (patch: { reps?: number; weightKg?: number; rpe?: number | null }) => void;
   onRemove: () => void;
-  onRequestClose: () => void;
 }) {
   const { t } = useT();
   const step = weightStep(units);
   const displayWeight = weightDisplayValue(set.weightKg, units, step);
 
   return (
-    <Sheet
-      onRequestClose={onRequestClose}
-      title={t('setRow.thisSet')}
-      subtitle={t('setRow.setSubtitle', {
-        name: entry.exerciseName,
-        reps: trimNumber(set.reps),
-      })}
-    >
-      <SheetSection title={t('setRow.reps')}>
+    <>
+      <Txt variant="caption" tone="muted">
+        {t('setRow.setSubtitle', { name: entry.exerciseName, reps: trimNumber(set.reps) })}
+      </Txt>
+      <FormSection title={t('setRow.reps')}>
         <Stepper
           label={t('setRow.reps')}
           value={set.reps}
@@ -400,9 +394,9 @@ export function SetEditorSheet({
             onChange({ reps });
           }}
         />
-      </SheetSection>
+      </FormSection>
 
-      <SheetSection title={t('setRow.weightIn', { unit: weightUnit(units) })}>
+      <FormSection title={t('setRow.weightIn', { unit: weightUnit(units) })}>
         <Stepper
           label={t('setRow.weightInUnit', { unit: weightUnit(units) })}
           value={displayWeight}
@@ -420,9 +414,9 @@ export function SetEditorSheet({
             {t('setRow.bodyweightNote')}
           </Txt>
         ) : null}
-      </SheetSection>
+      </FormSection>
 
-      <SheetSection title={t('setRow.rpe')}>
+      <FormSection title={t('setRow.rpe')}>
         <Stepper
           label={t('setRow.rpe')}
           value={set.rpe ?? 0}
@@ -439,20 +433,17 @@ export function SetEditorSheet({
         <Txt variant="micro" tone="faint" style={{ marginTop: spacing.sm }}>
           {t('setRow.rpeNote')}
         </Txt>
-      </SheetSection>
+      </FormSection>
 
-      <SheetFooter>
-        <IconButton
-          name="trash"
+      <FormFooter>
+        <Button
+          label={t('setRow.removeThisSet')}
           variant="danger"
-          size={20}
-          accessibilityLabel={t('setRow.removeThisSet')}
-          weighty
+          icon="trash"
           onPress={onRemove}
         />
-        <Button label={t('setRow.done')} variant="primary" fullWidth onPress={onRequestClose} />
-      </SheetFooter>
-    </Sheet>
+      </FormFooter>
+    </>
   );
 }
 

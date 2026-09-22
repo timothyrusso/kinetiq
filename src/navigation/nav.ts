@@ -17,6 +17,7 @@
  * at a glance.
  */
 import type { Href } from 'expo-router';
+import type { PersonalRecord } from '@/domain/types';
 import type { TKey } from '@/i18n';
 
 export type TabKey = '(home)' | 'activities' | 'workout' | 'exercises' | 'profile';
@@ -146,4 +147,24 @@ export const routes = {
   settingsAbout: () => '/settings/about' as Href,
   permissions: () => '/permissions' as Href,
   dev: () => '/dev' as Href,
+
+  /**
+   * The editors, presented as form sheets. Each takes what it edits as params and writes
+   * through the store or query that owns it, so nothing comes back through the navigation.
+   */
+  pickExercise: (target: 'draft' | 'session' | 'routine', routineId?: string) =>
+    ({ pathname: '/pick-exercise', params: routineId ? { target, id: routineId } : { target } }) as Href,
+  routineItem: (target: 'draft' | 'routine', itemId: string, routineId?: string) =>
+    ({
+      pathname: '/routine/item',
+      params: routineId ? { target, item: itemId, id: routineId } : { target, item: itemId },
+    }) as Href,
+  renameRoutine: (id: string) => ({ pathname: '/routine/rename', params: { id } }) as Href,
+  activityNotes: (id: string) => ({ pathname: '/activity/notes', params: { id } }) as Href,
+  exerciseFilters: () => '/exercise/filters' as Href,
+  sessionNotes: () => '/workout/notes' as Href,
+  sessionSet: (entryIndex: number, setIndex: number) =>
+    ({ pathname: '/workout/set', params: { entry: String(entryIndex), set: String(setIndex) } }) as Href,
+  sessionRecords: (records: readonly PersonalRecord[]) =>
+    ({ pathname: '/workout/records', params: { records: JSON.stringify(records) } }) as Href,
 } as const;
