@@ -81,7 +81,8 @@ import { useAppTheme } from '@/theme/theme';
 import { spacing, z, screenGutter } from '@/theme/tokens';
 import { Button } from '@/ui/controls/Button';
 import { IconButton } from '@/ui/controls/IconButton';
-import { Card, OverlaySurface, Row, SectionHeader } from '@/ui/layout';
+import { Card, OverlaySurface, Row } from '@/ui/layout';
+import { SectionHeader } from '@/ui/display';
 import { Chip } from '@/ui/controls/Chip';
 import { MetricLabel, Txt } from '@/ui/Text';
 import { EmptyState, SkeletonCard } from '@/ui/states';
@@ -474,19 +475,10 @@ export default function WorkoutSessionScreen() {
           <SectionHeader
             title={t('session.exercises')}
             eyebrow={`${session.entries.length} ${t('session.exerciseWord', { count: session.entries.length })}`}
-            action={
-              <Button
-                label={t('common.add')}
-                size="sm"
-                variant="secondary"
-                icon="plus"
-                onPress={() => {
+            action={{ label: t('common.add'), onPress: () => {
                   haptics.light();
                   router.push(routes.pickExercise('session'));
-                }}
-                accessibilityHint={t('session.addHint')}
-              />
-            }
+                } }}
           />
           {session.entries.length === 0 ? (
             <EmptyState

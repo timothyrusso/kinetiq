@@ -52,7 +52,6 @@ import { useActivityList, useDeleteActivity } from '@/queries/useActivities';
 import type { ActivityListParams, ActivitySort } from '@/query/keys';
 import { useSettings } from '@/settings/hooks';
 import { useIsOnline } from '@/query/networkStatus';
-import { activityDisplay } from '@/domain/display';
 import type { Activity, ActivityKind } from '@/domain/types';
 import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
@@ -62,6 +61,7 @@ import { compactNumber, formatDistance, formatDurationCompact } from '@/utils/fo
 import { toggleInArray } from '@/utils/functional';
 import { useDebouncedValue, useIsSettling } from '@/utils/useDebouncedValue';
 import type { TKey } from '@/i18n';
+import { activitySummary } from '@/ui/display';
 
 /** A list row is either a session or a heading above a run of sessions. */
 type RowItem =
@@ -155,13 +155,13 @@ export default function ActivitiesScreen() {
       if (item.type === 'label') {
         return <DayLabel text={item.text} count={item.count} />;
       }
-      const display = activityDisplay(item.activity, units, showSpeed);
+      const display = activitySummary(item.activity, units, showSpeed);
       return (
         <ActivityRow
           activity={item.activity}
           theme={theme}
           headline={display.headline}
-          subtitle={display.subtitle}
+          meta={display.meta}
           onPress={() => openActivity(item.activity.id)}
           onLongPress={() => requestDelete(item.activity)}
         />

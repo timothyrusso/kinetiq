@@ -33,7 +33,8 @@ import { SCROLL_INSETS, ScreenHeader } from '@/ui/Screen';
 import { MetaLine, type MetaItem } from '@/ui/display';
 import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { Avatar, NavRow } from '@/ui/rows';
-import { Badge, Card, MetricGrid, Row, SectionHeader } from '@/ui/layout';
+import { Badge, Card, MetricGrid, Row } from '@/ui/layout';
+import { SectionHeader } from '@/ui/display';
 import { SegmentedControl } from '@/ui/controls/SegmentedControl';
 import { useT } from '@/i18n/useT';
 import type { Language } from '@/i18n';
@@ -277,7 +278,7 @@ export default function ProfileScreen() {
           <Card padding="xxs">
             <NavRow
               title={t('profileScreen.progressTitle')}
-              subtitle={t('profileScreen.progressSubtitle')}
+              description={t('profileScreen.progressSubtitle')}
               theme={theme}
               icon="trendUp"
               topDivider={false}
@@ -285,7 +286,7 @@ export default function ProfileScreen() {
             />
             <NavRow
               title={t('profileScreen.allActivities')}
-              subtitle={t('profileScreen.allActivitiesSubtitle')}
+              description={t('profileScreen.allActivitiesSubtitle')}
               theme={theme}
               icon="activities"
               showChevron={false}
@@ -293,7 +294,7 @@ export default function ProfileScreen() {
             />
             <NavRow
               title={t('profileScreen.startCardio')}
-              subtitle={t('profileScreen.startCardioSubtitle')}
+              description={t('profileScreen.startCardioSubtitle')}
               theme={theme}
               icon="route"
               onPress={() => router.push(routes.cardio())}
@@ -304,7 +305,7 @@ export default function ProfileScreen() {
           <Card padding="xxs">
             <NavRow
               title={t('profileScreen.trainingPrefs')}
-              subtitle={t('profileScreen.trainingPrefsSubtitle')}
+              description={t('profileScreen.trainingPrefsSubtitle')}
               theme={theme}
               icon="target"
               topDivider={false}
@@ -312,7 +313,7 @@ export default function ProfileScreen() {
             />
             <NavRow
               title={t('profileScreen.notifications')}
-              subtitle={t('profileScreen.notificationsSubtitle', {
+              description={t('profileScreen.notificationsSubtitle', {
                 haptics: t(
                   hapticsEnabled ? 'profileScreen.hapticsOn' : 'profileScreen.hapticsOff',
                 ),
@@ -323,14 +324,14 @@ export default function ProfileScreen() {
             />
             <NavRow
               title={t('profileScreen.permissions')}
-              subtitle={t('profileScreen.permissionsSubtitle')}
+              description={t('profileScreen.permissionsSubtitle')}
               theme={theme}
               icon="lock"
               onPress={() => router.push(routes.permissions())}
             />
             <NavRow
               title={t('profileScreen.aboutTitle')}
-              subtitle={t('profileScreen.aboutSubtitle')}
+              description={t('profileScreen.aboutSubtitle')}
               theme={theme}
               icon="info"
               showChevron={false}

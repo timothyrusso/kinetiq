@@ -27,7 +27,7 @@ import { isOfflineError } from '@/api';
 import { useShimmer } from './animation';
 import { Button } from '@/ui/controls/Button';
 import { Icon, type IconName } from './icons';
-import { Stack } from './layout';
+import { Stack } from '@/ui/layout';
 import { Txt } from './Text';
 import { useT } from '@/i18n/useT';
 

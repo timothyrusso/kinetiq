@@ -5,3 +5,4 @@ export { SectionHeader } from './SectionHeader';
 export { StatTile } from './StatTile';
 export { TagRow } from './TagRow';
 export type { MetaItem, Tag, Tone, Trend } from './types';
+export { exerciseTags } from './exerciseTags';

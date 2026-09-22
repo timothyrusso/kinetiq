@@ -44,15 +44,8 @@ import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
 import { MetaLine } from '@/ui/display';
 import { useTransparentHeaderInset } from '@/ui/insets';
 import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
-import {
-  Badge,
-  Card,
-  Divider,
-  MetricGrid,
-  Row,
-  SectionHeader,
-  Stack as Column,
-} from '@/ui/layout';
+import { Badge, Card, Divider, MetricGrid, Row, Stack as Column } from '@/ui/layout';
+import { SectionHeader } from '@/ui/display';
 import { MetricLabel, Txt } from '@/ui/Text';
 import { Icon, type IconName } from '@/ui/icons';
 import { ActionRow } from '@/ui/rows';
@@ -722,7 +715,7 @@ function StrengthBody({
           <SectionHeader
             title={t('activity.volume')}
             eyebrow={t('activity.perMovement')}
-            count={volumePoints.length}
+            counter={volumePoints.length}
           />
           <Card>
             <TrendChart
@@ -742,7 +735,7 @@ function StrengthBody({
         <SectionHeader
           title={t('activity.exercises')}
           eyebrow={t('activity.work')}
-          count={entries.length}
+          counter={entries.length}
         />
         {entries.map((entry, index) => (
           <ExerciseCard key={`${entry.exerciseId}-${index}`} entry={entry} units={units} />
@@ -754,7 +747,7 @@ function StrengthBody({
           <SectionHeader
             title={t('activity.records')}
             eyebrow={t('activity.setThisSession')}
-            count={records.length}
+            counter={records.length}
           />
           <Card tone="accent">
             <Column gap="lg">

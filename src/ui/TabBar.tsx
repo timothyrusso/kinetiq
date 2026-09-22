@@ -27,9 +27,9 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { Icon, type IconName } from './icons';
-import { OverlaySurface } from './layout';
+import { OverlaySurface } from '@/ui/layout';
 import { TAB_BAR_HEIGHT as BAR_HEIGHT } from './insets';
-import { CellText } from './rows';
+import { CellText } from './CellText';
 import { usePulse } from './animation';
 import { radius, spacing, z } from '@/theme/tokens';
 import { useAppTheme, type Theme } from '@/theme/theme';

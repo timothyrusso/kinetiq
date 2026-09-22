@@ -54,7 +54,8 @@ import { useScreenContentBottom } from '@/ui/insets';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { ScreenHeader } from '@/ui/Screen';
-import { Card, Divider, SectionHeader, Stack } from '@/ui/layout';
+import { Card, Divider, Stack } from '@/ui/layout';
+import { SectionHeader } from '@/ui/display';
 import { Button } from '@/ui/controls/Button';
 import { Stepper } from '@/ui/controls/Stepper';
 import { Txt } from '@/ui/Text';

@@ -39,9 +39,9 @@ import { StatTile, TagRow, type Tag } from '@/ui/display';
 import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { LiveClock } from '@/ui/LiveClock';
 import { ActivityRow } from '@/ui/rows';
-import { Card, Divider, Row, SectionHeader, Stack } from '@/ui/layout';
+import { Card, Divider, Row, Stack } from '@/ui/layout';
+import { SectionHeader } from '@/ui/display';
 import { MetricLabel, Txt } from '@/ui/Text';
-import { Button } from '@/ui/controls/Button';
 import { BarChart, type BarPoint } from '@/ui/charts/BarChart';
 import { ActivityDistribution, type DistributionSlice } from '@/ui/charts/ActivityDistribution';
 import { ProgressRing } from '@/ui/charts/ProgressRing';
@@ -50,7 +50,7 @@ import { EmptyState, ErrorState, SkeletonCard, SkeletonList, ThemedRefreshContro
 import { useRecentActivities } from '@/queries/useActivities';
 import { useTrainingSummary, type TrainingSummary } from '@/queries/useProgress';
 import { useSettings } from '@/settings/hooks';
-import { activityDisplay, KIND_ORDER } from '@/domain/display';
+import { KIND_ORDER } from '@/domain/display';
 import { computeStreak } from '@/domain/logic';
 import type { Activity } from '@/domain/types';
 import { routes, tabHref } from '@/navigation/nav';
@@ -64,6 +64,7 @@ import {
   formatDistance,
   type UnitSystem,
 } from '@/utils/format';
+import { activitySummary } from '@/ui/display';
 
 /** Rows actually shown. The fetched set is longer: see the header note on streaks. */
 const RECENT_VISIBLE = 7;
@@ -109,13 +110,13 @@ export default function HomeScreen() {
 
   const renderItem = useCallback(
     ({ item }: { item: Activity }) => {
-      const display = activityDisplay(item, units, showSpeed);
+      const display = activitySummary(item, units, showSpeed);
       return (
         <ActivityRow
           activity={item}
           theme={theme}
           headline={display.headline}
-          subtitle={display.subtitle}
+          meta={display.meta}
           onPress={() => openActivity(item.id)}
         />
       );
@@ -196,16 +197,9 @@ export default function HomeScreen() {
           title={t('homeTab.recent')}
           eyebrow={t('homeTab.latestSessions')}
           style={{ paddingHorizontal: screenGutter }}
-          action={
-            visible.length > 0 ? (
-              <Button
-                label={t('homeTab.seeAll')}
-                variant="quiet"
-                size="sm"
-                onPress={() => router.push(tabHref(1))}
-              />
-            ) : null
-          }
+          {...(visible.length > 0
+            ? { action: { label: t('homeTab.seeAll'), onPress: () => router.push(tabHref(1)) } }
+            : {})}
         />
       )}
     </>

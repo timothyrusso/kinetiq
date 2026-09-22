@@ -49,15 +49,8 @@ import * as Linking from 'expo-linking';
 import { ScreenHeader } from '@/ui/Screen';
 import { useTransparentHeaderInset } from '@/ui/insets';
 import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
-import {
-  Badge,
-  Card,
-  Gap,
-  MetricGrid,
-  Row,
-  SectionHeader,
-  Stack as Column,
-} from '@/ui/layout';
+import { Badge, Card, Gap, MetricGrid, Row, Stack as Column } from '@/ui/layout';
+import { SectionHeader } from '@/ui/display';
 import { MetricLabel, Txt } from '@/ui/Text';
 import { Icon } from '@/ui/icons';
 import { ActionRow } from '@/ui/rows';
@@ -394,7 +387,7 @@ export default function ExerciseDetailScreen() {
                 <Column gap="md" style={styles.section}>
                   <SectionHeader
                     title={t('exerciseDetail.variations')}
-                    count={variations.data.length}
+                    counter={variations.data.length}
                     eyebrow={t('exerciseDetail.sameFamily')}
                   />
                 </Column>
@@ -404,11 +397,15 @@ export default function ExerciseDetailScreen() {
                       key={sibling.id}
                       name={sibling.name}
                       uri={sibling.thumbnailUrl ?? sibling.imageUrl}
-                      subtitle={
-                        sibling.id === exercise.id
-                          ? t('exerciseDetail.thisExercise')
-                          : sibling.category ?? t('exerciseDetail.variation')
-                      }
+                      tags={[
+                        {
+                          key: 'kind',
+                          label:
+                            sibling.id === exercise.id
+                              ? t('exerciseDetail.thisExercise')
+                              : (sibling.category ?? t('exerciseDetail.variation')),
+                        },
+                      ]}
                       theme={theme}
                       dimmed={sibling.id === exercise.id}
                       topDivider={i > 0}
@@ -666,7 +663,10 @@ function HistoryRow({
       <ListRow
         theme={theme}
         title={load}
-        subtitle={
+        meta={[
+          {
+            icon: 'calendar',
+            label:
           session.completedSets === session.sets
             ? t('exerciseDetail.setsAll', {
                 date: formatShortDate(session.performedAt),
@@ -676,8 +676,9 @@ function HistoryRow({
                 date: formatShortDate(session.performedAt),
                 done: session.completedSets,
                 total: session.sets,
-              })
-        }
+              }),
+          },
+        ]}
         showChevron
         onPress={onPress}
         accessibilityHint={t('exerciseDetail.openSession')}

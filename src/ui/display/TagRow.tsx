@@ -12,7 +12,7 @@ import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'rea
 
 import type { Theme } from '@/theme/theme';
 import { radius, spacing } from '@/theme/tokens';
-import { CellText } from '@/ui/rows';
+import { CellText } from '@/ui/CellText';
 import type { Tag, Tone } from './types';
 
 export const TagRow = memo(function TagRow({

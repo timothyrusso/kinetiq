@@ -49,7 +49,8 @@ import {
   type HeaderMenuItem,
 } from '@/navigation/HeaderAction';
 import { Button } from '@/ui/controls/Button';
-import { Card, Row, SectionHeader, Stack as Column } from '@/ui/layout';
+import { Card, Row, Stack as Column } from '@/ui/layout';
+import { SectionHeader } from '@/ui/display';
 import { Txt } from '@/ui/Text';
 import { Icon } from '@/ui/icons';
 import { EmptyState, ErrorState, SkeletonList } from '@/ui/states';
@@ -366,19 +367,10 @@ export default function RoutineDetailScreen() {
             <SectionHeader
               title={t('routine.exercises')}
               eyebrow={`${rows.length} ${t('routine.rowWord', { count: rows.length })}`}
-              action={
-                <Button
-                  label={t('common.add')}
-                  variant="quiet"
-                  size="sm"
-                  icon="plus"
-                  onPress={() => {
+              action={{ label: t('common.add'), onPress: () => {
                     haptics.light();
                     router.push(routes.pickExercise('routine', routine.id));
-                  }}
-                  accessibilityHint={t('routine.addHint')}
-                />
-              }
+                  } }}
             />
             {/* No Card: `ListRow` carries its own horizontal padding and hairline, so a
                 bordered box around it would inset the dividers short of the edges. */}

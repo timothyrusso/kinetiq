@@ -65,7 +65,6 @@ import { MetricLabel, Txt } from '@/ui/Text';
 import { ActivityRow } from '@/ui/rows';
 import { EmptyState, ErrorState, SkeletonList, ThemedRefreshControl } from '@/ui/states';
 import { useActivityList, useDeleteActivity } from '@/queries/useActivities';
-import { activityDisplay } from '@/domain/display';
 import { useSettings } from '@/settings';
 import { compactNumber, formatDistance, formatDurationCompact } from '@/utils/format';
 import { routes, tabHref, tabIndexOf } from '@/navigation/nav';
@@ -76,6 +75,7 @@ import { spacing, screenGutter } from '@/theme/tokens';
 import { useT } from '@/i18n/useT';
 import type { TKey } from '@/i18n';
 import { tr } from '@/i18n/tr';
+import { activitySummary } from '@/ui/display';
 
 const DAY_MS = 86_400_000;
 
@@ -198,13 +198,13 @@ export default function WorkoutHistoryScreen() {
   const renderItem = useCallback(
     ({ item }: { item: RowItem }) => {
       if (item.type === 'label') return <DayLabel text={item.text} count={item.count} />;
-      const display = activityDisplay(item.activity, units, showSpeed);
+      const display = activitySummary(item.activity, units, showSpeed);
       return (
         <ActivityRow
           activity={item.activity}
           theme={theme}
           headline={display.headline}
-          subtitle={display.subtitle}
+          meta={display.meta}
           onPress={() => openActivity(item.activity.id)}
           onLongPress={() => setPendingDelete(item.activity)}
         />

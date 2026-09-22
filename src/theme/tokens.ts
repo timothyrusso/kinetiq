@@ -137,11 +137,27 @@ export type PlatformSurface = {
   rowPressed: 'highlight' | 'ripple';
   /** Who holds the horizontal gutter for a list: the card itself, or the scroll container. */
   gutterOwner: 'card' | 'container';
+  /** Depth by shadow (iOS) or by tone alone (Material's tonal surfaces carry no shadow). */
+  shadow: boolean;
 };
 
 const platformSurfaces = {
-  ios: { radius: radius.lg, surface: 'surface', separator: 'hairline', rowPressed: 'highlight', gutterOwner: 'card' },
-  android: { radius: radius.md, surface: 'surfaceRaised', separator: 'none', rowPressed: 'ripple', gutterOwner: 'container' },
+  ios: {
+    radius: radius.lg,
+    surface: 'surface',
+    separator: 'hairline',
+    rowPressed: 'highlight',
+    gutterOwner: 'card',
+    shadow: true,
+  },
+  android: {
+    radius: radius.md,
+    surface: 'surfaceRaised',
+    separator: 'none',
+    rowPressed: 'ripple',
+    gutterOwner: 'container',
+    shadow: false,
+  },
 } as const satisfies Record<'ios' | 'android', PlatformSurface>;
 
 /** The skin for the platform this build runs on. */

@@ -49,9 +49,10 @@ import { useRouter, useIsFocused } from 'expo-router';
 import { useTabContentBottom } from '@/ui/insets';
 
 import { Button } from '@/ui/controls/Button';
-import { Card, Row, SectionHeader } from '@/ui/layout';
+import { Card, Row } from '@/ui/layout';
+import { SectionHeader } from '@/ui/display';
 import { SCROLL_INSETS, ScreenHeader } from '@/ui/Screen';
-import { MetaLine } from '@/ui/display';
+import { MetaLine, type MetaItem } from '@/ui/display';
 import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { ExerciseThumb, RoutineRow } from '@/ui/rows';
 import { SegmentedControl } from '@/ui/controls/SegmentedControl';
@@ -213,16 +214,8 @@ export default function WorkoutScreen() {
           <SectionHeader
             title={t('workout.yourRoutines')}
             eyebrow={t('workoutTab.saved')}
-            {...(routines.count > 0 ? { count: routines.count } : {})}
-            action={
-              <Button
-                label={t('workoutTab.new')}
-                size="sm"
-                variant="secondary"
-                icon="plus"
-                onPress={openNewRoutine}
-              />
-            }
+            {...(routines.count > 0 ? { counter: routines.count } : {})}
+            action={{ label: t('workoutTab.new'), onPress: openNewRoutine }}
           />
           {routines.routines.length > 1 ? (
             <View style={{ marginBottom: spacing.md }}>
@@ -258,7 +251,7 @@ export default function WorkoutScreen() {
                   key={routine.id}
                   routine={routine}
                   theme={theme}
-                  subtitle={routineSubtitle(routine)}
+                  meta={routineMeta(routine)}
                   topDivider={index > 0}
                   onPress={() => openRoutine(routine.id)}
                 />
@@ -504,15 +497,7 @@ function LibraryPreview({
       <SectionHeader
         title={t('workoutTab.library')}
         eyebrow={t('workoutTab.liveFromWger')}
-        action={
-          <Button
-            label={t('workoutTab.browse')}
-            size="sm"
-            variant="quiet"
-            trailingIcon="chevronRight"
-            onPress={onBrowse}
-          />
-        }
+        action={{ label: t('workoutTab.browse'), onPress: onBrowse }}
       />
       {loading ? (
         <SkeletonCard lines={1} />
@@ -602,15 +587,18 @@ function shortLabel(name: string): string {
   return clean.length <= 5 ? clean : `${clean.slice(0, 4)}.`;
 }
 
-function routineSubtitle(routine: Routine): string {
-  const parts = [
-    `${routine.items.length} ${tr('workoutTab.exerciseWord', { count: routine.items.length })}`,
+function routineMeta(routine: Routine): MetaItem[] {
+  const items: MetaItem[] = [
+    {
+      icon: 'layers',
+      label: `${routine.items.length} ${tr('workoutTab.exerciseWord', { count: routine.items.length })}`,
+    },
   ];
   if (routine.timesCompleted > 0) {
-    parts.push(tr('workoutTab.doneTimes', { count: routine.timesCompleted }));
+    items.push({ icon: 'checkCircle', label: tr('workoutTab.doneTimes', { count: routine.timesCompleted }) });
   }
-  if (routine.lastPerformedAt !== null) parts.push(formatAgo(routine.lastPerformedAt));
-  return parts.join(' · ');
+  if (routine.lastPerformedAt !== null) items.push({ icon: 'calendar', label: formatAgo(routine.lastPerformedAt) });
+  return items;
 }
 
 const styles = StyleSheet.create({

@@ -191,16 +191,18 @@ export const Card = memo(function Card({
   const surface = cardSurface(theme, tone);
   const interactive = Boolean(onPress || onLongPress);
 
+  // The platform skin decides radius, colour, hairline and depth: an inset-grouped card on
+  // iOS, a Material tonal surface on Android. Screens never branch on this themselves.
   const base: StyleProp<ViewStyle> = [
     {
       backgroundColor: surface.background,
-      borderRadius: radius.lg,
+      borderRadius: theme.surfaceSkin.radius,
       padding: spacing[padding],
       borderWidth: surface.border,
       borderColor: surface.borderColor,
       overflow: 'hidden',
     },
-    tone === 'raised' ? theme.shadows.card : null,
+    tone === 'raised' && theme.surfaceSkin.shadow ? theme.shadows.card : null,
     style,
   ];
 
@@ -232,9 +234,13 @@ function cardSurface(
 ): { background: string; border: number; borderColor: string } {
   switch (tone) {
     case 'flat':
-      return { background: theme.colors.surface, border: 0, borderColor: 'transparent' };
+      return { background: theme.colors[theme.surfaceSkin.surface], border: 0, borderColor: 'transparent' };
     case 'raised':
-      return { background: theme.colors.surface, border: 1, borderColor: theme.colors.hairline };
+      return {
+        background: theme.colors[theme.surfaceSkin.surface],
+        border: theme.surfaceSkin.separator === 'hairline' ? 1 : 0,
+        borderColor: theme.colors.hairline,
+      };
     case 'sunken':
       // The canvas colour is the *recessed* tone in both palettes: darker ink in
       // dark mode, warmer paper in light. It is a different token from
@@ -247,12 +253,6 @@ function cardSurface(
   }
 }
 
-/**
- * Section heading with an optional trailing action. The `eyebrow` is the small
- * uppercase line that lets a screen have several sections that scan in a second;
- * the count is passed separately so it can be announced with the section rather
- * than read as a stray number.
- */
 /**
  * Frosted (iOS) or solid (Android) backing for anything that floats over scrolling
  * content: the tab bar, the workout footer.
@@ -344,41 +344,6 @@ function liquidGlass(): boolean {
   }
   return liquidGlassCache;
 }
-
-export const SectionHeader = memo(function SectionHeader({
-  title,
-  eyebrow,
-  count,
-  action,
-  style,
-}: {
-  title: string;
-  eyebrow?: string;
-  count?: number;
-  action?: ReactNode;
-  style?: StyleProp<ViewStyle>;
-}) {
-  return (
-    <Row align="end" justify="between" style={[{ marginBottom: spacing.md }, style]}>
-      <Stack gap="xxs" style={{ flexShrink: 1 }}>
-        {eyebrow ? (
-          <Txt variant="micro" tone="faint" uppercase tracking={0.8}>
-            {eyebrow}
-          </Txt>
-        ) : null}
-        <Row gap="sm">
-          <Txt variant="title">{title}</Txt>
-          {count === undefined ? null : (
-            <Txt variant="label" tone="faint" style={{ marginTop: 3 }}>
-              {count}
-            </Txt>
-          )}
-        </Row>
-      </Stack>
-      {action}
-    </Row>
-  );
-});
 
 /** 2/3/4-up metric grid. `columns` is explicit because a grid that reflows
  * unpredictably makes a dashboard impossible to scan by eye position. */

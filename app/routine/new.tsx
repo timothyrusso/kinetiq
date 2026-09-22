@@ -34,10 +34,10 @@ import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
 import { MetaLine, type MetaItem } from '@/ui/display';
 import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { usePreventRemove } from 'expo-router/react-navigation';
-import { Button } from '@/ui/controls/Button';
 import { KeyboardAvoid } from '@/ui/layout';
 import { TextInput } from '@/ui/controls/TextInput';
-import { Card, Row, SectionHeader, Stack as Column } from '@/ui/layout';
+import { Card, Row, Stack as Column } from '@/ui/layout';
+import { SectionHeader } from '@/ui/display';
 import { Txt } from '@/ui/Text';
 import { Icon } from '@/ui/icons';
 import { EmptyState } from '@/ui/states';
@@ -229,18 +229,10 @@ export default function NewRoutineScreen() {
               <SectionHeader
                 title={t('newRoutine.exercises')}
                 eyebrow={`${rows.length} ${t('newRoutine.rowWord', { count: rows.length })}`}
-                action={
-                  <Button
-                    label={t('common.add')}
-                    variant="quiet"
-                    size="sm"
-                    icon="plus"
-                    onPress={() => {
+                action={{ label: t('common.add'), onPress: () => {
                       haptics.light();
                       router.push(routes.pickExercise('draft'));
-                    }}
-                  />
-                }
+                    } }}
               />
               {/* No Card: `ListRow` carries its own horizontal padding and hairline, so a
                   bordered box around it would inset the dividers short of the edges. */}

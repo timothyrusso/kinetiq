@@ -14,7 +14,7 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { Theme } from '@/theme/theme';
 import { spacing } from '@/theme/tokens';
 import { Icon, ICON_SIZE } from '@/ui/icons';
-import { CellText } from '@/ui/rows';
+import { CellText } from '@/ui/CellText';
 import type { MetaItem } from './types';
 
 export const MetaLine = memo(function MetaLine({

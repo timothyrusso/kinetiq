@@ -39,6 +39,7 @@ import { spacing } from '@/theme/tokens';
 import { useDebouncedValue, useIsSettling } from '@/utils/useDebouncedValue';
 import type { Exercise, ExerciseFilter } from '@/domain/types';
 import { useT } from '@/i18n/useT';
+import { exerciseTags } from '@/ui/display/exerciseTags';
 
 /**
  * Rows the sheet renders before asking for more.
@@ -237,7 +238,8 @@ function PickerRow({
     <ListRow
       theme={theme}
       title={exercise.name}
-      subtitle={pickerSubtitle(exercise)}
+      tags={exerciseTags(exercise)}
+      tagsMax={2}
       onPress={included ? undefined : onPress}
       disabled={included}
       style={{
@@ -265,16 +267,4 @@ function PickerRow({
       }
     />
   );
-}
-
-/**
- * The row's second line.
- *
- * The same order the rest of the app uses for an exercise's caption: muscles, then category,
- * then a bare "Exercise": because two screens falling back to two different words for the
- * same missing field is how a library starts to look unfinished.
- */
-function pickerSubtitle(exercise: Exercise): string {
-  if (exercise.primaryMuscles.length > 0) return exercise.primaryMuscles.join(', ');
-  return exercise.category ?? 'Exercise';
 }

@@ -48,6 +48,7 @@ import type { ExerciseSnapshot, RoutineItem } from '@/domain/types';
 import type { ItemTarget } from '@/routines/draft';
 import { useT } from '@/i18n/useT';
 import { tr } from '@/i18n/tr';
+import type { MetaItem } from '@/ui/display/types';
 
 /** A row's position, in the form the row needs to draw its move controls. */
 export type ItemPosition = {
@@ -92,7 +93,10 @@ export const RoutineItemRow = memo(function RoutineItemRow({
       <ListRow
         theme={theme}
         title={item.exerciseName}
-        subtitle={itemSubtitle(item, snapshot, units)}
+        meta={itemMeta(item, units)}
+        {...(snapshot?.primaryMuscles[0]
+          ? { tags: [{ key: 'muscle', label: snapshot.primaryMuscles[0] }] }
+          : {})}
         {...(onPress === undefined ? {} : { onPress })}
         {...(onLongPress === undefined ? {} : { onLongPress })}
         {...(onPress === undefined ? {} : { accessibilityHint: t('itemEditor.editHint') })}
@@ -341,15 +345,12 @@ export const ItemEditorForm = memo(function ItemEditorForm({
  * formatted; reps and sets are unit-free. A missing snapshot costs the muscle name and
  * nothing else: which is exactly why the exercise name is stored on the item.
  */
-export function itemSubtitle(
-  item: RoutineItem,
-  snapshot: ExerciseSnapshot | null,
-  units: UnitSystem,
-): string {
+function itemMeta(item: RoutineItem, units: UnitSystem): MetaItem[] {
   const load = item.weightKg === 0 ? tr('itemEditor.bodyweightShort') : formatWeight(item.weightKg, units);
-  const targets = `${item.sets} × ${item.reps} · ${load}`;
-  const muscle = snapshot?.primaryMuscles[0];
-  return muscle ? `${targets} · ${muscle}` : targets;
+  return [
+    { icon: 'layers', label: `${item.sets} × ${item.reps}` },
+    { icon: 'dumbbell', label: load },
+  ];
 }
 
 function sheetSubtitle(item: RoutineItem, snapshot: ExerciseSnapshot | null): string {

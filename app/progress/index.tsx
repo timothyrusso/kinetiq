@@ -54,7 +54,8 @@ import { useRouter } from 'expo-router';
 
 import { ScreenHeader, ScreenScroll } from '@/ui/Screen';
 import { MetaLine } from '@/ui/display';
-import { Card, Divider, MetricGrid, Row, SectionHeader, Stack } from '@/ui/layout';
+import { Card, Divider, MetricGrid, Row, Stack } from '@/ui/layout';
+import { SectionHeader } from '@/ui/display';
 import { Chip } from '@/ui/controls/Chip';
 import { IconTile } from '@/ui/icons';
 import { ListRow } from '@/ui/rows';
@@ -252,7 +253,7 @@ export default function ProgressScreen() {
                 <SectionHeader
                   title={t('progress.personalRecords')}
                   eyebrow={t('progress.allTime')}
-                  count={recordsQuery.data?.length}
+                  counter={recordsQuery.data?.length}
                 />
                 <RecordsCard
                   records={recordsQuery.data}
@@ -682,7 +683,10 @@ function RecordsCard({
           key={`${record.exerciseId}:${record.kind}`}
           theme={theme}
           title={record.exerciseName}
-          subtitle={`${t(RECORD_LABEL[record.kind])} · ${formatShortDate(record.achievedAt)}`}
+          meta={[
+            { icon: 'trophy', label: t(RECORD_LABEL[record.kind]) },
+            { icon: 'calendar', label: formatShortDate(record.achievedAt) },
+          ]}
           leading={
             <IconTile
               name="trophy"
