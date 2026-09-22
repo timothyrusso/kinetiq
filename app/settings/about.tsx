@@ -45,7 +45,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ScreenHeader } from '@/ui/Screen';
 import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
 import { Card, Divider, SectionHeader, Stack } from '@/ui/layout';
-import { IconButton } from '@/ui/Button';
+import { IconButton } from '@/ui/controls/IconButton';
 import { Txt } from '@/ui/Text';
 import { Icon } from '@/ui/icons';
 import { getExerciseProvider } from '@/api';

@@ -33,11 +33,11 @@ import {
   weightUnit,
   weightValue,
 } from '@/utils/format';
-import { Button } from './Button';
+import { Button } from '@/ui/controls/Button';
 import { withAlpha } from '@/utils/color';
-import { IconButton } from './Button';
+import { IconButton } from '@/ui/controls/IconButton';
 import { Row } from './layout';
-import { Stepper } from './controls';
+import { Stepper } from '@/ui/controls/Stepper';
 import { MetricLabel, Txt } from './Text';
 import { FormFooter, FormSection } from './FormSheet';
 import { ConfirmDialog } from './controls/ConfirmDialog';

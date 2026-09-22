@@ -38,7 +38,10 @@ import { useScreenContentBottom } from '@/ui/insets';
 
 import { ScreenHeader } from '@/ui/Screen';
 import { Card, Divider, Row, SectionHeader, Stack } from '@/ui/layout';
-import { Chip, SegmentedControl, Stepper, Toggle } from '@/ui/controls';
+import { Chip } from '@/ui/controls/Chip';
+import { SegmentedControl } from '@/ui/controls/SegmentedControl';
+import { Stepper } from '@/ui/controls/Stepper';
+import { Toggle } from '@/ui/controls';
 import { Txt } from '@/ui/Text';
 import { useSettings, useSettingsUpdate } from '@/settings';
 import { GOAL_PRESETS, REST_PRESETS } from '@/settings';
@@ -169,8 +172,8 @@ export default function SettingsTrainingScreen() {
                   value={speedInsteadOfPace ? 'speed' : 'pace'}
                   onChange={(next) => update({ showSpeedInsteadOfPace: next === 'speed' })}
                   segments={[
-                    { value: 'pace', label: t('cardio.pace'), icon: 'timer' },
-                    { value: 'speed', label: t('cardio.speed'), icon: 'bolt' },
+                    { value: 'pace', label: t('cardio.pace') },
+                    { value: 'speed', label: t('cardio.speed') },
                   ]}
                 />
                 <Txt variant="micro" tone="faint">

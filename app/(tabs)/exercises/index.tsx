@@ -44,9 +44,9 @@ import { MetaLine } from '@/ui/display';
 import { HeaderSearchBar, HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { ExerciseRow } from '@/ui/rows';
 import { Badge, Row } from '@/ui/layout';
-import { Chip } from '@/ui/controls';
+import { Chip } from '@/ui/controls/Chip';
 import { Txt } from '@/ui/Text';
-import { Button } from '@/ui/Button';
+import { Button } from '@/ui/controls/Button';
 import { EmptyState, ErrorState, SkeletonList, ThemedRefreshControl } from '@/ui/states';
 import { useExerciseSearch, useExerciseTaxonomy } from '@/queries/useExercises';
 import {

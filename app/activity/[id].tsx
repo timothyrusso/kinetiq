@@ -55,7 +55,7 @@ import {
 } from '@/ui/layout';
 import { MetricLabel, Txt } from '@/ui/Text';
 import { Icon, type IconName } from '@/ui/icons';
-import { ActionRow } from '@/ui/Button';
+import { ActionRow } from '@/ui/rows';
 import { ACTIVITY_ICON } from '@/ui/rows';
 import { EmptyState, ErrorState, SkeletonCard } from '@/ui/states';
 import { RouteMap } from '@/ui/RouteMap';

@@ -25,7 +25,7 @@ import { useAppTheme } from '@/theme/theme';
 import { haptics } from '@/services/haptics';
 import { isOfflineError } from '@/api';
 import { useShimmer } from './animation';
-import { Button } from './Button';
+import { Button } from '@/ui/controls/Button';
 import { Icon, type IconName } from './icons';
 import { Stack } from './layout';
 import { Txt } from './Text';

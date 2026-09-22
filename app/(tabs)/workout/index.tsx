@@ -48,13 +48,13 @@ import {
 import { useRouter, useIsFocused } from 'expo-router';
 import { useTabContentBottom } from '@/ui/insets';
 
-import { Button } from '@/ui/Button';
+import { Button } from '@/ui/controls/Button';
 import { Card, Row, SectionHeader } from '@/ui/layout';
 import { SCROLL_INSETS, ScreenHeader } from '@/ui/Screen';
 import { MetaLine } from '@/ui/display';
 import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { ExerciseThumb, RoutineRow } from '@/ui/rows';
-import { SegmentedControl } from '@/ui/controls';
+import { SegmentedControl } from '@/ui/controls/SegmentedControl';
 import { MetricLabel, Txt } from '@/ui/Text';
 import { Icon } from '@/ui/icons';
 import { EmptyState, ErrorState, SkeletonCard } from '@/ui/states';
@@ -225,12 +225,13 @@ export default function WorkoutScreen() {
             }
           />
           {routines.routines.length > 1 ? (
-            <SegmentedControl
-              segments={ORDER_SEGMENTS.map((seg) => ({ value: seg.value, label: t(seg.label) }))}
-              value={order}
-              onChange={setOrder}
-              style={{ marginBottom: spacing.md }}
-            />
+            <View style={{ marginBottom: spacing.md }}>
+              <SegmentedControl
+                segments={ORDER_SEGMENTS.map((seg) => ({ value: seg.value, label: t(seg.label) }))}
+                value={order}
+                onChange={setOrder}
+              />
+            </View>
           ) : null}
 
           {routines.isLoading ? (

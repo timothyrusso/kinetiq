@@ -19,8 +19,8 @@ import {
 } from '@/queries/exerciseFilters';
 import { useExerciseTaxonomy } from '@/queries/useExercises';
 import { spacing } from '@/theme/tokens';
-import { Button } from '@/ui/Button';
-import { Chip } from '@/ui/controls';
+import { Button } from '@/ui/controls/Button';
+import { Chip } from '@/ui/controls/Chip';
 import { FormSheet } from '@/ui/FormSheet';
 import { Txt } from '@/ui/Text';
 

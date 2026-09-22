@@ -55,7 +55,7 @@ import { useRouter } from 'expo-router';
 import { ScreenHeader, ScreenScroll } from '@/ui/Screen';
 import { MetaLine } from '@/ui/display';
 import { Card, Divider, MetricGrid, Row, SectionHeader, Stack } from '@/ui/layout';
-import { Chip } from '@/ui/controls';
+import { Chip } from '@/ui/controls/Chip';
 import { IconTile } from '@/ui/icons';
 import { ListRow } from '@/ui/rows';
 import { MetricLabel, Txt } from '@/ui/Text';

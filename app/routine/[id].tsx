@@ -48,7 +48,7 @@ import {
   headerMenu,
   type HeaderMenuItem,
 } from '@/navigation/HeaderAction';
-import { Button } from '@/ui/Button';
+import { Button } from '@/ui/controls/Button';
 import { Card, Row, SectionHeader, Stack as Column } from '@/ui/layout';
 import { Txt } from '@/ui/Text';
 import { Icon } from '@/ui/icons';

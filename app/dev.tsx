@@ -55,8 +55,8 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { ScreenHeader } from '@/ui/Screen';
 import { Card, Divider, SectionHeader, Stack } from '@/ui/layout';
-import { Button } from '@/ui/Button';
-import { Stepper } from '@/ui/controls';
+import { Button } from '@/ui/controls/Button';
+import { Stepper } from '@/ui/controls/Stepper';
 import { Txt } from '@/ui/Text';
 import { Icon, type IconName } from '@/ui/icons';
 import {

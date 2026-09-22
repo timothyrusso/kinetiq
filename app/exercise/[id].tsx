@@ -60,8 +60,9 @@ import {
 } from '@/ui/layout';
 import { MetricLabel, Txt } from '@/ui/Text';
 import { Icon } from '@/ui/icons';
-import { ActionRow, Button } from '@/ui/Button';
-import { Chip } from '@/ui/controls';
+import { ActionRow } from '@/ui/rows';
+import { Button } from '@/ui/controls/Button';
+import { Chip } from '@/ui/controls/Chip';
 import { ExerciseRow, ExerciseThumb, ListRow } from '@/ui/rows';
 import { EmptyState, ErrorState, SkeletonCard } from '@/ui/states';
 import {

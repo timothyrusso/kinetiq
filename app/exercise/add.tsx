@@ -37,8 +37,9 @@ import { router, useLocalSearchParams } from 'expo-router';
 
 import { Screen, ScreenHeader } from '@/ui/Screen';
 import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
-import { Button } from '@/ui/Button';
-import { Chip, Stepper } from '@/ui/controls';
+import { Button } from '@/ui/controls/Button';
+import { Chip } from '@/ui/controls/Chip';
+import { Stepper } from '@/ui/controls/Stepper';
 import { KeyboardAvoid, TextField } from '@/ui/TextField';
 import { Card, Gap, Row, SectionHeader, Stack as Column } from '@/ui/layout';
 import { Txt } from '@/ui/Text';
@@ -348,19 +349,20 @@ export default function AddExerciseScreen() {
                       style={{ flex: 1 }}
                       maxLength={6}
                     />
-                    <Stepper
-                      label={t('addExercise.weightPerSet', { unit: weightUnit(units) })}
-                      compact
-                      value={parseWeight(draft.weight, units)}
-                      onChange={(next) =>
-                        setDraft((d) => ({ ...d, weight: next === 0 ? '' : String(next) }))
-                      }
-                      min={0}
-                      max={units === 'imperial' ? 1000 : 450}
-                      step={weightStep(units)}
-                      suffix={weightUnit(units)}
-                      style={{ paddingTop: 22 }}
-                    />
+                    <View style={{ paddingTop: 22 }}>
+                      <Stepper
+                        label={t('addExercise.weightPerSet', { unit: weightUnit(units) })}
+                        compact
+                        value={parseWeight(draft.weight, units)}
+                        onChange={(next) =>
+                          setDraft((d) => ({ ...d, weight: next === 0 ? '' : String(next) }))
+                        }
+                        min={0}
+                        max={units === 'imperial' ? 1000 : 450}
+                        step={weightStep(units)}
+                        suffix={weightUnit(units)}
+                      />
+                    </View>
                   </Row>
 
                   <Row gap="md" align="center">
@@ -375,17 +377,18 @@ export default function AddExerciseScreen() {
                       style={{ flex: 1 }}
                       maxLength={4}
                     />
-                    <Stepper
-                      label={t('addExercise.restBetweenSets')}
-                      compact
-                      value={clampInt(draft.rest, 0, 600, defaultRest)}
-                      onChange={(next) => setDraft((d) => ({ ...d, rest: String(next) }))}
-                      min={0}
-                      max={600}
-                      step={15}
-                      suffix="s"
-                      style={{ paddingTop: 22 }}
-                    />
+                    <View style={{ paddingTop: 22 }}>
+                      <Stepper
+                        label={t('addExercise.restBetweenSets')}
+                        compact
+                        value={clampInt(draft.rest, 0, 600, defaultRest)}
+                        onChange={(next) => setDraft((d) => ({ ...d, rest: String(next) }))}
+                        min={0}
+                        max={600}
+                        step={15}
+                        suffix="s"
+                      />
+                    </View>
                   </Row>
 
                   <TextField

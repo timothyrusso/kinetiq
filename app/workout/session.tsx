@@ -79,9 +79,10 @@ import {
 } from '@/utils/format';
 import { useAppTheme } from '@/theme/theme';
 import { spacing, z, screenGutter } from '@/theme/tokens';
-import { Button, IconButton } from '@/ui/Button';
+import { Button } from '@/ui/controls/Button';
+import { IconButton } from '@/ui/controls/IconButton';
 import { Card, OverlaySurface, Row, SectionHeader } from '@/ui/layout';
-import { Chip } from '@/ui/controls';
+import { Chip } from '@/ui/controls/Chip';
 import { MetricLabel, Txt } from '@/ui/Text';
 import { EmptyState, SkeletonCard } from '@/ui/states';
 import { Icon } from '@/ui/icons';

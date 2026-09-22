@@ -23,7 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Screen } from '@/ui/Screen';
 import { Stack as Column } from '@/ui/layout';
-import { Button } from '@/ui/Button';
+import { Button } from '@/ui/controls/Button';
 import { Txt } from '@/ui/Text';
 import { screenGutter, spacing } from '@/theme/tokens';
 import { TAB_ROUTES, TAB_LABELS, tabHref } from '@/navigation/nav';

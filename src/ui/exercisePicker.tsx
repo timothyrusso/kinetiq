@@ -24,8 +24,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button } from '@/ui/Button';
-import { Chip } from '@/ui/controls';
+import { Button } from '@/ui/controls/Button';
+import { Chip } from '@/ui/controls/Chip';
 import { TextField } from '@/ui/TextField';
 import { Row } from '@/ui/layout';
 import { Txt } from '@/ui/Text';

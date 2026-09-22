@@ -40,8 +40,10 @@ import { useScreenContentBottom } from '@/ui/insets';
 
 import { ScreenHeader } from '@/ui/Screen';
 import { Card, Divider, Row, SectionHeader, Stack } from '@/ui/layout';
-import { Chip, Toggle } from '@/ui/controls';
-import { Button, IconButton } from '@/ui/Button';
+import { Chip } from '@/ui/controls/Chip';
+import { Toggle } from '@/ui/controls';
+import { Button } from '@/ui/controls/Button';
+import { IconButton } from '@/ui/controls/IconButton';
 import { Txt } from '@/ui/Text';
 import { useSettings, useSettingsUpdate } from '@/settings';
 import type { ReminderSettings } from '@/settings';

@@ -34,7 +34,7 @@ import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
 import { MetaLine, type MetaItem } from '@/ui/display';
 import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { usePreventRemove } from 'expo-router/react-navigation';
-import { Button } from '@/ui/Button';
+import { Button } from '@/ui/controls/Button';
 import { KeyboardAvoid, TextField } from '@/ui/TextField';
 import { Card, Row, SectionHeader, Stack as Column } from '@/ui/layout';
 import { Txt } from '@/ui/Text';

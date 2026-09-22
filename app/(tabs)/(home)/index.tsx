@@ -41,7 +41,7 @@ import { LiveClock } from '@/ui/LiveClock';
 import { ActivityRow } from '@/ui/rows';
 import { Card, Divider, Row, SectionHeader, Stack } from '@/ui/layout';
 import { MetricLabel, Txt } from '@/ui/Text';
-import { Button } from '@/ui/Button';
+import { Button } from '@/ui/controls/Button';
 import { BarChart, type BarPoint } from '@/ui/charts/BarChart';
 import { ActivityDistribution, type DistributionSlice } from '@/ui/charts/ActivityDistribution';
 import { ProgressRing } from '@/ui/charts/ProgressRing';

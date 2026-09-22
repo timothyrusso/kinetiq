@@ -39,7 +39,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { Button } from '@/ui/Button';
+import { Button } from '@/ui/controls/Button';
 import { Row } from '@/ui/layout';
 import { RouteTrace } from '@/ui/charts/RouteTrace';
 import { Txt } from '@/ui/Text';

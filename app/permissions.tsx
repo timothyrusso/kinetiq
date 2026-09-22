@@ -40,7 +40,7 @@ import { useRouter } from 'expo-router';
 
 import { ScreenHeader } from '@/ui/Screen';
 import { Card, Divider, Row, SectionHeader, Stack } from '@/ui/layout';
-import { Button } from '@/ui/Button';
+import { Button } from '@/ui/controls/Button';
 import { Toggle } from '@/ui/controls';
 import { Txt } from '@/ui/Text';
 import { Icon } from '@/ui/icons';

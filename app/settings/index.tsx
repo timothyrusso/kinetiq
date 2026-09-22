@@ -50,7 +50,7 @@ import { useScreenContentBottom } from '@/ui/insets';
 import { ScreenHeader } from '@/ui/Screen';
 import { NavRow } from '@/ui/rows';
 import { Card, Divider, SectionHeader, Stack } from '@/ui/layout';
-import { Button } from '@/ui/Button';
+import { Button } from '@/ui/controls/Button';
 import { TextField } from '@/ui/TextField';
 import { Txt } from '@/ui/Text';
 import { useAllSettings, useSettingsUpdate } from '@/settings';
