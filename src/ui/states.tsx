@@ -10,10 +10,11 @@
  * a metric card means the layout will not jump when data arrives, which is the whole
  * point; a spinner in the middle of an empty page means everything moves twice.
  */
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 import {
   Pressable,
   RefreshControl,
+  type RefreshControlProps,
   View,
   type StyleProp,
   type ViewStyle,
@@ -367,27 +368,31 @@ export function ThemedRefreshControl({
   refreshing,
   onRefresh,
   progressViewOffset,
-}: {
+  ...forwarded
+}: Omit<RefreshControlProps, 'refreshing' | 'onRefresh'> & {
   refreshing: boolean;
   onRefresh: () => void;
   progressViewOffset?: number;
 }) {
   const theme = useAppTheme();
-  return useMemo(
-    () => (
-      <RefreshControl
-        refreshing={refreshing}
-        onRefresh={() => {
-          haptics.light();
-          onRefresh();
-        }}
-        tintColor={theme.colors.accent}
-        colors={[theme.colors.accent]}
-        progressBackgroundColor={theme.colors.surface}
-        {...(progressViewOffset === undefined ? {} : { progressViewOffset })}
-      />
-    ),
-    [onRefresh, progressViewOffset, refreshing, theme.colors.accent, theme.colors.surface],
+  // Everything else is forwarded, children included, and that is load-bearing on Android: a
+  // ScrollView there renders INSIDE its refresh control (React Native clones the element and
+  // hands it the list as a child). A wrapper that dropped its children rendered every
+  // FlashList screen blank on Android, while iOS, which nests the control the other way
+  // round, looked fine.
+  return (
+    <RefreshControl
+      {...forwarded}
+      refreshing={refreshing}
+      onRefresh={() => {
+        haptics.light();
+        onRefresh();
+      }}
+      tintColor={theme.colors.accent}
+      colors={[theme.colors.accent]}
+      progressBackgroundColor={theme.colors.surface}
+      {...(progressViewOffset === undefined ? {} : { progressViewOffset })}
+    />
   );
 }
 
