@@ -65,7 +65,7 @@ import { Button } from '@/ui/controls/Button';
 import { Chip } from '@/ui/controls/Chip';
 import { MetricLabel, Txt } from '@/ui/Text';
 import { Icon, type IconName } from '@/ui/icons';
-import { TextField } from '@/ui/TextField';
+import { TextInput } from '@/ui/controls/TextInput';
 import { EmptyState } from '@/ui/states';
 import { RouteMap } from '@/ui/RouteMap';
 import { degradationMessage, recorder } from '@/services/location';
@@ -576,7 +576,7 @@ function StartPanel({
             </Row>
           </View>
 
-          <TextField
+          <TextInput
             label={t('cardio.nameLabel')}
             value={title}
             onChangeText={onTitle}

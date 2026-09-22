@@ -11,7 +11,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useT } from '@/i18n/useT';
 import { useActivity, useUpdateActivityNotes } from '@/queries/useActivities';
 import { FormSheet, closeSheet } from '@/ui/FormSheet';
-import { TextField } from '@/ui/TextField';
+import { TextInput } from '@/ui/controls/TextInput';
 
 export default function ActivityNotesSheet() {
   const { t } = useT();
@@ -33,7 +33,7 @@ export default function ActivityNotesSheet() {
       onDone={commit}
       doneDisabled={saveNotes.isPending}
     >
-      <TextField
+      <TextInput
         label={t('activity.notesLabel')}
         value={draft}
         onChangeText={(text) => {

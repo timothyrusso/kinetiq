@@ -45,7 +45,7 @@ import { Row } from '@/ui/layout';
 import { MetricLabel, Txt } from '@/ui/Text';
 import { Chip } from '@/ui/controls/Chip';
 import { SegmentedControl } from '@/ui/controls/SegmentedControl';
-import { TextField } from '@/ui/TextField';
+import { TextInput } from '@/ui/controls/TextInput';
 import { Button } from '@/ui/controls/Button';
 import { EmptyState, ErrorState, SkeletonList, ThemedRefreshControl } from '@/ui/states';
 import { useActivityList, useDeleteActivity } from '@/queries/useActivities';
@@ -212,7 +212,7 @@ export default function ActivitiesScreen() {
       <MetaLine items={summary} theme={theme} wrap style={styles.summary} />
 
       <View style={styles.filters}>
-        <TextField
+        <TextInput
           label={t('activityList.search')}
           value={search}
           onChangeText={setSearch}

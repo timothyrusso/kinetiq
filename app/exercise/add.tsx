@@ -40,7 +40,8 @@ import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { Button } from '@/ui/controls/Button';
 import { Chip } from '@/ui/controls/Chip';
 import { Stepper } from '@/ui/controls/Stepper';
-import { KeyboardAvoid, TextField } from '@/ui/TextField';
+import { KeyboardAvoid } from '@/ui/layout';
+import { TextInput } from '@/ui/controls/TextInput';
 import { Card, Gap, Row, SectionHeader, Stack as Column } from '@/ui/layout';
 import { Txt } from '@/ui/Text';
 import { Icon } from '@/ui/icons';
@@ -264,28 +265,24 @@ export default function AddExerciseScreen() {
                 {effectiveTarget === NEW_ROUTINE ? (
                   <Column gap="md" style={styles.section}>
                     <SectionHeader title={t('addExercise.newRoutine')} />
-                    <TextField
+                    <TextInput
                       label={t('addExercise.routineName')}
                       value={draft.name}
                       onChangeText={field('name')}
                       placeholder={t('addExercise.routineNamePlaceholder')}
-                      placeholderTextColor={theme.colors.textFaint}
                       returnKeyType="done"
                       onSubmitEditing={() => {
                         void save();
                       }}
-                      blurOnSubmit
                       autoCapitalize="words"
-                      autoComplete="off"
                       error={needsName ? t('addExercise.nameRequired') : null}
                       accessibilityHint={t('addExercise.nameHint')}
                     />
-                    <TextField
+                    <TextInput
                       label={t('addExercise.description')}
                       value={draft.description}
                       onChangeText={field('description')}
                       placeholder={t('addExercise.descriptionPlaceholder')}
-                      placeholderTextColor={theme.colors.textFaint}
                       returnKeyType="done"
                       autoCapitalize="sentences"
                       multiline
@@ -317,7 +314,7 @@ export default function AddExerciseScreen() {
                     eyebrow={t('addExercise.targetsEyebrow')}
                   />
                   <Row gap="md">
-                    <TextField
+                    <TextInput
                       label={t('addExercise.sets')}
                       value={draft.sets}
                       onChangeText={field('sets')}
@@ -326,7 +323,7 @@ export default function AddExerciseScreen() {
                       style={{ flex: 1 }}
                       maxLength={2}
                     />
-                    <TextField
+                    <TextInput
                       label={t('addExercise.reps')}
                       value={draft.reps}
                       onChangeText={field('reps')}
@@ -338,7 +335,7 @@ export default function AddExerciseScreen() {
                   </Row>
 
                   <Row gap="md" align="center">
-                    <TextField
+                    <TextInput
                       label={t('addExercise.weightIn', { unit: weightUnit(units) })}
                       value={draft.weight}
                       onChangeText={field('weight')}
@@ -366,7 +363,7 @@ export default function AddExerciseScreen() {
                   </Row>
 
                   <Row gap="md" align="center">
-                    <TextField
+                    <TextInput
                       label={t('addExercise.rest')}
                       value={draft.rest}
                       onChangeText={field('rest')}
@@ -391,12 +388,11 @@ export default function AddExerciseScreen() {
                     </View>
                   </Row>
 
-                  <TextField
+                  <TextInput
                     label={t('addExercise.cue')}
                     value={draft.notes}
                     onChangeText={field('notes')}
                     placeholder={t('addExercise.notesPlaceholder')}
-                    placeholderTextColor={theme.colors.textFaint}
                     returnKeyType="done"
                     autoCapitalize="sentences"
                     multiline

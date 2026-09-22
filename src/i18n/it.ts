@@ -1325,5 +1325,8 @@ export const it: Copy = {
     streakUnit_one: 'giorno',
     streakUnit_other: 'giorni',
   },
+  textInput: {
+    clear: 'Cancella {label}',
+  },
   // --- end foundation ---
 };

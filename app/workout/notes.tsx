@@ -9,7 +9,7 @@ import { useCallback, useState } from 'react';
 
 import { useT } from '@/i18n/useT';
 import { FormSheet, closeSheet } from '@/ui/FormSheet';
-import { TextField } from '@/ui/TextField';
+import { TextInput } from '@/ui/controls/TextInput';
 import { setSessionNotes, useWorkoutSession } from '@/workout/session';
 
 export default function SessionNotesSheet() {
@@ -25,7 +25,7 @@ export default function SessionNotesSheet() {
 
   return (
     <FormSheet title={t('session.notesTitle')} doneLabel="common.save" onDone={save}>
-      <TextField
+      <TextInput
         label={t('session.notesLabel')}
         value={draft}
         onChangeText={setDraft}

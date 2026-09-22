@@ -13,7 +13,7 @@ import { useRenameRoutine, useRoutine } from '@/queries/useRoutines';
 import { haptics } from '@/services/haptics';
 import { FormSheet, closeSheet } from '@/ui/FormSheet';
 import { Txt } from '@/ui/Text';
-import { TextField } from '@/ui/TextField';
+import { TextInput } from '@/ui/controls/TextInput';
 
 export default function RenameRoutineSheet() {
   const { t } = useT();
@@ -54,7 +54,7 @@ export default function RenameRoutineSheet() {
       <Txt variant="caption" tone="muted">
         {t('routine.renameHint')}
       </Txt>
-      <TextField
+      <TextInput
         label={t('routine.nameLabel')}
         value={name}
         onChangeText={(next) => {

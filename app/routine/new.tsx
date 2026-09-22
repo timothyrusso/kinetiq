@@ -35,7 +35,8 @@ import { MetaLine, type MetaItem } from '@/ui/display';
 import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { Button } from '@/ui/controls/Button';
-import { KeyboardAvoid, TextField } from '@/ui/TextField';
+import { KeyboardAvoid } from '@/ui/layout';
+import { TextInput } from '@/ui/controls/TextInput';
 import { Card, Row, SectionHeader, Stack as Column } from '@/ui/layout';
 import { Txt } from '@/ui/Text';
 import { Icon } from '@/ui/icons';
@@ -189,7 +190,7 @@ export default function NewRoutineScreen() {
         >
           <Column gap="md" style={{ paddingHorizontal: screenGutter }}>
             <MetaLine items={summary} theme={theme} wrap />
-            <TextField
+            <TextInput
               label={t('newRoutine.nameLabel')}
               value={draft.name}
               onChangeText={setDraftName}
@@ -202,7 +203,7 @@ export default function NewRoutineScreen() {
               returnKeyType="next"
               accessibilityHint={t('newRoutine.nameA11y')}
             />
-            <TextField
+            <TextInput
               label={t('newRoutine.notesLabel')}
               value={draft.description}
               onChangeText={setDraftDescription}

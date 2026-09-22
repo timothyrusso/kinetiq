@@ -26,7 +26,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/ui/controls/Button';
 import { Chip } from '@/ui/controls/Chip';
-import { TextField } from '@/ui/TextField';
+import { TextInput } from '@/ui/controls/TextInput';
 import { Row } from '@/ui/layout';
 import { Txt } from '@/ui/Text';
 import { Icon } from '@/ui/icons';
@@ -110,7 +110,7 @@ export function ExercisePicker({
           {error}
         </Txt>
       ) : null}
-      <TextField
+      <TextInput
         label={t('picker.search')}
         value={query}
         onChangeText={setQuery}

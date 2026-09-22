@@ -51,7 +51,7 @@ import { ScreenHeader } from '@/ui/Screen';
 import { NavRow } from '@/ui/rows';
 import { Card, Divider, SectionHeader, Stack } from '@/ui/layout';
 import { Button } from '@/ui/controls/Button';
-import { TextField } from '@/ui/TextField';
+import { TextInput } from '@/ui/controls/TextInput';
 import { Txt } from '@/ui/Text';
 import { useAllSettings, useSettingsUpdate } from '@/settings';
 import type { Profile, SettingsState } from '@/settings';
@@ -209,7 +209,7 @@ function ProfileForm({
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Stack gap="lg">
-        <TextField
+        <TextInput
           label={t('settings.name')}
           value={draft.name}
           onChangeText={set('name')}
@@ -221,7 +221,7 @@ function ProfileForm({
           hint={t('settingsScreen.nameHint')}
           maxLength={40}
         />
-        <TextField
+        <TextInput
           label={t('settings.height')}
           value={draft.heightCm}
           onChangeText={set('heightCm')}
@@ -232,7 +232,7 @@ function ProfileForm({
           hint={t('settingsScreen.heightHint', { min: HEIGHT_MIN, max: HEIGHT_MAX })}
           maxLength={3}
         />
-        <TextField
+        <TextInput
           label={t('settings.birthYear')}
           value={draft.birthYear}
           onChangeText={set('birthYear')}

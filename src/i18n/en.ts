@@ -1313,6 +1313,9 @@ export const en = {
     streakUnit_one: 'day',
     streakUnit_other: 'days',
   },
+  textInput: {
+    clear: 'Clear {label}',
+  },
   // --- end foundation ---
 } as const;
 
