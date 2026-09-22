@@ -1293,6 +1293,27 @@ export const en = {
     saveFailed: 'Could not save. Nothing was lost, the routine is still here as you left it.',
     permissionDenied: 'Permission denied',
   },
+  // --- foundation ---
+  headerActions: {
+    settings: 'Settings',
+    filter: 'Filters',
+    add: 'Add',
+    more: 'More options',
+    play: 'Start',
+    delete: 'Delete',
+    save: 'Save',
+    done: 'Done',
+    edit: 'Edit',
+    share: 'Share',
+    search: 'Search',
+    cancel: 'Cancel',
+  },
+  homeHero: {
+    streakLabel: 'Current streak',
+    streakUnit_one: 'day',
+    streakUnit_other: 'days',
+  },
+  // --- end foundation ---
 } as const;
 
 /**

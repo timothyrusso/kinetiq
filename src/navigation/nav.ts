@@ -19,15 +19,16 @@
 import type { Href } from 'expo-router';
 import type { TKey } from '@/i18n';
 
-export type TabKey = 'index' | 'activities' | 'workout' | 'exercises' | 'profile';
+export type TabKey = '(home)' | 'activities' | 'workout' | 'exercises' | 'profile';
 
 /**
- * Tab routes in bar order. `index` rather than `home` because the folder is
- * `(tabs)/index.tsx`, and a mismatch here is the kind of typo that compiles under a
- * cast: which is precisely why the cast has one home.
+ * Tab routes in bar order. `(home)` rather than `home` because Home is the group
+ * `(tabs)/(home)/`: a group, not a folder, so its URL stays `/` while it still gets a
+ * stack of its own. A mismatch here is the kind of typo that compiles under a cast, which
+ * is precisely why the cast has one home.
  */
 export const TAB_ROUTES: readonly [TabKey, TabKey, TabKey, TabKey, TabKey] = [
-  'index',
+  '(home)',
   'activities',
   'workout',
   'exercises',
@@ -35,7 +36,7 @@ export const TAB_ROUTES: readonly [TabKey, TabKey, TabKey, TabKey, TabKey] = [
 ] as const;
 
 const TAB_HREFS: Record<TabKey, Href> = {
-  index: '/(tabs)' as Href,
+  '(home)': '/(tabs)' as Href,
   activities: '/activities' as Href,
   workout: '/workout' as Href,
   exercises: '/exercises' as Href,
@@ -46,8 +47,8 @@ const TAB_HREFS: Record<TabKey, Href> = {
  * What each tab is called in the bar.
  *
  * Lives here rather than beside the bar's own list because the not-found screen offers the
- * same five destinations as text and must not maintain a second spelling of them. `index` is
- * "Home" and not "Index": the group segment is a routing fact, the label is a product one.
+ * same five destinations as text and must not maintain a second spelling of them. `(home)` is
+ * "Home": the group segment is a routing fact, the label is a product one.
  */
 /**
  * Tab names as catalog KEYS.
@@ -57,7 +58,7 @@ const TAB_HREFS: Record<TabKey, Href> = {
  * reference a tab by name without rendering the bar, such as the not-found screen.
  */
 export const TAB_LABELS: Record<TabKey, TKey> = {
-  index: 'tabs.home',
+  '(home)': 'tabs.home',
   activities: 'tabs.activities',
   workout: 'tabs.workout',
   exercises: 'tabs.exercises',
@@ -65,7 +66,7 @@ export const TAB_LABELS: Record<TabKey, TKey> = {
 };
 
 export function tabHref(index: number): Href {
-  const key = TAB_ROUTES[index] ?? 'index';
+  const key = TAB_ROUTES[index] ?? '(home)';
   return TAB_HREFS[key];
 }
 
@@ -89,8 +90,9 @@ export function tabKeyForPathname(pathname: string): TabKey | undefined {
   const segments = pathname.split('/').filter(Boolean);
   // `(tabs)` is the group segment and is not part of any tab's URL.
   if (segments[0] === '(tabs)') segments.shift();
+  if (segments[0] === '(home)') segments.shift();
   const first = segments[0];
-  if (first === undefined) return 'index';
+  if (first === undefined) return '(home)';
   return (TAB_ROUTES as readonly string[]).includes(first) ? (first as TabKey) : undefined;
 }
 

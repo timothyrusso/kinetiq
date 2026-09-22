@@ -47,7 +47,16 @@ export const TAB_BAR_HEIGHT = 83;
  * navigation bar, 56pt the Material top app bar. Kept here so the two media screens cannot
  * drift apart, which is the rule the rest of this file exists for.
  */
-export const NATIVE_HEADER_HEIGHT = Platform.OS === 'ios' ? 44 : 56;
+const NATIVE_HEADER_HEIGHT = Platform.OS === 'ios' ? 44 : 56;
+
+/**
+ * Where the first readable content belongs under a TRANSPARENT header: the status bar plus the
+ * bar itself. Opaque headers need nothing, because the navigator lays content out below them.
+ */
+export function useTransparentHeaderInset(): number {
+  const insets = useSafeAreaInsets();
+  return insets.top + NATIVE_HEADER_HEIGHT;
+}
 
 /**
  * Vertical room the floating "workout in progress" pill needs above the bar: its own height
@@ -64,10 +73,11 @@ export const WORKOUT_PILL_SPACE = 44 + spacing.sm;
  */
 export function useTabContentBottom(extra = 0): number {
   const running = useWorkoutRunning();
-  // The measured bar band, plus the bottom accessory when a workout is running (the system does
-  // not account for the accessory), plus breathing room so the last row is not flush against
-  // the glass. No `insets.bottom` term: TAB_BAR_HEIGHT already spans the home indicator.
-  return TAB_BAR_HEIGHT + spacing.xl + (running ? WORKOUT_PILL_SPACE : 0) + extra;
+  // The bar itself is covered by the system: a tab's list uses automatic content insets, which
+  // include the tab bar and the home indicator. What is left is the bottom accessory while a
+  // workout runs (the system does not account for it) and breathing room, so the last row is
+  // not flush against the glass.
+  return spacing.xl + (running ? WORKOUT_PILL_SPACE : 0) + extra;
 }
 
 /**

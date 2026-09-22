@@ -30,20 +30,21 @@
  * just read would feel broken, not careful.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import type { NativeScrollEvent, NativeSyntheticEvent, TextInputFocusEventData } from 'react-native';
+import type { SearchBarCommands } from 'react-native-screens';
 import type { ExerciseFilter } from '@/domain/types';
 import { StyleSheet, View } from 'react-native';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import { useIsFocused, useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTabContentBottom } from '@/ui/insets';
 
-import { BarAction, CollapsibleHeader, CollapsibleHero, useScreenHeaderScroll } from '@/ui/Screen';
+import { SCROLL_INSETS, ScreenHeader } from '@/ui/Screen';
+import { MetaLine } from '@/ui/display';
+import { HeaderSearchBar, HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { ExerciseRow } from '@/ui/rows';
 import { Badge, Row } from '@/ui/layout';
 import { Chip } from '@/ui/controls';
-import { TextField } from '@/ui/TextField';
 import { Txt } from '@/ui/Text';
 import { Button } from '@/ui/Button';
 import { Sheet } from '@/ui/Sheet';
@@ -71,11 +72,9 @@ export default function ExercisesScreen() {
   const { t } = useT();
   const router = useRouter();
   const theme = useAppTheme();
-  const insets = useSafeAreaInsets();
   const bottomSpace = useTabContentBottom();
-  const header = useScreenHeaderScroll();
 
-  const { draft, filter } = useExerciseFilter();
+  const { filter } = useExerciseFilter();
   const settling = useIsQuerySettling();
   // Mounted is not the same as on screen. `NativeTabs` is a real UITabBarController and mounts
   // every tab's screen when the bar is built, so without this gate the catalog was fetched
@@ -170,13 +169,24 @@ export default function ExercisesScreen() {
       // that gap, so a list left scrolled by an earlier screen paged the new search anyway.
       // Storing the pair makes the question unambiguous and needs no effect at all.
       lastScroll.current = { y: event.nativeEvent.contentOffset.y, filter };
-      // The header's own handler is a plain callback that writes a shared value, not a
-      // worklet, so composing it here is safe: calling a captured JS function from a worklet
-      // is what aborts this app.
-      header.onScroll(event);
     },
-    [filter, header],
+    [filter],
   );
+
+  // The search lives in the native header. The bar keeps its own text, so the one thing this
+  // screen must do by hand is empty it when the filter is reset from elsewhere (the Clear
+  // button, a removed chip that was the query), or the bar and the list would disagree.
+  const searchRef = useRef<SearchBarCommands>(null);
+  const onSearchText = useCallback(
+    (event: NativeSyntheticEvent<TextInputFocusEventData>) => setExerciseQuery(event.nativeEvent.text),
+    [],
+  );
+  const clearSearch = useCallback(() => setExerciseQuery(''), []);
+  const resetAll = useCallback(() => {
+    searchRef.current?.clearText();
+    resetExerciseFilter();
+  }, []);
+  const openFilters = useCallback(() => setFilterOpen(true), []);
 
   const onEndReached = useCallback(() => {
     const seen = lastScroll.current;
@@ -187,26 +197,22 @@ export default function ExercisesScreen() {
 
   const listHeader = (
     <>
-      <CollapsibleHero header={header} eyebrow={t('exercises.eyebrow')} title={t('exercises.title')}>
-        <Txt variant="caption" tone="muted" style={{ marginTop: spacing.xs }}>
-          {search.total === null
-            ? t('exerciseList.subtitle')
-            : searching
-              ? t('exercises.countFor', { count: search.total, query: filter.query })
-              : t('exercises.count', { count: search.total })}
-        </Txt>
-      </CollapsibleHero>
-
       <View style={styles.controls}>
-        <TextField
-          label={t('exercises.searchLabel')}
-          value={draft}
-          onChangeText={setExerciseQuery}
-          placeholder={t('exerciseList.placeholder')}
-          autoCorrect={false}
-          returnKeyType="search"
-          accessibilityLabel={t('exercises.searchHint')}
-          {...(settling ? { hint: t('exerciseList.searching') } : {})}
+        <MetaLine
+          items={[
+            {
+              icon: settling ? 'refresh' : 'library',
+              label: settling
+                ? t('exerciseList.searching')
+                : search.total === null
+                  ? t('exerciseList.subtitle')
+                  : searching
+                    ? t('exercises.countFor', { count: search.total, query: filter.query })
+                    : t('exercises.count', { count: search.total }),
+            },
+          ]}
+          theme={theme}
+          wrap
         />
 
         <Row gap="sm" align="center">
@@ -231,7 +237,7 @@ export default function ExercisesScreen() {
               label={t('common.clear')}
               size="sm"
               variant="quiet"
-              onPress={resetExerciseFilter}
+              onPress={resetAll}
             />
           ) : null}
         </Row>
@@ -261,25 +267,22 @@ export default function ExercisesScreen() {
   );
 
   return (
-    <View style={styles.root}>
-      <CollapsibleHeader
-        header={header}
-        title={t('exercises.title')}
-        right={
-          <BarAction
-            icon="filter"
-            label={
-              activeCount > 0
-                ? t('exerciseList.filtersWithCount', { count: activeCount })
-                : t('common.filters')
-            }
-            onPress={() => setFilterOpen(true)}
-            badge={activeCount > 0}
-          />
-        }
+    <>
+      <ScreenHeader title={t('exercises.title')} />
+      <HeaderSearchBar
+        ref={searchRef}
+        placeholder={t('exercises.searchLabel')}
+        onChangeText={onSearchText}
+        onCancelButtonPress={clearSearch}
+        autoCapitalize="none"
+        hideWhenScrolling={false}
       />
+      <HeaderToolbar placement="right">
+        {headerAction({ action: 'filter', onPress: openFilters, t, label: 'common.filters' })}
+      </HeaderToolbar>
 
       <FlashList
+        {...SCROLL_INSETS}
         ref={listRef}
         data={search.items}
         renderItem={renderItem}
@@ -287,7 +290,6 @@ export default function ExercisesScreen() {
         onScroll={onScroll}
         scrollEventThrottle={16}
         contentContainerStyle={{ paddingBottom: bottomSpace }}
-        progressViewOffset={insets.top + 52}
         refreshControl={
           <ThemedRefreshControl
             refreshing={search.isRefetching && search.items.length > 0}
@@ -343,7 +345,7 @@ export default function ExercisesScreen() {
       />
 
       {filterOpen ? <FilterSheet onClose={() => setFilterOpen(false)} /> : null}
-    </View>
+    </>
   );
 }
 
@@ -553,7 +555,6 @@ function nameOf(taxons: readonly Taxon[] | undefined, id: number | null): string
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
   controls: {
     paddingHorizontal: screenGutter,
     paddingTop: spacing.lg,

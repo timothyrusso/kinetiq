@@ -50,7 +50,9 @@ import { useTabContentBottom } from '@/ui/insets';
 
 import { Button } from '@/ui/Button';
 import { Card, Row, SectionHeader } from '@/ui/layout';
-import { BarAction, CollapsibleHeader, CollapsibleHero, useScreenHeaderScroll } from '@/ui/Screen';
+import { SCROLL_INSETS, ScreenHeader } from '@/ui/Screen';
+import { MetaLine } from '@/ui/display';
+import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { ExerciseThumb, RoutineRow } from '@/ui/rows';
 import { SegmentedControl } from '@/ui/controls';
 import { MetricLabel, Txt } from '@/ui/Text';
@@ -94,7 +96,6 @@ export default function WorkoutScreen() {
   const router = useRouter();
   const theme = useAppTheme();
   const bottomSpace = useTabContentBottom();
-  const header = useScreenHeaderScroll();
 
   const routines = useRoutines();
   const [order, setOrder] = useState<Order>('recent');
@@ -153,29 +154,34 @@ export default function WorkoutScreen() {
       : 0;
 
   return (
-    <View style={styles.root}>
-      <CollapsibleHeader
-        header={header}
-        title={t('workout.title')}
-        right={<BarAction icon="plus" label={t('workout.newRoutine')} onPress={openNewRoutine} />}
-      />
+    <>
+      <ScreenHeader title={t('workout.title')} largeTitle />
+      <HeaderToolbar placement="right">
+        {headerAction({ action: 'add', onPress: openNewRoutine, t, label: 'workout.newRoutine' })}
+      </HeaderToolbar>
 
       <ScrollView
-        onScroll={header.onScroll}
-        scrollEventThrottle={16}
+        {...SCROLL_INSETS}
         contentContainerStyle={[styles.content, { paddingBottom: bottomSpace }]}
         keyboardShouldPersistTaps="handled"
       >
-        <CollapsibleHero header={header} eyebrow={t('workout.eyebrow')} title={t('workout.title')}>
-          <Txt variant="caption" tone="muted" style={{ marginTop: spacing.xs }}>
-            {routines.count === 0
-              ? t('workoutTab.buildOnce')
-              : t('workoutTab.routinesReady', {
-                  count: routines.count,
-                  word: t('workoutTab.routineWord', { count: routines.count }),
-                })}
-          </Txt>
-        </CollapsibleHero>
+        <MetaLine
+          items={[
+            {
+              icon: 'layers',
+              label:
+                routines.count === 0
+                  ? t('workoutTab.buildOnce')
+                  : t('workoutTab.routinesReady', {
+                      count: routines.count,
+                      word: t('workoutTab.routineWord', { count: routines.count }),
+                    }),
+            },
+          ]}
+          theme={theme}
+          wrap
+          style={styles.intro}
+        />
 
         {resuming && session ? (
           <ResumeCard
@@ -276,7 +282,7 @@ export default function WorkoutScreen() {
 
         <SessionCounts routines={routines.routines} width={gridWidth} />
       </ScrollView>
-    </View>
+    </>
   );
 }
 
@@ -607,8 +613,8 @@ function routineSubtitle(routine: Routine): string {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
   content: { flexGrow: 1 },
+  intro: { paddingHorizontal: screenGutter, paddingTop: spacing.md },
   section: { paddingHorizontal: screenGutter, paddingTop: spacing.xxl },
   badge: {
     width: 44,

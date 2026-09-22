@@ -26,7 +26,6 @@ import {
   ReduceMotion,
   runOnJS,
   useAnimatedStyle,
-  useDerivedValue,
   useReducedMotion,
   useSharedValue,
   withDelay,
@@ -76,87 +75,6 @@ export const popSpring = {
 
 export const easeOut = Easing.out(Easing.cubic);
 export const easeInOut = Easing.inOut(Easing.quad);
-
-// ---------------------------------------------------------------------------
-// Scroll-coupled
-// ---------------------------------------------------------------------------
-
-/** Progress in [0,1] over the first `collapseDistance` pixels of scroll. */
-export function useCollapseProgress(
-  scrollY: SharedValue<number>,
-  collapseDistance: number,
-): SharedValue<number> {
-  return useDerivedValue(() =>
-    clamp(scrollY.value / Math.max(1, collapseDistance), 0, 1),
-  );
-}
-
-/**
- * A large title that shrinks into a sticky bar and gains a frosted backing as
- * content scrolls under it.
- *
- * The backing colour is passed in rather than read from a theme hook: the
- * scrolling screen already renders a long list, and subscribing *this* hook to
- * the theme would re-render the list on an appearance change for a colour that
- * a re-render of the header alone would have picked up.
- */
-export function useHeaderCollapse(
-  scrollY: SharedValue<number>,
-  options: { distance?: number; surface: string; hairline: string },
-) {
-  const { distance = 88, surface, hairline } = options;
-  const progress = useCollapseProgress(scrollY, distance);
-
-  /** True once the bar has fully collapsed: the point to swap in a compact title. */
-  const collapsed = useDerivedValue(() => progress.value > 0.82);
-
-  // Only the backing is animated: never the bar's own `opacity`, which would
-  // also hide the compact title inside it.
-  const barStyle = useAnimatedStyle(() => {
-    const t = progress.value;
-    return {
-      backgroundColor: withAlpha(surface, t * 0.96),
-      borderBottomWidth: 1,
-      borderBottomColor: withAlpha(hairline, t),
-    } as ViewStyle;
-  });
-
-  const inlineTitleStyle = useAnimatedStyle(() => ({
-    opacity: progress.value,
-    transform: [{ translateY: (1 - progress.value) * 10 }],
-  }));
-
-  const heroTitleStyle = useAnimatedStyle(() => ({
-    opacity: 1 - progress.value,
-    transform: [
-      { translateY: progress.value * -12 },
-      { scale: 1 - progress.value * 0.12 },
-    ],
-  }));
-
-  return { progress, collapsed, barStyle, inlineTitleStyle, heroTitleStyle };
-}
-
-/**
- * Adds alpha to a `#rrggbb` token, for a colour that changes per frame.
- *
- * Deliberately not `utils/color`'s `withAlpha`, which remains the one to use anywhere a worklet
- * is not involved. Reanimated stringifies a worklet and re-evaluates it on the UI thread, where
- * it can only reach functions from *its own module* or from a package Reanimated whitelists; a
- * project-module import is unreachable either way you mark it: unmarked it is `undefined`,
- * marked `'worklet'` it becomes a Remote Function and throws "Tried to synchronously call a
- * Remote Function" the moment a worklet calls it synchronously. `tsc` accepts all of these and
- * the app only finds out on the first scroll frame, which is why this is a duplicate rather
- * than an import. It is seven lines of string arithmetic with no policy in it.
- */
-function withAlpha(hex: string, alpha: number): string {
-  'worklet';
-  if (hex.length !== 7 || !hex.startsWith('#')) return hex;
-  const a = Math.round(clamp(alpha, 0, 1) * 255)
-    .toString(16)
-    .padStart(2, '0');
-  return `${hex}${a}`;
-}
 
 // ---------------------------------------------------------------------------
 // Gesture-driven

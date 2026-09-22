@@ -46,7 +46,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Linking from 'expo-linking';
 
-import { DetailScreen } from '@/ui/Screen';
+import { ScreenHeader } from '@/ui/Screen';
+import { useTransparentHeaderInset } from '@/ui/insets';
+import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import {
   Badge,
   Card,
@@ -58,7 +60,7 @@ import {
 } from '@/ui/layout';
 import { MetricLabel, Txt } from '@/ui/Text';
 import { Icon } from '@/ui/icons';
-import { ActionRow, Button, IconButton } from '@/ui/Button';
+import { ActionRow, Button } from '@/ui/Button';
 import { Chip } from '@/ui/controls';
 import { ExerciseRow, ExerciseThumb, ListRow } from '@/ui/rows';
 import { EmptyState, ErrorState, SkeletonCard } from '@/ui/states';
@@ -168,302 +170,289 @@ export default function ExerciseDetailScreen() {
     exercise?.name ??
     (exerciseId === null ? t('exerciseDetail.fallbackTitle') : provisionalExerciseName(exerciseId));
 
+  const transparent = exercise?.imageUrl != null;
+  const transparentInset = useTransparentHeaderInset();
+  const topInset = transparent ? transparentInset : 0;
+
   return (
     <>
       {/* Fade, matching the activity detail: this screen is pushed from four places and
           its hero is full-bleed media: a horizontal slide would drag the previous
           list's thumbnails across the photo. */}
       <Stack.Screen options={{ animation: 'fade_from_bottom' }} />
-      <DetailScreen
-        title={title}
-        headerTransparent={exercise?.imageUrl != null}
-        right={
-          exercise ? (
-            <IconButton
-              name="plus"
-              size={20}
-              weighty
-              accessibilityLabel={t('exerciseDetail.addToRoutine')}
-              accessibilityHint={t('exerciseDetail.addHint')}
-              onPress={openAddSheet}
-            />
-          ) : undefined
-        }
-      >
-        {(topInset, header) => (
-          <ScrollView
-            contentContainerStyle={{ paddingBottom: insets.bottom + spacing.huge }}
-            onScroll={header.onScroll}
-            scrollEventThrottle={16}
-          >
-            {detail.isLoading ? (
-              <Column gap="lg" style={[styles.section, { paddingTop: topInset + spacing.xl }]}>
-                <SkeletonCard lines={2} />
-                <SkeletonCard lines={5} />
-              </Column>
-            ) : exercise === null ? (
-              <View style={{ paddingTop: topInset + spacing.xl }}>
-                {detail.error !== null ? (
-                  <ErrorState
-                    error={detail.error}
-                    onRetry={detail.retry}
-                    title={t('exerciseDetail.loadError')}
-                  />
-                ) : (
-                  <EmptyState
-                    icon="info"
-                    title={t('exerciseDetail.unknownTitle')}
-                    message={t(
-                      detail.fetchable
-                        ? 'exerciseDetail.unknownFetchable'
-                        : 'exerciseDetail.unknownBuiltIn',
-                    )}
-                    actionLabel={t(
-                      detail.fetchable ? 'common.retry' : 'exerciseDetail.backToLibrary',
-                    )}
-                    onAction={detail.fetchable ? detail.retry : openLibrary}
-                  />
-                )}
-              </View>
+      <ScreenHeader title={title} transparent={transparent} />
+      {exercise ? (
+        <HeaderToolbar placement="right">
+          {headerAction({ action: 'add', onPress: openAddSheet, t, label: 'exerciseDetail.addToRoutine' })}
+        </HeaderToolbar>
+      ) : null}
+      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + spacing.huge }}>
+        {detail.isLoading ? (
+          <Column gap="lg" style={[styles.section, { paddingTop: topInset + spacing.xl }]}>
+            <SkeletonCard lines={2} />
+            <SkeletonCard lines={5} />
+          </Column>
+        ) : exercise === null ? (
+          <View style={{ paddingTop: topInset + spacing.xl }}>
+            {detail.error !== null ? (
+              <ErrorState
+                error={detail.error}
+                onRetry={detail.retry}
+                title={t('exerciseDetail.loadError')}
+              />
             ) : (
-              <Column gap="xxl">
-                <Hero exercise={exercise} topInset={topInset} />
+              <EmptyState
+                icon="info"
+                title={t('exerciseDetail.unknownTitle')}
+                message={t(
+                  detail.fetchable
+                    ? 'exerciseDetail.unknownFetchable'
+                    : 'exerciseDetail.unknownBuiltIn',
+                )}
+                actionLabel={t(
+                  detail.fetchable ? 'common.retry' : 'exerciseDetail.backToLibrary',
+                )}
+                onAction={detail.fetchable ? detail.retry : openLibrary}
+              />
+            )}
+          </View>
+        ) : (
+          <Column gap="xxl">
+            <Hero exercise={exercise} topInset={topInset} />
 
-                <Column gap="md" style={styles.section}>
-                  <Provenance
-                    from={detail.from}
-                    storedAt={detail.stored?.capturedAt ?? null}
-                    isFetching={detail.isFetching}
-                    onRetry={detail.retry}
-                    externalUrl={externalUrl}
-                  />
-                </Column>
+            <Column gap="md" style={styles.section}>
+              <Provenance
+                from={detail.from}
+                storedAt={detail.stored?.capturedAt ?? null}
+                isFetching={detail.isFetching}
+                onRetry={detail.retry}
+                externalUrl={externalUrl}
+              />
+            </Column>
 
-                <Column gap="md" style={styles.section}>
-                  <SectionHeader title={t('exerciseDetail.howTo')} />
-                  {exercise.instructions === null || exercise.instructions.length === 0 ? (
-                    <Card tone="sunken">
-                      <Row gap="md" align="start">
-                        <Icon name="info" size={18} color={theme.colors.textFaint} />
-                        <Txt variant="body" tone="muted" style={{ flex: 1 }}>
-                          {t(
-                            detail.from === 'stored'
-                              ? 'exerciseDetail.noDescriptionOffline'
-                              : 'exerciseDetail.noDescription',
-                          )}
-                        </Txt>
-                      </Row>
-                    </Card>
-                  ) : (
-                    <Card>
-                      <Txt variant="bodyLg" style={{ lineHeight: 24 }}>
-                        {exercise.instructions}
-                      </Txt>
-                    </Card>
-                  )}
-                </Column>
+            <Column gap="md" style={styles.section}>
+              <SectionHeader title={t('exerciseDetail.howTo')} />
+              {exercise.instructions === null || exercise.instructions.length === 0 ? (
+                <Card tone="sunken">
+                  <Row gap="md" align="start">
+                    <Icon name="info" size={18} color={theme.colors.textFaint} />
+                    <Txt variant="body" tone="muted" style={{ flex: 1 }}>
+                      {t(
+                        detail.from === 'stored'
+                          ? 'exerciseDetail.noDescriptionOffline'
+                          : 'exerciseDetail.noDescription',
+                      )}
+                    </Txt>
+                  </Row>
+                </Card>
+              ) : (
+                <Card>
+                  <Txt variant="bodyLg" style={{ lineHeight: 24 }}>
+                    {exercise.instructions}
+                  </Txt>
+                </Card>
+              )}
+            </Column>
 
-                <Column gap="md" style={styles.section}>
-                  <SectionHeader title={t('exerciseDetail.muscles')} />
-                  <Column gap="sm">
-                    <MuscleChips
-                      label={t('exerciseDetail.primary')}
-                      names={exercise.primaryMuscles}
-                      onPress={filterByMuscle}
-                    />
-                    <MuscleChips
-                      label={t('exerciseDetail.alsoWorked')}
-                      names={exercise.secondaryMuscles}
-                      onPress={filterByMuscle}
-                      muted
-                    />
-                    {exercise.secondaryMuscles.length > 0 ? (
-                      <Txt variant="caption" tone="faint">
-                        {t('misc.muscleTagging')}
-                      </Txt>
-                    ) : null}
-                  </Column>
-                </Column>
-
-                {exercise.equipment.length > 0 ? (
-                  <Column gap="md" style={styles.section}>
-                    <SectionHeader title={t('exerciseDetail.equipment')} />
-                    <Row gap="sm" wrap>
-                      {exercise.equipment.map((name) => (
-                        <Chip
-                          key={name}
-                          label={name}
-                          size="sm"
-                          onPress={() => filterByEquipment(name)}
-                        />
-                      ))}
-                    </Row>
-                  </Column>
+            <Column gap="md" style={styles.section}>
+              <SectionHeader title={t('exerciseDetail.muscles')} />
+              <Column gap="sm">
+                <MuscleChips
+                  label={t('exerciseDetail.primary')}
+                  names={exercise.primaryMuscles}
+                  onPress={filterByMuscle}
+                />
+                <MuscleChips
+                  label={t('exerciseDetail.alsoWorked')}
+                  names={exercise.secondaryMuscles}
+                  onPress={filterByMuscle}
+                  muted
+                />
+                {exercise.secondaryMuscles.length > 0 ? (
+                  <Txt variant="caption" tone="faint">
+                    {t('misc.muscleTagging')}
+                  </Txt>
                 ) : null}
+              </Column>
+            </Column>
 
-                <Column gap="lg" style={styles.section}>
-                  <SectionHeader
-                    title={t('exerciseDetail.yourHistory')}
-                    eyebrow={
-                      history.history.sessionsCount > 0
-                        ? t('exerciseDetail.sessionCount', {
-                            count: history.history.sessionsCount,
-                          })
-                        : undefined
-                    }
+            {exercise.equipment.length > 0 ? (
+              <Column gap="md" style={styles.section}>
+                <SectionHeader title={t('exerciseDetail.equipment')} />
+                <Row gap="sm" wrap>
+                  {exercise.equipment.map((name) => (
+                    <Chip
+                      key={name}
+                      label={name}
+                      size="sm"
+                      onPress={() => filterByEquipment(name)}
+                    />
+                  ))}
+                </Row>
+              </Column>
+            ) : null}
+
+            <Column gap="lg" style={styles.section}>
+              <SectionHeader
+                title={t('exerciseDetail.yourHistory')}
+                eyebrow={
+                  history.history.sessionsCount > 0
+                    ? t('exerciseDetail.sessionCount', {
+                        count: history.history.sessionsCount,
+                      })
+                    : undefined
+                }
+              />
+              {history.isLoading ? (
+                <SkeletonCard lines={2} />
+              ) : history.history.sessionsCount === 0 ? (
+                <Card tone="sunken">
+                  <Row gap="md" align="center">
+                    <Icon name="target" size={20} color={theme.colors.textFaint} />
+                    <Txt variant="body" tone="muted" style={{ flex: 1 }}>
+                      {t('exerciseDetail.neverLogged')}
+                    </Txt>
+                  </Row>
+                </Card>
+              ) : (
+                <>
+                  <MetricGrid columns={3}>
+                    <MetricGridCell
+                      value={formatWeight(history.history.totalVolumeKg, units)}
+                      label={t('exerciseDetail.totalVolume')}
+                    />
+                    <MetricGridCell
+                      value={String(history.history.totalSets)}
+                      label={t('exerciseDetail.setsDone')}
+                    />
+                    <MetricGridCell
+                      value={
+                        history.history.lastPerformedAt === null
+                          ? '-'
+                          : formatAgo(history.history.lastPerformedAt)
+                      }
+                      label={t('exerciseDetail.lastPerformed')}
+                    />
+                  </MetricGrid>
+                </>
+              )}
+            </Column>
+
+            {!history.isLoading && history.history.sessionsCount > 0 ? (
+              // Not wrapped in `styles.section`: these rows carry their own
+              // horizontal inset, and the section's padding would double it.
+              <View>
+                {history.history.sessions.slice(0, HISTORY_PREVIEW).map((session, i) => (
+                  <HistoryRow
+                    key={session.activityId}
+                    session={session}
+                    units={units}
+                    theme={theme}
+                    topDivider={i > 0}
+                    onPress={() => router.push(routes.activityDetail(session.activityId))}
                   />
-                  {history.isLoading ? (
-                    <SkeletonCard lines={2} />
-                  ) : history.history.sessionsCount === 0 ? (
-                    <Card tone="sunken">
-                      <Row gap="md" align="center">
-                        <Icon name="target" size={20} color={theme.colors.textFaint} />
-                        <Txt variant="body" tone="muted" style={{ flex: 1 }}>
-                          {t('exerciseDetail.neverLogged')}
-                        </Txt>
-                      </Row>
-                    </Card>
-                  ) : (
-                    <>
-                      <MetricGrid columns={3}>
-                        <MetricGridCell
-                          value={formatWeight(history.history.totalVolumeKg, units)}
-                          label={t('exerciseDetail.totalVolume')}
-                        />
-                        <MetricGridCell
-                          value={String(history.history.totalSets)}
-                          label={t('exerciseDetail.setsDone')}
-                        />
-                        <MetricGridCell
-                          value={
-                            history.history.lastPerformedAt === null
-                              ? '-'
-                              : formatAgo(history.history.lastPerformedAt)
-                          }
-                          label={t('exerciseDetail.lastPerformed')}
-                        />
-                      </MetricGrid>
-                    </>
-                  )}
-                </Column>
-
-                {!history.isLoading && history.history.sessionsCount > 0 ? (
-                  // Not wrapped in `styles.section`: these rows carry their own
-                  // horizontal inset, and the section's padding would double it.
-                  <View>
-                    {history.history.sessions.slice(0, HISTORY_PREVIEW).map((session, i) => (
-                      <HistoryRow
-                        key={session.activityId}
-                        session={session}
-                        units={units}
-                        theme={theme}
-                        topDivider={i > 0}
-                        onPress={() => router.push(routes.activityDetail(session.activityId))}
-                      />
-                    ))}
-                    {history.history.sessions.length > HISTORY_PREVIEW ? (
-                      <View style={styles.bandFooter}>
-                        <Txt variant="caption" tone="faint">
-                          {t('exerciseDetail.earlierSessions', {
-                            count: history.history.sessionsCount - HISTORY_PREVIEW,
-                          })}
-                        </Txt>
-                      </View>
-                    ) : null}
+                ))}
+                {history.history.sessions.length > HISTORY_PREVIEW ? (
+                  <View style={styles.bandFooter}>
+                    <Txt variant="caption" tone="faint">
+                      {t('exerciseDetail.earlierSessions', {
+                        count: history.history.sessionsCount - HISTORY_PREVIEW,
+                      })}
+                    </Txt>
                   </View>
                 ) : null}
+              </View>
+            ) : null}
 
-                {history.records.length > 0 ? (
-                  <Column gap="md" style={styles.section}>
-                    <SectionHeader
-                      title={t('exerciseDetail.records')}
-                      eyebrow={t('exerciseDetail.personalBests')}
-                    />
-                    <Card tone="accent">
-                      <Column gap="lg">
-                        {history.records.map((record) => (
-                          <Row key={record.kind} gap="md" align="center">
-                            <Icon name="trophy" size={20} color={theme.colors.onAccent} />
-                            <Txt variant="label" tone="muted" style={{ flex: 1 }}>
-                              {t(RECORD_LABEL[record.kind])}
-                            </Txt>
-                            <Txt variant="headline" weight="700">
-                              {formatRecordValue(record.kind, record.value, units)}
-                            </Txt>
-                          </Row>
-                        ))}
-                      </Column>
-                    </Card>
+            {history.records.length > 0 ? (
+              <Column gap="md" style={styles.section}>
+                <SectionHeader
+                  title={t('exerciseDetail.records')}
+                  eyebrow={t('exerciseDetail.personalBests')}
+                />
+                <Card tone="accent">
+                  <Column gap="lg">
+                    {history.records.map((record) => (
+                      <Row key={record.kind} gap="md" align="center">
+                        <Icon name="trophy" size={20} color={theme.colors.onAccent} />
+                        <Txt variant="label" tone="muted" style={{ flex: 1 }}>
+                          {t(RECORD_LABEL[record.kind])}
+                        </Txt>
+                        <Txt variant="headline" weight="700">
+                          {formatRecordValue(record.kind, record.value, units)}
+                        </Txt>
+                      </Row>
+                    ))}
                   </Column>
-                ) : null}
+                </Card>
+              </Column>
+            ) : null}
 
-                {variations.data !== undefined && variations.data.length > 0 ? (
-                  <>
-                    <Column gap="md" style={styles.section}>
-                      <SectionHeader
-                        title={t('exerciseDetail.variations')}
-                        count={variations.data.length}
-                        eyebrow={t('exerciseDetail.sameFamily')}
-                      />
-                    </Column>
-                    <View>
-                      {variations.data.map((sibling, i) => (
-                        <ExerciseRow
-                          key={sibling.id}
-                          name={sibling.name}
-                          uri={sibling.thumbnailUrl ?? sibling.imageUrl}
-                          subtitle={
-                            sibling.id === exercise.id
-                              ? t('exerciseDetail.thisExercise')
-                              : sibling.category ?? t('exerciseDetail.variation')
-                          }
-                          theme={theme}
-                          dimmed={sibling.id === exercise.id}
-                          topDivider={i > 0}
-                          onPress={() => {
-                            if (sibling.id === exercise.id) return;
-                            router.push(routes.exerciseDetail(sibling.id));
-                          }}
-                        />
-                      ))}
-                    </View>
-                    <Column style={styles.section}>
-                      <Button
-                        label={t('exerciseDetail.browseSimilar')}
-                        variant="secondary"
-                        icon="search"
-                        onPress={browseVariations}
-                      />
-                    </Column>
-                  </>
-                ) : null}
-
-                {externalUrl !== null ? (
-                  <Column style={styles.section}>
-                    <ActionRow
-                      title={t('exerciseDetail.viewOnWger')}
-                      subtitle={t('exerciseDetail.wgerSubtitle')}
-                      icon="link"
-                      onPress={() => {
-                        void Linking.openURL(externalUrl).catch(() => undefined);
-                      }}
-                    />
-                  </Column>
-                ) : null}
-
-                <Column style={styles.section}>
-                  <Button
-                    label={t('exerciseDetail.addButton')}
-                    icon="plus"
-                    onPress={openAddSheet}
-                    accessibilityHint={t('exerciseDetail.addButtonHint')}
+            {variations.data !== undefined && variations.data.length > 0 ? (
+              <>
+                <Column gap="md" style={styles.section}>
+                  <SectionHeader
+                    title={t('exerciseDetail.variations')}
+                    count={variations.data.length}
+                    eyebrow={t('exerciseDetail.sameFamily')}
                   />
                 </Column>
+                <View>
+                  {variations.data.map((sibling, i) => (
+                    <ExerciseRow
+                      key={sibling.id}
+                      name={sibling.name}
+                      uri={sibling.thumbnailUrl ?? sibling.imageUrl}
+                      subtitle={
+                        sibling.id === exercise.id
+                          ? t('exerciseDetail.thisExercise')
+                          : sibling.category ?? t('exerciseDetail.variation')
+                      }
+                      theme={theme}
+                      dimmed={sibling.id === exercise.id}
+                      topDivider={i > 0}
+                      onPress={() => {
+                        if (sibling.id === exercise.id) return;
+                        router.push(routes.exerciseDetail(sibling.id));
+                      }}
+                    />
+                  ))}
+                </View>
+                <Column style={styles.section}>
+                  <Button
+                    label={t('exerciseDetail.browseSimilar')}
+                    variant="secondary"
+                    icon="search"
+                    onPress={browseVariations}
+                  />
+                </Column>
+              </>
+            ) : null}
+
+            {externalUrl !== null ? (
+              <Column style={styles.section}>
+                <ActionRow
+                  title={t('exerciseDetail.viewOnWger')}
+                  subtitle={t('exerciseDetail.wgerSubtitle')}
+                  icon="link"
+                  onPress={() => {
+                    void Linking.openURL(externalUrl).catch(() => undefined);
+                  }}
+                />
               </Column>
-            )}
-          </ScrollView>
+            ) : null}
+
+            <Column style={styles.section}>
+              <Button
+                label={t('exerciseDetail.addButton')}
+                icon="plus"
+                onPress={openAddSheet}
+                accessibilityHint={t('exerciseDetail.addButtonHint')}
+              />
+            </Column>
+          </Column>
         )}
-      </DetailScreen>
+      </ScrollView>
     </>
   );
 }

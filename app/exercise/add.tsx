@@ -33,11 +33,11 @@
  */
 import { useCallback, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router, useLocalSearchParams } from 'expo-router';
 
-import { Screen } from '@/ui/Screen';
-import { Button, IconButton } from '@/ui/Button';
+import { Screen, ScreenHeader } from '@/ui/Screen';
+import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
+import { Button } from '@/ui/Button';
 import { Chip, Stepper } from '@/ui/controls';
 import { KeyboardAvoid, TextField } from '@/ui/TextField';
 import { Card, Gap, Row, SectionHeader, Stack as Column } from '@/ui/layout';
@@ -88,7 +88,6 @@ export default function AddExerciseScreen() {
   const { t } = useT();
   const params = useLocalSearchParams<{ id?: string }>();
   const theme = useAppTheme();
-  const insets = useSafeAreaInsets();
   const units = useSettings((s) => s.unitSystem);
   const defaultRest = useSettings((s) => s.defaultRestSeconds);
   const { routines, isLoading: routinesLoading } = useRoutines();
@@ -167,39 +166,31 @@ export default function AddExerciseScreen() {
       // error boundary for something the form can simply be re-tapped to retry.
     }
   }, [addItem, defaultRest, draft, effectiveTarget, exercise, saveRoutine, saving, units]);
+  const commit = useCallback(() => {
+    void save();
+  }, [save]);
+  const dismiss = useCallback(() => router.dismiss(), []);
 
   return (
     <>
-      <Stack.Screen options={{ headerShown: false }} />
+      <ScreenHeader title={t('addExercise.addToRoutineTitle')} />
+      <HeaderToolbar placement="left">
+        {headerAction({ action: 'cancel', onPress: dismiss, t, label: 'addExercise.cancel' })}
+      </HeaderToolbar>
+      {/* A text action, not a glyph: the commit here creates something, and a labelled
+          action also shows its disabled state, which a dimmed glyph does not. */}
+      <HeaderToolbar placement="right">
+        {headerAction({
+          action: 'save',
+          onPress: commit,
+          t,
+          label: saving ? 'addExercise.adding' : 'addExercise.add',
+          disabled: !canSave,
+          variant: 'done',
+        })}
+      </HeaderToolbar>
       <Screen>
         <KeyboardAvoid style={{ flex: 1 }}>
-          <View style={[styles.bar, { paddingTop: insets.top + spacing.xs }]}>
-            <IconButton
-              name="close"
-              size={20}
-              variant="surface"
-              accessibilityLabel={t('addExercise.cancel')}
-              onPress={() => router.dismiss()}
-            />
-            <Txt variant="subhead" weight="700" style={{ flex: 1 }} numberOfLines={1}>
-              {t('addExercise.addToRoutineTitle')}
-            </Txt>
-            {/* A text button, not a round icon: the commit here creates something, and
-                "close" and "add" as two identical discs six centimetres apart is a
-                mis-tap waiting to happen. A labelled button also shows its disabled
-                state; a dimmed glyph does not. */}
-            <Button
-              label={t(saving ? 'addExercise.adding' : 'addExercise.add')}
-              variant="ghost"
-              size="sm"
-              onPress={() => {
-                void save();
-              }}
-              disabled={!canSave}
-              accessibilityHint={t('addExercise.addHint')}
-            />
-          </View>
-
           <ScrollView
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={{ paddingTop: spacing.xxl, paddingBottom: spacing.huge }}
@@ -481,7 +472,6 @@ function clampInt(input: string, min: number, max: number, fallback: number): nu
 }
 
 const styles = StyleSheet.create({
-  bar: { paddingHorizontal: spacing.sm, paddingBottom: spacing.sm },
   section: { paddingHorizontal: screenGutter },
   multiline: { minHeight: 76, paddingTop: spacing.md, paddingBottom: spacing.md, textAlignVertical: 'top' },
 });

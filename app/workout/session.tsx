@@ -31,6 +31,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 import { router, Stack } from 'expo-router';
+import { ScreenHeader } from '@/ui/Screen';
+import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -91,11 +93,11 @@ import { Icon } from '@/ui/icons';
 import {
   ExerciseBlock,
   RestDock,
-  RemoveExerciseSheet,
+  RemoveExerciseDialog,
   SessionProgressBar,
   SetEditorSheet,
 } from '@/ui/workout';
-import { ConfirmSheet, OptionSheet, Sheet, SheetFooter } from '@/ui/Sheet';
+import { OptionSheet, Sheet, SheetFooter } from '@/ui/Sheet';
 import { ExercisePickerSheet } from '@/ui/exercisePicker';
 import { addExerciseToSession } from '@/workout/sessionExercises';
 import { TextField } from '@/ui/TextField';
@@ -364,6 +366,9 @@ export default function WorkoutSessionScreen() {
   if (!hydrated) {
     return (
       <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
+        {/* Headerless while restoring, because what it restores is almost always the live
+            workout, which is headerless: a bar that appears and vanishes reads as a glitch. */}
+        <ScreenHeader title={t('tabs.workout')} shown={false} />
         <View style={{ paddingTop: insets.top + spacing.xl, paddingHorizontal: screenGutter }}>
           <SkeletonCard lines={3} />
         </View>
@@ -376,6 +381,7 @@ export default function WorkoutSessionScreen() {
     // finished on another screen. It is not an error, so it must not render like one.
     return (
       <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
+        <ScreenHeader title={t('tabs.workout')} />
         <EmptyState
           title={t('session.noneTitle')}
           message={t('session.noneMessage')}
@@ -384,7 +390,7 @@ export default function WorkoutSessionScreen() {
           onAction={() => {
             router.replace(routes.workoutTab());
           }}
-          style={{ paddingTop: insets.top + spacing.xxxl }}
+          style={{ paddingTop: spacing.xxxl }}
         />
       </View>
     );
@@ -404,7 +410,8 @@ export default function WorkoutSessionScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
-      <Stack.Screen options={{ gestureEnabled: false }} />
+      {/* Immersive: the bar below is the only chrome, and its exits are explicit buttons. */}
+      <Stack.Screen options={{ gestureEnabled: false, headerShown: false }} />
 
       <View style={[styles.bar, { paddingTop: insets.top + spacing.xs }]}>
         <OverlaySurface theme={theme} edge="bottom" />
@@ -702,19 +709,23 @@ export default function WorkoutSessionScreen() {
       ) : null}
 
       {confirmDiscard ? (
-        <ConfirmSheet
+        <ConfirmDialog
+          visible={!discarding}
           title={t('session.discardTitle')}
           message={t('session.discardMessage', { count: doneSets })}
-          confirmLabel={t(discarding ? 'session.discarding' : 'session.discardConfirm')}
+          confirmLabel={t('session.discardConfirm')}
+          cancelLabel={t('common.cancel')}
+          destructive
           onConfirm={() => {
             void discard();
           }}
-          onRequestClose={() => setConfirmDiscard(false)}
+          onCancel={() => setConfirmDiscard(false)}
         />
       ) : null}
 
       {confirmFinish ? (
-        <ConfirmSheet
+        <ConfirmDialog
+          visible={!finishing}
           title={t('session.finishTitle')}
           message={
             progress.ratio < 1
@@ -725,16 +736,17 @@ export default function WorkoutSessionScreen() {
                 })
               : t('session.finishAll', { planned: progress.planned })
           }
-          confirmLabel={t(finishing ? 'session.saving' : 'session.finishConfirm')}
+          confirmLabel={t('session.finishConfirm')}
+          cancelLabel={t('common.cancel')}
           onConfirm={() => {
             void finish();
           }}
-          onRequestClose={() => setConfirmFinish(false)}
+          onCancel={() => setConfirmFinish(false)}
         />
       ) : null}
 
       {removing !== null ? (
-        <RemoveExerciseSheet
+        <RemoveExerciseDialog
           exerciseName={session.entries[removing]?.exerciseName ?? t('session.thisExercise')}
           completedSets={session.entries[removing]?.sets.filter((set) => set.completed).length ?? 0}
           onConfirm={() => {

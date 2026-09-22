@@ -65,6 +65,7 @@ import { themeFor } from '@/theme/theme';
 import { spacing } from '@/theme/tokens';
 import { Txt } from '@/ui/Text';
 import { handleAppState, hydrateWorkoutSession, pauseSession } from '@/workout/session';
+import { prefetchHeaderIcons } from '@/navigation/HeaderAction';
 
 export type SeedSummary = {
   activities: number;
@@ -249,6 +250,9 @@ export async function runBootstrap(systemDark: boolean): Promise<BootstrapOutcom
 
   // 6. The two slow steps, overlapped with each other and with everything after.
   const fontsLoaded = loadAppFonts();
+  // Android's native header takes images, not glyph names, so the header-action icons are
+  // rendered once here, in the same wait as the fonts, and the first bar already has them.
+  const headerIcons = prefetchHeaderIcons();
   const seeded = await seedIfEmpty();
 
   // 7. Active-workout restoration and the interrupted-recording draft. Both settle
@@ -259,7 +263,7 @@ export async function runBootstrap(systemDark: boolean): Promise<BootstrapOutcom
 
   // 8. Fonts are the only thing from step 6 the first frame genuinely needs, so that
   //    is what the splash waits on.
-  await fontsLoaded;
+  await Promise.all([fontsLoaded, headerIcons]);
 
   // 9. Reconcile the reminder schedule with reality, including the case where the
   //    user revoked permission in the OS while the app was closed. Not awaited: a

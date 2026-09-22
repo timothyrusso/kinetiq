@@ -56,13 +56,14 @@ import { router } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { DetailScreen, Screen } from '@/ui/Screen';
+import { Screen, ScreenHeader } from '@/ui/Screen';
+import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
+import { useScreenContentBottom } from '@/ui/insets';
 import { Card, Divider, MetricGrid, Row, SectionHeader, Stack } from '@/ui/layout';
 import { ActionRow, Button } from '@/ui/Button';
 import { Chip } from '@/ui/controls';
 import { MetricLabel, Txt } from '@/ui/Text';
 import { Icon, type IconName } from '@/ui/icons';
-import { ConfirmSheet } from '@/ui/Sheet';
 import { TextField } from '@/ui/TextField';
 import { EmptyState } from '@/ui/states';
 import { RouteMap } from '@/ui/RouteMap';
@@ -86,7 +87,6 @@ import {
   formatSpeed,
 } from '@/utils/format';
 
-const BOTTOM_SPACE = 48;
 
 /**
  * The recorder is an external store. Its `getSnapshot` is throttled to a new object every
@@ -117,6 +117,7 @@ export default function CardioScreen() {
   const { t } = useT();
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
+  const bottomSpace = useScreenContentBottom();
   const client = useQueryClient();
   const cardio = useCardio();
 
@@ -210,6 +211,7 @@ export default function CardioScreen() {
   if (savedAs !== null) {
     return (
       <Screen style={styles.center}>
+        <ScreenHeader title={t('cardio.title')} />
         <EmptyState
           icon="checkCircle"
           title={t('cardio.savedTitle')}
@@ -229,6 +231,7 @@ export default function CardioScreen() {
   if (tooShort) {
     return (
       <Screen style={styles.center}>
+        <ScreenHeader title={t('cardio.title')} />
         <EmptyState
           icon="clock"
           title={t('cardio.tooShortTitle')}
@@ -257,7 +260,7 @@ export default function CardioScreen() {
         resumable={cardio.resumable}
         onResume={() => void recorder.recover()}
         onDropResumable={() => void recorder.abandonResumable()}
-        bottomSpace={BOTTOM_SPACE + insets.bottom}
+        bottomSpace={bottomSpace}
       />
     );
   }
@@ -276,6 +279,8 @@ export default function CardioScreen() {
           which means a route that paints no background of its own lets the previous screen
           show through during the slide. */}
       <Screen>
+        {/* Immersive while recording: the exits are Stop and Discard, in content. */}
+        <ScreenHeader title={cardio.title} shown={false} />
         <ScrollView contentContainerStyle={styles.liveBody}>
           <Stack gap="xl" style={{ paddingTop: insets.top + spacing.lg }}>
             <Row align="center" gap="md">
@@ -452,18 +457,21 @@ export default function CardioScreen() {
               </Txt>
             ) : null}
 
-            <View style={{ height: BOTTOM_SPACE + insets.bottom }} />
+            <View style={{ height: bottomSpace }} />
           </Stack>
         </ScrollView>
       </Screen>
 
       {confirmingDiscard ? (
-        <ConfirmSheet
+        <ConfirmDialog
+          visible={!finishing}
           title={t('cardio.discardTitle')}
           message={t('cardio.discardMessage')}
-          confirmLabel={t(finishing ? 'cardio.discarding' : 'cardio.discard')}
+          confirmLabel={t('cardio.discard')}
+          cancelLabel={t('common.cancel')}
+          destructive
           onConfirm={discard}
-          onRequestClose={() => setConfirmingDiscard(false)}
+          onCancel={() => setConfirmingDiscard(false)}
         />
       ) : null}
     </>
@@ -511,123 +519,122 @@ function StartPanel({
   const theme = useAppTheme();
 
   return (
-    <DetailScreen title={t('cardio.title')}>
-      {(topInset) => (
-        <ScrollView
-          contentContainerStyle={[
-            styles.content,
-            { paddingTop: topInset + spacing.lg, paddingBottom: bottomSpace },
-          ]}
-          keyboardShouldPersistTaps="handled"
-        >
-          <Stack gap="xxl" style={styles.body}>
-            {/* An interrupted recording, adopted from the persisted draft at boot. Offered at the
-                top because it is the one thing here that is time-sensitive: every minute spent
-                deciding is a minute the route cannot recover. */}
-            {resumable ? (
-              <Card tone="accent">
-                <Stack gap="sm">
-                  <Txt variant="micro" uppercase tracking={0.8}>
-                    {t('cardio.resumableEyebrow')}
-                  </Txt>
-                  <Txt variant="caption">
-                    {t('cardio.resumableMessage', { name: resumable.title })}
-                  </Txt>
-                  <Row gap="md">
-                    <Button
-                      label={t('cardio.resume')}
-                      variant="primary"
-                      size="sm"
-                      icon="play"
-                      onPress={onResume}
-                    />
-                    <Button
-                      label={t('cardio.discardIt')}
-                      variant="quiet"
-                      size="sm"
-                      onPress={onDropResumable}
-                    />
-                  </Row>
-                </Stack>
-              </Card>
-            ) : null}
-
-            <View>
-              <SectionHeader title={t('cardio.activity')} eyebrow={t('cardio.activityEyebrow')} />
-              <Row gap="sm" wrap>
-                {TRACKABLE.map((option) => (
-                  <Chip
-                    key={option.kind}
-                    label={t(option.label)}
-                    icon={option.icon}
-                    selected={kind === option.kind}
-                    onPress={() => onKind(option.kind)}
+    <>
+      <ScreenHeader title={t('cardio.title')} />
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: spacing.lg, paddingBottom: bottomSpace },
+        ]}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Stack gap="xxl" style={styles.body}>
+          {/* An interrupted recording, adopted from the persisted draft at boot. Offered at the
+              top because it is the one thing here that is time-sensitive: every minute spent
+              deciding is a minute the route cannot recover. */}
+          {resumable ? (
+            <Card tone="accent">
+              <Stack gap="sm">
+                <Txt variant="micro" uppercase tracking={0.8}>
+                  {t('cardio.resumableEyebrow')}
+                </Txt>
+                <Txt variant="caption">
+                  {t('cardio.resumableMessage', { name: resumable.title })}
+                </Txt>
+                <Row gap="md">
+                  <Button
+                    label={t('cardio.resume')}
+                    variant="primary"
+                    size="sm"
+                    icon="play"
+                    onPress={onResume}
                   />
-                ))}
-              </Row>
-            </View>
+                  <Button
+                    label={t('cardio.discardIt')}
+                    variant="quiet"
+                    size="sm"
+                    onPress={onDropResumable}
+                  />
+                </Row>
+              </Stack>
+            </Card>
+          ) : null}
 
-            <TextField
-              label={t('cardio.nameLabel')}
-              value={title}
-              onChangeText={onTitle}
-              placeholder={t(placeholderFor(kind))}
-              autoCapitalize="sentences"
-              returnKeyType="done"
-              accessibilityLabel={t('cardio.nameA11y')}
-              hint={t('cardio.nameHint')}
-            />
+          <View>
+            <SectionHeader title={t('cardio.activity')} eyebrow={t('cardio.activityEyebrow')} />
+            <Row gap="sm" wrap>
+              {TRACKABLE.map((option) => (
+                <Chip
+                  key={option.kind}
+                  label={t(option.label)}
+                  icon={option.icon}
+                  selected={kind === option.kind}
+                  onPress={() => onKind(option.kind)}
+                />
+              ))}
+            </Row>
+          </View>
 
-            <View>
-              <SectionHeader title={t('cardio.beforeYouStart')} />
-              <Card>
-                <Stack gap="md">
-                  <Row gap="md" align="start">
-                    <Icon name="mapPin" size={18} color={theme.colors.textMuted} />
-                    <Txt variant="caption" tone="muted" style={{ flex: 1 }}>
-                      {t('cardio.locationNote', {
-                        unit: t(units === 'metric' ? 'cardio.kilometres' : 'cardio.miles'),
-                      })}
-                    </Txt>
-                  </Row>
-                  <Divider inset={0} />
-                  <Row gap="md" align="start">
-                    <Icon name="clock" size={18} color={theme.colors.textMuted} />
-                    <Txt variant="caption" tone="muted" style={{ flex: 1 }}>
-                      {t('cardio.backgroundNote')}
-                    </Txt>
-                  </Row>
-                </Stack>
-              </Card>
-            </View>
+          <TextField
+            label={t('cardio.nameLabel')}
+            value={title}
+            onChangeText={onTitle}
+            placeholder={t(placeholderFor(kind))}
+            autoCapitalize="sentences"
+            returnKeyType="done"
+            accessibilityLabel={t('cardio.nameA11y')}
+            hint={t('cardio.nameHint')}
+          />
 
-            {error ? (
-              <Txt variant="caption" tone="danger">
-                {error}
-              </Txt>
-            ) : null}
+          <View>
+            <SectionHeader title={t('cardio.beforeYouStart')} />
+            <Card>
+              <Stack gap="md">
+                <Row gap="md" align="start">
+                  <Icon name="mapPin" size={18} color={theme.colors.textMuted} />
+                  <Txt variant="caption" tone="muted" style={{ flex: 1 }}>
+                    {t('cardio.locationNote', {
+                      unit: t(units === 'metric' ? 'cardio.kilometres' : 'cardio.miles'),
+                    })}
+                  </Txt>
+                </Row>
+                <Divider inset={0} />
+                <Row gap="md" align="start">
+                  <Icon name="clock" size={18} color={theme.colors.textMuted} />
+                  <Txt variant="caption" tone="muted" style={{ flex: 1 }}>
+                    {t('cardio.backgroundNote')}
+                  </Txt>
+                </Row>
+              </Stack>
+            </Card>
+          </View>
 
-            <Button
-              label={t(starting ? 'cardio.starting' : 'cardio.start')}
-              variant="primary"
-              size="lg"
-              icon="play"
-              fullWidth
-              weighty
-              loading={starting}
-              onPress={onStart}
-              accessibilityHint={t('cardio.startHint')}
-            />
+          {error ? (
+            <Txt variant="caption" tone="danger">
+              {error}
+            </Txt>
+          ) : null}
 
-            {__DEV__ ? (
-              <Txt variant="micro" tone="faint">
-                {t('cardio.devStart')}
-              </Txt>
-            ) : null}
-          </Stack>
-        </ScrollView>
-      )}
-    </DetailScreen>
+          <Button
+            label={t(starting ? 'cardio.starting' : 'cardio.start')}
+            variant="primary"
+            size="lg"
+            icon="play"
+            fullWidth
+            weighty
+            loading={starting}
+            onPress={onStart}
+            accessibilityHint={t('cardio.startHint')}
+          />
+
+          {__DEV__ ? (
+            <Txt variant="micro" tone="faint">
+              {t('cardio.devStart')}
+            </Txt>
+          ) : null}
+        </Stack>
+      </ScrollView>
+    </>
   );
 }
 

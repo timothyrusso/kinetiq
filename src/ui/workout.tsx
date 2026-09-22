@@ -39,7 +39,8 @@ import { IconButton } from './Button';
 import { Row } from './layout';
 import { Stepper } from './controls';
 import { MetricLabel, Txt } from './Text';
-import { ConfirmSheet, Sheet, SheetFooter, SheetSection } from './Sheet';
+import { Sheet, SheetFooter, SheetSection } from './Sheet';
+import { ConfirmDialog } from './controls/ConfirmDialog';
 import { useT } from '@/i18n/useT';
 
 /**
@@ -563,7 +564,7 @@ export const RestDock = memo(function RestDock({
  * un-ticked: recoverable, so no prompt. Removing deletes the entry and the sets already
  * banked against it, so it goes through the same confirm path as discarding the workout.
  */
-export function RemoveExerciseSheet({
+export function RemoveExerciseDialog({
   exerciseName,
   completedSets,
   onConfirm,
@@ -576,7 +577,8 @@ export function RemoveExerciseSheet({
 }) {
   const { t } = useT();
   return (
-    <ConfirmSheet
+    <ConfirmDialog
+      visible
       title={t('setRow.removeExerciseTitle')}
       message={
         completedSets > 0
@@ -584,8 +586,10 @@ export function RemoveExerciseSheet({
           : t('setRow.removePlain', { name: exerciseName })
       }
       confirmLabel={t('setRow.remove')}
+      cancelLabel={t('common.cancel')}
+      destructive
       onConfirm={onConfirm}
-      onRequestClose={onRequestClose}
+      onCancel={onRequestClose}
     />
   );
 }

@@ -47,7 +47,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 're
 import { useRouter } from 'expo-router';
 import { useScreenContentBottom } from '@/ui/insets';
 
-import { DetailScreen } from '@/ui/Screen';
+import { ScreenHeader } from '@/ui/Screen';
 import { NavRow } from '@/ui/rows';
 import { Card, Divider, SectionHeader, Stack } from '@/ui/layout';
 import { Button } from '@/ui/Button';
@@ -80,77 +80,76 @@ export default function SettingsScreen() {
   const update = useSettingsUpdate();
 
   return (
-    <DetailScreen title={t('settings.title')} largeTitle>
-      {(topInset) => (
-        <ScrollView
-          contentContainerStyle={[
-            styles.content,
-            { paddingTop: topInset + spacing.md, paddingBottom: bottomSpace },
-          ]}
-          // `automatic`, so iOS owns the inset under the large title and can collapse it as
-          // this view scrolls. Without it the title stays large forever and the screen looks
-          // like a native header that does not work.
-          contentInsetAdjustmentBehavior="automatic"
-          keyboardShouldPersistTaps="handled"
-        >
-          <Stack gap="xxl" style={styles.body}>
-            <View>
-              <SectionHeader title={t('settings.you')} eyebrow={t('settings.usedForEstimates')} />
-              <ProfileForm
-                profile={settings.profile}
-                onSave={(patch) => {
-                  update({ profile: { ...settings.profile, ...patch } });
-                  haptics.success();
-                }}
+    <>
+      <ScreenHeader title={t('settings.title')} largeTitle />
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: spacing.md, paddingBottom: bottomSpace },
+        ]}
+        // `automatic`, so iOS owns the inset under the large title and can collapse it as
+        // this view scrolls. Without it the title stays large forever and the screen looks
+        // like a native header that does not work.
+        contentInsetAdjustmentBehavior="automatic"
+        keyboardShouldPersistTaps="handled"
+      >
+        <Stack gap="xxl" style={styles.body}>
+          <View>
+            <SectionHeader title={t('settings.you')} eyebrow={t('settings.usedForEstimates')} />
+            <ProfileForm
+              profile={settings.profile}
+              onSave={(patch) => {
+                update({ profile: { ...settings.profile, ...patch } });
+                haptics.success();
+              }}
+            />
+          </View>
+
+          <View>
+            <SectionHeader title={t('settings.app')} />
+            <Card padding="xxs">
+              <NavRow
+                title={t('settings.trainingPreferences')}
+                subtitle={t('settings.trainingSubtitle')}
+                theme={theme}
+                icon="target"
+                topDivider={false}
+                onPress={() => router.push(routes.settingsTraining())}
               />
-            </View>
+              <NavRow
+                title={t('settings.notifications')}
+                subtitle={notificationSummary(settings)}
+                theme={theme}
+                icon="bell"
+                onPress={() => router.push(routes.settingsNotifications())}
+              />
+              <NavRow
+                title={t('settings.permissions')}
+                subtitle={t('settings.permissionsSubtitle')}
+                theme={theme}
+                icon="lock"
+                onPress={() => router.push(routes.permissions())}
+              />
+              <NavRow
+                title={t('profileScreen.aboutTitle')}
+                subtitle={t('profileScreen.aboutSubtitle')}
+                theme={theme}
+                icon="info"
+                onPress={() => router.push(routes.settingsAbout())}
+              />
+            </Card>
+          </View>
 
-            <View>
-              <SectionHeader title={t('settings.app')} />
-              <Card padding="xxs">
-                <NavRow
-                  title={t('settings.trainingPreferences')}
-                  subtitle={t('settings.trainingSubtitle')}
-                  theme={theme}
-                  icon="target"
-                  topDivider={false}
-                  onPress={() => router.push(routes.settingsTraining())}
-                />
-                <NavRow
-                  title={t('settings.notifications')}
-                  subtitle={notificationSummary(settings)}
-                  theme={theme}
-                  icon="bell"
-                  onPress={() => router.push(routes.settingsNotifications())}
-                />
-                <NavRow
-                  title={t('settings.permissions')}
-                  subtitle={t('settings.permissionsSubtitle')}
-                  theme={theme}
-                  icon="lock"
-                  onPress={() => router.push(routes.permissions())}
-                />
-                <NavRow
-                  title={t('profileScreen.aboutTitle')}
-                  subtitle={t('profileScreen.aboutSubtitle')}
-                  theme={theme}
-                  icon="info"
-                  onPress={() => router.push(routes.settingsAbout())}
-                />
-              </Card>
-            </View>
+          <Txt variant="micro" tone="faint" align="center">
+            {t('misc.settingsFootnote')}
+          </Txt>
 
-            <Txt variant="micro" tone="faint" align="center">
-              {t('misc.settingsFootnote')}
-            </Txt>
-
-            <View>
-              <Divider inset={spacing.sm} />
-            </View>
-          </Stack>
-        </ScrollView>
-      )}
-    </DetailScreen>
+          <View>
+            <Divider inset={spacing.sm} />
+          </View>
+        </Stack>
+      </ScrollView>
+    </>
   );
 }
 

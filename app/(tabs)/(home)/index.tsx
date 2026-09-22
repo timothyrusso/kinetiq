@@ -31,16 +31,16 @@ import { useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTabContentBottom } from '@/ui/insets';
 
-import { BarAction, CollapsibleHeader, CollapsibleHero, useScreenHeaderScroll } from '@/ui/Screen';
+import { SCROLL_INSETS, ScreenHeader } from '@/ui/Screen';
+import { StatTile, TagRow, type Tag } from '@/ui/display';
+import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { LiveClock } from '@/ui/LiveClock';
 import { ActivityRow } from '@/ui/rows';
-import { Badge, Card, Divider, Row, SectionHeader, Stack } from '@/ui/layout';
+import { Card, Divider, Row, SectionHeader, Stack } from '@/ui/layout';
 import { MetricLabel, Txt } from '@/ui/Text';
-import { Icon } from '@/ui/icons';
 import { Button } from '@/ui/Button';
 import { BarChart, type BarPoint } from '@/ui/charts/BarChart';
 import { ActivityDistribution, type DistributionSlice } from '@/ui/charts/ActivityDistribution';
@@ -78,9 +78,7 @@ export default function HomeScreen() {
   const { t } = useT();
   const router = useRouter();
   const theme = useAppTheme();
-  const insets = useSafeAreaInsets();
   const bottomSpace = useTabContentBottom();
-  const header = useScreenHeaderScroll();
   const [chartWidth, onChartLayout] = useMeasuredWidth();
 
   const units = useSettings((s) => s.unitSystem);
@@ -133,33 +131,39 @@ export default function HomeScreen() {
   }, [recentQuery, summaryQuery]);
 
   const empty = summary !== undefined && !summary.hasAnyHistory && !loading;
+  const openSettings = useCallback(() => router.push(routes.settings()), [router]);
+  const heroTags = useMemo<Tag[]>(
+    () => [
+      remaining > 0
+        ? { key: 'goal', label: t('homeTab.toWeeklyGoal', { count: remaining }), tone: 'neutral' }
+        : { key: 'goal', label: t('homeTab.weeklyGoalMet'), tone: 'accent' },
+    ],
+    [remaining, t],
+  );
 
   const listHeader = (
     <>
-      <CollapsibleHero
-        header={header}
-        eyebrow={greeting()}
-        title={headlineFor(streak.current, summary)}
-      >
+      {/* The first content block: what the old collapsing hero said, as structured pieces. A
+          streak worth naming is a stat; anything less is the sentence that encourages. */}
+      <Stack gap="md" style={styles.hero}>
+        <Txt variant="micro" tone="faint" uppercase tracking={1.1}>
+          {greeting()}
+        </Txt>
+        {streak.current >= 2 ? (
+          <StatTile
+            emphasis="hero"
+            value={`${streak.current}`}
+            unit={t('homeHero.streakUnit', { count: streak.current })}
+            label={t('homeHero.streakLabel')}
+          />
+        ) : (
+          <Txt variant="headline">{headlineFor(streak.current, summary)}</Txt>
+        )}
         {/* Its own component so the per-second tick re-renders two Txt nodes rather than the
-            hero, its badges and everything the hero is a child of. */}
+            hero and everything the hero is a child of. */}
         <LiveClock />
-        {summary?.hasAnyHistory ? (
-          <Row gap="sm" style={{ marginTop: spacing.md }}>
-            <Badge
-              label={remaining > 0 ? `${remaining} to weekly goal` : 'Weekly goal met'}
-              tone={remaining > 0 ? 'neutral' : 'success'}
-            />
-            {streak.current >= 2 ? (
-              <Badge
-                label={`${streak.current} days`}
-                tone="accent"
-                icon={<Icon name="flame" size={12} color={theme.colors.accent} />}
-              />
-            ) : null}
-          </Row>
-        ) : null}
-      </CollapsibleHero>
+        {summary?.hasAnyHistory ? <TagRow tags={heroTags} theme={theme} /> : null}
+      </Stack>
 
       <View
         style={{ paddingHorizontal: screenGutter, paddingTop: spacing.xl, paddingBottom: spacing.xl }}
@@ -208,28 +212,21 @@ export default function HomeScreen() {
   );
 
   return (
-    <View style={styles.root}>
-      <CollapsibleHeader
-        header={header}
-        title={profileName ? `Hi ${firstName(profileName)}` : 'Today'}
-        right={
-          <BarAction
-            icon="settings"
-            label={t('homeTab.settings')}
-            onPress={() => router.push(routes.settings())}
-          />
-        }
+    <>
+      <ScreenHeader
+        title={profileName ? t('homeTab.hi', { name: firstName(profileName) }) : t('homeTab.today')}
       />
+      <HeaderToolbar placement="right">
+        {headerAction({ action: 'settings', onPress: openSettings, t, label: 'homeTab.settings' })}
+      </HeaderToolbar>
 
       <FlashList
+        {...SCROLL_INSETS}
         data={visible}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         extraData={units}
-        onScroll={header.onScroll}
-        scrollEventThrottle={16}
         contentContainerStyle={{ paddingBottom: bottomSpace }}
-        progressViewOffset={insets.top + 52}
         refreshControl={
           <ThemedRefreshControl refreshing={recentQuery.isFetching} onRefresh={refresh} />
         }
@@ -251,11 +248,10 @@ export default function HomeScreen() {
         }
         style={{ backgroundColor: theme.colors.background }}
       />
-      {/* No resume pill here: `TabBarWithPill` owns it, for every tab. Home used to mount
-          its own, and since the tab bar renders behind this scene rather than inside it,
-          both drew at once: two pills overlapping on the one screen where that was
-          visible. One owner, and it is the one that is not a scene. */}
-    </View>
+      {/* No resume pill here: the tab bar's accessory owns it, for every tab. Home used to
+          mount its own, and both drew at once. One owner, and it is the one that is not a
+          scene. */}
+    </>
   );
 }
 
@@ -468,5 +464,5 @@ function deltaPercent(current: number, previous: number): number | null {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
+  hero: { paddingHorizontal: screenGutter, paddingTop: spacing.md },
 });

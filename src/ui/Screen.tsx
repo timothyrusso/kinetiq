@@ -1,82 +1,48 @@
 /**
- * Screen scaffold: safe-area container, nav bar, collapsing large title.
+ * Screen scaffold: per-screen header options for the platform's own bar, and the containers
+ * that sit under it.
  *
- * ## Two header forms, on purpose
+ * ## The header is the navigator's, not ours
  *
- * A pushed detail screen wants a compact bar immediately: the user is deep in a stack and
- * needs the back affordance and the title on frame one. A root tab wants a large title that
- * collapses as content scrolls under it, which is the native reading of "you are at the top
- * level". Rendering one header for both makes either case feel like the wrong kind of screen.
+ * Every stack draws the native header with the shared look from `src/navigation/headerOptions`.
+ * A screen only says what is specific to it: its title, whether the title is large, whether the
+ * bar floats over media. There is no custom bar, no custom back button and no custom title view
+ * left in the app: those existed because the header used to be hidden and redrawn, and each
+ * redrawing (two of them, with different vertical-centring maths) was a way for the app to feel
+ * slightly unlike the platform it runs on.
  *
- * ## Why the header is a hook plus two parts, not a wrapping component
+ * ## One line of title
  *
- * A scroll handler has to be attached to the *same* scroll view the list renders, and a
- * wrapper component cannot reach inside a `FlashList` the caller owns. So the pattern is:
- * the screen calls `useScreenHeaderScroll()`, spreads the returned `onScroll` onto its own
- * scrollable, and renders `<CollapsibleHeader header={…} />` above it. The scrollable stays
- * the screen's business: which is also how a screen keeps its own `onEndReached`, its key
- * extractor, and its recycling config without fighting an abstraction.
+ * The native title holds one line. What used to be a subtitle under it is now the first line of
+ * the screen's content, as a `MetaLine`.
  *
- * ## Why `surface` and `hairline` are read once and passed down
+ * ## Scroll views and the large title
  *
- * `useHeaderCollapse` documents the rule and this file honours it: a screen that scrolls a
- * long list must not subscribe *the header* to the theme separately, because the header is
- * rendered by the same component as the list. One `useAppTheme()` call at the top of the
- * hook, values passed as plain strings.
- *
- * ## The blur
- *
- * Real `BlurView` on iOS for a *static* detail bar; a scrolling bar gets the animated
- * solid backing `useHeaderCollapse` already computes. Re-blurring everything beneath a
- * translucent bar during a scroll is a per-frame cost Android pays badly, and at this
- * opacity the visual difference is a few percent of contrast.
+ * A large title collapses by coupling to the scroll view's content inset, and the native stack
+ * finds that scroll view only when it is the screen's own first child. So `ScreenScroll` and
+ * lists spread with `SCROLL_INSETS` are rendered directly, never wrapped in a filling `View`:
+ * wrapped, the title renders but never shrinks.
  */
-import { type ReactNode, useCallback, useMemo } from 'react';
+import { type ReactNode } from 'react';
 import {
-  Platform,
-  Pressable,
+  ScrollView,
   StyleSheet,
   View,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
+  type ScrollViewProps,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  type SharedValue,
-} from 'react-native-reanimated';
-import { BlurView } from 'expo-blur';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Stack, router } from 'expo-router';
+import { Stack } from 'expo-router';
 
-import { useAppTheme, type Theme } from '@/theme/theme';
-import { radius, spacing, z, touchTarget, screenGutter } from '@/theme/tokens';
-import { Icon, type IconName } from '@/ui/icons';
-import { Txt } from '@/ui/Text';
-import { Row } from '@/ui/layout';
-import { useHeaderCollapse } from '@/ui/animation';
-import { NATIVE_HEADER_HEIGHT } from '@/ui/insets';
-import { useT } from '@/i18n/useT';
-
-/** Height of the compact bar, excluding any top safe-area inset. */
-const BAR_HEIGHT = 52;
-/** Distance over which the large title collapses: a little under one title height, so the
- * compact title is fully in before the hero has left the screen. */
-const COLLAPSE_DISTANCE = 72;
-
-export const SCREEN_BAR_HEIGHT = BAR_HEIGHT;
-
-/* -------------------------------------------------------------- containers -- */
+import { useAppTheme } from '@/theme/theme';
+import { screenGutter } from '@/theme/tokens';
+import { useScreenContentBottom, useTabContentBottom } from '@/ui/insets';
 
 /**
- * Opaque screen background, edge to edge.
+ * Opaque screen background, edge to edge, for a screen whose content does not scroll.
  *
- * Every route screen wraps itself in this rather than relying on the navigator's
- * `contentStyle`: with a transparent `contentStyle` (set in the root layout so a push does
- * not flash a second background over the outgoing screen), a screen with no container of its
- * own would let the previous screen show through during the transition.
+ * A screen with no container of its own would let the previous screen show through during a
+ * push, because the navigator's content colour is only painted once the transition settles.
  */
 export function Screen({
   children,
@@ -91,436 +57,90 @@ export function Screen({
   );
 }
 
-/* --------------------------------------------------------------- detail bar -- */
-
-export type DetailHeader = {
-  /** Drive the body's `onScroll` with this so the bar can gain a backing. */
-  onScroll: ScrollToSharedValue;
-  scrollY: SharedValue<number>;
-};
-
 /**
- * Writes scroll offset into a shared value, from the JS thread.
+ * This screen's header options. Renders nothing itself.
  *
- * This is deliberately *not* `useAnimatedScrollHandler`, which is the obvious thing and does
- * not work here. That hook returns an event-handler *object* (`{ workletEventHandler }`) built
- * to be consumed by Reanimated's `createAnimatedComponent`: reanimated's docs say to pass it
- * to `Animated.ScrollView`'s `onScroll`. These screens scroll a `FlashList`, whose own
- * `AnimatedFlashList` is wrapped with *RN's* `Animated`, not Reanimated's, so nothing on that
- * side recognises the object. FlashList's native code does
- * `props.onScroll?.call(props, event)`: and an object is not callable, so every scroll frame
- * threw "undefined is not a function" while the header quietly never collapsed.
- *
- * The cost is real and small: offset crosses to the UI thread per JS scroll event
- * (`scrollEventThrottle={16}`) instead of the worklet running there, so during a heavy list
- * recycle the backing can trail by one JS frame. On a frosted colour and a title opacity, * the only things `useHeaderCollapse` drives: that is below the threshold of notice. A
- * transform-critical gesture follower would need Reanimated's own scrollable, and does not
- * exist here.
+ * `largeTitle` for hubs and lists; the tab stacks already default to it. `transparent` for the
+ * two media screens, where the bar floats over an image or a map and the system blurs what
+ * scrolls under it.
  */
-export type ScrollToSharedValue = (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
-
-function useScrollOffsetWriter(scrollY: SharedValue<number>): ScrollToSharedValue {
-  return useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      scrollY.value = event.nativeEvent.contentOffset.y;
-    },
-    [scrollY],
-  );
-}
-
-/**
- * A pushed screen: fixed bar, and a body that is told how far to pad to clear it.
- *
- * The body receives the inset as an argument rather than being absolutely positioned under
- * the bar. A list that scrolls *under* a bar needs its first row offset by padding: without
- * it the first item slides out of view behind the title rather than under it, which reads to
- * a user as a clipping bug.
- */
-export function DetailScreen({
+export function ScreenHeader({
   title,
-  subtitle,
-  right,
-  children,
-  headerTransparent = false,
-  largeTitle = false,
-  ownBar = false,
-  onBack,
+  largeTitle,
+  transparent = false,
+  shown = true,
 }: {
   title: string;
-  subtitle?: string;
-  right?: ReactNode;
-  /** Receives the inset to pad by, and the scroll handler to attach. */
-  children: (topInset: number, header: DetailHeader) => ReactNode;
-  /** Full-bleed media underneath (an activity's map, an exercise photo). */
-  headerTransparent?: boolean;
-  /**
-   * Ask for the navigator's collapsing large title.
-   *
-   * Only correct where there is no subtitle and no media behind the bar, because a large
-   * title has room for one line and nothing behind it. The settings-style screens take it
-   * because a collapsing large title is the platform idiom for exactly that kind of screen.
-   */
   largeTitle?: boolean;
-  /**
-   * Draw the compact bar in this file instead of using the navigator's.
-   *
-   * One screen needs it: `app/dev.tsx`, the QA harness's instrument panel. Every gate reads
-   * its request ledger by scrolling to a known position, and a native header changes both
-   * the scroll geometry and the content inset under it. The first run after it was given one
-   * reported "(none sent)" for a COLD START, which cannot happen.
-   */
-  ownBar?: boolean;
-  onBack?: () => void;
+  transparent?: boolean;
+  /** `false` only for the immersive screens: the live workout and a running recording. */
+  shown?: boolean;
 }) {
   const theme = useAppTheme();
-  const insets = useSafeAreaInsets();
-  const scrollY = useSharedValue(0);
-  const onScroll = useScrollOffsetWriter(scrollY);
-  const barOpacity = useAnimatedStyle(() => ({
-    opacity: Math.min(1, scrollY.value / 48),
-  }));
-
-  const goBack = useCallback(() => {
-    if (onBack) {
-      onBack();
-      return;
-    }
-    // `back`, not `replace('/')`: the user expects the screen they came from, with its
-    // scroll position intact. `canGoBack` covers the case where this screen *is* the entry
-    // point: a deep link opened from a notification has nothing to return to, and a back
-    // button that does nothing is worse than no back button.
-    if (router.canGoBack()) router.back();
-    else router.replace('/');
-  }, [onBack]);
-
-  const header = useMemo(() => ({ onScroll, scrollY }), [onScroll, scrollY]);
-
-  if (!ownBar) {
-    return (
-      <>
-        <Stack.Screen
-          options={{
-            headerShown: true,
-            title,
-            // A large title only where one was asked for: it needs a line to itself and
-            // nothing behind it.
-            headerLargeTitle: largeTitle,
-            // A subtitle is why most of these screens cannot use a plain native title: the
-            // bar holds one string. A custom title view is the platform's own answer to
-            // that, and it keeps the rest of the native bar (blur, back chevron, the edge
-            // swipe) rather than reimplementing all of it to gain one line of text.
-            ...(subtitle
-              ? {
-                  headerTitle: () => (
-                    <View style={styles.nativeTitle}>
-                      <Txt variant="label" weight="700" numberOfLines={1} align="center">
-                        {title}
-                      </Txt>
-                      <Txt variant="micro" tone="muted" numberOfLines={1} align="center">
-                        {subtitle}
-                      </Txt>
-                    </View>
-                  ),
-                }
-              : {}),
-            // Over full-bleed media the bar floats, and the system blurs whatever scrolls
-            // under it.
-            ...(headerTransparent
-              ? {
-                  headerTransparent: true,
-                  headerBlurEffect: theme.mode === 'dark' ? 'systemChromeMaterialDark' : 'systemChromeMaterialLight',
-                  headerStyle: { backgroundColor: 'transparent' },
-                }
-              : {
-                  headerStyle: { backgroundColor: theme.colors.background },
-                  contentStyle: { backgroundColor: theme.colors.background },
-                }),
-            // The hairline under a large title is drawn by the system only once the title
-            // has collapsed; leaving it visible at rest puts a line across an empty bar.
-            headerLargeTitleShadowVisible: false,
-            headerShadowVisible: false,
-            headerTintColor: theme.colors.accent,
-            headerLargeStyle: { backgroundColor: theme.colors.background },
-            headerTitleStyle: { color: theme.colors.text },
-            headerLargeTitleStyle: { color: theme.colors.text },
-            ...(right ? { headerRight: () => <Row gap="xs">{right}</Row> } : {}),
-            // Always ours, never the navigator's own. These screens are the FIRST route in
-            // their nested stack (settings/index, permissions), so the system finds nothing
-            // to go back to inside that stack and draws no chevron at all, while the push
-            // that got here came from the stack above. `goBack` pops across navigators and
-            // falls back to Home, which is the behaviour the compact bar has always had.
-            headerLeft: () => (
-              <BarBackButton onPress={goBack} theme={theme} transparent={false} />
-            ),
-          }}
-        />
-        {/* No `Screen` wrapper, deliberately. A large title collapses by coupling to the
-            scroll view's content inset, and react-native-screens finds that scroll view only
-            when it is the screen's own child: wrapped in a filling `View` the title renders
-            but never shrinks, which costs a screen ~100pt of permanent chrome and looks like
-            a native header that does not work. The background it would have painted comes
-            from `contentStyle` above.
-
-            The inset is `0` for an opaque bar, because the navigator has already pushed
-            content below it and a screen padding by the bar height again would sit a bar's
-            worth low. A TRANSPARENT bar floats over media instead, so content starts at the
-            top of the screen and the first readable row has to clear the bar itself. */}
-        {children(headerTransparent ? insets.top + NATIVE_HEADER_HEIGHT : 0, header)}
-      </>
-    );
-  }
-
   return (
-    <Screen>
-      <View style={[styles.barWrap, { paddingTop: insets.top, zIndex: z.sticky }]} pointerEvents="box-none">
-        {/* One backing or the other, never both: the animated one would otherwise sit under
-            the blur and show through it as a grey wash at rest. */}
-        {headerTransparent ? (
-          <Animated.View
-            style={[StyleSheet.absoluteFill, barOpacity, { backgroundColor: theme.colors.background }]}
-          />
-        ) : (
-          <View style={StyleSheet.absoluteFill}>
-            {Platform.OS === 'ios' ? (
-              <BlurView
-                intensity={30}
-                tint={theme.mode === 'dark' ? 'dark' : 'light'}
-                style={StyleSheet.absoluteFill}
-              />
-            ) : (
-              <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.overlay }]} />
-            )}
-          </View>
-        )}
-        <Row align="center" gap="sm" style={[styles.bar, { height: BAR_HEIGHT }]}>
-          <BarBackButton onPress={goBack} theme={theme} transparent={headerTransparent} />
-          <View style={{ flex: 1 }}>
-            <Txt variant="subhead" weight="700" numberOfLines={1}>
-              {title}
-            </Txt>
-            {subtitle ? (
-              <Txt variant="caption" tone="muted" numberOfLines={1}>
-                {subtitle}
-              </Txt>
-            ) : null}
-          </View>
-          {right ? (
-            <Row gap="xs" style={styles.barRight}>
-              {right}
-            </Row>
-          ) : null}
-        </Row>
-      </View>
-      {children(insets.top + BAR_HEIGHT, header)}
-    </Screen>
-  );
-}
-
-/* ----------------------------------------------------- collapsing tab bar -- */
-
-/**
- * The scroll coupling for a root tab's large title. Call it in the screen, spread
- * `onScroll` onto the screen's own scrollable, and pass the result to
- * `<CollapsibleHeader>` / `<CollapsibleHero>`.
- */
-export function useScreenHeaderScroll(distance = COLLAPSE_DISTANCE) {
-  const theme = useAppTheme();
-  const scrollY = useSharedValue(0);
-
-  // The object form is required: the positional form takes the event directly. Passing a
-  // bare function here would read `event.contentOffset` off the wrong shape and leave the
-  // shared value at zero, i.e. a header that never collapses.
-  const onScroll = useScrollOffsetWriter(scrollY);
-
-  const collapse = useHeaderCollapse(scrollY, {
-    distance,
-    surface: theme.colors.background,
-    hairline: theme.colors.hairline,
-  });
-
-  return { scrollY, onScroll, theme, ...collapse };
-}
-
-export type ScreenHeaderState = ReturnType<typeof useScreenHeaderScroll>;
-
-/** The sticky half of a collapsing pair: translucent at rest, opaque once collapsed. */
-export function CollapsibleHeader({
-  header,
-  title,
-  right,
-}: {
-  header: ScreenHeaderState;
-  title: string;
-  right?: ReactNode;
-}) {
-  const insets = useSafeAreaInsets();
-
-  return (
-    <View style={[styles.barWrap, { zIndex: z.sticky }]} pointerEvents="box-none">
-      {/* `paddingTop: insets.top` with a BAR_HEIGHT row, exactly as `DetailScreen` does it.
-          Before this, the bar was a single `insets.top + BAR_HEIGHT` box and its row centred
-          inside the whole thing, which puts the trailing action at `BAR_HEIGHT / 2 +
-          insets.top / 2` instead of `insets.top + BAR_HEIGHT / 2`. On a 59pt inset that is
-          55.5 rather than 85: thirty points too high, tucked under the notch, and about thirty
-          points above the back button on every pushed screen. Two header components, two
-          different vertical-centring rules, and only one of them correct. */}
-      <Animated.View
-        style={[
-          styles.bar,
-          { paddingTop: insets.top, height: insets.top + BAR_HEIGHT },
-          header.barStyle,
-        ]}
-      >
-        <View style={styles.barSpacer} />
-        <Animated.View style={[styles.barInner, header.inlineTitleStyle]}>
-          <Txt variant="subhead" weight="700" numberOfLines={1}>
-            {title}
-          </Txt>
-        </Animated.View>
-        {right ? (
-          <Row gap="xs" style={styles.barRight}>
-            {right}
-          </Row>
-        ) : null}
-      </Animated.View>
-    </View>
-  );
-}
-
-/**
- * The hero half: the big title plus anything the screen wants under it, rendered inside the
- * scroll view's content so it scrolls away normally. `CollapsibleHeader` and this must be
- * used together: the bar's compact title is invisible until this one has scrolled out.
- */
-export function CollapsibleHero({
-  header,
-  title,
-  eyebrow,
-  children,
-}: {
-  header: ScreenHeaderState;
-  title: string;
-  eyebrow?: string;
-  children?: ReactNode;
-}) {
-  const insets = useSafeAreaInsets();
-  return (
-    // Below the BAR, not below the status bar. The bar occupies `insets.top .. insets.top +
-    // BAR_HEIGHT` and holds the trailing action, so a hero starting at `insets.top + xxl` puts
-    // its eyebrow inside that band and straight into the button: measured, the bar ends at 111
-    // and the eyebrow began at 85. It got worse when the spacing scale opened up, because the
-    // padding was derived from a spacing step rather than from the thing it had to clear.
-    <View
-      style={{
-        paddingTop: insets.top + BAR_HEIGHT + spacing.md,
-        paddingHorizontal: screenGutter,
+    <Stack.Screen
+      options={{
+        title,
+        headerShown: shown,
+        ...(largeTitle === undefined ? {} : { headerLargeTitle: largeTitle }),
+        ...(transparent
+          ? {
+              headerTransparent: true,
+              headerLargeTitle: false,
+              headerBlurEffect:
+                theme.mode === 'dark' ? 'systemChromeMaterialDark' : 'systemChromeMaterialLight',
+              headerStyle: { backgroundColor: 'transparent' },
+            }
+          : {}),
       }}
-    >
-      <Animated.View style={header.heroTitleStyle}>
-        {eyebrow ? (
-          <Txt variant="micro" tone="faint" uppercase tracking={1.1}>
-            {eyebrow}
-          </Txt>
-        ) : null}
-        <Txt variant="headline">{title}</Txt>
-      </Animated.View>
-      {children}
-    </View>
+    />
   );
 }
 
-/* ------------------------------------------------------------------- parts -- */
+/**
+ * The props every screen-level list spreads, so iOS owns the insets under the header and the
+ * tab bar and can collapse a large title as the list scrolls.
+ */
+export const SCROLL_INSETS = { contentInsetAdjustmentBehavior: 'automatic' } as const;
 
-function BarBackButton({
-  onPress,
-  theme,
-  transparent,
-}: {
-  onPress: () => void;
-  theme: Theme;
-  transparent: boolean;
-}) {
-  const { t } = useT();
-  return (
-    <Pressable
-      onPress={onPress}
-      hitSlop={8}
-      accessibilityRole="button"
-      accessibilityLabel={t('common.back')}
-      style={({ pressed }) => [
-        styles.roundButton,
-        {
-          // Over full-bleed media the tap target needs its own scrim or it disappears
-          // against a bright map tile.
-          backgroundColor: transparent ? theme.colors.scrim : theme.colors.surfacePressed,
-          opacity: pressed ? 0.75 : 1,
-        },
-      ]}
-    >
-      <Icon name="arrowLeft" size={21} color={theme.colors.text} />
-    </Pressable>
-  );
-}
-
-/** Circular icon button for a nav bar's trailing slot. */
-export function BarAction({
-  icon,
-  onPress,
-  label,
-  badge,
-}: {
-  icon: IconName;
-  onPress: () => void;
-  label: string;
-  badge?: boolean;
+/**
+ * A screen's scroll view: automatic insets, the screen gutter, and bottom room that clears
+ * whatever sits below the content (the home indicator, or the tab bar and its accessory).
+ */
+export function ScreenScroll({
+  children,
+  contentContainerStyle,
+  gutter = true,
+  inTab = false,
+  ...rest
+}: ScrollViewProps & {
+  children: ReactNode;
+  /** Off for full-bleed content (a hero image) that places its own gutter per section. */
+  gutter?: boolean;
+  /** On a tab's root screen, clear the tab bar rather than the home indicator. */
+  inTab?: boolean;
 }) {
   const theme = useAppTheme();
+  const screenBottom = useScreenContentBottom();
+  const tabBottom = useTabContentBottom();
   return (
-    <Pressable
-      onPress={onPress}
-      hitSlop={8}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      style={({ pressed }) => [
-        styles.roundButton,
-        { backgroundColor: theme.colors.surfacePressed, opacity: pressed ? 0.75 : 1 },
+    <ScrollView
+      {...SCROLL_INSETS}
+      keyboardShouldPersistTaps="handled"
+      {...rest}
+      style={[{ backgroundColor: theme.colors.background }, rest.style]}
+      contentContainerStyle={[
+        gutter ? styles.gutter : null,
+        { paddingBottom: inTab ? tabBottom : screenBottom },
+        contentContainerStyle,
       ]}
     >
-      {/* 22 to match `IconButton`, the other component that fills this slot. */}
-      <Icon name={icon} size={22} color={theme.colors.text} />
-      {badge ? <View style={[styles.dot, { backgroundColor: theme.colors.accent }]} /> : null}
-    </Pressable>
+      {children}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  // The navigator centres whatever this returns, so it only has to size itself. `maxWidth`
-  // keeps a long routine name from pushing the header actions off their own edge.
-  nativeTitle: { alignItems: 'center', justifyContent: 'center', maxWidth: 240 },
   screen: { flex: 1 },
-  barWrap: { position: 'absolute', left: 0, right: 0, top: 0 },
-  bar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: screenGutter,
-    gap: spacing.sm,
-  },
-  // Keeps the collapsed title on the same left edge as the hero title above it, so the
-  // title does not appear to jump sideways as it shrinks.
-  barSpacer: { width: 0 },
-  barInner: { flex: 1, alignItems: 'flex-start' },
-  barRight: { marginLeft: 'auto' },
-  // `touchTarget`, not 38. Two reasons, and the second is the one that shows: 38 is below the
-  // 44pt minimum a control is meant to offer, and `IconButton` (which two header screens use
-  // in this same slot) is already 44 with a 22pt glyph. So the trailing action was two
-  // different sizes depending on which screen you were on, which is visible the moment you
-  // navigate between them.
-  roundButton: {
-    width: touchTarget,
-    height: touchTarget,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dot: { position: 'absolute', top: 10, right: 11, width: 7, height: 7, borderRadius: 4 },
+  gutter: { paddingHorizontal: screenGutter },
 });

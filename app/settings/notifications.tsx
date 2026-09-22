@@ -38,7 +38,7 @@ import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useScreenContentBottom } from '@/ui/insets';
 
-import { DetailScreen } from '@/ui/Screen';
+import { ScreenHeader } from '@/ui/Screen';
 import { Card, Divider, Row, SectionHeader, Stack } from '@/ui/layout';
 import { Chip, Toggle } from '@/ui/controls';
 import { Button, IconButton } from '@/ui/Button';
@@ -160,204 +160,203 @@ export default function SettingsNotificationsScreen() {
   const minutes = Math.max(0, Math.min(REMINDER_LAST_MINUTE, reminder.minuteOfDay));
 
   return (
-    <DetailScreen title={t('notif.title')} largeTitle>
-      {(topInset) => (
-        <ScrollView
-          contentContainerStyle={[
-            styles.content,
-            { paddingTop: topInset + spacing.md, paddingBottom: bottomSpace },
-          ]}
-          // `automatic`, so iOS owns the inset under the large title and can collapse it as
-          // this view scrolls. Without it the title stays large forever and the screen looks
-          // like a native header that does not work.
-          contentInsetAdjustmentBehavior="automatic"
-          keyboardShouldPersistTaps="handled"
-        >
-          <Stack gap="xxl" style={styles.body}>
-            {/* --------------------------------------------------- OS permission -- */}
-            <OsPermission granted={granted} busy={granting} onAsk={() => void ask()} />
+    <>
+      <ScreenHeader title={t('notif.title')} largeTitle />
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: spacing.md, paddingBottom: bottomSpace },
+        ]}
+        // `automatic`, so iOS owns the inset under the large title and can collapse it as
+        // this view scrolls. Without it the title stays large forever and the screen looks
+        // like a native header that does not work.
+        contentInsetAdjustmentBehavior="automatic"
+        keyboardShouldPersistTaps="handled"
+      >
+        <Stack gap="xxl" style={styles.body}>
+          {/* --------------------------------------------------- OS permission -- */}
+          <OsPermission granted={granted} busy={granting} onAsk={() => void ask()} />
 
-            {/* --------------------------------------------------------- master -- */}
-            <View>
-              <SectionHeader title={t('notif.inAppAlerts')} />
-              <Card padding="xxs">
-                <ToggleRow
-                  label={t('notif.sendNotifications')}
-                  hint={t(enabled ? 'notif.onBody' : 'notif.offBody')}
-                  value={enabled}
-                  disabled={!granted}
-                  onChange={toggleMaster}
-                />
-                {!granted ? (
+          {/* --------------------------------------------------------- master -- */}
+          <View>
+            <SectionHeader title={t('notif.inAppAlerts')} />
+            <Card padding="xxs">
+              <ToggleRow
+                label={t('notif.sendNotifications')}
+                hint={t(enabled ? 'notif.onBody' : 'notif.offBody')}
+                value={enabled}
+                disabled={!granted}
+                onChange={toggleMaster}
+              />
+              {!granted ? (
+                <>
+                  <Divider inset={spacing.lg} />
+                  <View style={styles.note}>
+                    <Txt variant="caption" tone="muted">
+                      {t('notif.masterOffBecause')}
+                    </Txt>
+                  </View>
+                </>
+              ) : null}
+            </Card>
+          </View>
+
+          {/* -------------------------------------------------- rest timer -- */}
+          <View>
+            <SectionHeader title={t('notif.restTimer')} eyebrow={t('notif.whileRunning')} />
+            <Card>
+              <Stack gap="md">
+                <Txt variant="caption" tone="muted">
+                  {t('notif.restBody')}
+                </Txt>
+                <Txt variant="micro" tone="faint">
+                  {t('notif.restNote')}
+                </Txt>
+                {enabled && granted ? (
                   <>
-                    <Divider inset={spacing.lg} />
-                    <View style={styles.note}>
-                      <Txt variant="caption" tone="muted">
-                        {t('notif.masterOffBecause')}
-                      </Txt>
-                    </View>
+                    <Divider inset={0} />
+                    <Row align="center" gap="md">
+                      <Stack gap="xxs" style={{ flex: 1 }}>
+                        <Txt variant="strong">{t('notif.sendTest')}</Txt>
+                        <Txt variant="caption" tone="muted">
+                          {t('notif.testArrives')}
+                        </Txt>
+                      </Stack>
+                      <IconButton
+                        name="bell"
+                        variant="surface"
+                        accessibilityLabel={t('notif.sendTestA11y')}
+                        accessibilityHint={t('notif.sendTestHint')}
+                        onPress={test}
+                      />
+                    </Row>
                   </>
                 ) : null}
-              </Card>
-            </View>
+              </Stack>
+            </Card>
+          </View>
 
-            {/* -------------------------------------------------- rest timer -- */}
-            <View>
-              <SectionHeader title={t('notif.restTimer')} eyebrow={t('notif.whileRunning')} />
-              <Card>
-                <Stack gap="md">
-                  <Txt variant="caption" tone="muted">
-                    {t('notif.restBody')}
-                  </Txt>
-                  <Txt variant="micro" tone="faint">
-                    {t('notif.restNote')}
-                  </Txt>
-                  {enabled && granted ? (
-                    <>
-                      <Divider inset={0} />
-                      <Row align="center" gap="md">
-                        <Stack gap="xxs" style={{ flex: 1 }}>
-                          <Txt variant="strong">{t('notif.sendTest')}</Txt>
-                          <Txt variant="caption" tone="muted">
-                            {t('notif.testArrives')}
-                          </Txt>
-                        </Stack>
+          {/* ------------------------------------------------------- reminder -- */}
+          <View>
+            <SectionHeader
+              title={t('notif.weeklyReminder')}
+              eyebrow={
+                enabled && granted && reminder.enabled && reminder.days.length > 0
+                  ? t('notif.scheduled')
+                  : undefined
+              }
+            />
+            <Card padding="lg">
+              <Stack gap="lg">
+                <ToggleRow
+                  label={t('notif.remindMe')}
+                  hint={reminderHint(reminder, enabled, granted, locale)}
+                  value={reminder.enabled && enabled && granted}
+                  disabled={!enabled || !granted}
+                  onChange={(next) => commit({ enabled: next })}
+                />
+
+                {reminder.enabled && enabled && granted ? (
+                  <>
+                    <Divider inset={0} />
+
+                    <Row align="center" gap="lg">
+                      <Stack gap="xxs" style={{ flex: 1 }}>
+                        <Txt variant="strong">{t('notif.time')}</Txt>
+                        <Txt variant="caption" tone="muted">
+                          {t('notif.timeNote')}
+                        </Txt>
+                      </Stack>
+                      <Row align="center" gap="sm">
                         <IconButton
-                          name="bell"
+                          name="minus"
                           variant="surface"
-                          accessibilityLabel={t('notif.sendTestA11y')}
-                          accessibilityHint={t('notif.sendTestHint')}
-                          onPress={test}
+                          accessibilityLabel={`Earlier, ${formatClock(
+                            minutes - REMINDER_STEP_MINUTES,
+                          )}`}
+                          disabled={minutes <= 0}
+                          onPress={() =>
+                            commit({ minuteOfDay: Math.max(0, minutes - REMINDER_STEP_MINUTES) })
+                          }
+                        />
+                        {/* The readout is a live region: the arrows repeat and the number
+                            changing in silence is otherwise unreadable without looking. */}
+                        <View style={styles.clock} accessibilityLiveRegion="polite">
+                          <Txt variant="numeralSm">{formatClock(minutes)}</Txt>
+                        </View>
+                        <IconButton
+                          name="plus"
+                          variant="surface"
+                          accessibilityLabel={`Later, ${formatClock(
+                            minutes + REMINDER_STEP_MINUTES,
+                          )}`}
+                          disabled={minutes >= REMINDER_LAST_MINUTE}
+                          onPress={() =>
+                            commit({
+                              minuteOfDay: Math.min(
+                                REMINDER_LAST_MINUTE,
+                                minutes + REMINDER_STEP_MINUTES,
+                              ),
+                            })
+                          }
                         />
                       </Row>
-                    </>
-                  ) : null}
-                </Stack>
-              </Card>
-            </View>
+                    </Row>
 
-            {/* ------------------------------------------------------- reminder -- */}
-            <View>
-              <SectionHeader
-                title={t('notif.weeklyReminder')}
-                eyebrow={
-                  enabled && granted && reminder.enabled && reminder.days.length > 0
-                    ? t('notif.scheduled')
-                    : undefined
-                }
-              />
-              <Card padding="lg">
-                <Stack gap="lg">
-                  <ToggleRow
-                    label={t('notif.remindMe')}
-                    hint={reminderHint(reminder, enabled, granted, locale)}
-                    value={reminder.enabled && enabled && granted}
-                    disabled={!enabled || !granted}
-                    onChange={(next) => commit({ enabled: next })}
-                  />
+                    <Divider inset={0} />
 
-                  {reminder.enabled && enabled && granted ? (
-                    <>
-                      <Divider inset={0} />
-
-                      <Row align="center" gap="lg">
-                        <Stack gap="xxs" style={{ flex: 1 }}>
-                          <Txt variant="strong">{t('notif.time')}</Txt>
-                          <Txt variant="caption" tone="muted">
-                            {t('notif.timeNote')}
-                          </Txt>
-                        </Stack>
-                        <Row align="center" gap="sm">
-                          <IconButton
-                            name="minus"
-                            variant="surface"
-                            accessibilityLabel={`Earlier, ${formatClock(
-                              minutes - REMINDER_STEP_MINUTES,
-                            )}`}
-                            disabled={minutes <= 0}
-                            onPress={() =>
-                              commit({ minuteOfDay: Math.max(0, minutes - REMINDER_STEP_MINUTES) })
-                            }
-                          />
-                          {/* The readout is a live region: the arrows repeat and the number
-                              changing in silence is otherwise unreadable without looking. */}
-                          <View style={styles.clock} accessibilityLiveRegion="polite">
-                            <Txt variant="numeralSm">{formatClock(minutes)}</Txt>
-                          </View>
-                          <IconButton
-                            name="plus"
-                            variant="surface"
-                            accessibilityLabel={`Later, ${formatClock(
-                              minutes + REMINDER_STEP_MINUTES,
-                            )}`}
-                            disabled={minutes >= REMINDER_LAST_MINUTE}
-                            onPress={() =>
-                              commit({
-                                minuteOfDay: Math.min(
-                                  REMINDER_LAST_MINUTE,
-                                  minutes + REMINDER_STEP_MINUTES,
-                                ),
-                              })
-                            }
-                          />
-                        </Row>
+                    <Stack gap="sm">
+                      <Txt variant="strong">{t('notif.days')}</Txt>
+                      <Row gap="sm" style={styles.chips}>
+                        {ISO_DAYS.map((iso) => {
+                          const on = reminder.days.includes(iso);
+                          return (
+                            <Chip
+                              key={iso}
+                              label={dayLabel(iso, locale)}
+                              selected={on}
+                              size="sm"
+                              onPress={() =>
+                                commit({
+                                  days: on
+                                    ? reminder.days.filter((d) => d !== iso)
+                                    : [...reminder.days, iso].sort((a, b) => a - b),
+                                })
+                              }
+                            />
+                          );
+                        })}
                       </Row>
-
-                      <Divider inset={0} />
-
-                      <Stack gap="sm">
-                        <Txt variant="strong">{t('notif.days')}</Txt>
-                        <Row gap="sm" style={styles.chips}>
-                          {ISO_DAYS.map((iso) => {
-                            const on = reminder.days.includes(iso);
-                            return (
-                              <Chip
-                                key={iso}
-                                label={dayLabel(iso, locale)}
-                                selected={on}
-                                size="sm"
-                                onPress={() =>
-                                  commit({
-                                    days: on
-                                      ? reminder.days.filter((d) => d !== iso)
-                                      : [...reminder.days, iso].sort((a, b) => a - b),
-                                  })
-                                }
-                              />
-                            );
+                      {reminder.days.length === 0 ? (
+                        <Txt variant="micro" tone="warning">
+                          {t('notif.noDaysWarning')}
+                        </Txt>
+                      ) : (
+                        <Txt variant="micro" tone="faint">
+                          {t('notif.daysSummary', {
+                            days: describeDays(reminder.days, locale),
+                            count: reminder.days.length,
+                            word: t('notif.timeWord', { count: reminder.days.length }),
                           })}
-                        </Row>
-                        {reminder.days.length === 0 ? (
-                          <Txt variant="micro" tone="warning">
-                            {t('notif.noDaysWarning')}
-                          </Txt>
-                        ) : (
-                          <Txt variant="micro" tone="faint">
-                            {t('notif.daysSummary', {
-                              days: describeDays(reminder.days, locale),
-                              count: reminder.days.length,
-                              word: t('notif.timeWord', { count: reminder.days.length }),
-                            })}
-                          </Txt>
-                        )}
-                      </Stack>
-                    </>
-                  ) : null}
+                        </Txt>
+                      )}
+                    </Stack>
+                  </>
+                ) : null}
 
-                  {deferred ? (
-                    <View style={[styles.note, { backgroundColor: theme.colors.accentSoft }]}>
-                      <Txt variant="caption" tone="default">
-                        {t('misc.midSessionNote')}
-                      </Txt>
-                    </View>
-                  ) : null}
-                </Stack>
-              </Card>
-            </View>
-          </Stack>
-        </ScrollView>
-      )}
-    </DetailScreen>
+                {deferred ? (
+                  <View style={[styles.note, { backgroundColor: theme.colors.accentSoft }]}>
+                    <Txt variant="caption" tone="default">
+                      {t('misc.midSessionNote')}
+                    </Txt>
+                  </View>
+                ) : null}
+              </Stack>
+            </Card>
+          </View>
+        </Stack>
+      </ScrollView>
+    </>
   );
 }
 

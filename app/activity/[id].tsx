@@ -38,7 +38,11 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { DetailScreen } from '@/ui/Screen';
+import { ScreenHeader } from '@/ui/Screen';
+import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
+import { MetaLine } from '@/ui/display';
+import { useTransparentHeaderInset } from '@/ui/insets';
+import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import {
   Badge,
   Card,
@@ -50,9 +54,9 @@ import {
 } from '@/ui/layout';
 import { MetricLabel, Txt } from '@/ui/Text';
 import { Icon, type IconName } from '@/ui/icons';
-import { ActionRow, Button, IconButton } from '@/ui/Button';
+import { ActionRow, Button } from '@/ui/Button';
 import { ACTIVITY_ICON } from '@/ui/rows';
-import { ConfirmSheet, Sheet, SheetFooter } from '@/ui/Sheet';
+import { Sheet, SheetFooter } from '@/ui/Sheet';
 import { TextField } from '@/ui/TextField';
 import { EmptyState, ErrorState, SkeletonCard } from '@/ui/states';
 import { RouteMap } from '@/ui/RouteMap';
@@ -162,63 +166,60 @@ export default function ActivityDetailScreen() {
     });
   }, [activityId, removeActivity]);
 
+  const askDelete = useCallback(() => setConfirmingDelete(true), []);
+  const transparentInset = useTransparentHeaderInset();
+  const topInset = activity !== null ? transparentInset : 0;
+
   return (
     <>
       {/* A fade rather than a push: this screen is reached from Home, from the list and
           from Progress, and its content is a full-bleed surface: a horizontal slide would
           flash the previous list's rows past the hero number. */}
       <Stack.Screen options={{ animation: 'fade_from_bottom' }} />
-      <DetailScreen
+      <ScreenHeader
         title={activity?.title ?? t('activity.fallbackTitle')}
-        {...(activity ? { subtitle: formatFullDate(activity.startedAt) } : {})}
-        headerTransparent={activity !== null}
-        right={
-          activity ? (
-            <IconButton
-              name="trash"
-              variant="danger"
-              size={20}
-              weighty
-              accessibilityLabel={t('activity.delete')}
-              accessibilityHint={t('activity.deleteHint')}
-              onPress={() => setConfirmingDelete(true)}
-            />
-          ) : undefined
-        }
+        transparent={activity !== null}
+      />
+      {activity ? (
+        <HeaderToolbar placement="right">
+          {headerAction({ action: 'delete', onPress: askDelete, t, label: 'activity.delete' })}
+        </HeaderToolbar>
+      ) : null}
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: topInset, paddingBottom: insets.bottom + spacing.huge },
+        ]}
+        keyboardShouldPersistTaps="handled"
       >
-        {(topInset, header) => (
-          <ScrollView
-            contentContainerStyle={[
-              styles.content,
-              { paddingTop: topInset, paddingBottom: insets.bottom + spacing.huge },
-            ]}
-            onScroll={header.onScroll}
-            scrollEventThrottle={16}
-            keyboardShouldPersistTaps="handled"
-          >
-            {query.isPending ? (
-              <Column gap="lg" style={{ paddingTop: spacing.xl }}>
-                <SkeletonCard lines={3} />
-                <SkeletonCard lines={5} />
-              </Column>
-            ) : query.isError ? (
-              <ErrorState
-                error={query.error}
-                onRetry={() => void query.refetch()}
-                title={t('activity.loadError')}
-              />
-            ) : activity ? (
-              <ActivityBody
-                activity={activity}
-                units={units}
-                showSpeed={showSpeed}
-                theme={theme}
-                onEditNotes={() => setNotesDraft(activity.notes ?? '')}
-              />
-            ) : null}
-          </ScrollView>
-        )}
-      </DetailScreen>
+        {activity ? (
+          <MetaLine
+            items={[{ icon: 'calendar', label: formatFullDate(activity.startedAt) }]}
+            theme={theme}
+            style={styles.dateLine}
+          />
+        ) : null}
+        {query.isPending ? (
+          <Column gap="lg" style={{ paddingTop: spacing.xl }}>
+            <SkeletonCard lines={3} />
+            <SkeletonCard lines={5} />
+          </Column>
+        ) : query.isError ? (
+          <ErrorState
+            error={query.error}
+            onRetry={() => void query.refetch()}
+            title={t('activity.loadError')}
+          />
+        ) : activity ? (
+          <ActivityBody
+            activity={activity}
+            units={units}
+            showSpeed={showSpeed}
+            theme={theme}
+            onEditNotes={() => setNotesDraft(activity.notes ?? '')}
+          />
+        ) : null}
+      </ScrollView>
 
       {notesDraft !== null ? (
         <Sheet
@@ -274,25 +275,26 @@ export default function ActivityDetailScreen() {
       ) : null}
 
       {confirmingDelete && activity ? (
-        <ConfirmSheet
+        <ConfirmDialog
+          visible={!removeActivity.isPending}
           title={t('activity.deleteTitle')}
-          message={t('activity.deleteMessage', { name: activity.title })}
-          confirmLabel={t(removeActivity.isPending ? 'activity.deleting' : 'activity.deleteConfirm')}
+          message={
+            removeActivity.isError
+              ? removeActivity.error instanceof Error
+                ? removeActivity.error.message
+                : t('activity.deleteFailed')
+              : t('activity.deleteMessage', { name: activity.title })
+          }
+          confirmLabel={t('activity.deleteConfirm')}
+          cancelLabel={t('common.cancel')}
+          destructive
           onConfirm={confirmDelete}
-          onRequestClose={() => {
-            // Same reason as the list's delete sheet: leaving the previous failure behind
-            // would make a reopened sheet report an attempt that has not happened yet.
+          onCancel={() => {
+            // Same reason as the list's delete: leaving the previous failure behind would
+            // make a reopened dialog report an attempt that has not happened yet.
             removeActivity.reset();
             setConfirmingDelete(false);
           }}
-          {...(removeActivity.isError
-            ? {
-                error:
-                  removeActivity.error instanceof Error
-                    ? removeActivity.error.message
-                    : t('activity.deleteFailed'),
-              }
-            : {})}
         />
       ) : null}
     </>
@@ -1121,6 +1123,7 @@ function axisLabel(name: string): string {
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: screenGutter },
+  dateLine: { paddingTop: spacing.md },
   hero: { marginTop: spacing.md, padding: spacing.lg, borderRadius: radius.xl },
   section: { paddingTop: spacing.xxxl },
   headRow: { paddingVertical: spacing.xs },

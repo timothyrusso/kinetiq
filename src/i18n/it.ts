@@ -1305,4 +1305,25 @@ export const it: Copy = {
     saveFailed: 'Salvataggio non riuscito. Non hai perso nulla, la scheda è come l hai lasciata.',
     permissionDenied: 'Autorizzazione negata',
   },
+  // --- foundation ---
+  headerActions: {
+    settings: 'Impostazioni',
+    filter: 'Filtri',
+    add: 'Aggiungi',
+    more: 'Altre opzioni',
+    play: 'Avvia',
+    delete: 'Elimina',
+    save: 'Salva',
+    done: 'Fine',
+    edit: 'Modifica',
+    share: 'Condividi',
+    search: 'Cerca',
+    cancel: 'Annulla',
+  },
+  homeHero: {
+    streakLabel: 'Serie attuale',
+    streakUnit_one: 'giorno',
+    streakUnit_other: 'giorni',
+  },
+  // --- end foundation ---
 };

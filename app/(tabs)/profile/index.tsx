@@ -22,14 +22,16 @@
  * to Progress, which is a full screen with range controls, and repeating a third of it here
  * would just be a second place to be out of date.
  */
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import type { TKey, TVars } from '@/i18n';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTabContentBottom } from '@/ui/insets';
 
 import { Icon } from '@/ui/icons';
-import { BarAction, CollapsibleHeader, CollapsibleHero, useScreenHeaderScroll } from '@/ui/Screen';
+import { SCROLL_INSETS, ScreenHeader } from '@/ui/Screen';
+import { MetaLine, type MetaItem } from '@/ui/display';
+import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { Avatar, NavRow } from '@/ui/rows';
 import { Badge, Card, MetricGrid, Row, SectionHeader } from '@/ui/layout';
 import { SegmentedControl } from '@/ui/controls';
@@ -84,7 +86,6 @@ export default function ProfileScreen() {
   const router = useRouter();
   const theme = useAppTheme();
   const bottomSpace = useTabContentBottom();
-  const header = useScreenHeaderScroll();
 
   const name = useSettings((s) => s.profile.name);
   const heightCm = useSettings((s) => s.profile.heightCm);
@@ -124,44 +125,46 @@ export default function ProfileScreen() {
 
   const totals = summary.data?.totals;
   const age = useMemo(() => new Date().getFullYear() - birthYear, [birthYear]);
+  const openSettings = useCallback(() => router.push(routes.settings()), [router]);
+  const identity = useMemo<MetaItem[]>(
+    () => [
+      {
+        icon: 'ruler',
+        label: t('profileScreen.ageLine', {
+          height: heightCm,
+          age,
+          word: t('profileScreen.yearWord', { count: age }),
+        }),
+      },
+      {
+        icon: 'calendar',
+        label: summary.isPending ? t('profileScreen.loadingHistory') : trainingSince(summary.data, t),
+      },
+    ],
+    [age, heightCm, summary.data, summary.isPending, t],
+  );
 
   return (
-    <View style={styles.root}>
-      <CollapsibleHeader
-        header={header}
-        title={t('profile.title')}
-        right={
-          <BarAction
-            icon="settings"
-            label={t('profileScreen.settings')}
-            onPress={() => router.push(routes.settings())}
-          />
-        }
-      />
+    <>
+      <ScreenHeader title={t('profile.title')} />
+      <HeaderToolbar placement="right">
+        {headerAction({ action: 'settings', onPress: openSettings, t, label: 'profileScreen.settings' })}
+      </HeaderToolbar>
 
       <ScrollView
-        onScroll={header.onScroll}
-        scrollEventThrottle={16}
+        {...SCROLL_INSETS}
         contentContainerStyle={[styles.content, { paddingBottom: bottomSpace }]}
         keyboardShouldPersistTaps="handled"
       >
-        <CollapsibleHero header={header} eyebrow={t('profile.eyebrow')} title={name || t('profileScreen.athlete')}>
-          <Row gap="md" align="center">
-            <Avatar name={name} theme={theme} size={62} />
-            <Stack gap="xxs" style={{ flex: 1, minWidth: 0 }}>
-              <Txt variant="caption" tone="muted">
-                {t('profileScreen.ageLine', {
-                  height: heightCm,
-                  age,
-                  word: t('profileScreen.yearWord', { count: age }),
-                })}
-              </Txt>
-              <Txt variant="caption" tone="faint">
-                {summary.isPending ? t('profileScreen.loadingHistory') : trainingSince(summary.data, t)}
-              </Txt>
-            </Stack>
-          </Row>
-        </CollapsibleHero>
+        <Row gap="md" align="center" style={styles.identity}>
+          <Avatar name={name} theme={theme} size={62} />
+          <Stack gap="xs" style={{ flex: 1, minWidth: 0 }}>
+            <Txt variant="title" numberOfLines={1}>
+              {name || t('profileScreen.athlete')}
+            </Txt>
+            <MetaLine items={identity} theme={theme} wrap />
+          </Stack>
+        </Row>
 
         <View style={styles.body}>
           {/* ---- The week, and the goal it is measured against ---------------- */}
@@ -343,7 +346,7 @@ export default function ProfileScreen() {
           </Txt>
         </View>
       </ScrollView>
-    </View>
+    </>
   );
 }
 
@@ -462,7 +465,7 @@ function formatNumber(value: number | undefined): string {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
-  content: { paddingHorizontal: screenGutter },
+  identity: { paddingHorizontal: screenGutter, paddingTop: spacing.md },
+  content: { flexGrow: 1 },
   body: { paddingHorizontal: screenGutter, gap: spacing.lg },
 });

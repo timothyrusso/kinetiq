@@ -42,9 +42,9 @@ import { router } from 'expo-router';
 import { useScreenContentBottom } from '@/ui/insets';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { DetailScreen } from '@/ui/Screen';
+import { ScreenHeader } from '@/ui/Screen';
+import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
 import { Card, Divider, SectionHeader, Stack } from '@/ui/layout';
-import { ConfirmSheet } from '@/ui/Sheet';
 import { IconButton } from '@/ui/Button';
 import { Txt } from '@/ui/Text';
 import { Icon } from '@/ui/icons';
@@ -111,198 +111,191 @@ export default function SettingsAboutScreen() {
   }, [queryClient]);
 
   return (
-    <DetailScreen title={t('about.title')} largeTitle>
-      {(topInset) => (
-        <>
-        <ScrollView
-          contentContainerStyle={[
-            styles.content,
-            { paddingTop: topInset + spacing.md, paddingBottom: bottomSpace },
-          ]}
-          // `automatic`, so iOS owns the inset under the large title and can collapse it as
-          // this view scrolls. Without it the title stays large forever and the screen looks
-          // like a native header that does not work.
-          contentInsetAdjustmentBehavior="automatic"
-          keyboardShouldPersistTaps="handled"
-        >
-          <Stack gap="xxl" style={styles.body}>
-            {/* --------------------------------------------------------- build */}
-            <View>
-              <SectionHeader title="Kinetiq" eyebrow={t('about.appEyebrow')} />
-              <Card padding="md">
-                <Fact label={t('about.version')} value={version ?? t('about.unknown')} />
-                <Fact
-                  label={t('about.appId')}
-                  value={appId ?? t('about.unknown')}
-                  hint={t('about.appIdHint')}
-                />
-                <Fact label={t('about.schema')} value={`v${schema}`} last />
-              </Card>
-              <Txt variant="micro" tone="faint" style={styles.footnote}>
-                {t('about.storageNote')}
-              </Txt>
-            </View>
-
-            {/* -------------------------------------------------------- catalog */}
-            <View>
-              <SectionHeader title={t('about.catalog')} eyebrow={t('about.servedRemotely')} />
-              <Card>
-                <Stack gap="md">
-                  <Txt variant="strong">
-                    {LABELLED_PROVIDERS[provider.name] ?? provider.name}
-                  </Txt>
-                  <Txt variant="caption" tone="muted">
-                    {t('about.catalogNote')}
-                  </Txt>
-                  <Divider inset={0} />
-                  <Txt variant="caption" tone="muted">
-                    {t('about.localNote')}
-                  </Txt>
-                  {provider.supportsOffline ? null : (
-                    <Txt variant="micro" tone="faint">
-                      {t('about.needsConnection')}
-                    </Txt>
-                  )}
-                </Stack>
-              </Card>
-            </View>
-
-            {/* ------------------------------------------------------ your data */}
-            <View>
-              <SectionHeader
-                title={t('about.onThisDevice')}
-                eyebrow={
-                  activityList.isLoading
-                    ? undefined
-                    : t('about.activityCount', { count: activityCount })
-                }
+    <>
+      <ScreenHeader title={t('about.title')} largeTitle />
+      <>
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: spacing.md, paddingBottom: bottomSpace },
+        ]}
+        // `automatic`, so iOS owns the inset under the large title and can collapse it as
+        // this view scrolls. Without it the title stays large forever and the screen looks
+        // like a native header that does not work.
+        contentInsetAdjustmentBehavior="automatic"
+        keyboardShouldPersistTaps="handled"
+      >
+        <Stack gap="xxl" style={styles.body}>
+          {/* --------------------------------------------------------- build */}
+          <View>
+            <SectionHeader title="Kinetiq" eyebrow={t('about.appEyebrow')} />
+            <Card padding="md">
+              <Fact label={t('about.version')} value={version ?? t('about.unknown')} />
+              <Fact
+                label={t('about.appId')}
+                value={appId ?? t('about.unknown')}
+                hint={t('about.appIdHint')}
               />
-              <Card padding="md">
-                {activityList.isLoading ? (
-                  <Fact label={t('about.activities')} value={t('about.counting')} last />
-                ) : activityCount === 0 ? (
-                  <View style={styles.empty}>
-                    <Txt variant="caption" tone="muted">
-                      {t('about.nothingStored')}
-                    </Txt>
-                  </View>
-                ) : (
-                  KIND_ORDER.filter((kind) => (counts[kind] ?? 0) > 0).map((kind, index) => (
-                    <KindRow
-                      key={kind}
-                      kind={kind}
-                      count={counts[kind] ?? 0}
-                      first={index === 0}
-                    />
-                  ))
-                )}
-                <Divider inset={0} />
-                <Fact
-                  label={t('about.routines')}
-                  value={routinesLoading ? t('about.counting') : String(routines.length)}
-                  hint={t('about.routinesHint')}
-                />
-                <Fact
-                  label={t('about.units')}
-                  value={t(unitSystem === 'metric' ? 'settings.metric' : 'settings.imperial')}
-                />
-                <Fact
-                  label={t('about.appearance')}
-                  value={t(
-                    themeMode === 'system'
-                      ? 'about.matchSystem'
-                      : themeMode === 'light'
-                        ? 'settings.light'
-                        : 'settings.dark',
-                  )}
-                  last
-                />
-              </Card>
-            </View>
+              <Fact label={t('about.schema')} value={`v${schema}`} last />
+            </Card>
+            <Txt variant="micro" tone="faint" style={styles.footnote}>
+              {t('about.storageNote')}
+            </Txt>
+          </View>
 
-            {/* ----------------------------------------------------- dev console
-                Compiled into the route table either way: expo-router has no conditional
-                routes: so `app/dev.tsx` returns null outside `__DEV__` as well. The link is
-                gated here because an entry point is the thing a reviewer or a user sees, and
-                a row that leads to a blank screen is worse than no row. */}
-            {__DEV__ ? (
-              <View>
-                <SectionHeader title={t('about.developer')} eyebrow={t('about.thisBuildOnly')} />
-                <Card padding="md">
-                  <NavRow
-                    title={t('about.faultInjection')}
-                    subtitle={t('about.faultSubtitle')}
-                    icon="bolt"
-                    topDivider={false}
-                    theme={theme}
-                    onPress={() => router.push(routes.dev())}
-                  />
-                </Card>
-              </View>
-            ) : null}
-
-            {/* ---------------------------------------------------------- reset */}
-            <View>
-              <SectionHeader title={t('about.reset')} eyebrow={t('about.cannotUndo')} />
-              <Card>
-                <View style={styles.resetRow}>
-                  <Stack gap="xxs" style={{ flex: 1 }}>
-                    <Txt variant="strong">{t('about.eraseAll')}</Txt>
-                    <Txt variant="caption" tone="muted">
-                      {t('about.activityCount', { count: activityCount })} ·{' '}
-                      {t('about.routineCount', { count: routines.length })} ·{' '}
-                      {t('about.settingsWord')}
-                    </Txt>
-                  </Stack>
-                  <IconButton
-                    name="trash"
-                    variant="surface"
-                    accessibilityLabel={t('about.eraseAll')}
-                    accessibilityHint={t('about.eraseHint')}
-                    onPress={() => {
-                      haptics.warning();
-                      setConfirming(true);
-                    }}
-                  />
-                </View>
+          {/* -------------------------------------------------------- catalog */}
+          <View>
+            <SectionHeader title={t('about.catalog')} eyebrow={t('about.servedRemotely')} />
+            <Card>
+              <Stack gap="md">
+                <Txt variant="strong">
+                  {LABELLED_PROVIDERS[provider.name] ?? provider.name}
+                </Txt>
+                <Txt variant="caption" tone="muted">
+                  {t('about.catalogNote')}
+                </Txt>
                 <Divider inset={0} />
-                <View style={styles.resetNote}>
+                <Txt variant="caption" tone="muted">
+                  {t('about.localNote')}
+                </Txt>
+                {provider.supportsOffline ? null : (
                   <Txt variant="micro" tone="faint">
-                    {t('about.eraseNote')}
+                    {t('about.needsConnection')}
+                  </Txt>
+                )}
+              </Stack>
+            </Card>
+          </View>
+
+          {/* ------------------------------------------------------ your data */}
+          <View>
+            <SectionHeader
+              title={t('about.onThisDevice')}
+              eyebrow={
+                activityList.isLoading
+                  ? undefined
+                  : t('about.activityCount', { count: activityCount })
+              }
+            />
+            <Card padding="md">
+              {activityList.isLoading ? (
+                <Fact label={t('about.activities')} value={t('about.counting')} last />
+              ) : activityCount === 0 ? (
+                <View style={styles.empty}>
+                  <Txt variant="caption" tone="muted">
+                    {t('about.nothingStored')}
                   </Txt>
                 </View>
+              ) : (
+                KIND_ORDER.filter((kind) => (counts[kind] ?? 0) > 0).map((kind, index) => (
+                  <KindRow
+                    key={kind}
+                    kind={kind}
+                    count={counts[kind] ?? 0}
+                    first={index === 0}
+                  />
+                ))
+              )}
+              <Divider inset={0} />
+              <Fact
+                label={t('about.routines')}
+                value={routinesLoading ? t('about.counting') : String(routines.length)}
+                hint={t('about.routinesHint')}
+              />
+              <Fact
+                label={t('about.units')}
+                value={t(unitSystem === 'metric' ? 'settings.metric' : 'settings.imperial')}
+              />
+              <Fact
+                label={t('about.appearance')}
+                value={t(
+                  themeMode === 'system'
+                    ? 'about.matchSystem'
+                    : themeMode === 'light'
+                      ? 'settings.light'
+                      : 'settings.dark',
+                )}
+                last
+              />
+            </Card>
+          </View>
+
+          {/* ----------------------------------------------------- dev console
+              Compiled into the route table either way: expo-router has no conditional
+              routes: so `app/dev.tsx` returns null outside `__DEV__` as well. The link is
+              gated here because an entry point is the thing a reviewer or a user sees, and
+              a row that leads to a blank screen is worse than no row. */}
+          {__DEV__ ? (
+            <View>
+              <SectionHeader title={t('about.developer')} eyebrow={t('about.thisBuildOnly')} />
+              <Card padding="md">
+                <NavRow
+                  title={t('about.faultInjection')}
+                  subtitle={t('about.faultSubtitle')}
+                  icon="bolt"
+                  topDivider={false}
+                  theme={theme}
+                  onPress={() => router.push(routes.dev())}
+                />
               </Card>
             </View>
+          ) : null}
 
-            <Txt variant="micro" tone="faint" align="center">
-              {t('about.builtWith')}
-            </Txt>
-          </Stack>
-        </ScrollView>
-        {confirming ? (
-        <ConfirmSheet
-          title={t('about.eraseTitle')}
-          message={t('about.eraseMessage', {
-            activities: t('about.activityCount', { count: activityCount }),
-            routines: t('about.routineCount', { count: routines.length }),
-          })}
-          confirmLabel={t(erasing ? 'about.erasing' : 'about.eraseConfirm')}
-          onConfirm={() => {
-            if (erasing) return;
-            void erase();
-          }}
-          onRequestClose={() => {
-            // Closed while it is already running: the wipe is in flight and cannot be recalled,
-            // so dismissing the sheet would hide the only indication that anything is happening.
-            if (erasing) return;
-            setConfirming(false);
-          }}
-          cancelLabel={t('about.keepMyData')}
-        />
-      ) : null}
-        </>
-      )}
-    </DetailScreen>
+          {/* ---------------------------------------------------------- reset */}
+          <View>
+            <SectionHeader title={t('about.reset')} eyebrow={t('about.cannotUndo')} />
+            <Card>
+              <View style={styles.resetRow}>
+                <Stack gap="xxs" style={{ flex: 1 }}>
+                  <Txt variant="strong">{t('about.eraseAll')}</Txt>
+                  <Txt variant="caption" tone="muted">
+                    {t('about.activityCount', { count: activityCount })} ·{' '}
+                    {t('about.routineCount', { count: routines.length })} ·{' '}
+                    {t('about.settingsWord')}
+                  </Txt>
+                </Stack>
+                <IconButton
+                  name="trash"
+                  variant="surface"
+                  accessibilityLabel={t('about.eraseAll')}
+                  accessibilityHint={t('about.eraseHint')}
+                  onPress={() => {
+                    haptics.warning();
+                    setConfirming(true);
+                  }}
+                />
+              </View>
+              <Divider inset={0} />
+              <View style={styles.resetNote}>
+                <Txt variant="micro" tone="faint">
+                  {t('about.eraseNote')}
+                </Txt>
+              </View>
+            </Card>
+          </View>
+
+          <Txt variant="micro" tone="faint" align="center">
+            {t('about.builtWith')}
+          </Txt>
+        </Stack>
+      </ScrollView>
+      {confirming ? (
+      <ConfirmDialog
+        visible={!erasing}
+        title={t('about.eraseTitle')}
+        message={t('about.eraseMessage', {
+          activities: t('about.activityCount', { count: activityCount }),
+          routines: t('about.routineCount', { count: routines.length }),
+        })}
+        confirmLabel={t('about.eraseConfirm')}
+        cancelLabel={t('about.keepMyData')}
+        destructive
+        onConfirm={() => void erase()}
+        onCancel={() => setConfirming(false)}
+      />
+    ) : null}
+      </>
+    </>
   );
 }
 

@@ -34,11 +34,12 @@ import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTabContentBottom } from '@/ui/insets';
 
-import { CollapsibleHeader, CollapsibleHero, useScreenHeaderScroll } from '@/ui/Screen';
+import { SCROLL_INSETS, ScreenHeader } from '@/ui/Screen';
+import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
+import { MetaLine, type MetaItem } from '@/ui/display';
 import { ActivityRow } from '@/ui/rows';
 import { Row } from '@/ui/layout';
 import { MetricLabel, Txt } from '@/ui/Text';
@@ -46,7 +47,6 @@ import { Chip, SegmentedControl } from '@/ui/controls';
 import { TextField } from '@/ui/TextField';
 import { Button } from '@/ui/Button';
 import { EmptyState, ErrorState, SkeletonList, ThemedRefreshControl } from '@/ui/states';
-import { ConfirmSheet } from '@/ui/Sheet';
 import { useActivityList, useDeleteActivity } from '@/queries/useActivities';
 import type { ActivityListParams, ActivitySort } from '@/query/keys';
 import { useSettings } from '@/settings/hooks';
@@ -93,9 +93,7 @@ export default function ActivitiesScreen() {
   const { t } = useT();
   const router = useRouter();
   const theme = useAppTheme();
-  const insets = useSafeAreaInsets();
   const bottomSpace = useTabContentBottom();
-  const header = useScreenHeaderScroll();
   const online = useIsOnline();
 
   const units = useSettings((s) => s.unitSystem);
@@ -191,26 +189,26 @@ export default function ActivitiesScreen() {
     removeActivity.mutate(pendingDelete.id, { onSuccess: () => setPendingDelete(null) });
   }, [pendingDelete, removeActivity]);
 
-  const summaryLine = useMemo(() => {
-    if (list.isLoading || list.flat.length === 0) return t('states.everySessionLands');
-    const parts = [
-      `${list.flat.length} ${list.flat.length === 1 ? 'session' : 'sessions'}`,
-      formatDurationCompact(list.totals.durationSeconds),
+  const summary = useMemo<MetaItem[]>(() => {
+    if (list.isLoading || list.flat.length === 0) {
+      return [{ icon: 'activities', label: t('states.everySessionLands') }];
+    }
+    const items: MetaItem[] = [
+      { icon: 'activities', label: t('activities.session', { count: list.flat.length }) },
+      { icon: 'clock', label: formatDurationCompact(list.totals.durationSeconds) },
     ];
     if (list.totals.distanceMeters > 0) {
-      parts.push(formatDistance(list.totals.distanceMeters, units, 1));
+      items.push({ icon: 'route', label: formatDistance(list.totals.distanceMeters, units, 1) });
     }
-    if (list.totals.volumeKg > 0) parts.push(`${compactNumber(list.totals.volumeKg)} kg`);
-    return parts.join(' · ');
+    if (list.totals.volumeKg > 0) {
+      items.push({ icon: 'dumbbell', label: `${compactNumber(list.totals.volumeKg)} kg` });
+    }
+    return items;
   }, [list.flat.length, list.isLoading, list.totals, t, units]);
 
   const listHeader = (
     <>
-      <CollapsibleHero header={header} eyebrow={t('activities.eyebrow')} title={t('activities.title')}>
-        <Txt variant="caption" tone="muted" style={{ marginTop: spacing.xs }}>
-          {summaryLine}
-        </Txt>
-      </CollapsibleHero>
+      <MetaLine items={summary} theme={theme} wrap style={styles.summary} />
 
       <View style={styles.filters}>
         <TextField
@@ -254,23 +252,21 @@ export default function ActivitiesScreen() {
   );
 
   return (
-    <View style={styles.root}>
+    <>
+      <ScreenHeader title={t('activities.title')} />
       {/* No bar action. The type chips and the sort control are permanently in the list
           header directly under this bar, so a funnel button here would either open a sheet
           duplicating controls that are already on screen or, as it did, fire a press that
           set the search text to what it already was. A dead icon is worse than no icon. */}
-      <CollapsibleHeader header={header} title={t('activities.title')} />
 
       <FlashList
+        {...SCROLL_INSETS}
         data={rows}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         getItemType={getItemType}
         extraData={units}
-        onScroll={header.onScroll}
-        scrollEventThrottle={16}
         contentContainerStyle={{ paddingBottom: bottomSpace }}
-        progressViewOffset={insets.top + 52}
         refreshControl={
           <ThemedRefreshControl
             refreshing={list.isLoading && list.flat.length > 0}
@@ -309,26 +305,27 @@ export default function ActivitiesScreen() {
       />
 
       {pendingDelete ? (
-        <ConfirmSheet
+        <ConfirmDialog
+          visible={!removeActivity.isPending}
           title={t('activityList.deleteTitle')}
-          message={`"${pendingDelete.title}" and its route will be removed. Personal records it set are recalculated from what remains.`}
-          confirmLabel={removeActivity.isPending ? 'Deleting…' : 'Delete'}
+          message={
+            removeActivity.isError
+              ? removeActivity.error instanceof Error
+                ? removeActivity.error.message
+                : t('activity.deleteFailed')
+              : t('activity.deleteMessage', { name: pendingDelete.title })
+          }
+          confirmLabel={t('activity.deleteConfirm')}
+          cancelLabel={t('common.cancel')}
+          destructive
           onConfirm={confirmDelete}
-          onRequestClose={() => {
+          onCancel={() => {
             removeActivity.reset();
             setPendingDelete(null);
           }}
-          {...(removeActivity.isError
-            ? {
-                error:
-                  removeActivity.error instanceof Error
-                    ? removeActivity.error.message
-                    : t('activity.deleteFailed'),
-              }
-            : {})}
         />
       ) : null}
-    </View>
+    </>
   );
 }
 
@@ -352,7 +349,7 @@ function DayLabel({ text, count }: { text: string; count: number }) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
+  summary: { paddingHorizontal: screenGutter, paddingTop: spacing.md },
   filters: {
     paddingHorizontal: screenGutter,
     paddingTop: spacing.lg,

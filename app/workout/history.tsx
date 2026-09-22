@@ -51,16 +51,17 @@
 import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
-import { DetailScreen } from '@/ui/Screen';
+import { SCROLL_INSETS, ScreenHeader } from '@/ui/Screen';
+import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
+import { MetaLine, type MetaItem } from '@/ui/display';
+import { useScreenContentBottom } from '@/ui/insets';
+import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { Row } from '@/ui/layout';
-import { Button } from '@/ui/Button';
 import { Chip, SegmentedControl } from '@/ui/controls';
 import { MetricLabel, Txt } from '@/ui/Text';
 import { ActivityRow } from '@/ui/rows';
-import { ConfirmSheet } from '@/ui/Sheet';
 import { EmptyState, ErrorState, SkeletonList, ThemedRefreshControl } from '@/ui/states';
 import { useActivityList, useDeleteActivity } from '@/queries/useActivities';
 import { activityDisplay } from '@/domain/display';
@@ -75,7 +76,6 @@ import { useT } from '@/i18n/useT';
 import type { TKey } from '@/i18n';
 import { tr } from '@/i18n/tr';
 
-const BOTTOM_SPACE = 96;
 const DAY_MS = 86_400_000;
 
 /** Rolling windows, labelled by what they actually are: see `windowStart`. */
@@ -116,7 +116,7 @@ const SORT: ActivitySort = 'recent';
 
 export default function WorkoutHistoryScreen() {
   const { t } = useT();
-  const insets = useSafeAreaInsets();
+  const bottomSpace = useScreenContentBottom();
   const theme = useAppTheme();
 
   // 30 days is the default because it is the widest window whose entire contents are plausibly
@@ -225,144 +225,135 @@ export default function WorkoutHistoryScreen() {
     setKinds([]);
   }, []);
 
-  const summary = list.isLoading
-    ? t('states.loadingEllipsis')
-    : visible.length === 0
-      ? t('activityList.nothingInRange')
-      : // Three segments at most. This renders into a fixed-height bar that also carries the
-        // Search button, and `numberOfLines={1}` truncates whatever does not fit: with four
-        // segments that landed mid-number ("24 sessions · 17h 21m · 127.6…"), which reads as
-        // a broken value rather than as an abbreviated summary. Count and duration always
-        // apply; the third is whichever of distance or volume this range actually has, and
-        // when it has both, distance wins because every strength row already shows its own
-        // volume and Progress carries the full breakdown.
-        [
-          `${visible.length} ${visible.length === 1 ? 'session' : 'sessions'}`,
-          formatDurationCompact(totals.duration),
-          ...(totals.distance > 0
-            ? [formatDistance(totals.distance, units, 1)]
-            : totals.volume > 0
-              ? [`${compactNumber(totals.volume)} kg`]
-              : []),
-        ].join(' · ');
+  // The range at a glance, as the first line of content now that the native title holds one
+  // line. Count and duration always apply; the third is whichever of distance or volume this
+  // range actually has, distance winning when it has both because every strength row already
+  // shows its own volume and Progress carries the full breakdown.
+  const summary = useMemo<MetaItem[]>(() => {
+    if (list.isLoading) return [];
+    if (visible.length === 0) return [{ icon: 'calendar', label: t('activityList.nothingInRange') }];
+    return [
+      { icon: 'activities', label: t('activities.session', { count: visible.length }) },
+      { icon: 'clock', label: formatDurationCompact(totals.duration) },
+      ...(totals.distance > 0
+        ? [{ icon: 'route' as const, label: formatDistance(totals.distance, units, 1) }]
+        : totals.volume > 0
+          ? [{ icon: 'dumbbell' as const, label: `${compactNumber(totals.volume)} kg` }]
+          : []),
+    ];
+  }, [list.isLoading, visible.length, totals, units, t]);
+  const openSearch = useCallback(
+    () => router.replace(tabHref(tabIndexOf('activities'))),
+    [router],
+  );
 
   return (
     <>
-      <DetailScreen
-        title={t('activityList.historyTitle')}
-        subtitle={summary}
-        right={
-          <Button
-            label={t('activityList.search')}
-            variant="quiet"
-            size="sm"
-            icon="search"
-            onPress={() => router.replace(tabHref(tabIndexOf('activities')))}
-            accessibilityHint={t('activityList.searchEveryHint')}
+      <ScreenHeader title={t('activityList.historyTitle')} />
+      <HeaderToolbar placement="right">
+        {headerAction({ action: 'search', onPress: openSearch, t, label: 'activityList.search' })}
+      </HeaderToolbar>
+      <FlashList
+        {...SCROLL_INSETS}
+        data={rows}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        getItemType={getItemType}
+        extraData={units}
+        contentContainerStyle={{
+          paddingHorizontal: screenGutter,
+          paddingTop: spacing.md,
+          paddingBottom: bottomSpace,
+        }}
+        // 44px is the segmented control and the chips below it; without this the spinner
+        // appears underneath the first rows of the list.
+        progressViewOffset={44}
+        refreshControl={
+          <ThemedRefreshControl
+            refreshing={list.isLoading && rows.length > 0}
+            onRefresh={() => void list.refresh()}
           />
         }
-      >
-        {(topInset) => (
-          <FlashList
-            data={rows}
-            renderItem={renderItem}
-            keyExtractor={keyExtractor}
-            getItemType={getItemType}
-            extraData={units}
-            contentContainerStyle={{
-              paddingHorizontal: screenGutter,
-              paddingTop: topInset + spacing.md,
-              paddingBottom: BOTTOM_SPACE + insets.bottom,
-            }}
-            // 44px is the segmented control and the chips below it; without this the spinner
-            // appears underneath the first rows of the list.
-            progressViewOffset={topInset + 44}
-            refreshControl={
-              <ThemedRefreshControl
-                refreshing={list.isLoading && rows.length > 0}
-                onRefresh={() => void list.refresh()}
-              />
-            }
-            ListHeaderComponent={
-              <View style={styles.controls}>
-                <SegmentedControl<Range>
-                  segments={rangeSegments}
-                  value={range}
-                  onChange={setRange}
+        ListHeaderComponent={
+          <View style={styles.controls}>
+            <MetaLine items={summary} theme={theme} wrap />
+            <SegmentedControl<Range>
+              segments={rangeSegments}
+              value={range}
+              onChange={setRange}
+            />
+            <Row gap="sm" style={styles.chips}>
+              {KIND_CHIPS.map((chip) => (
+                <Chip
+                  key={chip.kind}
+                  label={t(chip.label)}
+                  icon={chip.icon}
+                  size="sm"
+                  selected={kinds.includes(chip.kind)}
+                  onPress={() =>
+                    setKinds((prev) =>
+                      prev.includes(chip.kind)
+                        ? prev.filter((k) => k !== chip.kind)
+                        : [...prev, chip.kind],
+                    )
+                  }
                 />
-                <Row gap="sm" style={styles.chips}>
-                  {KIND_CHIPS.map((chip) => (
-                    <Chip
-                      key={chip.kind}
-                      label={t(chip.label)}
-                      icon={chip.icon}
-                      size="sm"
-                      selected={kinds.includes(chip.kind)}
-                      onPress={() =>
-                        setKinds((prev) =>
-                          prev.includes(chip.kind)
-                            ? prev.filter((k) => k !== chip.kind)
-                            : [...prev, chip.kind],
-                        )
-                      }
-                    />
-                  ))}
-                </Row>
-              </View>
-            }
-            ListEmptyComponent={
-              list.isLoading ? (
-                <View style={{ paddingHorizontal: screenGutter, paddingTop: spacing.lg }}>
-                  <SkeletonList rows={5} />
-                </View>
-              ) : list.error ? (
-                <ErrorState
-                  error={list.error}
-                  onRetry={() => void list.refresh()}
-                  title={t('activityList.historyError')}
-                />
-              ) : list.flat.length === 0 ? (
-                <EmptyState
-                  title={t('activityList.noSessionsTitle')}
-                  message={t('activityList.emptyMessage')}
-                  icon="activities"
-                  actionLabel={t('activityList.startWorkout')}
-                  onAction={() => router.replace(routes.workoutTab())}
-                />
-              ) : (
-                <EmptyState
-                  title={t('activityList.nothingInRange')}
-                  message={t('states.outsideRange', { count: list.flat.length })}
-                  icon="calendar"
-                  {...(filtering ? { actionLabel: t('states.showEverything'), onAction: widen } : {})}
-                />
-              )
-            }
-            style={{ backgroundColor: theme.colors.background }}
-          />
-        )}
-      </DetailScreen>
+              ))}
+            </Row>
+          </View>
+        }
+        ListEmptyComponent={
+          list.isLoading ? (
+            <View style={{ paddingHorizontal: screenGutter, paddingTop: spacing.lg }}>
+              <SkeletonList rows={5} />
+            </View>
+          ) : list.error ? (
+            <ErrorState
+              error={list.error}
+              onRetry={() => void list.refresh()}
+              title={t('activityList.historyError')}
+            />
+          ) : list.flat.length === 0 ? (
+            <EmptyState
+              title={t('activityList.noSessionsTitle')}
+              message={t('activityList.emptyMessage')}
+              icon="activities"
+              actionLabel={t('activityList.startWorkout')}
+              onAction={() => router.replace(routes.workoutTab())}
+            />
+          ) : (
+            <EmptyState
+              title={t('activityList.nothingInRange')}
+              message={t('states.outsideRange', { count: list.flat.length })}
+              icon="calendar"
+              {...(filtering ? { actionLabel: t('states.showEverything'), onAction: widen } : {})}
+            />
+          )
+        }
+        style={{ backgroundColor: theme.colors.background }}
+      />
 
       {pendingDelete ? (
-        <ConfirmSheet
+        <ConfirmDialog
+          visible={!removeActivity.isPending}
           title={t('activityList.deleteTitle')}
-          message={`"${pendingDelete.title}" and its route will be removed. Personal records it set are recalculated from what remains.`}
-          confirmLabel={removeActivity.isPending ? 'Deleting…' : 'Delete'}
+          message={
+            removeActivity.isError
+              ? removeActivity.error instanceof Error
+                ? removeActivity.error.message
+                : t('activity.deleteFailed')
+              : t('activity.deleteMessage', { name: pendingDelete.title })
+          }
+          confirmLabel={t('activity.deleteConfirm')}
+          cancelLabel={t('common.cancel')}
+          destructive
           onConfirm={confirmDelete}
-          onRequestClose={() => {
-            // Dismissing clears the previous attempt: a sheet opened a second time should
+          onCancel={() => {
+            // Dismissing clears the previous attempt: a dialog opened a second time should
             // not still be reporting why the *first* delete failed.
             removeActivity.reset();
             setPendingDelete(null);
           }}
-          {...(removeActivity.isError
-            ? {
-                error:
-                  removeActivity.error instanceof Error
-                    ? removeActivity.error.message
-                    : t('activity.deleteFailed'),
-              }
-            : {})}
         />
       ) : null}
     </>

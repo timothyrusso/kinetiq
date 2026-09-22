@@ -39,15 +39,22 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { routes } from '@/navigation/nav';
-import { BarAction, DetailScreen } from '@/ui/Screen';
+import { ScreenHeader } from '@/ui/Screen';
+import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
+import { MetaLine, type MetaItem } from '@/ui/display';
+import {
+  HeaderToolbar,
+  headerAction,
+  headerMenu,
+  type HeaderMenuItem,
+} from '@/navigation/HeaderAction';
 import { Button } from '@/ui/Button';
 import { Card, Row, SectionHeader, Stack as Column } from '@/ui/layout';
 import { Txt } from '@/ui/Text';
 import { Icon } from '@/ui/icons';
 import { EmptyState, ErrorState, SkeletonList } from '@/ui/states';
-import { ConfirmSheet, Sheet, SheetFooter } from '@/ui/Sheet';
+import { Sheet, SheetFooter } from '@/ui/Sheet';
 import { TextField } from '@/ui/TextField';
-import { NavRow } from '@/ui/rows';
 import { ExercisePickerSheet } from '@/ui/exercisePicker';
 import { ItemEditorSheet, RoutineItemRow, type ItemPosition } from '@/ui/routineItems';
 import {
@@ -73,14 +80,13 @@ import { defaultItemTarget, orderedIdsOf, pairItems, type ItemTarget } from '@/r
 import { estimateMinutes, plannedVolumeKg } from '@/domain/logic';
 import {
   formatAgo,
-  joinMiddleDot,
   trimNumber,
   weightUnit,
   weightValue,
 } from '@/utils/format';
 import type { Exercise } from '@/domain/types';
 
-type SheetKind = 'actions' | 'rename' | 'delete' | 'add' | 'editor' | null;
+type SheetKind = 'rename' | 'delete' | 'add' | 'editor' | null;
 
 export default function RoutineDetailScreen() {
   const { t } = useT();
@@ -254,26 +260,58 @@ export default function RoutineDetailScreen() {
       });
   }, [destroy, routine, t]);
 
+  const optionItems = useMemo<HeaderMenuItem[]>(
+    () => [
+      { key: 'rename', label: t('routine.rename'), sf: 'pencil', onPress: () => setSheet('rename') },
+      { key: 'duplicate', label: t('routine.duplicate'), sf: 'plus.square.on.square', onPress: () => void doDuplicate() },
+      {
+        key: 'delete',
+        label: t('routine.deleteRoutine'),
+        sf: 'trash',
+        destructive: true,
+        onPress: () => setSheet('delete'),
+      },
+    ],
+    [doDuplicate, t],
+  );
+  const startRoutine = useCallback(() => {
+    if (liveSession) {
+      reportLiveSession(session?.routineName, setFailed, t);
+      return;
+    }
+    begin();
+  }, [begin, liveSession, session?.routineName, t]);
+  const summary = useMemo<MetaItem[]>(
+    () => [
+      { icon: 'layers', label: `${items.length} ${t('routine.exerciseWord', { count: items.length })}` },
+      {
+        icon: 'dumbbell',
+        label: volumeKg === 0 ? t('routine.bodyweight') : formatPlanned(volumeKg, units, t),
+      },
+      { icon: 'clock', label: `~${minutes} min` },
+    ],
+    [items.length, minutes, t, units, volumeKg],
+  );
+
   /* ------------------------------------------------------------ early states */
 
   if (isLoading) {
     return (
-      <DetailScreen title={t('routine.title')}>
-        {() => (
+      <>
+        <ScreenHeader title={t('routine.title')} />
           <View
             style={{ flex: 1, paddingHorizontal: screenGutter, paddingTop: spacing.md }}
           >
             <SkeletonList rows={6} />
           </View>
-        )}
-      </DetailScreen>
+      </>
     );
   }
 
   if (error !== null) {
     return (
-      <DetailScreen title={t('routine.title')}>
-        {() => (
+      <>
+        <ScreenHeader title={t('routine.title')} />
           <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: screenGutter }}>
             <ErrorState
               error={error}
@@ -281,8 +319,7 @@ export default function RoutineDetailScreen() {
               title={t('routine.readError')}
             />
           </View>
-        )}
-      </DetailScreen>
+      </>
     );
   }
 
@@ -291,8 +328,8 @@ export default function RoutineDetailScreen() {
     // nothing there. That happens when the row was deleted elsewhere while this screen was
     // open, and it needs a way out rather than a spinner that never ends.
     return (
-      <DetailScreen title={t('routine.title')}>
-        {() => (
+      <>
+        <ScreenHeader title={t('routine.title')} />
           <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: screenGutter }}>
             <EmptyState
               icon="listAdd"
@@ -302,217 +339,154 @@ export default function RoutineDetailScreen() {
               onAction={() => router.replace(routes.workoutTab())}
             />
           </View>
-        )}
-      </DetailScreen>
+      </>
     );
   }
 
   return (
     <>
-      <DetailScreen
-        title={routine.name}
-        subtitle={joinMiddleDot([
-          `${items.length} ${t('routine.exerciseWord', { count: items.length })}`,
-          volumeKg === 0 ? t('routine.bodyweight') : formatPlanned(volumeKg, units, t),
-          `~${minutes} min`,
-        ])}
-        right={
-          <>
-            <BarAction
-              icon="more"
-              label={t('routine.options')}
-              onPress={() => {
-                haptics.light();
-                setSheet('actions');
-              }}
-            />
-            <BarAction
-              icon="play"
-              label={t('routine.start')}
-              onPress={() => {
-                if (liveSession) {
-                  reportLiveSession(session?.routineName, setFailed, t);
-                  return;
-                }
-                begin();
-              }}
-            />
-          </>
-        }
+      <ScreenHeader title={routine.name} />
+      <HeaderToolbar placement="right">
+        {headerMenu({ action: 'more', t, label: 'routine.options', items: optionItems })}
+        {headerAction({ action: 'play', onPress: startRoutine, t, label: 'routine.start' })}
+      </HeaderToolbar>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{
+          paddingTop: spacing.xl,
+          paddingBottom: insets.bottom + spacing.huge,
+          gap: spacing.xxl,
+        }}
       >
-        {(topInset, header) => (
-          <ScrollView
-            keyboardShouldPersistTaps="handled"
-            onScroll={header.onScroll}
-            scrollEventThrottle={16}
-            contentContainerStyle={{
-              paddingTop: topInset + spacing.xl,
-              paddingBottom: insets.bottom + spacing.huge,
-              gap: spacing.xxl,
-            }}
-          >
-            <Column gap="lg" style={{ paddingHorizontal: screenGutter }}>
-              {routine.description === null || routine.description.length === 0 ? null : (
-                <Txt variant="body" tone="secondary">
-                  {routine.description}
-                </Txt>
-              )}
+        <Column gap="lg" style={{ paddingHorizontal: screenGutter }}>
+          <MetaLine items={summary} theme={theme} wrap />
+          {routine.description === null || routine.description.length === 0 ? null : (
+            <Txt variant="body" tone="secondary">
+              {routine.description}
+            </Txt>
+          )}
 
-              <Row gap="xxl" wrap>
-                <Stat
-                  label={t('routine.plannedVolume')}
-                  value={formatPlanned(volumeKg, units, t)}
-                />
-                <Stat label={t('routine.estTime')} value={`~${minutes} min`} />
-                <Stat label={t('routine.trained')} value={`${routine.timesCompleted}×`} />
-                {routine.lastPerformedAt === null ? null : (
-                  <Stat label={t('routine.last')} value={formatAgo(routine.lastPerformedAt)} />
-                )}
-              </Row>
-
-              {failed !== null ? (
-                <Card tone="sunken" padding="md">
-                  <Row gap="sm" align="start">
-                    <Icon name="warning" size={17} color={theme.colors.warning} />
-                    <Txt variant="body" style={{ flex: 1 }}>
-                      {failed}
-                    </Txt>
-                  </Row>
-                </Card>
-              ) : null}
-            </Column>
-
-            {rows.length === 0 ? (
-              <EmptyState
-                icon="listAdd"
-                title={t('routine.emptyTitle')}
-                message={t('routine.emptyMessage')}
-                actionLabel={t('exercises.addExercise')}
-                onAction={() => {
-                  haptics.light();
-                  setSheet('add');
-                }}
-              />
-            ) : (
-              <Column gap="md">
-                <SectionHeader
-                  title={t('routine.exercises')}
-                  eyebrow={`${rows.length} ${t('routine.rowWord', { count: rows.length })}`}
-                  action={
-                    <Button
-                      label={t('common.add')}
-                      variant="quiet"
-                      size="sm"
-                      icon="plus"
-                      onPress={() => {
-                        haptics.light();
-                        setSheet('add');
-                      }}
-                      accessibilityHint={t('routine.addHint')}
-                    />
-                  }
-                />
-                {/* No Card: `ListRow` carries its own horizontal padding and hairline, so a
-                    bordered box around it would inset the dividers short of the edges. */}
-                <View>
-                  {rows.map((row, index) => {
-                    const open = () => {
-                      setEditorItemId(row.item.id);
-                      setSheet('editor');
-                    };
-                    const position: ItemPosition = {
-                      index,
-                      count: rows.length,
-                      onMove: (to) => move(index, to),
-                    };
-                    return (
-                      <RoutineItemRow
-                        key={row.item.id}
-                        item={row.item}
-                        snapshot={row.snapshot}
-                        units={units}
-                        position={position}
-                        onPress={open}
-                        onLongPress={open}
-                        onRemove={() => dropItem(row.item.id)}
-                      />
-                    );
-                  })}
-                </View>
-                <Txt variant="caption" tone="faint" style={{ paddingHorizontal: screenGutter }}>
-                  {t('routine.editHint')}
-                </Txt>
-              </Column>
+          <Row gap="xxl" wrap>
+            <Stat
+              label={t('routine.plannedVolume')}
+              value={formatPlanned(volumeKg, units, t)}
+            />
+            <Stat label={t('routine.estTime')} value={`~${minutes} min`} />
+            <Stat label={t('routine.trained')} value={`${routine.timesCompleted}×`} />
+            {routine.lastPerformedAt === null ? null : (
+              <Stat label={t('routine.last')} value={formatAgo(routine.lastPerformedAt)} />
             )}
+          </Row>
 
-            <Column gap="md" style={{ paddingHorizontal: screenGutter }}>
-              <Button
-                label={t(liveSession ? 'routine.openWorkout' : 'routine.start')}
-                icon={liveSession ? 'arrowUpRight' : 'play'}
-                size="lg"
-                weighty
-                fullWidth
-                loading={starting}
-                onPress={() => {
-                  if (liveSession) {
-                    router.push(routes.workoutSession());
-                    return;
-                  }
-                  begin();
-                }}
-                accessibilityHint={
-                  t(liveSession ? 'routine.openHint' : 'routine.startHint')
-                }
-              />
-              {/* The count and the date are on the same line rather than stacked: two faint
-                  centred captions under a primary button reads as two warnings. */}
-              {routine.timesCompleted > 0 ? (
-                <Txt variant="micro" tone="faint" style={{ textAlign: 'center' }}>
-                  {t('routine.completedCount', {
-                    count: routine.timesCompleted,
-                    word: t('routine.timeWord', { count: routine.timesCompleted }),
-                  })}
-                  {routine.lastPerformedAt === null
-                    ? ''
-                    : t('routine.mostRecently', { ago: formatAgo(routine.lastPerformedAt) })}
+          {failed !== null ? (
+            <Card tone="sunken" padding="md">
+              <Row gap="sm" align="start">
+                <Icon name="warning" size={17} color={theme.colors.warning} />
+                <Txt variant="body" style={{ flex: 1 }}>
+                  {failed}
                 </Txt>
-              ) : null}
-            </Column>
-          </ScrollView>
-        )}
-      </DetailScreen>
+              </Row>
+            </Card>
+          ) : null}
+        </Column>
 
-      {sheet === 'actions' ? (
-        <Sheet
-          title={routine.name}
-          subtitle={t('routine.options')}
-          onRequestClose={() => setSheet(null)}
-        >
-          <ActionRow
-            topDivider={false}
-            icon="edit"
-            title={t('routine.rename')}
-            subtitle={t('routine.renameSubtitle')}
-            theme={theme}
-            onPress={() => setSheet('rename')}
+        {rows.length === 0 ? (
+          <EmptyState
+            icon="listAdd"
+            title={t('routine.emptyTitle')}
+            message={t('routine.emptyMessage')}
+            actionLabel={t('exercises.addExercise')}
+            onAction={() => {
+              haptics.light();
+              setSheet('add');
+            }}
           />
-          <ActionRow
-            icon="copy"
-            title={t('routine.duplicate')}
-            subtitle={t('routine.duplicateSubtitle')}
-            theme={theme}
-            onPress={doDuplicate}
+        ) : (
+          <Column gap="md">
+            <SectionHeader
+              title={t('routine.exercises')}
+              eyebrow={`${rows.length} ${t('routine.rowWord', { count: rows.length })}`}
+              action={
+                <Button
+                  label={t('common.add')}
+                  variant="quiet"
+                  size="sm"
+                  icon="plus"
+                  onPress={() => {
+                    haptics.light();
+                    setSheet('add');
+                  }}
+                  accessibilityHint={t('routine.addHint')}
+                />
+              }
+            />
+            {/* No Card: `ListRow` carries its own horizontal padding and hairline, so a
+                bordered box around it would inset the dividers short of the edges. */}
+            <View>
+              {rows.map((row, index) => {
+                const open = () => {
+                  setEditorItemId(row.item.id);
+                  setSheet('editor');
+                };
+                const position: ItemPosition = {
+                  index,
+                  count: rows.length,
+                  onMove: (to) => move(index, to),
+                };
+                return (
+                  <RoutineItemRow
+                    key={row.item.id}
+                    item={row.item}
+                    snapshot={row.snapshot}
+                    units={units}
+                    position={position}
+                    onPress={open}
+                    onLongPress={open}
+                    onRemove={() => dropItem(row.item.id)}
+                  />
+                );
+              })}
+            </View>
+            <Txt variant="caption" tone="faint" style={{ paddingHorizontal: screenGutter }}>
+              {t('routine.editHint')}
+            </Txt>
+          </Column>
+        )}
+
+        <Column gap="md" style={{ paddingHorizontal: screenGutter }}>
+          <Button
+            label={t(liveSession ? 'routine.openWorkout' : 'routine.start')}
+            icon={liveSession ? 'arrowUpRight' : 'play'}
+            size="lg"
+            weighty
+            fullWidth
+            loading={starting}
+            onPress={() => {
+              if (liveSession) {
+                router.push(routes.workoutSession());
+                return;
+              }
+              begin();
+            }}
+            accessibilityHint={
+              t(liveSession ? 'routine.openHint' : 'routine.startHint')
+            }
           />
-          <ActionRow
-            icon="trash"
-            title={t('routine.deleteRoutine')}
-            subtitle={t('routine.deleteSubtitle')}
-            theme={theme}
-            danger
-            onPress={() => setSheet('delete')}
-          />
-        </Sheet>
-      ) : null}
+          {/* The count and the date are on the same line rather than stacked: two faint
+              centred captions under a primary button reads as two warnings. */}
+          {routine.timesCompleted > 0 ? (
+            <Txt variant="micro" tone="faint" style={{ textAlign: 'center' }}>
+              {t('routine.completedCount', {
+                count: routine.timesCompleted,
+                word: t('routine.timeWord', { count: routine.timesCompleted }),
+              })}
+              {routine.lastPerformedAt === null
+                ? ''
+                : t('routine.mostRecently', { ago: formatAgo(routine.lastPerformedAt) })}
+            </Txt>
+          ) : null}
+        </Column>
+      </ScrollView>
 
       {sheet === 'rename' ? (
         <RenameSheet
@@ -536,7 +510,8 @@ export default function RoutineDetailScreen() {
       ) : null}
 
       {sheet === 'delete' ? (
-        <ConfirmSheet
+        <ConfirmDialog
+          visible
           title={t('routine.deleteTitle', { name: routine.name })}
           message={
             routine.timesCompleted > 0
@@ -547,7 +522,9 @@ export default function RoutineDetailScreen() {
               : t('routine.deleteNever')
           }
           confirmLabel={t('routine.deleteRoutine')}
-          onRequestClose={() => setSheet(null)}
+          cancelLabel={t('common.cancel')}
+          destructive
+          onCancel={() => setSheet(null)}
           onConfirm={doDelete}
         />
       ) : null}
@@ -585,45 +562,6 @@ function Stat({ label, value }: { label: string; value: string }) {
       </Txt>
       <Txt variant="strong">{value}</Txt>
     </Column>
-  );
-}
-
-/**
- * One line in the "more" sheet.
- *
- * `NavRow` with its chevron suppressed: these are actions, not destinations, and a chevron
- * promises a screen that is not there. `ListRow` would be wrong in the other direction: it
- * would put the row's own horizontal padding inside a sheet that already has padding, and the
- * three rows would sit narrower than the sheet's title.
- */
-function ActionRow({
-  icon,
-  title,
-  subtitle,
-  theme,
-  danger = false,
-  topDivider = true,
-  onPress,
-}: {
-  icon: 'edit' | 'copy' | 'trash';
-  title: string;
-  subtitle: string;
-  theme: Parameters<typeof NavRow>[0]['theme'];
-  danger?: boolean;
-  topDivider?: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <NavRow
-      icon={icon}
-      title={title}
-      subtitle={subtitle}
-      theme={theme}
-      danger={danger}
-      showChevron={false}
-      topDivider={topDivider}
-      onPress={onPress}
-    />
   );
 }
 

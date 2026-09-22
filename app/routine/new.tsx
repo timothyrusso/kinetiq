@@ -29,14 +29,17 @@ import { ScrollView, View } from 'react-native';
 import { router, useNavigation } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { DetailScreen } from '@/ui/Screen';
+import { ScreenHeader } from '@/ui/Screen';
+import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
+import { MetaLine, type MetaItem } from '@/ui/display';
+import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
+import { usePreventRemove } from 'expo-router/react-navigation';
 import { Button } from '@/ui/Button';
 import { KeyboardAvoid, TextField } from '@/ui/TextField';
 import { Card, Row, SectionHeader, Stack as Column } from '@/ui/layout';
 import { Txt } from '@/ui/Text';
 import { Icon } from '@/ui/icons';
 import { EmptyState } from '@/ui/states';
-import { ConfirmSheet } from '@/ui/Sheet';
 import { ExercisePickerSheet } from '@/ui/exercisePicker';
 import { ItemEditorSheet, RoutineItemRow } from '@/ui/routineItems';
 import { estimateMinutes, plannedVolumeKg } from '@/domain/logic';
@@ -140,180 +143,164 @@ export default function NewRoutineScreen() {
     }
   }, [saveRoutine, t]);
 
-  // Back gesture, hardware back, the swipe and the back button all route through
-  // `beforeRemove`, which is the only hook that fires for all four. Without it, the same
-  // thumb that can lose a workout by backgrounding the app can lose a routine by swiping.
-  //
-  // The latch is a ref, not state: registering a listener per state change would resubscribe
-  // on every keystroke, and the handler needs the current answer either way.
-  const discardConfirmed = useRef(false);
-  useEffect(
+  // Back gesture, hardware back, the swipe, Cancel and a dismiss all remove this screen, and
+  // `usePreventRemove` intercepts every one of them. Without it, the same thumb that can lose
+  // a workout by backgrounding the app can lose a routine by swiping. The blocked action is
+  // kept so a confirmed discard can finish exactly the navigation the user started.
+  const pendingRemoval = useRef<Parameters<typeof navigation.dispatch>[0] | null>(null);
+  usePreventRemove(isDraftDirty(), ({ data }) => {
+    pendingRemoval.current = data.action;
+    setConfirmDiscard(true);
+  });
+  const cancel = useCallback(() => router.dismiss(), []);
+  const done = useCallback(() => {
+    void save();
+  }, [save]);
+  const summary = useMemo<MetaItem[]>(
     () =>
-      navigation.addListener('beforeRemove', (event) => {
-        if (discardConfirmed.current || !isDraftDirty()) return;
-        event.preventDefault();
-        setConfirmDiscard(true);
-      }),
-    [navigation],
+      draft.items.length === 0
+        ? [{ icon: 'listAdd', label: t('newRoutine.subtitleEmpty') }]
+        : [
+            {
+              icon: 'layers',
+              label: `${draft.items.length} ${t('newRoutine.exerciseWord', { count: draft.items.length })}`,
+            },
+            { icon: 'clock', label: `~${minutes} min` },
+          ],
+    [draft.items.length, minutes, t],
   );
 
   return (
     <>
-      <DetailScreen
-        title={t('newRoutine.title')}
-        subtitle={
-          draft.items.length === 0
-            ? t('newRoutine.subtitleEmpty')
-            : t('newRoutine.subtitleCount', {
-                count: draft.items.length,
-                word: t('newRoutine.exerciseWord', { count: draft.items.length }),
-                minutes,
-              })
-        }
-        right={
-          <Button
-            label={t(draft.status === 'saving' ? 'newRoutine.saving' : 'newRoutine.done')}
-            variant="ghost"
-            size="sm"
-            disabled={draft.status === 'saving'}
-            onPress={() => {
-              void save();
-            }}
-            accessibilityHint={t('newRoutine.saveHint')}
-          />
-        }
-        // The back button goes through the same guard as the gesture; `DetailScreen` calls
-        // this instead of calling `router.back()` itself.
-        onBack={() => {
-          if (isDraftDirty()) setConfirmDiscard(true);
-          else router.dismiss();
-        }}
-      >
-        {(topInset, header) => (
-          <KeyboardAvoid style={{ flex: 1 }}>
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
-              onScroll={header.onScroll}
-              scrollEventThrottle={16}
-              contentContainerStyle={{
-                // `topInset` is the translucent header's height, and this screen was the only
-                // one of eleven that threw it away for a flat 16pt. The header then covered the
-                // first ~105pt of content, which on THIS screen is the routine's name field, // so "New routine" opened with its first and most important input hidden, and
-                // no amount of scrolling revealed it because the list was already at offset 0.
-                // A routine saved without a name falls back to being named after its first
-                // exercise, which is how a QA run produced a routine called "Squat (Stacchi)".
-                paddingTop: topInset + spacing.lg,
-                paddingBottom: insets.bottom + spacing.huge,
-                gap: spacing.xxl,
+      <ScreenHeader title={t('newRoutine.title')} />
+      <HeaderToolbar placement="left">
+        {headerAction({ action: 'cancel', onPress: cancel, t })}
+      </HeaderToolbar>
+      <HeaderToolbar placement="right">
+        {headerAction({
+          action: 'done',
+          onPress: done,
+          t,
+          label: draft.status === 'saving' ? 'newRoutine.saving' : 'newRoutine.done',
+          disabled: draft.status === 'saving',
+          variant: 'done',
+        })}
+      </HeaderToolbar>
+      <KeyboardAvoid style={{ flex: 1 }}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{
+            paddingTop: spacing.lg,
+            paddingBottom: insets.bottom + spacing.huge,
+            gap: spacing.xxl,
+          }}
+        >
+          <Column gap="md" style={{ paddingHorizontal: screenGutter }}>
+            <MetaLine items={summary} theme={theme} wrap />
+            <TextField
+              label={t('newRoutine.nameLabel')}
+              value={draft.name}
+              onChangeText={setDraftName}
+              placeholder={t('newRoutine.namePlaceholder')}
+              hint={t(
+                draft.name.trim().length === 0 && draft.items.length > 0
+                  ? 'newRoutine.nameHintEmpty'
+                  : 'newRoutine.nameHint',
+              )}
+              returnKeyType="next"
+              accessibilityHint={t('newRoutine.nameA11y')}
+            />
+            <TextField
+              label={t('newRoutine.notesLabel')}
+              value={draft.description}
+              onChangeText={setDraftDescription}
+              placeholder={t('newRoutine.notesPlaceholder')}
+              multiline
+              accessibilityHint={t('newRoutine.notesA11y')}
+            />
+          </Column>
+
+          {rows.length === 0 ? (
+            <EmptyState
+              icon="listAdd"
+              title={t('newRoutine.emptyTitle')}
+              message={t('newRoutine.emptyMessage')}
+              actionLabel={t('newRoutine.addExercise')}
+              onAction={() => {
+                haptics.light();
+                setPickerOpen(true);
               }}
-            >
-              <Column gap="md" style={{ paddingHorizontal: screenGutter }}>
-                <TextField
-                  label={t('newRoutine.nameLabel')}
-                  value={draft.name}
-                  onChangeText={setDraftName}
-                  placeholder={t('newRoutine.namePlaceholder')}
-                  hint={t(
-                    draft.name.trim().length === 0 && draft.items.length > 0
-                      ? 'newRoutine.nameHintEmpty'
-                      : 'newRoutine.nameHint',
-                  )}
-                  returnKeyType="next"
-                  accessibilityHint={t('newRoutine.nameA11y')}
-                />
-                <TextField
-                  label={t('newRoutine.notesLabel')}
-                  value={draft.description}
-                  onChangeText={setDraftDescription}
-                  placeholder={t('newRoutine.notesPlaceholder')}
-                  multiline
-                  accessibilityHint={t('newRoutine.notesA11y')}
-                />
-              </Column>
-
-              {rows.length === 0 ? (
-                <EmptyState
-                  icon="listAdd"
-                  title={t('newRoutine.emptyTitle')}
-                  message={t('newRoutine.emptyMessage')}
-                  actionLabel={t('newRoutine.addExercise')}
-                  onAction={() => {
-                    haptics.light();
-                    setPickerOpen(true);
-                  }}
-                />
-              ) : (
-                <Column gap="md">
-                  <SectionHeader
-                    title={t('newRoutine.exercises')}
-                    eyebrow={`${rows.length} ${t('newRoutine.rowWord', { count: rows.length })}`}
-                    action={
-                      <Button
-                        label={t('common.add')}
-                        variant="quiet"
-                        size="sm"
-                        icon="plus"
-                        onPress={() => {
-                          haptics.light();
-                          setPickerOpen(true);
-                        }}
-                      />
-                    }
+            />
+          ) : (
+            <Column gap="md">
+              <SectionHeader
+                title={t('newRoutine.exercises')}
+                eyebrow={`${rows.length} ${t('newRoutine.rowWord', { count: rows.length })}`}
+                action={
+                  <Button
+                    label={t('common.add')}
+                    variant="quiet"
+                    size="sm"
+                    icon="plus"
+                    onPress={() => {
+                      haptics.light();
+                      setPickerOpen(true);
+                    }}
                   />
-                  {/* No Card: `ListRow` carries its own horizontal padding and hairline, so a
-                      bordered box around it would inset the dividers short of the edges. */}
-                  <View>
-                    {rows.map((row, index) => (
-                      <RoutineItemRow
-                        key={row.item.id}
-                        item={row.item}
-                        snapshot={row.snapshot}
-                        units={units}
-                        position={{
-                          index,
-                          count: rows.length,
-                          onMove: (to) => moveDraftItem(index, to),
-                        }}
-                        onPress={() => setEditorItemId(row.item.id)}
-                        onLongPress={() => setEditorItemId(row.item.id)}
-                        onRemove={() => {
-                          haptics.light();
-                          removeDraftItem(row.item.id);
-                        }}
-                      />
-                    ))}
-                  </View>
-                  <Row gap="xxl" style={{ paddingHorizontal: screenGutter }}>
-                    <MetricNote
-                      label={t('newRoutine.plannedVolume')}
-                      value={
-                        volumeKg === 0
-                          ? t('newRoutine.bodyweight')
-                          : `${trimNumber(weightValue(volumeKg, units), 0)} ${weightUnit(units)}`
-                      }
-                    />
-                    <MetricNote label={t('newRoutine.estTime')} value={`~${minutes} min`} />
-                  </Row>
-                  <Txt variant="caption" tone="faint" style={{ paddingHorizontal: screenGutter }}>
-                    {t('newRoutine.reorderNote')}
-                  </Txt>
-                </Column>
-              )}
+                }
+              />
+              {/* No Card: `ListRow` carries its own horizontal padding and hairline, so a
+                  bordered box around it would inset the dividers short of the edges. */}
+              <View>
+                {rows.map((row, index) => (
+                  <RoutineItemRow
+                    key={row.item.id}
+                    item={row.item}
+                    snapshot={row.snapshot}
+                    units={units}
+                    position={{
+                      index,
+                      count: rows.length,
+                      onMove: (to) => moveDraftItem(index, to),
+                    }}
+                    onPress={() => setEditorItemId(row.item.id)}
+                    onLongPress={() => setEditorItemId(row.item.id)}
+                    onRemove={() => {
+                      haptics.light();
+                      removeDraftItem(row.item.id);
+                    }}
+                  />
+                ))}
+              </View>
+              <Row gap="xxl" style={{ paddingHorizontal: screenGutter }}>
+                <MetricNote
+                  label={t('newRoutine.plannedVolume')}
+                  value={
+                    volumeKg === 0
+                      ? t('newRoutine.bodyweight')
+                      : `${trimNumber(weightValue(volumeKg, units), 0)} ${weightUnit(units)}`
+                  }
+                />
+                <MetricNote label={t('newRoutine.estTime')} value={`~${minutes} min`} />
+              </Row>
+              <Txt variant="caption" tone="faint" style={{ paddingHorizontal: screenGutter }}>
+                {t('newRoutine.reorderNote')}
+              </Txt>
+            </Column>
+          )}
 
-              {blocked === null ? null : (
-                <Card tone="sunken" padding="md" style={{ marginHorizontal: spacing.lg }}>
-                  <Row gap="sm" align="start">
-                    <Icon name="warning" size={17} color={theme.colors.danger} />
-                    <Txt variant="body" style={{ flex: 1 }}>
-                      {blocked}
-                    </Txt>
-                  </Row>
-                </Card>
-              )}
-            </ScrollView>
-          </KeyboardAvoid>
-        )}
-      </DetailScreen>
+          {blocked === null ? null : (
+            <Card tone="sunken" padding="md" style={{ marginHorizontal: spacing.lg }}>
+              <Row gap="sm" align="start">
+                <Icon name="warning" size={17} color={theme.colors.danger} />
+                <Txt variant="body" style={{ flex: 1 }}>
+                  {blocked}
+                </Txt>
+              </Row>
+            </Card>
+          )}
+        </ScrollView>
+      </KeyboardAvoid>
 
       {editorItem === null ? null : (
         <ItemEditorSheet
@@ -342,7 +329,8 @@ export default function NewRoutineScreen() {
       ) : null}
 
       {confirmDiscard ? (
-        <ConfirmSheet
+        <ConfirmDialog
+          visible
           title={t('newRoutine.discardTitle')}
           message={
             draft.items.length > 0
@@ -350,14 +338,18 @@ export default function NewRoutineScreen() {
               : t('newRoutine.discardEmpty')
           }
           confirmLabel={t('newRoutine.discard')}
-          onRequestClose={() => setConfirmDiscard(false)}
+          cancelLabel={t('common.cancel')}
+          destructive
+          onCancel={() => setConfirmDiscard(false)}
           onConfirm={() => {
-            // Order matters: the guard reads the ref, so it must be raised before the
-            // navigation starts or the dismiss would prompt itself again.
-            discardConfirmed.current = true;
+            // The draft is cleared first so nothing is left to guard, then the navigation the
+            // user started (a swipe, Cancel, a hardware back) is replayed as they asked for it.
             setConfirmDiscard(false);
             clearDraft();
-            router.dismiss();
+            const action = pendingRemoval.current;
+            pendingRemoval.current = null;
+            if (action) navigation.dispatch(action);
+            else router.dismiss();
           }}
         />
       ) : null}
