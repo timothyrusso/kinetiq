@@ -8,7 +8,8 @@
  *
  * Labels are catalog KEYS, not words: this table is built at import time, before a language
  * exists. `text` rows (`save`, `done`) are words on both platforms, because a confirming verb
- * in a header is read, not recognised.
+ * in a header is read, not recognised. (On Android they draw their Material glyph: the top
+ * app bar only takes icons, and Material's confirming action is the check.)
  */
 import type MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import type { SFSymbol } from 'sf-symbols-typescript';
@@ -35,13 +36,8 @@ export type HeaderActionRow = {
   sf: SFSymbol;
   material: MaterialIconName;
   label: TKey;
-  /** Rendered as its label rather than as a glyph, on both platforms. */
+  /** Rendered as its label on iOS; Android draws the glyph (see the note above). */
   text?: true;
-  /**
-   * Drawn on iOS only. A modal's leading "Cancel" is the iOS convention; Android's modal
-   * already carries the system back arrow, and a second way out beside it reads as a mistake.
-   */
-  iosOnly?: true;
 };
 
 export const HEADER_ACTIONS: Record<HeaderActionKey, HeaderActionRow> = {
@@ -56,5 +52,6 @@ export const HEADER_ACTIONS: Record<HeaderActionKey, HeaderActionRow> = {
   edit: { sf: 'pencil', material: 'edit', label: 'headerActions.edit' },
   share: { sf: 'square.and.arrow.up', material: 'share', label: 'headerActions.share' },
   search: { sf: 'magnifyingglass', material: 'search', label: 'headerActions.search' },
-  cancel: { sf: 'xmark', material: 'close', label: 'headerActions.cancel', text: true, iosOnly: true },
+  // "Cancel" on iOS, the full-screen dialog's close glyph on Android.
+  cancel: { sf: 'xmark', material: 'close', label: 'headerActions.cancel', text: true },
 };

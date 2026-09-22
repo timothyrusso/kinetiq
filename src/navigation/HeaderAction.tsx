@@ -12,9 +12,9 @@
  * ## Icons per platform
  *
  * iOS takes the SF Symbol name directly. Android's bar only accepts an image source (an SF name
- * is silently ignored there), so every Material glyph in the table is rendered to an image once,
- * during bootstrap, before the navigator mounts. A row whose image is somehow missing renders
- * nothing rather than an empty tappable square.
+ * is silently ignored, and a button with no image is not drawn at all), so every Material glyph
+ * in the table is rendered to an image once, during bootstrap, before the navigator mounts. A
+ * row whose image is somehow missing renders nothing rather than an empty tappable square.
  */
 import type { ReactElement } from 'react';
 import { Platform, type ImageSourcePropType } from 'react-native';
@@ -36,7 +36,6 @@ export async function prefetchHeaderIcons(): Promise<void> {
   const keys = Object.keys(HEADER_ACTIONS) as HeaderActionKey[];
   await Promise.all(
     keys.map(async (key) => {
-      if (HEADER_ACTIONS[key].text) return;
       const source = await MaterialIcons.getImageSource(
         HEADER_ACTIONS[key].material,
         ANDROID_ICON_SIZE,
@@ -83,7 +82,6 @@ export function headerAction({
   tint,
 }: HeaderActionOptions): ReactElement | null {
   const row = HEADER_ACTIONS[action];
-  if (row.iosOnly && Platform.OS !== 'ios') return null;
   const spoken = t(label ?? row.label);
   const shared = {
     onPress,
@@ -92,7 +90,11 @@ export function headerAction({
     ...(variant === undefined ? {} : { variant }),
     ...(tint === undefined ? {} : { tintColor: tint }),
   };
-  if (row.text) {
+  // A word on iOS, where a confirming verb in a bar is read. Android's top bar only draws
+  // icons (a text-only toolbar button renders nothing there), and Material's confirming
+  // action is the check glyph, so text rows fall through to their icon with the label as
+  // the spoken name.
+  if (row.text && Platform.OS === 'ios') {
     return <Stack.Toolbar.Button key={action} {...shared}>{spoken}</Stack.Toolbar.Button>;
   }
   if (Platform.OS === 'android') {
