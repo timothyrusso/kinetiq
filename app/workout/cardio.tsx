@@ -71,6 +71,8 @@ import type { CardioSnapshot } from '@/services/location';
 import { invalidateActivityHistory } from '@/query/invalidation';
 import { useSettings } from '@/settings';
 import { haptics } from '@/services/haptics';
+import { useT } from '@/i18n/useT';
+import type { TKey } from '@/i18n';
 import { routes } from '@/navigation/nav';
 import type { ActivityKind } from '@/domain/types';
 import { useAppTheme } from '@/theme/theme';
@@ -104,14 +106,15 @@ function useCardio(): CardioSnapshot {
  * honest way to infer a distance from a bench press, so a session with no distance would put a
  * fabricated `0.00 km` into history for the progress charts to average against.
  */
-const TRACKABLE: readonly { kind: ActivityKind; label: string; icon: IconName }[] = [
-  { kind: 'run', label: 'Run', icon: 'run' },
-  { kind: 'ride', label: 'Ride', icon: 'bike' },
-  { kind: 'walk', label: 'Walk', icon: 'walk' },
-  { kind: 'yoga', label: 'Other', icon: 'yoga' },
+const TRACKABLE: readonly { kind: ActivityKind; label: TKey; icon: IconName }[] = [
+  { kind: 'run', label: 'cardio.kindRun', icon: 'run' },
+  { kind: 'ride', label: 'cardio.kindRide', icon: 'bike' },
+  { kind: 'walk', label: 'cardio.kindWalk', icon: 'walk' },
+  { kind: 'yoga', label: 'cardio.kindOther', icon: 'yoga' },
 ];
 
 export default function CardioScreen() {
+  const { t } = useT();
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
   const client = useQueryClient();
@@ -164,13 +167,13 @@ export default function CardioScreen() {
       // a slow device can cause. Route rather than explain: the live panel *is* the answer to
       // "where did my run go", and the message behind it would otherwise be a stack of identical
       // panels.
-      setStartError(error instanceof Error ? error.message : 'Could not start the activity.');
+      setStartError(error instanceof Error ? error.message : t('cardio.startFailed'));
       haptics.warning();
       if (recorder.getSnapshot().status !== 'idle') router.replace(routes.cardio());
     } finally {
       setStarting(false);
     }
-  }, [kind, starting, title]);
+  }, [kind, starting, t, title]);
 
   const finish = useCallback(async () => {
     if (finishing) return;
@@ -191,12 +194,12 @@ export default function CardioScreen() {
     } catch {
       // The draft survives a failed save: that is deliberate, in the service: so the right next
       // move is to try again, not to start over.
-      setFinishError('Your phone could not save this activity. It is still here: try again.');
+      setFinishError(t('cardio.saveFailed'));
       haptics.warning();
     } finally {
       setFinishing(false);
     }
-  }, [client, finishing]);
+  }, [client, finishing, t]);
 
   const discard = useCallback(() => {
     void recorder.discard();
@@ -209,11 +212,11 @@ export default function CardioScreen() {
       <Screen style={styles.center}>
         <EmptyState
           icon="checkCircle"
-          title="Saved"
-          message="Your activity is in History, with its route and splits."
-          actionLabel="View activity"
+          title={t('cardio.savedTitle')}
+          message={t('cardio.savedMessage')}
+          actionLabel={t('cardio.viewActivity')}
           onAction={() => router.replace(routes.activityDetail(savedAs))}
-          secondaryLabel="Record another"
+          secondaryLabel={t('cardio.recordAnother')}
           onSecondary={() => {
             setSavedAs(null);
             setTitle('');
@@ -228,9 +231,9 @@ export default function CardioScreen() {
       <Screen style={styles.center}>
         <EmptyState
           icon="clock"
-          title="Too short to save"
-          message="An activity under 20 seconds with no distance is not worth keeping, so nothing was written to your history."
-          actionLabel="Record another"
+          title={t('cardio.tooShortTitle')}
+          message={t('cardio.tooShortMessage')}
+          actionLabel={t('cardio.recordAnother')}
           onAction={() => {
             setTooShort(false);
             setTitle('');
@@ -278,7 +281,7 @@ export default function CardioScreen() {
             <Row align="center" gap="md">
               <Stack gap="xxs" style={{ flex: 1, minWidth: 0 }}>
                 <Txt variant="micro" tone="faint" uppercase tracking={0.8}>
-                  {running ? 'Recording' : 'Paused'}
+                  {t(running ? 'cardio.recording' : 'cardio.paused')}
                 </Txt>
                 <Txt variant="title" numberOfLines={1}>
                   {cardio.title}
@@ -290,28 +293,33 @@ export default function CardioScreen() {
             <Card>
               <View style={styles.hero}>
                 <Txt variant="numeralLg">{formatDuration(cardio.elapsedSeconds)}</Txt>
-                <MetricLabel label={running ? 'Elapsed' : 'Paused'} />
+                <MetricLabel label={t(running ? 'cardio.elapsed' : 'cardio.paused')} />
               </View>
               <Divider inset={0} />
               <MetricGrid columns={2}>
                 <Metric
-                  label="Distance"
+                  label={t('cardio.distance')}
                   value={formatDistance(cardio.distanceMeters, units, 2)}
-                  note={cardio.distanceEstimated ? 'Estimated from time' : 'From GPS'}
+                  note={t(
+                    cardio.distanceEstimated ? 'cardio.estimatedFromTime' : 'cardio.fromGps',
+                  )}
                 />
                 <Metric
-                  label={useSpeed ? 'Speed' : 'Pace'}
+                  label={t(useSpeed ? 'cardio.speed' : 'cardio.pace')}
                   value={
                     useSpeed
                       ? formatSpeed(speedMps, units)
                       : formatPace(cardio.paceSecPerKm, units)
                   }
                 />
-                <Metric label="Calories" value={`${formatCalories(cardio.caloriesKcal)} kcal`} />
                 <Metric
-                  label="Positions"
+                  label={t('cardio.calories')}
+                  value={`${formatCalories(cardio.caloriesKcal)} kcal`}
+                />
+                <Metric
+                  label={t('cardio.positions')}
                   value={`${cardio.route.length}`}
-                  note={hasRoute ? undefined : 'No route yet'}
+                  note={hasRoute ? undefined : t('cardio.noRouteYet')}
                 />
               </MetricGrid>
             </Card>
@@ -321,7 +329,7 @@ export default function CardioScreen() {
                 <Stack gap="sm">
                   <Row gap="sm">
                     <Icon name="warning" size={18} color={theme.colors.warning} />
-                    <Txt variant="strong">Recording, with limits</Txt>
+                    <Txt variant="strong">{t('cardio.limitsTitle')}</Txt>
                   </Row>
                   {/* Every active degradation, not just the first. The service keeps only the first
                       in `degradedReason` because that field is a one-line label; the list is the
@@ -334,12 +342,12 @@ export default function CardioScreen() {
                   ))}
                   {cardio.permission === 'denied' ? (
                     <Button
-                      label="Try location again"
+                      label={t('cardio.tryLocationAgain')}
                       variant="secondary"
                       size="sm"
                       icon="mapPin"
                       onPress={() => void recorder.requestPermission()}
-                      accessibilityHint="On iPhone you may be sent to the Settings app"
+                      accessibilityHint={t('cardio.tryLocationHint')}
                     />
                   ) : null}
                 </Stack>
@@ -362,7 +370,7 @@ export default function CardioScreen() {
                   this fault, and the empty card below says the same thing more usefully (it
                   explains *why* a line needs two positions, and how to feed one on a
                   simulator). A section header with nothing to eyebrow is correct here. */}
-              <SectionHeader title="Route" />
+              <SectionHeader title={t('cardio.route')} />
               {hasRoute ? (
                 <RouteMap
                   route={cardio.route}
@@ -376,10 +384,9 @@ export default function CardioScreen() {
                   <Row gap="md" align="start">
                     <Icon name="route" size={24} color={theme.colors.textFaint} />
                     <Stack gap="xxs" style={{ flex: 1, minWidth: 0 }}>
-                      <Txt variant="strong">Nothing traced yet</Txt>
+                      <Txt variant="strong">{t('cardio.nothingTracedTitle')}</Txt>
                       <Txt variant="caption" tone="muted">
-                        A line needs two usable positions. Keep moving for a few seconds; on a
-                        simulator, set a position from the device&apos;s location debug menu.
+                        {t('cardio.nothingTracedMessage')}
                       </Txt>
                     </Stack>
                   </Row>
@@ -390,7 +397,7 @@ export default function CardioScreen() {
             <Stack gap="md">
               {running ? (
                 <Button
-                  label="Pause"
+                  label={t('cardio.pause')}
                   variant="secondary"
                   size="lg"
                   icon="pause"
@@ -402,7 +409,7 @@ export default function CardioScreen() {
                 />
               ) : (
                 <Button
-                  label="Resume"
+                  label={t('cardio.resume')}
                   variant="secondary"
                   size="lg"
                   icon="play"
@@ -414,7 +421,7 @@ export default function CardioScreen() {
                 />
               )}
               <Button
-                label={finishing ? 'Saving…' : 'Stop and save'}
+                label={t(finishing ? 'cardio.saving' : 'cardio.stopAndSave')}
                 variant="primary"
                 size="lg"
                 icon="stop"
@@ -422,11 +429,11 @@ export default function CardioScreen() {
                 weighty
                 loading={finishing}
                 onPress={() => void finish()}
-                accessibilityHint="Writes the activity to your history"
+                accessibilityHint={t('cardio.stopHint')}
               />
               <ActionRow
-                title="Discard this activity"
-                subtitle="Route, time and distance are thrown away"
+                title={t('cardio.discardRow')}
+                subtitle={t('cardio.discardRowSubtitle')}
                 icon="trash"
                 tone="danger"
                 onPress={() => setConfirmingDiscard(true)}
@@ -436,14 +443,12 @@ export default function CardioScreen() {
             {/* Said rather than assumed: there is no back button here, so the panel has to say that
                 stepping away is allowed and costs nothing. */}
             <Txt variant="caption" tone="muted" align="center">
-              Lock your phone or switch apps: the recording continues, and it is waiting here when
-              you come back.
+              {t('cardio.steppingAway')}
             </Txt>
 
             {__DEV__ ? (
               <Txt variant="micro" tone="faint">
-                Development build: distances stay estimated unless the simulator is actually moving,
-                which it is not on its own.
+                {t('cardio.devLive')}
               </Txt>
             ) : null}
 
@@ -454,9 +459,9 @@ export default function CardioScreen() {
 
       {confirmingDiscard ? (
         <ConfirmSheet
-          title="Discard this activity?"
-          message="The route, distance and time go away. Sessions you finished earlier are untouched."
-          confirmLabel={finishing ? 'Discarding…' : 'Discard'}
+          title={t('cardio.discardTitle')}
+          message={t('cardio.discardMessage')}
+          confirmLabel={t(finishing ? 'cardio.discarding' : 'cardio.discard')}
           onConfirm={discard}
           onRequestClose={() => setConfirmingDiscard(false)}
         />
@@ -502,10 +507,11 @@ function StartPanel({
   onDropResumable: () => void;
   bottomSpace: number;
 }) {
+  const { t } = useT();
   const theme = useAppTheme();
 
   return (
-    <DetailScreen title="Cardio">
+    <DetailScreen title={t('cardio.title')}>
       {(topInset) => (
         <ScrollView
           contentContainerStyle={[
@@ -522,22 +528,21 @@ function StartPanel({
               <Card tone="accent">
                 <Stack gap="sm">
                   <Txt variant="micro" uppercase tracking={0.8}>
-                    Pick up where you stopped
+                    {t('cardio.resumableEyebrow')}
                   </Txt>
                   <Txt variant="caption">
-                    The app closed while “{resumable.title}” was recording. Its time and route are
-                    still here.
+                    {t('cardio.resumableMessage', { name: resumable.title })}
                   </Txt>
                   <Row gap="md">
                     <Button
-                      label="Resume"
+                      label={t('cardio.resume')}
                       variant="primary"
                       size="sm"
                       icon="play"
                       onPress={onResume}
                     />
                     <Button
-                      label="Discard it"
+                      label={t('cardio.discardIt')}
                       variant="quiet"
                       size="sm"
                       onPress={onDropResumable}
@@ -548,12 +553,12 @@ function StartPanel({
             ) : null}
 
             <View>
-              <SectionHeader title="Activity" eyebrow="What are you doing?" />
+              <SectionHeader title={t('cardio.activity')} eyebrow={t('cardio.activityEyebrow')} />
               <Row gap="sm" wrap>
                 {TRACKABLE.map((option) => (
                   <Chip
                     key={option.kind}
-                    label={option.label}
+                    label={t(option.label)}
                     icon={option.icon}
                     selected={kind === option.kind}
                     onPress={() => onKind(option.kind)}
@@ -563,34 +568,33 @@ function StartPanel({
             </View>
 
             <TextField
-              label="Name"
+              label={t('cardio.nameLabel')}
               value={title}
               onChangeText={onTitle}
-              placeholder={placeholderFor(kind)}
+              placeholder={t(placeholderFor(kind))}
               autoCapitalize="sentences"
               returnKeyType="done"
-              accessibilityLabel="Activity name"
-              hint="Leave blank and it is named from the activity and today's date."
+              accessibilityLabel={t('cardio.nameA11y')}
+              hint={t('cardio.nameHint')}
             />
 
             <View>
-              <SectionHeader title="Before you start" />
+              <SectionHeader title={t('cardio.beforeYouStart')} />
               <Card>
                 <Stack gap="md">
                   <Row gap="md" align="start">
                     <Icon name="mapPin" size={18} color={theme.colors.textMuted} />
                     <Txt variant="caption" tone="muted" style={{ flex: 1 }}>
-                      Location is used while recording, and only for this. If it is off, the session
-                      still runs and distance is estimated from your time: in{' '}
-                      {units === 'metric' ? 'kilometres' : 'miles'}, either way.
+                      {t('cardio.locationNote', {
+                        unit: t(units === 'metric' ? 'cardio.kilometres' : 'cardio.miles'),
+                      })}
                     </Txt>
                   </Row>
                   <Divider inset={0} />
                   <Row gap="md" align="start">
                     <Icon name="clock" size={18} color={theme.colors.textMuted} />
                     <Txt variant="caption" tone="muted" style={{ flex: 1 }}>
-                      Lock your phone or switch apps; recording continues. If the app is closed by
-                      mistake, reopening it offers to pick the activity up where it stopped.
+                      {t('cardio.backgroundNote')}
                     </Txt>
                   </Row>
                 </Stack>
@@ -604,7 +608,7 @@ function StartPanel({
             ) : null}
 
             <Button
-              label={starting ? 'Starting…' : 'Start'}
+              label={t(starting ? 'cardio.starting' : 'cardio.start')}
               variant="primary"
               size="lg"
               icon="play"
@@ -612,14 +616,12 @@ function StartPanel({
               weighty
               loading={starting}
               onPress={onStart}
-              accessibilityHint="Begins recording time, distance and route"
+              accessibilityHint={t('cardio.startHint')}
             />
 
             {__DEV__ ? (
               <Txt variant="micro" tone="faint">
-                Development build: a simulator does not move on its own, so with no help from the
-                location debug menu the route stays empty and distance stays estimated. That is the
-                simulator, not the recorder.
+                {t('cardio.devStart')}
               </Txt>
             ) : null}
           </Stack>
@@ -655,6 +657,7 @@ function Metric({ label, value, note }: { label: string; value: string; note?: s
  * Local state and a local interval, so the blink never re-renders the metrics next to it.
  */
 function StatusDot({ running, colour }: { running: boolean; colour: string }) {
+  const { t } = useT();
   const [on, setOn] = useState(true);
   useEffect(() => {
     if (!running) {
@@ -668,7 +671,7 @@ function StatusDot({ running, colour }: { running: boolean; colour: string }) {
   return (
     <View
       accessibilityRole="image"
-      accessibilityLabel={running ? 'Recording in progress' : 'Recording paused'}
+      accessibilityLabel={t(running ? 'cardio.a11yRecording' : 'cardio.a11yPaused')}
       style={[
         styles.dot,
         { backgroundColor: running ? colour : 'transparent', borderColor: colour },
@@ -678,11 +681,12 @@ function StatusDot({ running, colour }: { running: boolean; colour: string }) {
   );
 }
 
-function placeholderFor(kind: ActivityKind): string {
-  if (kind === 'ride') return 'Morning ride';
-  if (kind === 'walk') return 'Evening walk';
-  if (kind === 'yoga') return 'Session';
-  return 'Morning run';
+/** The catalog key for the name field's placeholder. Translated at the call site. */
+function placeholderFor(kind: ActivityKind): TKey {
+  if (kind === 'ride') return 'cardio.placeholderRide';
+  if (kind === 'walk') return 'cardio.placeholderWalk';
+  if (kind === 'yoga') return 'cardio.placeholderOther';
+  return 'cardio.placeholderRun';
 }
 
 const styles = StyleSheet.create({

@@ -61,6 +61,8 @@ import {
   useSetRoutineItem,
 } from '@/queries/useRoutines';
 import { useSettings } from '@/settings';
+import { useT } from '@/i18n/useT';
+import type { TKey, TVars } from '@/i18n';
 import { useStartRoutine } from '@/workout/startRoutine';
 import { useWorkoutSession } from '@/workout/session';
 import { useAppTheme } from '@/theme/theme';
@@ -70,10 +72,8 @@ import { moveItem } from '@/utils/functional';
 import { defaultItemTarget, orderedIdsOf, pairItems, type ItemTarget } from '@/routines/draft';
 import { estimateMinutes, plannedVolumeKg } from '@/domain/logic';
 import {
-  countNoun,
   formatAgo,
   joinMiddleDot,
-  pluralWord,
   trimNumber,
   weightUnit,
   weightValue,
@@ -83,6 +83,7 @@ import type { Exercise } from '@/domain/types';
 type SheetKind = 'actions' | 'rename' | 'delete' | 'add' | 'editor' | null;
 
 export default function RoutineDetailScreen() {
+  const { t } = useT();
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ id: string }>();
@@ -145,11 +146,11 @@ export default function RoutineDetailScreen() {
           router.push(routes.workoutSession());
           return;
         }
-        setFailed('This routine has no exercises yet. Add one before starting it.');
+        setFailed(t('routine.noExercisesYet'));
         haptics.warning();
       },
     });
-  }, [defaultRest, routine, start]);
+  }, [defaultRest, routine, start, t]);
 
   const move = useCallback(
     (from: number, to: number) => {
@@ -159,12 +160,12 @@ export default function RoutineDetailScreen() {
       void reorder
         .mutateAsync({ id: routine.id, orderedItemIds: orderedIdsOf(moveItem(items, from, to)) })
         .catch(() => {
-          setFailed('That reorder did not stick. Try it again.');
+          setFailed(t('routine.reorderFailed'));
           haptics.warning();
         });
       haptics.selection();
     },
-    [items, reorder, routine],
+    [items, reorder, routine, t],
   );
 
   const changeItem = useCallback(
@@ -175,11 +176,11 @@ export default function RoutineDetailScreen() {
       // feel broken; the write is a one-row indexed update in a device-local database. A failure
       // is still surfaced: it just is not allowed to interrupt the interaction.
       void setItem.mutateAsync({ routineId: routine.id, itemId, patch }).catch(() => {
-        setFailed('That change did not save. Try it again.');
+        setFailed(t('routine.changeFailed'));
         haptics.warning();
       });
     },
-    [routine, setItem],
+    [routine, setItem, t],
   );
 
   const dropItem = useCallback(
@@ -188,11 +189,11 @@ export default function RoutineDetailScreen() {
       setSheet(null);
       haptics.light();
       void removeItem.mutateAsync({ routineId: routine.id, itemId }).catch(() => {
-        setFailed('That exercise is still in the routine. Try removing it again.');
+        setFailed(t('routine.removeFailed'));
         haptics.warning();
       });
     },
-    [removeItem, routine],
+    [removeItem, routine, t],
   );
 
   const doAdd = useCallback(
@@ -207,13 +208,13 @@ export default function RoutineDetailScreen() {
           item: defaultItemTarget(defaultRest),
         })
         .catch(() => {
-          setFailed('That exercise could not be added. Nothing was removed.');
+          setFailed(t('routine.addFailed'));
           haptics.warning();
           return;
         });
       haptics.success();
     },
-    [addExercise, defaultRest, routine],
+    [addExercise, defaultRest, routine, t],
   );
 
   const doDuplicate = useCallback(() => {
@@ -229,10 +230,10 @@ export default function RoutineDetailScreen() {
         router.replace(routes.routine(copy.id));
       })
       .catch(() => {
-        setFailed('Could not duplicate. The routine is untouched.');
+        setFailed(t('routine.duplicateFailed'));
         haptics.warning();
       });
-  }, [duplicate, routine]);
+  }, [duplicate, routine, t]);
 
   const doDelete = useCallback(() => {
     if (routine === null) return;
@@ -248,16 +249,16 @@ export default function RoutineDetailScreen() {
         else router.replace(routes.workoutTab());
       })
       .catch(() => {
-        setFailed('Could not delete it. Nothing was removed.');
+        setFailed(t('routine.deleteFailed'));
         haptics.warning();
       });
-  }, [destroy, routine]);
+  }, [destroy, routine, t]);
 
   /* ------------------------------------------------------------ early states */
 
   if (isLoading) {
     return (
-      <DetailScreen title="Routine">
+      <DetailScreen title={t('routine.title')}>
         {() => (
           <View
             style={{ flex: 1, paddingHorizontal: screenGutter, paddingTop: spacing.md }}
@@ -271,13 +272,13 @@ export default function RoutineDetailScreen() {
 
   if (error !== null) {
     return (
-      <DetailScreen title="Routine">
+      <DetailScreen title={t('routine.title')}>
         {() => (
           <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: screenGutter }}>
             <ErrorState
               error={error}
               onRetry={() => void refresh()}
-              title="This routine could not be read"
+              title={t('routine.readError')}
             />
           </View>
         )}
@@ -290,14 +291,14 @@ export default function RoutineDetailScreen() {
     // nothing there. That happens when the row was deleted elsewhere while this screen was
     // open, and it needs a way out rather than a spinner that never ends.
     return (
-      <DetailScreen title="Routine">
+      <DetailScreen title={t('routine.title')}>
         {() => (
           <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: screenGutter }}>
             <EmptyState
               icon="listAdd"
-              title="This routine is gone"
-              message="It was deleted, most likely from another screen in this app."
-              actionLabel="Back to workouts"
+              title={t('routine.goneTitle')}
+              message={t('routine.goneMessage')}
+              actionLabel={t('routine.backToWorkouts')}
               onAction={() => router.replace(routes.workoutTab())}
             />
           </View>
@@ -311,15 +312,15 @@ export default function RoutineDetailScreen() {
       <DetailScreen
         title={routine.name}
         subtitle={joinMiddleDot([
-          `${items.length} ${pluralWord(items.length, 'exercise')}`,
-          volumeKg === 0 ? 'Bodyweight' : formatPlanned(volumeKg, units),
+          `${items.length} ${t('routine.exerciseWord', { count: items.length })}`,
+          volumeKg === 0 ? t('routine.bodyweight') : formatPlanned(volumeKg, units, t),
           `~${minutes} min`,
         ])}
         right={
           <>
             <BarAction
               icon="more"
-              label="Routine options"
+              label={t('routine.options')}
               onPress={() => {
                 haptics.light();
                 setSheet('actions');
@@ -327,10 +328,10 @@ export default function RoutineDetailScreen() {
             />
             <BarAction
               icon="play"
-              label="Start this workout"
+              label={t('routine.start')}
               onPress={() => {
                 if (liveSession) {
-                  reportLiveSession(session?.routineName, setFailed);
+                  reportLiveSession(session?.routineName, setFailed, t);
                   return;
                 }
                 begin();
@@ -358,11 +359,14 @@ export default function RoutineDetailScreen() {
               )}
 
               <Row gap="xxl" wrap>
-                <Stat label="Planned volume" value={formatPlanned(volumeKg, units)} />
-                <Stat label="Est. time" value={`~${minutes} min`} />
-                <Stat label="Trained" value={`${routine.timesCompleted}×`} />
+                <Stat
+                  label={t('routine.plannedVolume')}
+                  value={formatPlanned(volumeKg, units, t)}
+                />
+                <Stat label={t('routine.estTime')} value={`~${minutes} min`} />
+                <Stat label={t('routine.trained')} value={`${routine.timesCompleted}×`} />
                 {routine.lastPerformedAt === null ? null : (
-                  <Stat label="Last" value={formatAgo(routine.lastPerformedAt)} />
+                  <Stat label={t('routine.last')} value={formatAgo(routine.lastPerformedAt)} />
                 )}
               </Row>
 
@@ -381,9 +385,9 @@ export default function RoutineDetailScreen() {
             {rows.length === 0 ? (
               <EmptyState
                 icon="listAdd"
-                title="No exercises in this routine"
-                message="Nothing here to train yet. Add one from the library and it is stored on the device straight away."
-                actionLabel="Add exercise"
+                title={t('routine.emptyTitle')}
+                message={t('routine.emptyMessage')}
+                actionLabel={t('exercises.addExercise')}
                 onAction={() => {
                   haptics.light();
                   setSheet('add');
@@ -392,11 +396,11 @@ export default function RoutineDetailScreen() {
             ) : (
               <Column gap="md">
                 <SectionHeader
-                  title="Exercises"
-                  eyebrow={`${rows.length} ${pluralWord(rows.length, 'row')}`}
+                  title={t('routine.exercises')}
+                  eyebrow={`${rows.length} ${t('routine.rowWord', { count: rows.length })}`}
                   action={
                     <Button
-                      label="Add"
+                      label={t('common.add')}
                       variant="quiet"
                       size="sm"
                       icon="plus"
@@ -404,7 +408,7 @@ export default function RoutineDetailScreen() {
                         haptics.light();
                         setSheet('add');
                       }}
-                      accessibilityHint="Search the exercise library"
+                      accessibilityHint={t('routine.addHint')}
                     />
                   }
                 />
@@ -436,15 +440,14 @@ export default function RoutineDetailScreen() {
                   })}
                 </View>
                 <Txt variant="caption" tone="faint" style={{ paddingHorizontal: screenGutter }}>
-                  Tap a row to change its sets, reps, weight or rest: changes save as you make
-                  them. The arrows reorder the routine.
+                  {t('routine.editHint')}
                 </Txt>
               </Column>
             )}
 
             <Column gap="md" style={{ paddingHorizontal: screenGutter }}>
               <Button
-                label={liveSession ? 'Open your workout' : 'Start this workout'}
+                label={t(liveSession ? 'routine.openWorkout' : 'routine.start')}
                 icon={liveSession ? 'arrowUpRight' : 'play'}
                 size="lg"
                 weighty
@@ -458,20 +461,20 @@ export default function RoutineDetailScreen() {
                   begin();
                 }}
                 accessibilityHint={
-                  liveSession
-                    ? 'Opens the workout that is already running'
-                    : 'Begins this workout and opens the session'
+                  t(liveSession ? 'routine.openHint' : 'routine.startHint')
                 }
               />
               {/* The count and the date are on the same line rather than stacked: two faint
                   centred captions under a primary button reads as two warnings. */}
               {routine.timesCompleted > 0 ? (
                 <Txt variant="micro" tone="faint" style={{ textAlign: 'center' }}>
-                  Completed {routine.timesCompleted}{' '}
-                  {countNoun(routine.timesCompleted, 'time')}
+                  {t('routine.completedCount', {
+                    count: routine.timesCompleted,
+                    word: t('routine.timeWord', { count: routine.timesCompleted }),
+                  })}
                   {routine.lastPerformedAt === null
                     ? ''
-                    : ` · most recently ${formatAgo(routine.lastPerformedAt)}`}
+                    : t('routine.mostRecently', { ago: formatAgo(routine.lastPerformedAt) })}
                 </Txt>
               ) : null}
             </Column>
@@ -480,26 +483,30 @@ export default function RoutineDetailScreen() {
       </DetailScreen>
 
       {sheet === 'actions' ? (
-        <Sheet title={routine.name} subtitle="Routine options" onRequestClose={() => setSheet(null)}>
+        <Sheet
+          title={routine.name}
+          subtitle={t('routine.options')}
+          onRequestClose={() => setSheet(null)}
+        >
           <ActionRow
             topDivider={false}
             icon="edit"
-            title="Rename"
-            subtitle="The name also titles future rows in your history"
+            title={t('routine.rename')}
+            subtitle={t('routine.renameSubtitle')}
             theme={theme}
             onPress={() => setSheet('rename')}
           />
           <ActionRow
             icon="copy"
-            title="Duplicate"
-            subtitle="A copy you can change, including its saved exercise data"
+            title={t('routine.duplicate')}
+            subtitle={t('routine.duplicateSubtitle')}
             theme={theme}
             onPress={doDuplicate}
           />
           <ActionRow
             icon="trash"
-            title="Delete routine"
-            subtitle="Your completed workouts and progress are not affected"
+            title={t('routine.deleteRoutine')}
+            subtitle={t('routine.deleteSubtitle')}
             theme={theme}
             danger
             onPress={() => setSheet('delete')}
@@ -521,7 +528,7 @@ export default function RoutineDetailScreen() {
               })
               .catch(() => {
                 setSheet(null);
-                setFailed('The name did not change. Try again.');
+                setFailed(t('routine.renameFailed'));
                 haptics.warning();
               });
           }}
@@ -530,13 +537,16 @@ export default function RoutineDetailScreen() {
 
       {sheet === 'delete' ? (
         <ConfirmSheet
-          title={`Delete “${routine.name}”?`}
+          title={t('routine.deleteTitle', { name: routine.name })}
           message={
             routine.timesCompleted > 0
-              ? `You have completed it ${routine.timesCompleted} ${pluralWord(routine.timesCompleted, 'time')}. Those workouts stay in your history and your progress: only the plan is removed.`
-              : 'This routine has never been completed, and nothing else will reference it once it is gone.'
+              ? t('routine.deleteCompleted', {
+                  count: routine.timesCompleted,
+                  word: t('routine.timeWord', { count: routine.timesCompleted }),
+                })
+              : t('routine.deleteNever')
           }
-          confirmLabel="Delete routine"
+          confirmLabel={t('routine.deleteRoutine')}
           onRequestClose={() => setSheet(null)}
           onConfirm={doDelete}
         />
@@ -645,6 +655,7 @@ function RenameSheet({
   onSubmit: (name: string) => void;
   onRequestClose: () => void;
 }) {
+  const { t } = useT();
   const [name, setName] = useState(initialName);
   const [error, setError] = useState<string | null>(null);
   const trimmed = name.trim();
@@ -653,7 +664,7 @@ function RenameSheet({
     if (trimmed.length === 0) {
       // An inline error, not a disabled button: the field is empty, which is the reason, and
       // saying so where the typing happened is faster to act on than a greyed-out control.
-      setError('A routine needs a name.');
+      setError(t('routine.nameRequired'));
       haptics.warning();
       return;
     }
@@ -663,14 +674,14 @@ function RenameSheet({
 
   return (
     <Sheet
-      title="Rename routine"
+      title={t('routine.renameTitle')}
       // Says what else the name does, because it is the one consequence on this screen that is
       // not visible from the field itself.
-      subtitle="Future workouts keep this name in your history"
+      subtitle={t('routine.renameHint')}
       onRequestClose={onRequestClose}
     >
       <TextField
-        label="Name"
+        label={t('routine.nameLabel')}
         value={name}
         onChangeText={(next) => {
           setName(next);
@@ -680,11 +691,17 @@ function RenameSheet({
         autoFocus
         returnKeyType="done"
         onSubmitEditing={commit}
-        accessibilityHint="The name of this routine"
+        accessibilityHint={t('routine.nameFieldHint')}
       />
       <SheetFooter>
-        <Button label="Cancel" variant="ghost" onPress={onRequestClose} />
-        <Button label="Save name" weighty loading={busy} style={{ flex: 1 }} onPress={commit} />
+        <Button label={t('common.cancel')} variant="ghost" onPress={onRequestClose} />
+        <Button
+          label={t('routine.saveName')}
+          weighty
+          loading={busy}
+          style={{ flex: 1 }}
+          onPress={commit}
+        />
       </SheetFooter>
     </Sheet>
   );
@@ -693,8 +710,14 @@ function RenameSheet({
 /* ----------------------------------------------------------------- helpers -- */
 
 /** Planned volume, in the unit the user reads: or the words that replace the number. */
-function formatPlanned(volumeKg: number, units: 'metric' | 'imperial'): string {
-  if (volumeKg === 0) return 'Bodyweight';
+function formatPlanned(
+  volumeKg: number,
+  units: 'metric' | 'imperial',
+  // Passed in rather than read from a hook: this is a plain function, and a translated
+  // string cannot come from module scope, where there is no language yet.
+  t: (key: TKey, vars?: TVars) => string,
+): string {
+  if (volumeKg === 0) return t('routine.bodyweight');
   return `${trimNumber(weightValue(volumeKg, units), 0)} ${weightUnit(units)}`;
 }
 
@@ -707,11 +730,10 @@ function formatPlanned(volumeKg: number, units: 'metric' | 'imperial'): string {
 function reportLiveSession(
   routineName: string | undefined,
   setFailed: (message: string) => void,
+  t: (key: TKey, vars?: TVars) => string,
 ): void {
   setFailed(
-    routineName
-      ? `“${routineName}” is already in progress. Finish or discard it before starting another.`
-      : 'A workout is already in progress. Finish or discard it before starting another.',
+    routineName ? t('routine.liveNamed', { name: routineName }) : t('routine.liveUnnamed'),
   );
   haptics.warning();
 }

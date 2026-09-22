@@ -33,6 +33,7 @@ import {
   type NotificationTriggerInput,
 } from 'expo-notifications';
 import type { ReminderSettings } from '@/settings';
+import { tr } from '@/i18n/tr';
 
 /** Matches the `defaultChannel` in app.json (Android notification channel). */
 const CHANNEL_ID = 'training';
@@ -54,7 +55,7 @@ async function ensureChannel(): Promise<void> {
   }
   try {
     await setNotificationChannelAsync(CHANNEL_ID, {
-      name: 'Training',
+      name: tr('push.channel'),
       description: 'Rest-timer alerts and training reminders.',
       importance: AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
@@ -142,11 +143,11 @@ export async function notifyRestComplete(
   const seconds = Math.max(1, Math.round(delaySeconds));
   return post(
     {
-      title: 'Rest complete',
+      title: tr('push.restComplete'),
       body:
         nextLabel.length > 0
-          ? `${exerciseName} is done. Next up: ${nextLabel}.`
-          : `${exerciseName} is done: you are finished here.`,
+          ? tr('push.restNext', { name: exerciseName, next: nextLabel })
+          : tr('push.restLast', { name: exerciseName }),
     },
     { type: SchedulableTriggerInputTypes.TIME_INTERVAL, seconds },
   );
@@ -161,7 +162,7 @@ export async function notifyPersonalRecord(
   exerciseName: string,
   detail: string,
 ): Promise<string | null> {
-  return post({ title: `New record, ${exerciseName}`, body: detail }, null);
+  return post({ title: tr('push.newRecord', { name: exerciseName }), body: detail }, null);
 }
 
 /**
@@ -176,8 +177,8 @@ export async function notifyPersonalRecord(
 export async function notifySettingsTest(): Promise<string | null> {
   return post(
     {
-      title: 'Notifications are working',
-      body: 'This is the same channel your rest-timer alerts use.',
+      title: tr('push.testTitle'),
+      body: tr('push.testBody'),
     },
     null,
   );
@@ -258,8 +259,8 @@ export async function syncTrainingReminder(
 
   const identifier = await post(
     {
-      title: 'Time to train',
-      body: 'Your session is waiting. Even a short one keeps the streak alive.',
+      title: tr('push.reminderTitle'),
+      body: tr('push.reminderBody'),
       badge: 1,
     },
     { type: SchedulableTriggerInputTypes.DATE, date: next },

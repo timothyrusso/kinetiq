@@ -60,6 +60,8 @@ import {
   type PreviousLift,
 } from '@/queries/useRoutines';
 import { haptics, useHaptics } from '@/services/haptics';
+import { useT } from '@/i18n/useT';
+import { tr } from '@/i18n/tr';
 import {
   cancelScheduledNotification,
   notifyRestComplete,
@@ -70,13 +72,11 @@ import type { UnitSystem } from '@/utils/format';
 import type { Exercise, PersonalRecord } from '@/domain/types';
 import {
   compactNumber,
-  countNoun,
   formatAgo,
   formatDurationCompact,
   formatTimer,
   formatWeight,
   joinMiddleDot,
-  pluralWord,
   weightUnit,
   weightValue,
 } from '@/utils/format';
@@ -107,6 +107,7 @@ const REST_PRESETS = [45, 60, 90, 120, 180] as const;
 const BOTTOM_SPACE = 210;
 
 export default function WorkoutSessionScreen() {
+  const { t } = useT();
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
   const client = useQueryClient();
@@ -204,7 +205,7 @@ export default function WorkoutSessionScreen() {
       if (!notificationsOn) return;
       const { session: live, activeIndex: index } = liveRef.current;
       if (live === null) return;
-      const name = live.entries[index]?.exerciseName ?? 'This set';
+      const name = live.entries[index]?.exerciseName ?? t('session.thisSet');
       const next = nextUpLabel(live, index);
       // Fired and forgotten on purpose: a notification that cannot be scheduled is a
       // notification the user does not need told about, and the timer on screen works
@@ -217,7 +218,7 @@ export default function WorkoutSessionScreen() {
         restAlertId.current = id;
       });
     },
-    [notificationsOn],
+    [notificationsOn, t],
   );
 
   const onToggleSetAt = useCallback(
@@ -283,18 +284,18 @@ export default function WorkoutSessionScreen() {
           // the list did not change: it was already in the workout, or the workout finished
           // while the sheet was open. Either way the honest statement is "nothing changed".
           setActionError(
-            'That exercise did not go in: it is either already in this workout, or the workout has ended. Nothing was changed.',
+            t('session.addNotChanged'),
           );
           haptics.warning();
         })
         .catch(() => {
           setActionError(
-            'Your phone could not store that exercise, so it was not added. Your workout is unchanged.',
+            t('session.addFailed'),
           );
           haptics.warning();
         });
     },
-    [defaultRest],
+    [defaultRest, t],
   );
 
   const isInThisWorkout = useCallback(
@@ -327,9 +328,9 @@ export default function WorkoutSessionScreen() {
       router.back();
     } catch {
       setDiscarding(false);
-      setActionError('Your phone could not delete the session. The workout is still here.');
+      setActionError(t('session.discardFailed'));
     }
-  }, [discarding, retractRestAlert, session]);
+  }, [discarding, retractRestAlert, session, t]);
 
   const finish = useCallback(async () => {
     if (session === null || finishing) return;
@@ -342,7 +343,7 @@ export default function WorkoutSessionScreen() {
       if (result === null) {
         // Nothing was written. Pretending otherwise would send someone to a history
         // screen that does not contain the workout they just did.
-        setActionError('Your phone could not save the session. Try again.');
+        setActionError(t('session.saveFailed'));
         setFinishing(false);
         return;
       }
@@ -355,10 +356,10 @@ export default function WorkoutSessionScreen() {
         router.replace(routes.workoutHistory());
       }
     } catch {
-      setActionError('Your phone could not save the session. Nothing was lost: try again.');
+      setActionError(t('session.saveFailedKept'));
       setFinishing(false);
     }
-  }, [client, finishing, retractRestAlert, session]);
+  }, [client, finishing, retractRestAlert, session, t]);
 
   if (!hydrated) {
     return (
@@ -376,10 +377,10 @@ export default function WorkoutSessionScreen() {
     return (
       <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
         <EmptyState
-          title="No workout in progress"
-          message="Start one from a routine and it shows up here, with your last numbers beside every set."
+          title={t('session.noneTitle')}
+          message={t('session.noneMessage')}
           icon="workout"
-          actionLabel="Pick a routine"
+          actionLabel={t('session.pickRoutine')}
           onAction={() => {
             router.replace(routes.workoutTab());
           }}
@@ -412,8 +413,8 @@ export default function WorkoutSessionScreen() {
             name="close"
             variant="surface"
             size={20}
-            accessibilityLabel="Leave the workout. It keeps running."
-            accessibilityHint="Returns to the previous screen. The session is not lost."
+            accessibilityLabel={t('session.leave')}
+            accessibilityHint={t('session.leaveHint')}
             onPress={() => {
               router.back();
             }}
@@ -426,12 +427,12 @@ export default function WorkoutSessionScreen() {
                 as though eighteen sets were one set. `1/1 set` is the only singular case,
                 which is exactly what `progress.planned` gives. */}
             <Txt variant="micro" tone="muted">
-              {`${formatTimer(session.elapsedSeconds)} · ${doneSets}/${progress.planned} ${pluralWord(progress.planned, 'set')}`}
+              {`${formatTimer(session.elapsedSeconds)} · ${doneSets}/${progress.planned} ${t('session.setWord', { count: progress.planned })}`}
             </Txt>
           </View>
           <Chip
             size="sm"
-            label={running ? 'Running' : 'Paused'}
+            label={t(running ? 'session.running' : 'session.paused')}
             icon={running ? 'pause' : 'play'}
             onPress={() => {
               if (running) {
@@ -450,7 +451,7 @@ export default function WorkoutSessionScreen() {
             variant="danger"
             size={20}
             weighty
-            accessibilityLabel="Finish and save this workout"
+            accessibilityLabel={t('session.finishA11y')}
             onPress={() => {
               setConfirmFinish(true);
             }}
@@ -471,12 +472,10 @@ export default function WorkoutSessionScreen() {
                 <Icon name="warning" size={20} color={theme.colors.danger} />
                 <View style={{ flex: 1 }}>
                   <Txt variant="strong" weight="700">
-                    Not saving to this device
+                    {t('misc.notSaving')}
                   </Txt>
                   <Txt variant="caption" tone="muted">
-                    Your phone refused a write, so these sets exist only until the app
-                    closes. Keep going: it will retry with every set: but do not force
-                    quit.
+                    {t('misc.persistFailedBody')}
                   </Txt>
                 </View>
               </Row>
@@ -488,7 +487,7 @@ export default function WorkoutSessionScreen() {
           <View style={styles.section}>
             <Card tone="outline" style={{ borderColor: theme.colors.warning }}>
               <Txt variant="strong" weight="700">
-                Could not save that
+                {t('misc.couldNotSaveThat')}
               </Txt>
               <Txt variant="caption" tone="muted" style={{ marginTop: spacing.xxs }}>
                 {actionError}
@@ -506,7 +505,9 @@ export default function WorkoutSessionScreen() {
                   {/* The engine stops the clock while the app is away and re-derives rest
                       from its deadline, so both numbers here are statements about stored
                       data rather than a promise about a timer that was ticking. */}
-                  {`Away for ${formatDurationCompact(awayNoticeSeconds)}. The clock only counts while the app is open, and rest resumed from where it was.`}
+                  {t('session.awayNotice', {
+                    time: formatDurationCompact(awayNoticeSeconds),
+                  })}
                 </Txt>
               </Row>
             </Card>
@@ -527,11 +528,11 @@ export default function WorkoutSessionScreen() {
 
         <View style={styles.section}>
           <SectionHeader
-            title="Exercises"
-            eyebrow={countNoun(session.entries.length, 'exercise')}
+            title={t('session.exercises')}
+            eyebrow={`${session.entries.length} ${t('session.exerciseWord', { count: session.entries.length })}`}
             action={
               <Button
-                label="Add"
+                label={t('common.add')}
                 size="sm"
                 variant="secondary"
                 icon="plus"
@@ -539,16 +540,16 @@ export default function WorkoutSessionScreen() {
                   haptics.light();
                   setAddingExercise(true);
                 }}
-                accessibilityHint="Search the exercise library and add one to this workout"
+                accessibilityHint={t('session.addHint')}
               />
             }
           />
           {session.entries.length === 0 ? (
             <EmptyState
-              title="No exercises in this workout"
-              message="The routine this started from had nothing in it. Add one from the library and it is stored on the device straight away."
+              title={t('session.emptyTitle')}
+              message={t('session.emptyMessage')}
               icon="dumbbell"
-              actionLabel="Add an exercise"
+              actionLabel={t('session.addAnExercise')}
               onAction={() => {
                 haptics.light();
                 setAddingExercise(true);
@@ -584,14 +585,14 @@ export default function WorkoutSessionScreen() {
         </View>
 
         <View style={styles.section}>
-          <SectionHeader title="Session notes" eyebrow="Saved with the workout" />
+          <SectionHeader title={t('session.notesTitle')} eyebrow={t('session.notesEyebrow')} />
           <Card onPress={() => setNotesSheet(true)}>
             <Txt
               variant={session.notes === null ? 'body' : 'bodyLg'}
               tone={session.notes === null ? 'faint' : 'default'}
               numberOfLines={3}
             >
-              {session.notes ?? 'How did it go? Added to the activity when you finish.'}
+              {session.notes ?? t('session.notesEmpty')}
             </Txt>
           </Card>
         </View>
@@ -605,7 +606,7 @@ export default function WorkoutSessionScreen() {
         <OverlaySurface theme={theme} />
         <Row gap="md" align="center">
           <Button
-            label="Discard"
+            label={t('session.discard')}
             variant="ghost"
             size="md"
             onPress={() => {
@@ -613,7 +614,7 @@ export default function WorkoutSessionScreen() {
             }}
           />
           <Button
-            label="Finish"
+            label={t('session.finish')}
             variant="primary"
             size="md"
             fullWidth
@@ -671,11 +672,14 @@ export default function WorkoutSessionScreen() {
 
       {restSheet ? (
         <OptionSheet<number>
-          title="Rest timer"
+          title={t('session.restTimer')}
           value={session.restDurationSeconds ?? active?.restSeconds ?? 90}
           options={REST_PRESETS.map((seconds) => ({
             value: seconds,
-            label: seconds >= 60 ? `${seconds / 60} min` : `${seconds}s`,
+            label:
+              seconds >= 60
+                ? t('session.minutes', { count: seconds / 60 })
+                : t('session.seconds', { count: seconds }),
           }))}
           onSelect={(seconds) => {
             setRestSheet(false);
@@ -699,9 +703,9 @@ export default function WorkoutSessionScreen() {
 
       {confirmDiscard ? (
         <ConfirmSheet
-          title="Discard this workout?"
-          message={`${doneSets} ${pluralWord(doneSets, 'set')} ${doneSets === 1 ? 'goes' : 'go'} unrecorded, and this workout will not appear in your history or your totals. There is no undo.`}
-          confirmLabel={discarding ? 'Discarding…' : 'Discard workout'}
+          title={t('session.discardTitle')}
+          message={t('session.discardMessage', { count: doneSets })}
+          confirmLabel={t(discarding ? 'session.discarding' : 'session.discardConfirm')}
           onConfirm={() => {
             void discard();
           }}
@@ -711,13 +715,17 @@ export default function WorkoutSessionScreen() {
 
       {confirmFinish ? (
         <ConfirmSheet
-          title="Finish this workout?"
+          title={t('session.finishTitle')}
           message={
             progress.ratio < 1
-              ? `${progress.planned - progress.completed} of ${progress.planned} ${pluralWord(progress.planned, 'set')} left un-ticked. Un-ticked work is not recorded: the workout saves what you completed.`
-              : `All ${progress.planned} sets are done. This becomes an activity in your history.`
+              ? t('session.finishPartial', {
+                  left: progress.planned - progress.completed,
+                  planned: progress.planned,
+                  word: t('session.setWord', { count: progress.planned }),
+                })
+              : t('session.finishAll', { planned: progress.planned })
           }
-          confirmLabel={finishing ? 'Saving…' : 'Finish and save'}
+          confirmLabel={t(finishing ? 'session.saving' : 'session.finishConfirm')}
           onConfirm={() => {
             void finish();
           }}
@@ -727,7 +735,7 @@ export default function WorkoutSessionScreen() {
 
       {removing !== null ? (
         <RemoveExerciseSheet
-          exerciseName={session.entries[removing]?.exerciseName ?? 'This exercise'}
+          exerciseName={session.entries[removing]?.exerciseName ?? t('session.thisExercise')}
           completedSets={session.entries[removing]?.sets.filter((set) => set.completed).length ?? 0}
           onConfirm={() => {
             removeExercise(removing);
@@ -831,24 +839,30 @@ function NotesSheet({
   onSave: (notes: string) => void;
   onRequestClose: () => void;
 }) {
+  const { t } = useT();
   const [draft, setDraft] = useState(initial);
   return (
-    <Sheet onRequestClose={onRequestClose} title="Session notes">
+    <Sheet onRequestClose={onRequestClose} title={t('session.notesTitle')}>
       {/* The sentence here is a hint about where the text goes, not a section heading, so
           it rides on the field: as a `SheetSection` title it stacked a second caption
           above the field's own "Notes" label. `SheetFooter` supplies the divider. */}
       <TextField
-        label="Notes"
+        label={t('session.notesLabel')}
         value={draft}
         onChangeText={setDraft}
         multiline
         autoFocus
-        placeholder="Bar speed, sleep, that nagging shoulder."
-        hint="Stored on this device, with the activity."
+        placeholder={t('session.notesPlaceholder')}
+        hint={t('session.notesHint')}
       />
       <SheetFooter>
-        <Button label="Cancel" variant="quiet" onPress={onRequestClose} />
-        <Button label="Save" variant="primary" fullWidth onPress={() => onSave(draft)} />
+        <Button label={t('common.cancel')} variant="quiet" onPress={onRequestClose} />
+        <Button
+          label={t('common.save')}
+          variant="primary"
+          fullWidth
+          onPress={() => onSave(draft)}
+        />
       </SheetFooter>
     </Sheet>
   );
@@ -870,10 +884,15 @@ function RecordsSheet({
   units: UnitSystem;
   onDone: () => void;
 }) {
+  const { t } = useT();
   const theme = useAppTheme();
   return (
     <Sheet
-      title={records.length === 1 ? 'Personal record' : `${records.length} personal records`}
+      title={
+        records.length === 1
+          ? t('session.recordOne')
+          : t('session.recordMany', { count: records.length })
+      }
       dismissible={false}
       onRequestClose={onDone}
     >
@@ -893,7 +912,7 @@ function RecordsSheet({
                   {record.exerciseName}
                 </Txt>
                 <Txt variant="caption" tone="muted">
-                  {RECORD_LABEL[record.kind]}
+                  {t(RECORD_LABEL[record.kind])}
                 </Txt>
               </View>
               <Txt variant="numeralSm" weight="700" tone="accent">
@@ -904,7 +923,7 @@ function RecordsSheet({
         ))}
       </View>
       <SheetFooter>
-        <Button label="See it in history" variant="primary" fullWidth onPress={onDone} />
+        <Button label={t('session.seeInHistory')} variant="primary" fullWidth onPress={onDone} />
       </SheetFooter>
     </Sheet>
   );
@@ -924,11 +943,12 @@ function SessionTotals({
   volumeKg: number;
   units: UnitSystem;
 }) {
+  const { t } = useT();
   const items = [
-    { label: 'Elapsed', value: formatDurationCompact(elapsed) },
-    { label: 'Sets', value: `${sets}/${planned}` },
+    { label: t('session.elapsed'), value: formatDurationCompact(elapsed) },
+    { label: t('session.sets'), value: `${sets}/${planned}` },
     {
-      label: `Volume (${weightUnit(units)})`,
+      label: t('session.volumeIn', { unit: weightUnit(units) }),
       value: compactNumber(weightValue(volumeKg, units)),
     },
   ];
@@ -981,19 +1001,19 @@ function previousLineFor(
   isLoading: boolean,
   units: UnitSystem,
 ): string | null {
-  if (lift === undefined) return isLoading ? null : 'No previous sessions of this exercise';
+  if (lift === undefined) return isLoading ? null : tr('session.noPrevious');
   const heaviest = lift.sets.reduce<(typeof lift.sets)[number] | null>(
     (best, set) => (best === null || set.weightKg > best.weightKg ? set : best),
     null,
   );
-  if (heaviest === null) return 'Last time, no load recorded';
+  if (heaviest === null) return tr('session.noLoadRecorded');
   const load =
     heaviest.weightKg === 0
-      ? 'bodyweight'
+      ? tr('session.bodyweight')
       : `${formatWeight(heaviest.weightKg, units)} × ${heaviest.reps}`;
   // `joinMiddleDot` rather than a template literal: the "when" half is omitted for a row
   // whose timestamp is unusable, and a hand-joined string would leave a dangling dot.
-  return joinMiddleDot([`Last time ${load}`, formatAgo(lift.performedAt)]);
+  return joinMiddleDot([tr('session.lastTime', { load }), formatAgo(lift.performedAt)]);
 }
 
 /** The body copy for the rest notification: what comes after this set, if anything. */
@@ -1005,7 +1025,9 @@ function nextUpLabel(
   if (!entry) return '';
   const open = entry.sets.filter((set) => !set.completed);
   // More sets in this exercise, or a later exercise, or genuinely nothing left.
-  if (open.length > 1) return `${open.length - 1} more ${pluralWord(open.length - 1, 'set')} of ${entry.exerciseName}`;
+  if (open.length > 1) {
+    return tr('session.moreSetsOf', { count: open.length - 1, name: entry.exerciseName });
+  }
   const nextEntry = session.entries.slice(activeIndex + 1).find((e) => e.sets.length > 0);
   return nextEntry?.exerciseName ?? '';
 }

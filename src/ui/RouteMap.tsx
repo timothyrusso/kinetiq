@@ -50,6 +50,7 @@ import { isNativePlatform, type Theme } from '@/theme/theme';
 import { regionForRoute, resampleRoute } from '@/utils/geometry';
 import { withAlpha } from '@/utils/color';
 import type { ActivityKind, RoutePoint } from '@/domain/types';
+import { useT } from '@/i18n/useT';
 
 /** Points in a rendered line. Above this the gesture thread pays for tesselation nobody sees. */
 const MAX_RENDERED_POINTS = 400;
@@ -79,6 +80,7 @@ export const RouteMap = memo(function RouteMap({
   interactive?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
+  const { t } = useT();
   const [size, setSize] = useState({ width: 0, height });
   const [mapFailed, setMapFailed] = useState(false);
   const [mapReady, setMapReady] = useState(false);
@@ -253,7 +255,7 @@ export const RouteMap = memo(function RouteMap({
         </Row>
       ) : mapFailed ? (
         <Txt variant="micro" tone="faint" style={{ paddingTop: spacing.sm }}>
-          The map could not be loaded, so the route is drawn on its own.
+          {t('misc.mapFailed')}
         </Txt>
       ) : null}
     </View>

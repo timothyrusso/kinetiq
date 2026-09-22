@@ -33,6 +33,7 @@ import { CellText } from './rows';
 import { usePulse } from './animation';
 import { radius, spacing, z } from '@/theme/tokens';
 import { useAppTheme, type Theme } from '@/theme/theme';
+import { useT } from '@/i18n/useT';
 
 export type TabItem = {
   /** Route name as it appears in the tabs navigator's state. */
@@ -287,13 +288,14 @@ export const ActiveWorkoutPill = memo(function ActiveWorkoutPill({
   onPress: () => void;
   theme: Theme;
 }) {
+  const { t } = useT();
   const pulse = usePulse(1600, 0.35);
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={detail ? `${label}, ${detail}` : label}
-      accessibilityHint="Opens the workout in progress"
+      accessibilityHint={t('misc.opensWorkoutInProgress')}
       style={({ pressed }) => [
         {
           flexDirection: 'row',

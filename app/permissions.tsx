@@ -53,9 +53,12 @@ import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
 import { spacing, screenGutter } from '@/theme/tokens';
 import { haptics } from '@/services/haptics';
+import { useT } from '@/i18n/useT';
+import type { TKey } from '@/i18n';
 
 
 export default function PermissionsScreen() {
+  const { t } = useT();
   const router = useRouter();
   const bottomSpace = useScreenContentBottom();
   const theme = useAppTheme();
@@ -79,12 +82,15 @@ export default function PermissionsScreen() {
     else haptics.warning();
   }, [requestNotifications]);
 
-  const locationMessage = LOCATION_COPY[location];
+  const locationMessage = t(LOCATION_COPY[location]);
 
   return (
-    <DetailScreen title="Permissions">
+    <DetailScreen title={t('perms.title')} largeTitle>
       {(topInset) => (
         <ScrollView
+          // `automatic`, so iOS owns the inset under the large title and can collapse it as
+          // this view scrolls. Without it the title stays large forever.
+          contentInsetAdjustmentBehavior="automatic"
           contentContainerStyle={[
             styles.content,
             { paddingTop: topInset + spacing.md, paddingBottom: bottomSpace },
@@ -93,7 +99,7 @@ export default function PermissionsScreen() {
           <Stack gap="xxl" style={styles.body}>
             {/* -------------------------------------------------------- location */}
             <View>
-              <SectionHeader title="Location" eyebrow={LOCATION_EYEBROW[location]} />
+              <SectionHeader title={t('perms.location')} eyebrow={t(LOCATION_EYEBROW[location])} />
               <Card>
                 <Stack gap="md">
                   <StatusLine
@@ -101,10 +107,10 @@ export default function PermissionsScreen() {
                     icon="route"
                     label={
                       location === 'granted'
-                        ? 'Kinetiq may use location while active'
+                        ? t('perms.locGranted')
                         : location === 'reduced'
-                          ? 'Kinetiq may use approximate location only'
-                          : 'Kinetiq may not use location'
+                          ? t('perms.locReduced')
+                          : t('perms.locDenied')
                     }
                   />
                   <Txt variant="caption" tone="muted">
@@ -113,12 +119,12 @@ export default function PermissionsScreen() {
 
                   {location === 'granted' ? null : (
                     <Button
-                      label="Ask again"
+                      label={t('perms.askAgain')}
                       variant="secondary"
                       icon="mapPin"
                       loading={requesting === 'location'}
                       onPress={() => void askLocation()}
-                      accessibilityHint="iOS may show its own prompt or send you to Settings"
+                      accessibilityHint={t('perms.askHint')}
                     />
                   )}
 
@@ -138,17 +144,14 @@ export default function PermissionsScreen() {
                     <>
                       <Divider inset={0} />
                       <Txt variant="micro" tone="faint">
-                        Denied once means iOS will not ask a second time. Turn it on under
-                        Settings → Kinetiq → Location; this screen re-reads the answer as soon as
-                        you come back.
+                        {t('perms.deniedNote')}
                       </Txt>
                     </>
                   ) : null}
 
                   <Divider inset={0} />
                   <Txt variant="micro" tone="faint">
-                    Recorded positions stay in the activity on this device. Nothing is uploaded,
-                    and no location is collected while the app is closed.
+                    {t('perms.storedLocally')}
                   </Txt>
                 </Stack>
               </Card>
@@ -159,11 +162,9 @@ export default function PermissionsScreen() {
                 <View style={styles.after}>
                   <Card tone="sunken">
                     <Stack gap="sm">
-                      <Txt variant="strong">What still works without it</Txt>
+                      <Txt variant="strong">{t('perms.withoutItTitle')}</Txt>
                       <Txt variant="caption" tone="muted">
-                        Strength sessions are unaffected. A run or ride still records elapsed
-                        time, effort and a route-free summary, with distance estimated from how
-                        long you moved: less accurate, but the session is not lost.
+                        {t('perms.withoutItBody')}
                       </Txt>
                     </Stack>
                   </Card>
@@ -174,8 +175,8 @@ export default function PermissionsScreen() {
             {/* --------------------------------------------------- notifications */}
             <View>
               <SectionHeader
-                title="Notifications"
-                eyebrow={notifications.granted ? 'Granted' : 'Not granted'}
+                title={t('perms.notifications')}
+                eyebrow={t(notifications.granted ? 'perms.granted' : 'perms.notGranted')}
               />
               <Card>
                 <Stack gap="md">
@@ -184,70 +185,69 @@ export default function PermissionsScreen() {
                     icon="bell"
                     label={
                       notifications.granted
-                        ? 'Kinetiq may send notifications'
-                        : 'Kinetiq may not send notifications'
+                        ? t('perms.notifGranted')
+                        : t('perms.notifDenied')
                     }
                   />
                   <Txt variant="caption" tone="muted">
                     {notifications.granted
-                      ? 'Rest-timer alerts and the weekly reminder can be delivered.'
-                      : 'The rest timer keeps counting on screen either way, so a workout is never interrupted by this.'}
+                      ? t('perms.notifGrantedBody')
+                      : t('perms.notifDeniedBody')}
                   </Txt>
 
                   {notifications.granted ? null : (
                     <Button
-                      label="Ask again"
+                      label={t('perms.askAgain')}
                       variant="secondary"
                       icon="bell"
                       loading={requesting === 'notifications'}
                       onPress={() => void askNotifications()}
-                      accessibilityHint="iOS may show its own prompt or send you to Settings"
+                      accessibilityHint={t('perms.askHint')}
                     />
                   )}
 
                   <Divider inset={0} />
                   <Row align="center" gap="md">
                     <Stack gap="xxs" style={{ flex: 1 }}>
-                      <Txt variant="strong">Send them at all</Txt>
+                      <Txt variant="strong">{t('perms.sendThemAtAll')}</Txt>
                       <Txt variant="caption" tone="muted">
-                        The app's own switch. Off overrides everything, granted or not.
+                        {t('perms.ownSwitch')}
                       </Txt>
                     </Stack>
                     <Toggle
                       value={notificationsEnabled}
                       onChange={(next) => update({ notificationsEnabled: next })}
-                      accessibilityLabel="Send notifications"
+                      accessibilityLabel={t('perms.sendNotifications')}
                     />
                   </Row>
                 </Stack>
               </Card>
               <View style={styles.after}>
                 <Button
-                  label="Reminder days and times"
+                  label={t('perms.reminderDays')}
                   variant="quiet"
                   trailingIcon="chevronRight"
                   onPress={() => router.push(routes.settingsNotifications())}
-                  accessibilityHint="Choose which days and what time"
+                  accessibilityHint={t('perms.reminderHint')}
                 />
               </View>
             </View>
 
             {/* ---------------------------------------------------------- motion */}
             <View>
-              <SectionHeader title="Motion" eyebrow="No system permission needed" />
+              <SectionHeader title={t('perms.motion')} eyebrow={t('perms.noSystemPermission')} />
               <Card padding="lg">
                 <Row align="center" gap="lg">
                   <Stack gap="xxs" style={{ flex: 1 }}>
-                    <Txt variant="strong">Haptics</Txt>
+                    <Txt variant="strong">{t('perms.haptics')}</Txt>
                     <Txt variant="caption" tone="muted">
-                      A buzz on a completed set, a rest that ends, and a new record. iOS needs no
-                      permission for this; it follows the system's own haptics setting.
+                      {t('misc.hapticsBody')}
                     </Txt>
                   </Stack>
                   <Toggle
                     value={hapticsEnabled}
                     onChange={(next) => update({ hapticsEnabled: next })}
-                    accessibilityLabel="Haptics"
+                    accessibilityLabel={t('perms.haptics')}
                   />
                 </Row>
               </Card>
@@ -255,7 +255,7 @@ export default function PermissionsScreen() {
 
             {/* --------------------------------------------------- what we don't ask */}
             <View>
-              <SectionHeader title="Never requested" />
+              <SectionHeader title={t('perms.neverRequested')} />
               <Card padding="md">
                 <Stack>
                   {NEVER_ASKED.map((item, index) => (
@@ -263,9 +263,9 @@ export default function PermissionsScreen() {
                       {index > 0 ? <Hairline /> : null}
                       <View style={styles.neverRow}>
                         <Stack gap="xxs" style={{ flex: 1 }}>
-                          <Txt variant="body">{item.title}</Txt>
+                          <Txt variant="body">{t(item.title)}</Txt>
                           <Txt variant="caption" tone="muted">
-                            {item.detail}
+                            {t(item.detail)}
                           </Txt>
                         </Stack>
                       </View>
@@ -277,14 +277,10 @@ export default function PermissionsScreen() {
 
             {/* ------------------------------------------------------- dev honesty */}
             <PermissionState
-              feature="Simulator GPS"
+              feature={t('perms.simGps')}
               icon="warning"
-              message={
-                'On a simulator, location is whatever the debug menu sets: it never drifts, never ' +
-                'loses signal, and reports perfect accuracy, so the accuracy filtering in the ' +
-                'recorder cannot be exercised here. Run on a device to judge distance accuracy.'
-              }
-              actionLabel="Understood"
+              message={t('perms.simGpsNote')}
+              actionLabel={t('perms.understood')}
               onAction={() => router.back()}
               style={styles.simNote}
             />
@@ -347,22 +343,18 @@ function Hairline() {
  * `LocationPermissionStatus` to the service is a compile error here instead of a missing string
  * at runtime.
  */
-const LOCATION_COPY: Record<LocationPermissionStatus, string> = {
-  granted:
-    'Used only while an activity is being recorded: elapsed positions become your route, distance and pace.',
-  undetermined:
-    'You have not been asked yet. The recorder asks the first time you start a run, ride or walk: and works without an answer.',
-  reduced:
-    'Precise location is off, so the app receives an approximate position. Sessions record, and distance will drift from the truth.',
-  denied:
-    'Location is off for Kinetiq, so distance is estimated from elapsed time instead of measured.',
+const LOCATION_COPY: Record<LocationPermissionStatus, TKey> = {
+  granted: 'perms.copyGranted',
+  undetermined: 'perms.copyUndetermined',
+  reduced: 'perms.copyReduced',
+  denied: 'perms.copyDenied',
 };
 
-const LOCATION_EYEBROW: Record<LocationPermissionStatus, string> = {
-  granted: 'While using the app',
-  undetermined: 'Not asked yet',
-  reduced: 'Approximate only',
-  denied: 'Turned off',
+const LOCATION_EYEBROW: Record<LocationPermissionStatus, TKey> = {
+  granted: 'perms.eyebrowGranted',
+  undetermined: 'perms.eyebrowUndetermined',
+  reduced: 'perms.eyebrowReduced',
+  denied: 'perms.eyebrowDenied',
 };
 
 /**
@@ -373,19 +365,10 @@ const LOCATION_EYEBROW: Record<LocationPermissionStatus, string> = {
  * because nothing said otherwise. Each line is a promise that is currently true: checked
  * against the `expo.plugins` list in app.json, not against intent.
  */
-const NEVER_ASKED: readonly { title: string; detail: string }[] = [
-  {
-    title: 'Background location',
-    detail: 'Positions stop the moment the app leaves the foreground.',
-  },
-  {
-    title: 'Health app',
-    detail: 'No HealthKit read or write. Kinetiq is the source, not a mirror.',
-  },
-  {
-    title: 'Motion & fitness',
-    detail: 'Steps and cadence are not collected. Distance comes from GPS or from time.',
-  },
+const NEVER_ASKED: readonly { title: TKey; detail: TKey }[] = [
+  { title: 'perms.neverBackgroundTitle', detail: 'perms.neverBackgroundDetail' },
+  { title: 'perms.neverHealthTitle', detail: 'perms.neverHealthDetail' },
+  { title: 'perms.neverMotionTitle', detail: 'perms.neverMotionDetail' },
 ];
 
 const styles = StyleSheet.create({

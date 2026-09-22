@@ -19,6 +19,7 @@ import { activityRepository } from '@/persistence';
 import type { Activity, ActivityKind } from '@/domain/types';
 import { queryKeys, type ActivityListParams, type ActivitySort } from '@/query/keys';
 import { invalidateActivityHistory } from '@/query/invalidation';
+import { tr } from '@/i18n/tr';
 
 export type ActivityGroup = {
   /** Local calendar day, ms at midnight. */
@@ -201,7 +202,7 @@ export function useActivity(id: string | null) {
     queryFn: async () => {
       if (!id) return null;
       const activity = await activityRepository.byId(id);
-      if (!activity) throw new Error('That activity is no longer stored.');
+      if (!activity) throw new Error(tr('states.activityGone'));
       return activity;
     },
     enabled: id !== null,
@@ -221,7 +222,7 @@ export function useUpdateActivityNotes() {
   return useMutation({
     mutationFn: async ({ id, notes }: { id: string; notes: string | null }) => {
       const existing = await activityRepository.byId(id);
-      if (!existing) throw new Error('That activity is no longer stored.');
+      if (!existing) throw new Error(tr('states.activityGone'));
       await activityRepository.update({ ...existing, notes });
     },
     onSuccess: (_result, variables) => {

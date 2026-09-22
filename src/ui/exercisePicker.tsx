@@ -43,6 +43,7 @@ import { useAppTheme } from '@/theme/theme';
 import { spacing } from '@/theme/tokens';
 import { useDebouncedValue, useIsSettling } from '@/utils/useDebouncedValue';
 import type { Exercise, ExerciseFilter } from '@/domain/types';
+import { useT } from '@/i18n/useT';
 
 /**
  * Rows the sheet renders before asking for more.
@@ -76,6 +77,7 @@ export function ExercisePickerSheet({
    */
   isIncluded: (exerciseId: string) => boolean;
 }) {
+  const { t } = useT();
   const [query, setQuery] = useState('');
   const [muscleId, setMuscleId] = useState<number | null>(null);
   const [equipmentId, setEquipmentId] = useState<number | null>(null);
@@ -105,19 +107,19 @@ export function ExercisePickerSheet({
   return (
     <Sheet
       onRequestClose={onClose}
-      title="Add exercises"
-      subtitle="Searched live from the exercise library"
+      title={t('picker.title')}
+      subtitle={t('picker.subtitle')}
     >
       <TextField
-        label="Search"
+        label={t('picker.search')}
         value={query}
         onChangeText={setQuery}
-        placeholder="Squat, curl, lat pulldown"
+        placeholder={t('picker.placeholder')}
         autoFocus
         // Text rather than a spinner: a hint is announced, and it explains the one state
         // where typing has been received and nothing has moved yet.
         hint={settling ? 'Searching…' : `${search.total ?? '-'} exercises in the library`}
-        accessibilityHint="Filters the exercise library as you type"
+        accessibilityHint={t('picker.searchHint')}
       />
 
       <Row gap="sm" wrap>
@@ -143,7 +145,7 @@ export function ExercisePickerSheet({
 
       {filtered ? (
         <Button
-          label="Clear filter"
+          label={t('picker.clearFilter')}
           variant="quiet"
           size="sm"
           icon="close"
@@ -159,7 +161,7 @@ export function ExercisePickerSheet({
           error={search.error}
           onRetry={() => void search.refresh()}
           compact
-          title="The library is unreachable"
+          title={t('picker.unreachable')}
         />
       ) : search.isLoading ? (
         <SkeletonList rows={6} />
@@ -167,12 +169,10 @@ export function ExercisePickerSheet({
         <EmptyState
           compact
           icon="search"
-          title={searching || filtered ? 'Nothing matches that' : 'Start typing'}
-          message={
-            searching || filtered
-              ? 'The library is a real remote catalogue, so an unusual name may simply not be in it. Try a plainer word, or clear the filter.'
-              : 'Type part of an exercise name and results appear as you go.'
-          }
+          title={t(searching || filtered ? 'states.pickerNoMatch' : 'states.pickerStart')}
+          message={t(
+            searching || filtered ? 'states.pickerNoMatchBody' : 'states.pickerStartBody',
+          )}
         />
       ) : (
         <View style={{ marginTop: -spacing.sm }}>
@@ -196,7 +196,7 @@ export function ExercisePickerSheet({
 
       {search.hasMore ? (
         <Button
-          label="Load more"
+          label={t('picker.loadMore')}
           variant="secondary"
           size="sm"
           loading={search.isFetchingNextPage}
@@ -211,7 +211,7 @@ export function ExercisePickerSheet({
       ) : null}
 
       <SheetFooter>
-        <Button label="Done" onPress={onClose} weighty />
+        <Button label={t('picker.done')} onPress={onClose} weighty />
       </SheetFooter>
 
       {includedCount > 0 ? (
@@ -234,6 +234,7 @@ function PickerRow({
   dimmed: boolean;
   onPress: () => void;
 }) {
+  const { t } = useT();
   const theme = useAppTheme();
 
   return (
@@ -249,7 +250,7 @@ function PickerRow({
         borderTopColor: theme.colors.hairline,
       }}
       accessibilityHint={
-        included ? 'Already in this routine' : 'Adds this exercise to the routine'
+        t(included ? 'states.alreadyInRoutine' : 'states.addsToRoutine')
       }
       leading={
         <ExerciseThumb

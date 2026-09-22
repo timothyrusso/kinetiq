@@ -55,6 +55,7 @@ import { estimateCalories, paceFromDistance } from '@/domain/logic';
 import { activityRepository, readState, writeState } from '@/persistence';
 import { clamp, localId } from '@/utils/functional';
 import { isOfflineError } from '@/api';
+import { tr } from '@/i18n/tr';
 // The acceptance thresholds sit in ./gps.ts beside the arithmetic they govern, so nobody
 // can read a gate without reading what it gates. Nothing here needs them as values any
 // more: the only function that consulted them moved with them.
@@ -160,28 +161,39 @@ export type CardioSnapshot = {
 // Pure helpers. Device-free by design: but for the GPS maths itself, see ./gps.ts.
 // ---------------------------------------------------------------------------
 
+/**
+ * Why distance is being estimated, in the user's language.
+ *
+ * `tr` rather than a `t` parameter: this is called from inside the recorder, several frames
+ * deep in a singleton that no component owns, and threading a translator through every one of
+ * those calls would put the language in the recorder's constructor, where it could not change
+ * when the user changed it.
+ */
 export function degradationMessage(reason: CardioDegradation): string {
   switch (reason) {
     case 'permission-denied':
-      return 'Location access is off, so distance is estimated from time.';
+      return tr('cardio.degradedPermission');
     case 'services-off':
-      return 'Location services are switched off on this device.';
+      return tr('cardio.degradedServices');
     case 'no-signal':
-      return 'Waiting for a GPS signal: distance is estimated until one arrives.';
+      return tr('cardio.degradedNoSignal');
     case 'reduced-accuracy':
-      return 'Precise location is off, so distance will drift.';
+      return tr('cardio.degradedAccuracy');
   }
 }
 
 export function locationPermissionErrorMessage(error: unknown): string | null {
-  if (isOfflineError(error)) {
-    return 'Your connection dropped. The activity keeps recording; rejoin and it resumes.';
-  }
-  return 'Could not read your location on this device, so distance is estimated from time.';
+  return tr(isOfflineError(error) ? 'cardio.errorOffline' : 'cardio.errorLocation');
 }
 
 export function defaultActivityTitle(kind: ActivityKind): string {
-  return { run: 'Morning run', ride: 'Ride', walk: 'Walk', yoga: 'Mobility', lift: 'Session' }[
+  return {
+    run: tr('cardio.placeholderRun'),
+    ride: tr('cardio.kindRide'),
+    walk: tr('cardio.kindWalk'),
+    yoga: tr('cardio.placeholderOther'),
+    lift: tr('cardio.placeholderOther'),
+  }[
     kind
   ];
 }
@@ -446,7 +458,7 @@ class CardioRecorder {
       // running is wrong: the user has already stopped. Leave the draft intact
       // so a retry can work, and surface why.
       this.lastError =
-        error instanceof Error ? error.message : 'Could not save this activity.';
+        error instanceof Error ? error.message : tr('cardio.errorSave');
       this.publish(true);
       throw error;
     } finally {

@@ -240,8 +240,14 @@ export default function DevScreen() {
 
   if (!__DEV__) return null;
 
+  // No `largeTitle` on this screen, deliberately. It is the QA harness's instrument panel:
+  // every gate reads its request ledger by scrolling to a known position, and a native large
+  // title changes both the scroll geometry and the content inset under it. The first run
+  // after it was added reported "(none sent)" for a COLD START, which cannot happen. A
+  // developer console gains nothing from a collapsing title, and the gates lose their only
+  // measurement of what the app sent.
   return (
-    <DetailScreen title="Developer">
+    <DetailScreen title="Developer" ownBar>
       {(topInset) => (
         <ScrollView
           contentContainerStyle={[

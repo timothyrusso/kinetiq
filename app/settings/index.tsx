@@ -59,8 +59,9 @@ import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
 import { spacing, screenGutter } from '@/theme/tokens';
 import { haptics } from '@/services/haptics';
+import { useT } from '@/i18n/useT';
+import { tr } from '@/i18n/tr';
 import {
-  countNoun,
   parseNumber,
 } from '@/utils/format';
 
@@ -70,6 +71,7 @@ const HEIGHT_MAX = 230;
 const BIRTH_YEAR_MIN = 1930;
 
 export default function SettingsScreen() {
+  const { t } = useT();
   const router = useRouter();
   const theme = useAppTheme();
   const bottomSpace = useScreenContentBottom();
@@ -78,18 +80,22 @@ export default function SettingsScreen() {
   const update = useSettingsUpdate();
 
   return (
-    <DetailScreen title="Settings">
+    <DetailScreen title={t('settings.title')} largeTitle>
       {(topInset) => (
         <ScrollView
           contentContainerStyle={[
             styles.content,
             { paddingTop: topInset + spacing.md, paddingBottom: bottomSpace },
           ]}
+          // `automatic`, so iOS owns the inset under the large title and can collapse it as
+          // this view scrolls. Without it the title stays large forever and the screen looks
+          // like a native header that does not work.
+          contentInsetAdjustmentBehavior="automatic"
           keyboardShouldPersistTaps="handled"
         >
           <Stack gap="xxl" style={styles.body}>
             <View>
-              <SectionHeader title="You" eyebrow="Used for estimates" />
+              <SectionHeader title={t('settings.you')} eyebrow={t('settings.usedForEstimates')} />
               <ProfileForm
                 profile={settings.profile}
                 onSave={(patch) => {
@@ -100,33 +106,33 @@ export default function SettingsScreen() {
             </View>
 
             <View>
-              <SectionHeader title="App" />
+              <SectionHeader title={t('settings.app')} />
               <Card padding="xxs">
                 <NavRow
-                  title="Training preferences"
-                  subtitle="Default rest, auto-start, speed vs. pace"
+                  title={t('settings.trainingPreferences')}
+                  subtitle={t('settings.trainingSubtitle')}
                   theme={theme}
                   icon="target"
                   topDivider={false}
                   onPress={() => router.push(routes.settingsTraining())}
                 />
                 <NavRow
-                  title="Notifications"
+                  title={t('settings.notifications')}
                   subtitle={notificationSummary(settings)}
                   theme={theme}
                   icon="bell"
                   onPress={() => router.push(routes.settingsNotifications())}
                 />
                 <NavRow
-                  title="Permissions"
-                  subtitle="Location, notifications, motion"
+                  title={t('settings.permissions')}
+                  subtitle={t('settings.permissionsSubtitle')}
                   theme={theme}
                   icon="lock"
                   onPress={() => router.push(routes.permissions())}
                 />
                 <NavRow
-                  title="About Kinetiq"
-                  subtitle="Version, data, the exercise catalog"
+                  title={t('profileScreen.aboutTitle')}
+                  subtitle={t('profileScreen.aboutSubtitle')}
                   theme={theme}
                   icon="info"
                   onPress={() => router.push(routes.settingsAbout())}
@@ -135,8 +141,7 @@ export default function SettingsScreen() {
             </View>
 
             <Txt variant="micro" tone="faint" align="center">
-              Units, appearance and your weekly goal are on the Profile tab, next to the
-              numbers they change.
+              {t('misc.settingsFootnote')}
             </Txt>
 
             <View>
@@ -176,6 +181,7 @@ function ProfileForm({
   profile: Profile;
   onSave: (patch: Partial<Profile>) => void;
 }) {
+  const { t } = useT();
   const [draft, setDraft] = useState<Draft>(() => draftOf(profile));
 
   const errors = useMemo(() => validate(draft), [draft]);
@@ -205,50 +211,50 @@ function ProfileForm({
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Stack gap="lg">
         <TextField
-          label="Name"
+          label={t('settings.name')}
           value={draft.name}
           onChangeText={set('name')}
-          placeholder="Athlete"
+          placeholder={t('settingsScreen.namePlaceholder')}
           autoCapitalize="words"
           autoCorrect={false}
           returnKeyType="done"
           error={errors?.name ?? null}
-          hint="Shown on your Profile tab and in your history."
+          hint={t('settingsScreen.nameHint')}
           maxLength={40}
         />
         <TextField
-          label="Height"
+          label={t('settings.height')}
           value={draft.heightCm}
           onChangeText={set('heightCm')}
           keyboardType="number-pad"
           unit="cm"
           returnKeyType="done"
           error={errors?.heightCm ?? null}
-          hint={`Between ${HEIGHT_MIN} and ${HEIGHT_MAX} cm. Used for stride and calorie estimates.`}
+          hint={t('settingsScreen.heightHint', { min: HEIGHT_MIN, max: HEIGHT_MAX })}
           maxLength={3}
         />
         <TextField
-          label="Birth year"
+          label={t('settings.birthYear')}
           value={draft.birthYear}
           onChangeText={set('birthYear')}
           keyboardType="number-pad"
           returnKeyType="done"
           error={errors?.birthYear ?? null}
-          hint="Used for calorie estimates only. Stored as a year, not a date."
+          hint={t('settingsScreen.birthYearHint')}
           maxLength={4}
         />
 
         <Button
-          label="Save"
+          label={t('common.save')}
           onPress={save}
           disabled={!dirty || errors !== null}
-          accessibilityHint={
-            dirty ? 'Stores these details on this device' : 'Nothing has changed yet'
-          }
+          accessibilityHint={t(
+            dirty ? 'settingsScreen.saveHintDirty' : 'settingsScreen.saveHintClean',
+          )}
         />
         {dirty ? (
           <Txt variant="micro" tone="faint" align="center">
-            Unsaved. Leaving this screen without saving discards these changes.
+            {t('settingsScreen.unsaved')}
           </Txt>
         ) : null}
       </Stack>
@@ -269,25 +275,28 @@ function validate(draft: Draft): Partial<Record<keyof Draft, string>> | null {
 
   const height = parseNumber(draft.heightCm);
   if (draft.heightCm.trim() === '') {
-    errors.heightCm = 'Height is needed for calorie estimates.';
+    errors.heightCm = tr('settingsScreen.heightRequired');
   } else if (height === null) {
-    errors.heightCm = 'Numbers only.';
+    errors.heightCm = tr('settingsScreen.numbersOnly');
   } else if (height < HEIGHT_MIN || height > HEIGHT_MAX) {
-    errors.heightCm = `Must be between ${HEIGHT_MIN} and ${HEIGHT_MAX} cm.`;
+    errors.heightCm = tr('settingsScreen.heightRange', { min: HEIGHT_MIN, max: HEIGHT_MAX });
   }
 
   const year = parseNumber(draft.birthYear);
   const thisYear = new Date().getFullYear();
   if (draft.birthYear.trim() === '') {
-    errors.birthYear = 'Birth year is needed for calorie estimates.';
+    errors.birthYear = tr('settingsScreen.birthYearRequired');
   } else if (year === null) {
-    errors.birthYear = 'Four digits, like 1994.';
+    errors.birthYear = tr('settingsScreen.birthYearDigits');
   } else if (year < BIRTH_YEAR_MIN || year > thisYear) {
-    errors.birthYear = `Must be between ${BIRTH_YEAR_MIN} and ${thisYear}.`;
+    errors.birthYear = tr('settingsScreen.birthYearRange', {
+      min: BIRTH_YEAR_MIN,
+      max: thisYear,
+    });
   }
 
   if (draft.name.trim().length > 0 && draft.name.trim().length < 2) {
-    errors.name = 'A name needs at least two characters.';
+    errors.name = tr('settingsScreen.nameTooShort');
   }
 
   return Object.keys(errors).length > 0 ? errors : null;
@@ -303,10 +312,13 @@ function validate(draft: Draft): Partial<Record<keyof Draft, string>> | null {
  * never deliver is worth saying out loud rather than describing.
  */
 function notificationSummary(settings: SettingsState): string {
-  if (!settings.notificationsEnabled) return 'All notifications off';
-  if (!settings.notificationsGranted) return 'Blocked in iOS settings';
-  if (!settings.reminder.enabled) return 'Rest timer only';
-  return `Rest timer · ${countNoun(settings.reminder.days.length, 'day')} a week`;
+  if (!settings.notificationsEnabled) return tr('settingsScreen.notificationsOff');
+  if (!settings.notificationsGranted) return tr('settingsScreen.notificationsBlocked');
+  if (!settings.reminder.enabled) return tr('settingsScreen.restTimerOnly');
+  return tr('settingsScreen.restTimerPlusDays', {
+    count: settings.reminder.days.length,
+    word: tr('settingsScreen.dayWord', { count: settings.reminder.days.length }),
+  });
 }
 
 const styles = StyleSheet.create({

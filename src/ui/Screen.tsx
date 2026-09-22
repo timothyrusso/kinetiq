@@ -49,7 +49,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { Stack, router } from 'expo-router';
 
 import { useAppTheme, type Theme } from '@/theme/theme';
 import { radius, spacing, z, touchTarget, screenGutter } from '@/theme/tokens';
@@ -57,6 +57,8 @@ import { Icon, type IconName } from '@/ui/icons';
 import { Txt } from '@/ui/Text';
 import { Row } from '@/ui/layout';
 import { useHeaderCollapse } from '@/ui/animation';
+import { NATIVE_HEADER_HEIGHT } from '@/ui/insets';
+import { useT } from '@/i18n/useT';
 
 /** Height of the compact bar, excluding any top safe-area inset. */
 const BAR_HEIGHT = 52;
@@ -140,6 +142,8 @@ export function DetailScreen({
   right,
   children,
   headerTransparent = false,
+  largeTitle = false,
+  ownBar = false,
   onBack,
 }: {
   title: string;
@@ -149,6 +153,23 @@ export function DetailScreen({
   children: (topInset: number, header: DetailHeader) => ReactNode;
   /** Full-bleed media underneath (an activity's map, an exercise photo). */
   headerTransparent?: boolean;
+  /**
+   * Ask for the navigator's collapsing large title.
+   *
+   * Only correct where there is no subtitle and no media behind the bar, because a large
+   * title has room for one line and nothing behind it. The settings-style screens take it
+   * because a collapsing large title is the platform idiom for exactly that kind of screen.
+   */
+  largeTitle?: boolean;
+  /**
+   * Draw the compact bar in this file instead of using the navigator's.
+   *
+   * One screen needs it: `app/dev.tsx`, the QA harness's instrument panel. Every gate reads
+   * its request ledger by scrolling to a known position, and a native header changes both
+   * the scroll geometry and the content inset under it. The first run after it was given one
+   * reported "(none sent)" for a COLD START, which cannot happen.
+   */
+  ownBar?: boolean;
   onBack?: () => void;
 }) {
   const theme = useAppTheme();
@@ -173,6 +194,81 @@ export function DetailScreen({
   }, [onBack]);
 
   const header = useMemo(() => ({ onScroll, scrollY }), [onScroll, scrollY]);
+
+  if (!ownBar) {
+    return (
+      <>
+        <Stack.Screen
+          options={{
+            headerShown: true,
+            title,
+            // A large title only where one was asked for: it needs a line to itself and
+            // nothing behind it.
+            headerLargeTitle: largeTitle,
+            // A subtitle is why most of these screens cannot use a plain native title: the
+            // bar holds one string. A custom title view is the platform's own answer to
+            // that, and it keeps the rest of the native bar (blur, back chevron, the edge
+            // swipe) rather than reimplementing all of it to gain one line of text.
+            ...(subtitle
+              ? {
+                  headerTitle: () => (
+                    <View style={styles.nativeTitle}>
+                      <Txt variant="label" weight="700" numberOfLines={1} align="center">
+                        {title}
+                      </Txt>
+                      <Txt variant="micro" tone="muted" numberOfLines={1} align="center">
+                        {subtitle}
+                      </Txt>
+                    </View>
+                  ),
+                }
+              : {}),
+            // Over full-bleed media the bar floats, and the system blurs whatever scrolls
+            // under it.
+            ...(headerTransparent
+              ? {
+                  headerTransparent: true,
+                  headerBlurEffect: theme.mode === 'dark' ? 'systemChromeMaterialDark' : 'systemChromeMaterialLight',
+                  headerStyle: { backgroundColor: 'transparent' },
+                }
+              : {
+                  headerStyle: { backgroundColor: theme.colors.background },
+                  contentStyle: { backgroundColor: theme.colors.background },
+                }),
+            // The hairline under a large title is drawn by the system only once the title
+            // has collapsed; leaving it visible at rest puts a line across an empty bar.
+            headerLargeTitleShadowVisible: false,
+            headerShadowVisible: false,
+            headerTintColor: theme.colors.accent,
+            headerLargeStyle: { backgroundColor: theme.colors.background },
+            headerTitleStyle: { color: theme.colors.text },
+            headerLargeTitleStyle: { color: theme.colors.text },
+            ...(right ? { headerRight: () => <Row gap="xs">{right}</Row> } : {}),
+            // Always ours, never the navigator's own. These screens are the FIRST route in
+            // their nested stack (settings/index, permissions), so the system finds nothing
+            // to go back to inside that stack and draws no chevron at all, while the push
+            // that got here came from the stack above. `goBack` pops across navigators and
+            // falls back to Home, which is the behaviour the compact bar has always had.
+            headerLeft: () => (
+              <BarBackButton onPress={goBack} theme={theme} transparent={false} />
+            ),
+          }}
+        />
+        {/* No `Screen` wrapper, deliberately. A large title collapses by coupling to the
+            scroll view's content inset, and react-native-screens finds that scroll view only
+            when it is the screen's own child: wrapped in a filling `View` the title renders
+            but never shrinks, which costs a screen ~100pt of permanent chrome and looks like
+            a native header that does not work. The background it would have painted comes
+            from `contentStyle` above.
+
+            The inset is `0` for an opaque bar, because the navigator has already pushed
+            content below it and a screen padding by the bar height again would sit a bar's
+            worth low. A TRANSPARENT bar floats over media instead, so content starts at the
+            top of the screen and the first readable row has to clear the bar itself. */}
+        {children(headerTransparent ? insets.top + NATIVE_HEADER_HEIGHT : 0, header)}
+      </>
+    );
+  }
 
   return (
     <Screen>
@@ -344,12 +440,13 @@ function BarBackButton({
   theme: Theme;
   transparent: boolean;
 }) {
+  const { t } = useT();
   return (
     <Pressable
       onPress={onPress}
       hitSlop={8}
       accessibilityRole="button"
-      accessibilityLabel="Go back"
+      accessibilityLabel={t('common.back')}
       style={({ pressed }) => [
         styles.roundButton,
         {
@@ -397,6 +494,9 @@ export function BarAction({
 }
 
 const styles = StyleSheet.create({
+  // The navigator centres whatever this returns, so it only has to size itself. `maxWidth`
+  // keeps a long routine name from pushing the header actions off their own edge.
+  nativeTitle: { alignItems: 'center', justifyContent: 'center', maxWidth: 240 },
   screen: { flex: 1 },
   barWrap: { position: 'absolute', left: 0, right: 0, top: 0 },
   bar: {

@@ -83,9 +83,17 @@ const firstDelta = afterWarm.total - base.total;
 // can legitimately cost nothing: that is the cache doing its job, and demanding a request
 // would make the check fail on the behaviour it exists to protect. What IS a defect is a
 // visit that costs a pile: pages fetched far ahead of anything the user asked for.
-if (firstDelta > 4) {
-  fail(`a single Exercises visit cost ${firstDelta} requests (budget 4): prefetch is running far ` +
-       'ahead of the user, or one screen is asking for the same page repeatedly');
+// The floor for a genuinely cold visit is FIVE, not four: wger exposes its taxonomy as four
+// separate endpoints (category, muscle, equipment, language), each fetched once and then
+// cached for the life of the app, plus the first page of results. There is no arrangement of
+// a correct client that pays less on a cold cache, so a budget of 4 failed the app for doing
+// the minimum. What the check is really for is the case above that: a second page nobody
+// asked for, or the same page fetched twice.
+const COLD_VISIT_BUDGET = 5;
+if (firstDelta > COLD_VISIT_BUDGET) {
+  fail(`a single Exercises visit cost ${firstDelta} requests (budget ${COLD_VISIT_BUDGET}: four ` +
+       'taxonomy endpoints plus one page): prefetch is running ahead of the user, or one screen ' +
+       'is asking for the same page repeatedly');
 }
 if (firstDelta === 0) {
   console.log('   (cache was already warm: nothing fetched; navigation below measures a warm app, ' +
@@ -107,6 +115,18 @@ const afterNav = ledger('after 3 round trips');
 console.log('4. one new search term');
 const term = `chest${Math.floor(Math.random() * 900 + 100)}`;
 open('exercises', 'Exercise');
+// Settle the tab, then start the clock.
+//
+// Re-entering the tab can refetch the catalog listing: its own query, older than the search
+// and quite entitled to go stale while the gates before this one ran. Measuring from the dev
+// screen therefore charged that refetch to the search, and the delta read 3 in a full suite
+// and 2 standalone for identical app behaviour: the difference being only how stale the
+// catalog happened to be. A check that claims to measure ONE SEARCH has to open its window
+// once the screen is quiet.
+sleep(6);
+open('dev', 'Developer');
+const beforeType = ledger('tab settled, before typing');
+open('exercises', 'Exercise');
 // The field lives in the list header, so it is only reachable from the top of the list.
 scrollTop();
 const field = nodes().find((n) => n.type === 'TextField' && visible(n));
@@ -125,7 +145,7 @@ const afterSearch = ledger(`after "${term}"`);
 // One new search must cost a page plus the settle-time commit: so one or two requests,
 // and never anything resembling one per character.
 const navDelta = afterNav.total - afterWarm.total;
-const searchDelta = afterSearch.total - afterNav.total;
+const searchDelta = afterSearch.total - beforeType.total;
 console.log(`\n   navigation added ${navDelta} request(s) over 3 round trips`);
 console.log(`   one new search term added ${searchDelta} request(s)`);
 
@@ -144,7 +164,36 @@ if (navDelta !== 0) { console.error(`   !! FAILED: ${navDelta} request(s) for or
 if (searchDelta < 1) { console.error(`   !! FAILED: a new search sent nothing: the term never reached the query`); ok = false; }
 if (searchDelta > 2) { console.error(`   !! FAILED: a new search sent ${searchDelta}, expected one page (+1 settle commit at most)`); ok = false; }
 if (base.total > 0) console.log(`   note: baseline was ${base.total}: the ledger was not empty when we took it; deltas above are what count`);
-if (afterSearch.rows.some(([, c]) => c > 3)) console.error('   !! FAILED: a path fired >3×: see the ledger above');
+
+// A LOOPING path, measured inside one phase rather than summed across the run.
+//
+// This used to compare the cumulative per-path total against 3, which this script trips by
+// construction: it deliberately performs two measured phases (a cold visit, then a search),
+// each legitimately costing a page, so `exerciseinfo` reaches 4 with the app behaving
+// perfectly. It also printed "FAILED" without setting `ok`, so the run ended "FAILED ... PASS"
+// and exited 0. A check that cannot fail the run should not use the word, and one that always
+// trips teaches the reader to ignore it.
+//
+// What it is actually for is a query that repeats: the same endpoint firing again and again
+// for one user action. That is a per-phase question, so it is asked per phase.
+const perPhase = (before, after) => {
+  const prior = new Map(before.rows);
+  return after.rows
+    .map(([path, count]) => [path, count - (prior.get(path) ?? 0)])
+    .filter(([, delta]) => delta > 0);
+};
+const LOOP_CEILING = 3;
+for (const [phase, before, after] of [
+  ['the cold Exercises visit', afterWarm, afterNav],
+  ['one search', beforeType, afterSearch],
+]) {
+  for (const [path, delta] of perPhase(before, after)) {
+    if (delta > LOOP_CEILING) {
+      console.error(`   !! FAILED: ${path} fired ${delta}× during ${phase}: that is a loop, not a page`);
+      ok = false;
+    }
+  }
+}
 
 console.log(ok ? '\nPASS' : '\nFAIL');
 process.exit(ok ? 0 : 1);

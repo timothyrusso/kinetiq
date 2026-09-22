@@ -56,6 +56,8 @@ import type { Activity } from '@/domain/types';
 import { routes, tabHref } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
 import { spacing, screenGutter } from '@/theme/tokens';
+import { useT } from '@/i18n/useT';
+import { tr } from '@/i18n/tr';
 import {
   compactNumber,
   formatDurationCompact,
@@ -73,6 +75,7 @@ const RECENT_FETCHED = 60;
 const CARD_PADDING = spacing.lg;
 
 export default function HomeScreen() {
+  const { t } = useT();
   const router = useRouter();
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
@@ -186,13 +189,13 @@ export default function HomeScreen() {
 
       {empty ? null : (
         <SectionHeader
-          title="Recent"
-          eyebrow="Latest sessions"
+          title={t('homeTab.recent')}
+          eyebrow={t('homeTab.latestSessions')}
           style={{ paddingHorizontal: screenGutter }}
           action={
             visible.length > 0 ? (
               <Button
-                label="See all"
+                label={t('homeTab.seeAll')}
                 variant="quiet"
                 size="sm"
                 onPress={() => router.push(tabHref(1))}
@@ -212,7 +215,7 @@ export default function HomeScreen() {
         right={
           <BarAction
             icon="settings"
-            label="Settings"
+            label={t('homeTab.settings')}
             onPress={() => router.push(routes.settings())}
           />
         }
@@ -234,10 +237,10 @@ export default function HomeScreen() {
         ListEmptyComponent={
           empty ? (
             <EmptyState
-              title="No training yet"
-              message="Pick a routine and go lift something. Kinetiq keeps score from the first set you finish."
+              title={t('home.emptyTitle')}
+              message={t('home.emptyMessage')}
               icon="target"
-              actionLabel="Browse routines"
+              actionLabel={t('homeTab.browseRoutines')}
               onAction={() => router.push(tabHref(2))}
             />
           ) : loading ? (
@@ -278,6 +281,7 @@ function HomeSummary({
   units: UnitSystem;
   chartWidth: number;
 }) {
+  const { t } = useT();
   const theme = useAppTheme();
   const week = summary.weeks.at(-1);
   const previous = summary.weeks.at(-2);
@@ -323,19 +327,21 @@ function HomeSummary({
             theme={theme}
             size={90}
             label={`${week?.workouts ?? 0}`}
-            sublabel={`of ${goal}`}
+            sublabel={t('homeTab.ofGoal', { goal })}
           />
           <Stack gap="xs" style={{ flex: 1, minWidth: 0 }}>
-            <MetricLabel label="This week" />
+            <MetricLabel label={t('home.thisWeek')} />
             <Txt variant="title" numberOfLines={1}>
               {formatDurationCompact(week?.durationSeconds ?? 0)}
             </Txt>
             <Txt variant="caption" tone="muted" numberOfLines={2}>
               {delta === null
                 ? goal - (week?.workouts ?? 0) > 0
-                  ? `${goal - (week?.workouts ?? 0)} more to hit your goal`
-                  : 'Weekly goal complete'
-                : `${delta >= 0 ? '+' : ''}${delta}% against last week`}
+                  ? t('homeTab.moreToGoal', { count: goal - (week?.workouts ?? 0) })
+                  : t('homeTab.goalComplete')
+                : t('homeTab.deltaAgainstLastWeek', {
+                    delta: `${delta >= 0 ? '+' : ''}${delta}`,
+                  })}
             </Txt>
           </Stack>
         </Row>
@@ -346,9 +352,9 @@ function HomeSummary({
 
         <View style={{ paddingTop: spacing.lg }}>
           <Row gap="lg">
-            <MetricCell label="Sessions" value={`${week?.workouts ?? 0}`} />
+            <MetricCell label={t('home.sessions')} value={`${week?.workouts ?? 0}`} />
             <MetricCell
-              label="Distance"
+              label={t('home.distance')}
               value={
                 (week?.distanceMeters ?? 0) > 0
                   ? formatDistance(week?.distanceMeters ?? 0, units, 1)
@@ -358,16 +364,23 @@ function HomeSummary({
           </Row>
           <Row gap="lg" style={{ marginTop: spacing.md }}>
             <MetricCell
-              label="Volume"
+              label={t('home.volume')}
               value={(week?.volumeKg ?? 0) > 0 ? `${compactNumber(week?.volumeKg ?? 0)} kg` : '-'}
             />
-            <MetricCell label="Calories" value={compactNumber(Math.round(week?.caloriesKcal ?? 0))} />
+            <MetricCell
+              label={t('home.calories')}
+              value={compactNumber(Math.round(week?.caloriesKcal ?? 0))}
+            />
           </Row>
         </View>
       </Card>
 
       <Card>
-        <SectionHeader title="Training load" eyebrow="Last 6 weeks" style={{ marginBottom: spacing.lg }} />
+        <SectionHeader
+          title={t('home.trainingLoad')}
+          eyebrow={t('home.lastSixWeeks')}
+          style={{ marginBottom: spacing.lg }}
+        />
         {chartWidth > CARD_PADDING * 2 ? (
           <BarChart
             points={bars}
@@ -385,7 +398,7 @@ function HomeSummary({
       {slices.length > 0 ? (
         <Card>
           <SectionHeader
-            title="Mix"
+            title={t('homeTab.mix')}
             eyebrow={`Sessions over ${summary.rangeWeeks} weeks`}
             style={{ marginBottom: spacing.md }}
           />
@@ -424,18 +437,18 @@ function MetricCell({ label, value }: { label: string; value: string }) {
  * just opened it for the first time.
  */
 function headlineFor(currentStreak: number, summary: TrainingSummary | undefined): string {
-  if (!summary || !summary.hasAnyHistory) return 'Start your first session';
-  if (currentStreak === 0) return 'Ready when you are';
-  if (currentStreak === 1) return 'Day one of something';
-  return `${currentStreak} days in a row`;
+  if (!summary || !summary.hasAnyHistory) return tr('homeTab.headlineFirst');
+  if (currentStreak === 0) return tr('homeTab.headlineReady');
+  if (currentStreak === 1) return tr('homeTab.headlineDayOne');
+  return tr('homeTab.headlineStreak', { count: currentStreak });
 }
 
 function greeting(): string {
   const hour = new Date().getHours();
-  if (hour < 5) return 'Late session';
-  if (hour < 12) return 'Good morning';
-  if (hour < 18) return 'Good afternoon';
-  return 'Good evening';
+  if (hour < 5) return tr('homeTab.greetLate');
+  if (hour < 12) return tr('home.eyebrowMorning');
+  if (hour < 18) return tr('home.eyebrowAfternoon');
+  return tr('home.eyebrowEvening');
 }
 
 function firstName(full: string): string {

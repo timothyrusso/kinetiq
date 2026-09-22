@@ -17,6 +17,7 @@ import { Linking, StyleSheet, Text, View } from 'react-native';
 
 import { themeFor } from '@/theme/theme';
 import { spacing } from '@/theme/tokens';
+import { tr } from '@/i18n/tr';
 
 type State = { error: Error | null };
 
@@ -43,15 +44,21 @@ export class RootErrorBoundary extends Component<{ children: ReactNode }, State>
     // safer default because the app's launch background is dark in that theme.
     const theme = themeFor('dark');
 
+    // `tr` rather than `useT` here, and it is the one place that is correct.
+    //
+    // This is a class component, so there is no hook to call, and the screen it renders is
+    // terminal: the app has already failed above the navigator. Nobody changes language on
+    // this screen, so the subscription `useT` buys has nothing to do. Everywhere else the
+    // rule is the opposite, and `npm run check` enforces it.
+
     return (
       <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
-        <Text style={[styles.badge, { color: theme.colors.danger }]}>KINETIQ STOPPED</Text>
+        <Text style={[styles.badge, { color: theme.colors.danger }]}>{tr('boot.stopped')}</Text>
         <Text style={[styles.title, { color: theme.colors.text }]}>
-          Kinetiq could not start correctly
+          {tr('boot.couldNotStartCorrectly')}
         </Text>
         <Text style={[styles.body, { color: theme.colors.textMuted }]}>
-          Your saved workouts and routines were not changed. Restarting the app will usually
-          fix this.
+          {tr('misc.fatalBody')}
         </Text>
         <View
           style={[
@@ -77,7 +84,7 @@ export class RootErrorBoundary extends Component<{ children: ReactNode }, State>
             }}
             style={[styles.action, { color: theme.colors.accent }]}
           >
-            Try again
+            {tr('boot.tryAgain')}
           </Text>
           <Text
             accessibilityRole="button"
@@ -86,7 +93,7 @@ export class RootErrorBoundary extends Component<{ children: ReactNode }, State>
             }}
             style={[styles.action, { color: theme.colors.textMuted }]}
           >
-            Open device settings
+            {tr('boot.openDeviceSettings')}
           </Text>
         </View>
       </View>

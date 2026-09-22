@@ -14,6 +14,7 @@ import { memo, useMemo } from 'react';
 import { Pressable, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { fontFamily, radius, spacing } from '@/theme/tokens';
 import type { Theme } from '@/theme/theme';
+import { useT } from '@/i18n/useT';
 
 const CELL = 12;
 const GAP = 3;
@@ -34,7 +35,7 @@ export const HeatmapCalendar = memo(function HeatmapCalendar({
   theme,
   weeks = 26,
   maxValue,
-  label = 'Consistency',
+  label,
   footer,
   onSelectDay,
   style,
@@ -52,6 +53,7 @@ export const HeatmapCalendar = memo(function HeatmapCalendar({
   onSelectDay?: (date: string) => void;
   style?: StyleProp<ViewStyle>;
 }) {
+  const { t } = useT();
   const { columns, monthMarks, max, busiest, best } = useMemo(() => {
     const trailing = days.slice(Math.max(0, days.length - weeks * 7));
     const cols: HeatmapDay[][] = [];
@@ -100,7 +102,7 @@ export const HeatmapCalendar = memo(function HeatmapCalendar({
     return (
       <View style={[{ paddingVertical: spacing.lg }, style]}>
         <Text style={{ fontFamily: fontFamily.medium, fontSize: 13, color: theme.colors.textFaint }}>
-          No training history yet
+          {t('misc.noHistoryYet')}
         </Text>
       </View>
     );
@@ -111,7 +113,13 @@ export const HeatmapCalendar = memo(function HeatmapCalendar({
       style={style}
       accessible
       accessibilityRole="summary"
-      accessibilityLabel={`${label}: ${best}-day streak, busiest day ${formatNumber(busiest)}`}
+      accessibilityLabel={t('misc.heatmapA11y', {
+        label: label ?? t('misc.consistencyLabel'),
+        // The same expression the visible footer uses: reading "0 giorni di fila" aloud
+        // while the card shows "start a streak today" is two answers to one question.
+        streak: best > 1 ? t('misc.dayStreak', { count: best }) : t('misc.startStreak'),
+        busiest: formatNumber(busiest),
+      })}
     >
       <View style={{ flexDirection: 'row' }}>
         <View style={{ width: DAY_LABEL_WIDTH }} />
@@ -184,13 +192,24 @@ export const HeatmapCalendar = memo(function HeatmapCalendar({
       >
         <Text
           numberOfLines={1}
-          style={{ fontFamily: fontFamily.medium, fontSize: 11.5, color: theme.colors.textMuted }}
+          // `flex: 1` with `minWidth: 0`: without them this text takes its natural width and
+          // `space-between` has nothing left to distribute, so a long footer runs straight
+          // into the Less/More key beside it and renders as "26 settimaneMeno".
+          style={{
+            flex: 1,
+            minWidth: 0,
+            marginRight: spacing.md,
+            fontFamily: fontFamily.medium,
+            fontSize: 11.5,
+            color: theme.colors.textMuted,
+          }}
         >
-          {footer ?? (best > 1 ? `${best}-day streak` : 'Start a streak today')}
+          {footer ??
+            (best > 1 ? t('misc.dayStreak', { count: best }) : t('misc.startStreak'))}
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <Text style={{ fontFamily: fontFamily.medium, fontSize: 10, color: theme.colors.chartAxis }}>
-            Less
+            {t('misc.less')}
           </Text>
           {[0, 1, 2, 3, 4].map((level) => (
             <View
@@ -204,7 +223,7 @@ export const HeatmapCalendar = memo(function HeatmapCalendar({
             />
           ))}
           <Text style={{ fontFamily: fontFamily.medium, fontSize: 10, color: theme.colors.chartAxis }}>
-            More
+            {t('misc.more')}
           </Text>
         </View>
       </View>

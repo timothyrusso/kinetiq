@@ -49,6 +49,8 @@
 //     bottom pages it, and those page fetches land in the ledger charged to the fault.
 
 const {
+  settleForText,
+  armFault,
   forceEnglishUI,fillField, CWD, sh, sleep, open, fail, ledger, nodes, visible, seek, scrollTop,
   has, labels, pressLabel, pressRow, onExit, clearFaultQuietly, restartApp,
 } = require('./lib');
@@ -115,18 +117,31 @@ function resetLedger(name) {
     );
   }
   open('dev', 'Developer');
-  const reset = nodes().find((n) => (n.label ?? '').trim() === 'Reset');
-  if (reset) sh(`npx agent-device press '@${reset.ref}' 2>&1`, { allowFail: true });
-  sleep(4);
-  const l = ledger(`${name} (after reset)`);
-  if (l.total !== 0) {
+  // `pressLabel`, not a raw press on the node's centre. The dev screen scrolls, and a centre
+  // press lands on whatever chrome happens to be over the button; when that happened the
+  // counters simply stayed where they were, the next read returned the SAME five requests the
+  // settle had just measured, and the check reported them as "a refetch with nobody asking
+  // for it". A reset that quietly does nothing is indistinguishable from an app that is
+  // talking, so the press is now occlusion-aware AND verified below.
+  let cleared = false;
+  for (let attempt = 1; attempt <= 2 && !cleared; attempt += 1) {
+    pressLabel('Reset', { probe: attempt === 1 });
+    sleep(4);
+    cleared = ledger(`${name} (after reset, attempt ${attempt})`).total === 0;
+    if (!cleared) open('dev', 'Developer');
+  }
+  if (!cleared) {
+    const l = ledger(`${name} (still not clear)`);
     fail(
-      `${name}: requests appeared after the counters settled and were cleared ` +
-        `(${l.rows.map(([p, n]) => `${p} ×${n}`).join(', ')}). An idle app on a loaded screen ` +
-        'should send nothing: this is a refetch with nobody asking for it.',
+      `${name}: the counters would not clear (${l.rows.map(([p, n]) => `${p} ×${n}`).join(', ')}). ` +
+        'Either the Reset control could not be pressed, in which case every count below is ' +
+        'measured from an unknown baseline, or an idle app on a loaded screen is still sending: ' +
+        'the ledger cannot tell those apart, so neither can this check.',
     );
   }
-  return l;
+  // The cleared reading: zero by construction, returned so callers can treat this like any
+  // other ledger call rather than special-casing it.
+  return { total: 0, rows: [] };
 }
 
 /**
@@ -144,7 +159,7 @@ function resetLedger(name) {
  */
 function ensureFaultCleared(context) {
   open('dev', 'Developer');
-  if (pressLabel('Stop injecting')) {
+  if (pressLabel('Stop injecting', { probe: true })) {
     sleep(1);
     return 'cleared';
   }
@@ -182,7 +197,7 @@ function ensureFaultCleared(context) {
 function coldStart(terms, { proveIdle = false } = {}) {
   restartApp();
   open('exercises', 'SEARCH EXERCISES');
-  sleep(6);
+  settleForText('SEARCH EXERCISES', { seconds: 8 });
   if (proveIdle) {
     // Once per run: prove the app goes quiet and stays there. Every later case measures a
     // BEFORE/AFTER delta around its own faulted search instead, which is immune to whatever
@@ -197,7 +212,8 @@ function coldStart(terms, { proveIdle = false } = {}) {
   }
   const field = searchField();
   fillField(field.ref, terms[0]);
-  sleep(10);
+  // The subtitle carries the term once the query has answered.
+  settleForText(`for \u201c${terms[0]}\u201d`, { seconds: 14 });
   if (!has(`exercises for “${terms[0]}”`)) {
     fail(`the cold-start search for "${terms[0]}" never rendered results: the network is not ` +
          'healthy enough to measure a failure against');
@@ -302,7 +318,9 @@ function searchAndRead(term) {
 /** Arm a fault from its row and return the app's own description of what it armed. */
 function arm(row) {
   open('dev', 'Developer');
-  if (!pressRow(row, ['Arm', 'Armed'])) fail(`could not arm "${row}"`);
+  // armFault, not pressRow: the armer is a toggle, so pressing a row already reading "Armed"
+  // disarms it and the run then measures a healthy network while believing it broke one.
+  if (!armFault(row)) fail(`could not arm "${row}"`);
   if (!seek((n) => /Failing the next/.test(n.label ?? ''))) fail(`"${row}" armed with no status line`);
   return nodes().find((n) => /Failing the next/.test(n.label ?? '')).label.trim();
 }
@@ -342,7 +360,7 @@ console.log('   baseline search works, cache proven cold, app goes quiet');
 console.log('\n1. first load of the tab, network already dead: the full-screen error state');
 restartApp();
 open('dev', 'Developer');
-if (!pressRow('Server error 500', ['Arm', 'Armed'])) fail('could not arm the fault before opening the tab');
+if (!armFault('Server error 500')) fail('could not arm the fault before opening the tab');
 const armed = nodes().find((n) => /Failing the next/.test(n.label ?? ''));
 console.log(`   ${armed ? armed.label.trim() : '(no status line)'}`);
 // `soft`, and then proved: the deep link may land on a not-found screen for all this check
@@ -367,7 +385,7 @@ sleep(6);
 // no "Try again" left to press: demanding one failed a run for recovering too well. Or the
 // query holds its error until asked, and the button is there. What is NOT acceptable is the
 // third outcome: still broken after the network came back.
-const askedAgain = pressLabel('Try again');
+const askedAgain = pressLabel('Try again', { probe: true });
 sleep(12);
 if (below('Exercise search unavailable')) {
   fail(
@@ -433,13 +451,35 @@ for (const c of CASES) {
   // y=531, found by `seek` on the first try.
   open('exercises', 'SEARCH EXERCISES', { soft: true });
   sleep(2);
-  if (!pressLabel(control)) fail(`"${c.row}": the ${surface} offered no pressable "${control}"`);
-  sleep(10);
-  const retried = below('outdated results') || below('Exercise search unavailable');
-  console.log(`   "${control}" pressed into the same outage, still showing a failure: ${retried}`);
-  if (!retried) {
-    console.log('   (not fatal to this check: a retry that happens to catch the last armed ' +
-                'request can legitimately succeed: the fault is finite)');
+  // The control may legitimately be gone by now, and that is not a defect.
+  //
+  // A fault is finite. "No connection" arms 5 requests and this case spends all 5, so the
+  // `open` above refetches into a network that is healthy again and the error state is
+  // correctly replaced by results: there is no retry control left, because there is nothing
+  // left to retry. "Server error 500" arms 15, spends 5, and still has 10 in reserve, so its
+  // error state survives the same navigation and its button is there. Same code, two honest
+  // outcomes, decided by arithmetic rather than by anything the app did wrong.
+  //
+  // So the demand is not "the control exists" but "the screen is one of the two states it is
+  // allowed to be in": still failing and offering a way out, or recovered. The third outcome,
+  // still failing with no way out, is the real defect and is the only one that fails here.
+  const pressed = pressLabel(control, { probe: true });
+  sleep(pressed ? 10 : 2);
+  const stillBroken = below('outdated results') || below('Exercise search unavailable');
+  if (!pressed) {
+    if (stillBroken) {
+      fail(
+        `"${c.row}": the ${surface} is still on screen and offers no pressable "${control}". ` +
+          'A user who hits this has a dead list and no way to ask for it again.',
+      );
+    }
+    console.log(`   the outage cleared itself before the retry (fault fully spent), list recovered`);
+  } else {
+    console.log(`   "${control}" pressed into the same outage, still showing a failure: ${stillBroken}`);
+    if (!stillBroken) {
+      console.log('   (not fatal to this check: a retry that happens to catch the last armed ' +
+                  'request can legitimately succeed: the fault is finite)');
+    }
   }
 
   ensureFaultCleared(`case "${c.row}"`);

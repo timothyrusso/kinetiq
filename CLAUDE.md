@@ -45,6 +45,14 @@ All user-facing copy, including accessibility labels, goes through the catalog i
 `src/i18n/`. English and Italian are both required; a key present in one and missing from the
 other fails `npm run check`.
 
+Components read it with `useT()`. Code that cannot call a hook (a service, a module-level
+table, a plain helper) uses `tr()` from `src/i18n/tr.ts`, which reads the language from the
+settings store at call time. A module-level map of labels holds catalog KEYS, never words: it
+is built at import time, when there is no language yet.
+
+Two deliberate exceptions: `app/dev.tsx` (the fault-injection console, which ships only in
+`__DEV__` and whose copy the QA scripts match on), and the product name.
+
 ## Gates
 
 `npm run check` before any commit. The device gates (`qa:crud`, `qa:network`, `qa:pagination`,

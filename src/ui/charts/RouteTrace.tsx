@@ -32,6 +32,7 @@ import { Txt } from '@/ui/Text';
 import { Row } from '@/ui/layout';
 import { spacing } from '@/theme/tokens';
 import type { ActivityKind } from '@/domain/types';
+import { useT } from '@/i18n/useT';
 
 /** Consecutive points further apart than this (screen px) get a dotted link. */
 const GAP_THRESHOLD = 18;
@@ -64,6 +65,7 @@ export const RouteTrace = memo(function RouteTrace({
   caption?: string;
   style?: StyleProp<ViewStyle>;
 }) {
+  const { t } = useT();
   const [width, setWidth] = useState(0);
   const onLayout = (e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width);
 
@@ -85,9 +87,7 @@ export const RouteTrace = memo(function RouteTrace({
     return (
       <View style={[styles.empty, { height }, style]}>
         <Txt variant="caption" tone="faint" align="center">
-          {route.length === 0
-            ? 'No route was recorded for this activity.'
-            : 'Too few position fixes to draw a route.'}
+          {t(route.length === 0 ? 'states.noRouteRecorded' : 'states.tooFewFixes')}
         </Txt>
       </View>
     );

@@ -32,6 +32,8 @@
  * than sleeping a guessed number of seconds.
  */
 const {
+  settle,
+  waitFor,
   forceEnglishUI,fillField, tab, fail, onExit, pressLabel, seek, nodes, visible, sh, open,
   sleep, restartApp, dbQuery, dbCol, dbExec,
 } = require('./lib');
@@ -147,7 +149,7 @@ if (!pick?.ref) {
 }
 // Blur inside the sheet: the default tap point is above it, on the screen behind.
 fillField(pick.ref, TERM, { blurAt: `201 ${Math.round(pickerTitle.rect.y)}` });
-sleep(12);
+settle(() => nodes().some((n) => (n.label ?? '').includes('Exercises')), { seconds: 12, min: 2 });
 // A row already in the routine renders disabled with a check, and pressing it does nothing, // which would read as the picker ignoring the tap. Take the first row that is actually pressable,
 // and require it to be a real catalog result rather than the placeholder rows shown while loading.
 const row = nodes().find(
@@ -250,12 +252,29 @@ for (const target of [`${RENAMED} copy`, RENAMED]) {
   // copy as missing from a list it had never navigated back to.
   open('workout', undefined, { soft: true });
   sleep(3);
-  if (!pressLabel(`text^="${target}. "`)) fail(`could not reopen "${target}" to delete it`);
+  // A predicate, not `text^=`: agent-device has no prefix operator, so that string fell
+  // through to a substring match that merely looked like one.
+  if (!pressLabel((n) => (n.label ?? '').trim().startsWith(`${target}. `))) {
+    fail(`could not reopen "${target}" to delete it`);
+  }
   sleep(3);
   if (!pressLabel('Routine options')) fail(`no options button on "${target}"`);
-  if (!seek((n) => (n.label ?? '') === 'Delete routine')) fail('the options sheet never appeared for deletion');
+  // `waitFor`, not `seek`: a sheet arrives in its own window, so the remedy is to re-ask for
+  // the tree rather than to pan the screen behind it.
+  if (!waitFor((n) => n.type === 'Button' && (n.label ?? '').trim() === 'Delete routine', {
+    label: 'the options sheet row',
+  })) {
+    fail('the options sheet never appeared for deletion');
+  }
   if (!pressLabel('Delete routine')) fail('could not choose Delete routine');
-  if (!seek((n) => /^Delete “/.test(n.label ?? ''))) fail('the delete confirmation never appeared');
+  // The confirm BUTTON, not the sheet's title: the title lands in the tree first and a wait
+  // that stops there hands the press a sheet whose buttons have not arrived.
+  if (!waitFor((n) => n.type === 'Button' && (n.label ?? '').trim() === 'Delete routine', {
+    label: 'the delete confirmation button',
+    seconds: 10,
+  })) {
+    fail('the delete confirmation never appeared');
+  }
   if (!pressLabel('Delete routine')) fail('could not confirm the deletion');
   sleep(2);
   const gone = dbWait(`select id from routines where name = '${sql(target)}';`, 0);

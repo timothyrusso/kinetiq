@@ -22,6 +22,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { Theme } from '@/theme/theme';
 import { spacing } from '@/theme/tokens';
 import { Button } from '@/ui/Button';
+import { useT } from '@/i18n/useT';
 
 export function RouteErrorScreen({
   error,
@@ -34,6 +35,7 @@ export function RouteErrorScreen({
   onRetry: () => void;
   onGoHome?: () => void;
 }) {
+  const { t } = useT();
   // Stack kept in full: the first frame is usually inside a library, and the line the
   // user needs is the third or fourth. Truncated to a length that survives a support
   // screenshot.
@@ -49,15 +51,14 @@ export function RouteErrorScreen({
         keyboardShouldPersistTaps="handled"
       >
         <View style={[styles.badge, { backgroundColor: theme.colors.dangerSoft }]}>
-          <Text style={[styles.badgeText, { color: theme.colors.danger }]}>SOMETHING BROKE</Text>
+          <Text style={[styles.badgeText, { color: theme.colors.danger }]}>{t('boot.somethingBroke')}</Text>
         </View>
 
         <Text style={[styles.title, { color: theme.colors.text }]}>
-          This screen hit an error
+          {t('boot.screenError')}
         </Text>
         <Text style={[styles.body, { color: theme.colors.textMuted }]}>
-          Your workouts, routines and settings were not affected. You can try the screen
-          again, or go back and carry on elsewhere in the app.
+          {t('misc.routeErrorBody')}
         </Text>
 
         <View style={[styles.messageBox, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
@@ -75,9 +76,9 @@ export function RouteErrorScreen({
         </Text>
 
         <View style={styles.actions}>
-          <Button label="Try again" variant="primary" onPress={onRetry} />
+          <Button label={t('boot.tryAgain')} variant="primary" onPress={onRetry} />
           {onGoHome ? (
-            <Button label="Go to Home" variant="secondary" onPress={onGoHome} />
+            <Button label={t('boot.goToHome')} variant="secondary" onPress={onGoHome} />
           ) : null}
         </View>
       </ScrollView>

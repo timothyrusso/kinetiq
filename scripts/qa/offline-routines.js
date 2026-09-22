@@ -22,7 +22,8 @@
 //     left armed silently poisons every later run, which reads as a broken app.
 
 const {
-  forceEnglishUI,fillField, CWD, sh, sleep, scan, has, open, fail, pressLabel, pressRow, ledger, nodes, visible, scrollTop, hasAnywhere, labels, seek, onExit, clearFaultQuietly, faultArmed,
+  settleForText,
+  armFault, waitFor, forceEnglishUI,fillField, CWD, sh, sleep, scan, has, open, fail, pressLabel, pressRow, ledger, nodes, visible, scrollTop, hasAnywhere, labels, seek, onExit, clearFaultQuietly, faultArmed,
 } = require('./lib');
 
 // English, whatever the device or the user's setting: every assertion below matches English copy.
@@ -98,11 +99,12 @@ if (inProgress) console.log(`   "${inProgress}" is mid-session; starting "${name
 // the third time running. Mount and settle the screen that will be measured, then arm.
 console.log('2. settle the exercise screen, then arm "No connection"');
 open('exercises', 'Exercise');
-sleep(6);
+settleForText('SEARCH EXERCISES', { seconds: 8 });
 open('dev', 'Developer');
-if (!pressRow('No connection', ['Arm', 'Armed'])) fail('could not arm the offline fault');
-// faultSummary() answers with e.g. `Failing the next 3 requests with "offline".` (src/api/devFaults.ts:81)
-if (!hasAnywhere('Failing the next')) fail('arming reported no confirmation: the rest of this run would be meaningless');
+// armFault clears first: the armer is a toggle, so pressing a row that already reads
+// "Armed" disarms it. It also verifies the summary line the app prints, e.g.
+// `Failing the next 3 requests with "offline".` (src/api/devFaults.ts:81)
+if (!armFault('No connection')) fail('could not arm the offline fault');
 console.log('   armed');
 
 // ── 3. Prove the fault is live ─────────────────────────────────────────────
@@ -118,10 +120,7 @@ let cut = false;
 for (let attempt = 1; attempt <= 3 && !cut; attempt++) {
   const probe = `zzz${Math.floor(Math.random() * 90000 + 10000)}`;
   open('dev', 'Developer');
-  if (!pressRow('No connection', ['Arm', 'Armed'])) fail('could not re-arm the offline fault');
-  if (!hasAnywhere('Failing the next')) {
-    fail('arming reported success but the dev screen does not show an armed fault');
-  }
+  if (!armFault('No connection')) fail('could not re-arm the offline fault');
   open('exercises', 'Exercise');
   scrollTop();
   const field = nodes().find((n) => n.type === 'TextField' && visible(n));
@@ -172,7 +171,9 @@ console.log(`   all ${before.length} still listed`);
 // on the bare name hits THAT first: which resumed the workout and left this check reading the
 // session screen, then reporting that the routine detail "does not show its exercise rows".
 // The list row's label is "<name>. <subtitle>", so the period is what distinguishes them.
-if (!pressLabel(`text^="${name}. "`)) fail(`could not open "${name}" offline`);
+if (!pressLabel((n) => (n.label ?? '').trim().startsWith(`${name}. `))) {
+  fail(`could not open "${name}" offline`);
+}
 sleep(3);
 // The sets the user configured can be below the fold on a five-exercise routine, so this
 // reads the whole screen: a viewport-only read would report a healthy routine as broken.
@@ -208,13 +209,39 @@ if (inProgress) {
   open('workout/session', undefined, { soft: true });
   sleep(3);
   if (pressLabel('Discard')) {
-    sleep(2);
+    // Wait for THE CONTROL, not for the sheet around it.
+    //
+    // The sheet arrives in its own window and animates in, so a fixed `sleep(2)` caught the
+    // tree mid-presentation and reported the confirm button missing while a screenshot of
+    // that instant showed it on screen. Waiting on the sheet's TITLE did not fix it either,
+    // and the reason is the useful part: the title enters the tree a beat before the buttons
+    // do, so the wait returned and the press still found nothing. Wait for the thing you are
+    // about to act on, never for its neighbour.
+    waitFor((n) => n.type === 'Button' && (n.label ?? '').trim() === 'Discard workout', {
+      label: 'the discard confirmation button',
+    });
     if (!pressLabel('Discard workout')) fail('the discard confirmation never offered its confirm button');
     sleep(4);
   }
   if (scan().text.includes('in progress.')) {
     fail(`could not clear the "${inProgress}" session, so no workout can be started offline`);
   }
+}
+// Back to the routine EXPLICITLY, rather than assuming the discard left us on it. It does
+// not: discarding calls `router.back()`, and this script reached the session screen by deep
+// link, so back goes to the tab root and lands on Home. The old code then looked for "Start
+// this workout" from there, found the routine screen still mounted BEHIND Home, tapped its
+// coordinates through two screens, and reported the app as having started no session, while
+// the database showed the session it had in fact started. Navigating on purpose costs three
+// seconds and removes the whole class of guess.
+open('workout', 'New routine');
+sleep(2);
+if (!pressLabel((n) => (n.label ?? '').trim().startsWith(`${name}. `))) {
+  fail(`could not re-open "${name}" to start it`);
+}
+sleep(3);
+if (!hasAnywhere('Start this workout')) {
+  fail(`"${name}" did not open its detail screen, so there is nothing to start`);
 }
 if (!pressLabel('Start this workout')) fail('"Start this workout" offline was not pressable');
 sleep(5);
@@ -226,8 +253,25 @@ console.log('   session running offline: sets, rest and progress all present');
 // ── 6. Reconnect: the outage has to clear itself, not linger ───────────────
 console.log('6. clear the fault');
 open('dev', 'Developer');
-if (!pressLabel('Stop injecting')) fail('the armed fault could not be cleared: leaving it armed would poison every later run');
-sleep(1);
+// The button may legitimately be gone, and this script is the reason it is.
+//
+// "No connection" arms 5 requests, and steps 3 to 5 spend them: three forced searches, the
+// routine list, the detail, the session. A fault clears itself when its last request is
+// spent (`devFaults.ts`), and the armer only renders while one is armed, so arriving here
+// with nothing to press is the SUCCESSFUL path, not a failure. Demanding the button turned a
+// completely green offline run into "the fault could not be cleared".
+//
+// What still has to be true is that nothing is armed when this script leaves, because a
+// leftover fault silently poisons every later gate. So: press it if it is there, accept the
+// app's own "no fault armed" line if it is not, and fail only when a fault is still armed
+// with no way to clear it.
+if (pressLabel('Stop injecting', { probe: true })) {
+  sleep(1);
+} else if (faultArmed()) {
+  fail('a fault is still armed but no "Stop injecting" control was reachable: it would poison every later run');
+} else {
+  console.log('   the fault had already spent itself, nothing left armed');
+}
 // Recovery here is not automatic, and that is a decision rather than a gap: onlineManager is
 // wired but nothing invalidates on reconnect (src/query/client.ts), so a query that errored
 // stays errored until the user pulls to refresh or presses Retry. The screen says so out loud

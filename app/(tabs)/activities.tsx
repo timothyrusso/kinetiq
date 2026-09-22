@@ -60,25 +60,31 @@ import { spacing, screenGutter } from '@/theme/tokens';
 import { compactNumber, formatDistance, formatDurationCompact } from '@/utils/format';
 import { toggleInArray } from '@/utils/functional';
 import { useDebouncedValue, useIsSettling } from '@/utils/useDebouncedValue';
+import type { TKey } from '@/i18n';
 
 /** A list row is either a session or a heading above a run of sessions. */
 type RowItem =
   | { type: 'activity'; activity: Activity }
   | { type: 'label'; key: string; text: string; count: number };
 
-const KIND_CHIPS: readonly { kind: ActivityKind; label: string; icon: 'run' | 'bike' | 'dumbbell' | 'walk' | 'yoga' }[] = [
-  { kind: 'run', label: 'Runs', icon: 'run' },
-  { kind: 'ride', label: 'Rides', icon: 'bike' },
-  { kind: 'lift', label: 'Strength', icon: 'dumbbell' },
-  { kind: 'walk', label: 'Walks', icon: 'walk' },
-  { kind: 'yoga', label: 'Yoga', icon: 'yoga' },
+const KIND_CHIPS: readonly {
+  kind: ActivityKind;
+  /** A catalog key: this table is built at import time, where there is no language. */
+  label: TKey;
+  icon: 'run' | 'bike' | 'dumbbell' | 'walk' | 'yoga';
+}[] = [
+  { kind: 'run', label: 'activities.kindRuns', icon: 'run' },
+  { kind: 'ride', label: 'activities.kindRides', icon: 'bike' },
+  { kind: 'lift', label: 'activities.kindStrength', icon: 'dumbbell' },
+  { kind: 'walk', label: 'activities.kindWalks', icon: 'walk' },
+  { kind: 'yoga', label: 'activities.kindYoga', icon: 'yoga' },
 ];
 
-const SORTS: readonly { value: ActivitySort; label: string }[] = [
-  { value: 'recent', label: 'Recent' },
-  { value: 'duration', label: 'Longest' },
-  { value: 'distance', label: 'Furthest' },
-  { value: 'volume', label: 'Heaviest' },
+const SORTS: readonly { value: ActivitySort; label: TKey }[] = [
+  { value: 'recent', label: 'activities.sortRecent' },
+  { value: 'duration', label: 'activities.sortLongest' },
+  { value: 'distance', label: 'activities.sortFurthest' },
+  { value: 'volume', label: 'activities.sortHeaviest' },
 ];
 
 /** Clearance for the floating tab bar. */
@@ -98,6 +104,13 @@ export default function ActivitiesScreen() {
   const [search, setSearch] = useState('');
   const [kinds, setKinds] = useState<ActivityKind[]>([]);
   const [sort, setSort] = useState<ActivitySort>('recent');
+  // Segment labels are catalog keys in the table above; resolved here, memoised on `t` so a
+  // new array does not defeat SegmentedControl's memo on every unrelated re-render.
+  const sortSegments = useMemo(
+    () => SORTS.map((o) => ({ value: o.value, label: t(o.label) })),
+    [t],
+  );
+
   const [pendingDelete, setPendingDelete] = useState<Activity | null>(null);
 
   const debouncedSearch = useDebouncedValue(search);
@@ -179,7 +192,7 @@ export default function ActivitiesScreen() {
   }, [pendingDelete, removeActivity]);
 
   const summaryLine = useMemo(() => {
-    if (list.isLoading || list.flat.length === 0) return 'Every session you finish lands here';
+    if (list.isLoading || list.flat.length === 0) return t('states.everySessionLands');
     const parts = [
       `${list.flat.length} ${list.flat.length === 1 ? 'session' : 'sessions'}`,
       formatDurationCompact(list.totals.durationSeconds),
@@ -189,7 +202,7 @@ export default function ActivitiesScreen() {
     }
     if (list.totals.volumeKg > 0) parts.push(`${compactNumber(list.totals.volumeKg)} kg`);
     return parts.join(' · ');
-  }, [list.flat.length, list.isLoading, list.totals, units]);
+  }, [list.flat.length, list.isLoading, list.totals, t, units]);
 
   const listHeader = (
     <>
@@ -201,21 +214,21 @@ export default function ActivitiesScreen() {
 
       <View style={styles.filters}>
         <TextField
-          label="Search"
+          label={t('activityList.search')}
           value={search}
           onChangeText={setSearch}
           placeholder={t('activities.searchPlaceholder')}
           autoCorrect={false}
           returnKeyType="search"
-          accessibilityLabel="Search activities"
-          {...(settling ? { hint: 'Searching…' } : {})}
+          accessibilityLabel={t('activityList.searchA11y')}
+          {...(settling ? { hint: t('exerciseList.searching') } : {})}
         />
 
         <View style={styles.chips}>
           {KIND_CHIPS.map((chip) => (
             <Chip
               key={chip.kind}
-              label={chip.label}
+              label={t(chip.label)}
               icon={chip.icon}
               size="sm"
               selected={kinds.includes(chip.kind)}
@@ -226,14 +239,14 @@ export default function ActivitiesScreen() {
 
         <Row gap="md" align="center">
           <View style={{ flex: 1, minWidth: 0 }}>
-            <SegmentedControl segments={SORTS} value={sort} onChange={setSort} />
+            <SegmentedControl segments={sortSegments} value={sort} onChange={setSort} />
           </View>
-          {filtering ? <Button label="Clear" variant="quiet" size="sm" onPress={clearFilters} /> : null}
+          {filtering ? <Button label={t('common.clear')} variant="quiet" size="sm" onPress={clearFilters} /> : null}
         </Row>
 
         {online ? null : (
           <Txt variant="caption" tone="muted">
-            Offline: your history is stored on this device, so everything below is intact.
+            {t('activityList.offlineNote')}
           </Txt>
         )}
       </View>
@@ -271,21 +284,21 @@ export default function ActivitiesScreen() {
               <SkeletonList rows={6} />
             </View>
           ) : list.error ? (
-            <ErrorState error={list.error} onRetry={() => void list.refresh()} title="Could not read your history" />
+            <ErrorState error={list.error} onRetry={() => void list.refresh()} title={t('activityList.historyError')} />
           ) : filtering ? (
             <EmptyState
-              title="Nothing matches"
-              message="No session fits those filters. Try widening the search or clearing a type."
+              title={t('activityList.noMatchTitle')}
+              message={t('activityList.noMatchMessage')}
               icon="search"
-              actionLabel="Clear filters"
+              actionLabel={t('activityList.clearFilters')}
               onAction={clearFilters}
             />
           ) : (
             <EmptyState
-              title="No activities yet"
-              message="Finish a workout or record a run and it lands here: route, splits, every set."
+              title={t('activityList.emptyTitle')}
+              message={t('activityList.emptyMessage')}
               icon="activities"
-              actionLabel="Start a workout"
+              actionLabel={t('activityList.startWorkout')}
               // A `replace`, not a push: this is a tab, and pushing it would stack a second
               // copy of the tab bar on the one the user is standing on.
               onAction={() => router.replace(routes.workoutTab())}
@@ -297,7 +310,7 @@ export default function ActivitiesScreen() {
 
       {pendingDelete ? (
         <ConfirmSheet
-          title="Delete this session?"
+          title={t('activityList.deleteTitle')}
           message={`"${pendingDelete.title}" and its route will be removed. Personal records it set are recalculated from what remains.`}
           confirmLabel={removeActivity.isPending ? 'Deleting…' : 'Delete'}
           onConfirm={confirmDelete}
@@ -310,7 +323,7 @@ export default function ActivitiesScreen() {
                 error:
                   removeActivity.error instanceof Error
                     ? removeActivity.error.message
-                    : 'The session could not be deleted.',
+                    : t('activity.deleteFailed'),
               }
             : {})}
         />

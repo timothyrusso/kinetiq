@@ -60,12 +60,14 @@ import { useRoutines } from '@/queries/useRoutines';
 import { useAppTheme } from '@/theme/theme';
 import { spacing, screenGutter } from '@/theme/tokens';
 import { haptics } from '@/services/haptics';
+import { useT } from '@/i18n/useT';
+import type { TKey } from '@/i18n';
 import {
-  countNoun,
 } from '@/utils/format';
 
 
 export default function SettingsAboutScreen() {
+  const { t } = useT();
   const bottomSpace = useScreenContentBottom();
   const queryClient = useQueryClient();
 
@@ -109,7 +111,7 @@ export default function SettingsAboutScreen() {
   }, [queryClient]);
 
   return (
-    <DetailScreen title="About">
+    <DetailScreen title={t('about.title')} largeTitle>
       {(topInset) => (
         <>
         <ScrollView
@@ -117,45 +119,48 @@ export default function SettingsAboutScreen() {
             styles.content,
             { paddingTop: topInset + spacing.md, paddingBottom: bottomSpace },
           ]}
+          // `automatic`, so iOS owns the inset under the large title and can collapse it as
+          // this view scrolls. Without it the title stays large forever and the screen looks
+          // like a native header that does not work.
+          contentInsetAdjustmentBehavior="automatic"
           keyboardShouldPersistTaps="handled"
         >
           <Stack gap="xxl" style={styles.body}>
             {/* --------------------------------------------------------- build */}
             <View>
-              <SectionHeader title="Kinetiq" eyebrow="Training tracker" />
+              <SectionHeader title="Kinetiq" eyebrow={t('about.appEyebrow')} />
               <Card padding="md">
-                <Fact label="Version" value={version ?? 'unknown'} />
-                <Fact label="App ID" value={appId ?? 'unknown'} hint="Worth quoting if something breaks." />
-                <Fact label="Database schema" value={`v${schema}`} last />
+                <Fact label={t('about.version')} value={version ?? t('about.unknown')} />
+                <Fact
+                  label={t('about.appId')}
+                  value={appId ?? t('about.unknown')}
+                  hint={t('about.appIdHint')}
+                />
+                <Fact label={t('about.schema')} value={`v${schema}`} last />
               </Card>
               <Txt variant="micro" tone="faint" style={styles.footnote}>
-                Everything is stored on this device. Kinetiq has no account, no sign-in, and no
-                server of its own.
+                {t('about.storageNote')}
               </Txt>
             </View>
 
             {/* -------------------------------------------------------- catalog */}
             <View>
-              <SectionHeader title="Exercise catalog" eyebrow="Served remotely" />
+              <SectionHeader title={t('about.catalog')} eyebrow={t('about.servedRemotely')} />
               <Card>
                 <Stack gap="md">
                   <Txt variant="strong">
                     {LABELLED_PROVIDERS[provider.name] ?? provider.name}
                   </Txt>
                   <Txt variant="caption" tone="muted">
-                    The exercise library: search, photos, muscles and equipment: is served by
-                    an external catalog, live.
+                    {t('about.catalogNote')}
                   </Txt>
                   <Divider inset={0} />
                   <Txt variant="caption" tone="muted">
-                    Your own data never depends on it. Every exercise you add to a routine is
-                    stored as a local snapshot, so routines and history keep working when the
-                    catalog is offline, rate-limited, or gone.
+                    {t('about.localNote')}
                   </Txt>
                   {provider.supportsOffline ? null : (
                     <Txt variant="micro" tone="faint">
-                      Browsing for new exercises needs a connection. Using the ones you saved
-                      does not.
+                      {t('about.needsConnection')}
                     </Txt>
                   )}
                 </Stack>
@@ -165,20 +170,20 @@ export default function SettingsAboutScreen() {
             {/* ------------------------------------------------------ your data */}
             <View>
               <SectionHeader
-                title="On this device"
+                title={t('about.onThisDevice')}
                 eyebrow={
                   activityList.isLoading
                     ? undefined
-                    : countNoun(activityCount, 'activity', 'activities')
+                    : t('about.activityCount', { count: activityCount })
                 }
               />
               <Card padding="md">
                 {activityList.isLoading ? (
-                  <Fact label="Activities" value="counting…" last />
+                  <Fact label={t('about.activities')} value={t('about.counting')} last />
                 ) : activityCount === 0 ? (
                   <View style={styles.empty}>
                     <Txt variant="caption" tone="muted">
-                      Nothing stored yet.
+                      {t('about.nothingStored')}
                     </Txt>
                   </View>
                 ) : (
@@ -193,20 +198,23 @@ export default function SettingsAboutScreen() {
                 )}
                 <Divider inset={0} />
                 <Fact
-                  label="Routines"
-                  value={routinesLoading ? 'counting…' : String(routines.length)}
-                  hint="Each carries its own exercise snapshots."
+                  label={t('about.routines')}
+                  value={routinesLoading ? t('about.counting') : String(routines.length)}
+                  hint={t('about.routinesHint')}
                 />
-                <Fact label="Units" value={unitSystem === 'metric' ? 'Metric' : 'Imperial'} />
                 <Fact
-                  label="Appearance"
-                  value={
+                  label={t('about.units')}
+                  value={t(unitSystem === 'metric' ? 'settings.metric' : 'settings.imperial')}
+                />
+                <Fact
+                  label={t('about.appearance')}
+                  value={t(
                     themeMode === 'system'
-                      ? 'Match the system'
+                      ? 'about.matchSystem'
                       : themeMode === 'light'
-                        ? 'Light'
-                        : 'Dark'
-                  }
+                        ? 'settings.light'
+                        : 'settings.dark',
+                  )}
                   last
                 />
               </Card>
@@ -219,11 +227,11 @@ export default function SettingsAboutScreen() {
                 a row that leads to a blank screen is worse than no row. */}
             {__DEV__ ? (
               <View>
-                <SectionHeader title="Developer" eyebrow="This build only" />
+                <SectionHeader title={t('about.developer')} eyebrow={t('about.thisBuildOnly')} />
                 <Card padding="md">
                   <NavRow
-                    title="Fault injection"
-                    subtitle="Fail, slow or stall a request, and count what the app then sends"
+                    title={t('about.faultInjection')}
+                    subtitle={t('about.faultSubtitle')}
                     icon="bolt"
                     topDivider={false}
                     theme={theme}
@@ -235,21 +243,22 @@ export default function SettingsAboutScreen() {
 
             {/* ---------------------------------------------------------- reset */}
             <View>
-              <SectionHeader title="Reset" eyebrow="Cannot be undone" />
+              <SectionHeader title={t('about.reset')} eyebrow={t('about.cannotUndo')} />
               <Card>
                 <View style={styles.resetRow}>
                   <Stack gap="xxs" style={{ flex: 1 }}>
-                    <Txt variant="strong">Erase all Kinetiq data</Txt>
+                    <Txt variant="strong">{t('about.eraseAll')}</Txt>
                     <Txt variant="caption" tone="muted">
-                      {countNoun(activityCount, 'activity', 'activities')} ·{' '}
-                      {countNoun(routines.length, 'routine')} · settings
+                      {t('about.activityCount', { count: activityCount })} ·{' '}
+                      {t('about.routineCount', { count: routines.length })} ·{' '}
+                      {t('about.settingsWord')}
                     </Txt>
                   </Stack>
                   <IconButton
                     name="trash"
                     variant="surface"
-                    accessibilityLabel="Erase all Kinetiq data"
-                    accessibilityHint="Deletes history and routines after asking first"
+                    accessibilityLabel={t('about.eraseAll')}
+                    accessibilityHint={t('about.eraseHint')}
                     onPress={() => {
                       haptics.warning();
                       setConfirming(true);
@@ -259,29 +268,25 @@ export default function SettingsAboutScreen() {
                 <Divider inset={0} />
                 <View style={styles.resetNote}>
                   <Txt variant="micro" tone="faint">
-                    Saved exercises came from the catalog and can be downloaded again. Nothing
-                    is uploaded anywhere, so there is no account to close and nothing sitting on
-                    someone else's server to delete.
+                    {t('about.eraseNote')}
                   </Txt>
                 </View>
               </Card>
             </View>
 
             <Txt variant="micro" tone="faint" align="center">
-              Built with React Native and Expo.
+              {t('about.builtWith')}
             </Txt>
           </Stack>
         </ScrollView>
         {confirming ? (
         <ConfirmSheet
-          title="Erase everything?"
-          message={
-            `${countNoun(activityCount, 'activity', 'activities')} and ` +
-            `${countNoun(routines.length, 'routine')} will be deleted from this device, along ` +
-            'with your units, appearance, goal and reminder settings. You will be left with an ' +
-            'empty app: nothing is re-added unless you ask for it below.'
-          }
-          confirmLabel={erasing ? 'Erasing…' : 'Erase everything'}
+          title={t('about.eraseTitle')}
+          message={t('about.eraseMessage', {
+            activities: t('about.activityCount', { count: activityCount }),
+            routines: t('about.routineCount', { count: routines.length }),
+          })}
+          confirmLabel={t(erasing ? 'about.erasing' : 'about.eraseConfirm')}
           onConfirm={() => {
             if (erasing) return;
             void erase();
@@ -292,7 +297,7 @@ export default function SettingsAboutScreen() {
             if (erasing) return;
             setConfirming(false);
           }}
-          cancelLabel="Keep my data"
+          cancelLabel={t('about.keepMyData')}
         />
       ) : null}
         </>
@@ -340,6 +345,7 @@ function Fact({
 }
 
 function KindRow({ kind, count, first }: { kind: ActivityKind; count: number; first: boolean }) {
+  const { t } = useT();
   const theme = useAppTheme();
   return (
     <View style={styles.fact}>
@@ -348,7 +354,7 @@ function KindRow({ kind, count, first }: { kind: ActivityKind; count: number; fi
         <View style={styles.kindLeft}>
           <Icon name={ACTIVITY_ICON[kind]} size={18} color={theme.colors.textMuted} />
           <Txt variant="body" tone="muted" style={{ marginLeft: spacing.sm }}>
-            {KIND_NAMES[kind]}
+            {t(KIND_NAMES[kind])}
           </Txt>
         </View>
         <Txt variant="numeralSm">{count}</Txt>
@@ -391,12 +397,13 @@ function tally(activities: readonly { kind: ActivityKind }[]): Record<ActivityKi
   return out;
 }
 
-const KIND_NAMES: Record<ActivityKind, string> = {
-  run: 'Runs',
-  ride: 'Rides',
-  lift: 'Strength sessions',
-  walk: 'Walks',
-  yoga: 'Yoga',
+/** Catalog keys, not words: this is module scope, where there is no language yet. */
+const KIND_NAMES: Record<ActivityKind, TKey> = {
+  run: 'about.kindRuns',
+  ride: 'about.kindRides',
+  lift: 'about.kindLift',
+  walk: 'about.kindWalks',
+  yoga: 'about.kindYoga',
 };
 
 /**

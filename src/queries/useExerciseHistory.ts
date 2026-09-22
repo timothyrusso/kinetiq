@@ -37,6 +37,7 @@ import { estimatedOneRepMax, setVolumeKg } from '@/domain/logic';
 import type { UnitSystem } from '@/utils/format';
 import { formatWeight } from '@/utils/format';
 import { sum } from '@/utils/functional';
+import type { TKey } from '@/i18n';
 
 /** Per-session rollup of one exercise, newest first. */
 export type ExercisePerformance = {
@@ -93,10 +94,20 @@ const EMPTY_HISTORY: ExerciseHistory = {
  * held *for that exercise*: and a user comparing the two should never see the same record
  * called two different things.
  */
-export const RECORD_LABEL: Record<PersonalRecordKind, string> = {
-  est1rm: 'Heaviest single estimated',
-  volume: 'Most volume in one exercise',
-  maxReps: 'Most reps in one set',
+/**
+ * Record wording, as catalog KEYS.
+ *
+ * Keys rather than words because this is module scope: there is no language here, and a map
+ * of English strings built at import time is a map that cannot be translated. Each of the
+ * three screens that shows a record already has a `t`, so the lookup belongs there.
+ *
+ * "Most volume" rather than "Most volume in one exercise": the label shares a row with the
+ * value on a 402pt screen and the longer phrase truncated to "Most volume in one exercis…".
+ */
+export const RECORD_LABEL: Record<PersonalRecordKind, TKey> = {
+  est1rm: 'records.est1rm',
+  volume: 'records.volume',
+  maxReps: 'records.maxReps',
 };
 
 /** A record's value with its own unit: rep records are reps, everything else is weight. */

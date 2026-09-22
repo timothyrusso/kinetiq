@@ -27,8 +27,10 @@ import { Button } from '@/ui/Button';
 import { Txt } from '@/ui/Text';
 import { spacing } from '@/theme/tokens';
 import { TAB_ROUTES, TAB_LABELS, tabHref } from '@/navigation/nav';
+import { useT } from '@/i18n/useT';
 
 export default function NotFoundScreen() {
+  const { t } = useT();
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
 
@@ -40,14 +42,13 @@ export default function NotFoundScreen() {
       <View style={{ flex: 1 }} />
       <View style={[styles.content, { paddingBottom: insets.bottom + spacing.huge }]}>
         <Txt variant="micro" tone="faint" align="center" uppercase tracking={1.4}>
-          Not found
+          {t('boot.notFound')}
         </Txt>
         <Txt variant="title" weight="700" align="center" style={{ marginTop: spacing.sm }}>
-          There is no screen here
+          {t('boot.noScreenHere')}
         </Txt>
         <Txt variant="body" tone="muted" align="center" style={{ marginTop: spacing.md }}>
-          The link you followed points somewhere this app does not have. Your routines,
-          history and settings are untouched.
+          {t('misc.notFoundBody')}
         </Txt>
         {typeof pathname === 'string' && pathname.length > 0 ? (
           <Txt variant="monoSm" tone="faint" align="center" style={{ marginTop: spacing.md }}>
@@ -59,7 +60,7 @@ export default function NotFoundScreen() {
           {/* `replace`, not `push`: a user who arrived by deep link should not be left with a
               stack whose only other entry is this screen. */}
           <Button
-            label="Go to Home"
+            label={t('boot.goToHome')}
             variant="primary"
             fullWidth
             icon="home"
@@ -68,7 +69,7 @@ export default function NotFoundScreen() {
           {/* Only offered when there is somewhere to go: a back button that silently no-ops
               reads as a second bug on top of the first. */}
           {router.canGoBack() ? (
-            <Button label="Go back" variant="secondary" fullWidth onPress={() => router.back()} />
+            <Button label={t('common.back')} variant="secondary" fullWidth onPress={() => router.back()} />
           ) : null}
         </Column>
 
@@ -83,7 +84,7 @@ export default function NotFoundScreen() {
               onPress={() => router.replace(tabHref(index))}
               accessibilityRole="link"
             >
-              {TAB_LABELS[key]}
+              {t(TAB_LABELS[key])}
             </Txt>
           ))}
         </View>

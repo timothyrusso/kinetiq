@@ -27,6 +27,8 @@ import type { ActivityKind } from '@/domain/types';
 import { ACTIVITY_ICON } from '../rows';
 import { Icon } from '../icons';
 import { arcPath, sweepTo } from './geometry';
+import { tr } from '@/i18n/tr';
+import { useT } from '@/i18n/useT';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 /** Kinds drawn individually; anything beyond this is summed into "Other". */
@@ -49,7 +51,7 @@ export const ActivityDistribution = memo(function ActivityDistribution({
   centerSublabel,
   showLegend = true,
   animate = true,
-  emptyLabel = 'No sessions in this range',
+  emptyLabel,
   style,
 }: {
   slices: DistributionSlice[];
@@ -65,6 +67,7 @@ export const ActivityDistribution = memo(function ActivityDistribution({
   emptyLabel?: string;
   style?: StyleProp<ViewStyle>;
 }) {
+  const { t } = useT();
   const reduced = useReducedMotion();
 
   // Zero and negative values are dropped here rather than trusted from the caller: one
@@ -113,7 +116,7 @@ export const ActivityDistribution = memo(function ActivityDistribution({
             textAlign: 'center',
           }}
         >
-          {emptyLabel}
+          {emptyLabel ?? t('distribution.empty')}
         </Text>
       </View>
     );
@@ -199,9 +202,11 @@ export const ActivityDistribution = memo(function ActivityDistribution({
         // data rather than "pie chart, 5 slices".
         <View
           accessibilityRole="summary"
-          accessibilityLabel={`Training distribution: ${drawn
-            .map((d) => `${labelFor(d.kind)} ${Math.round(d.share * 100)}%`)
-            .join(', ')}`}
+          accessibilityLabel={t('distribution.a11y', {
+            breakdown: drawn
+              .map((d) => `${labelFor(d.kind)} ${Math.round(d.share * 100)}%`)
+              .join(', '),
+          })}
           style={{ flex: 1, gap: spacing.sm }}
         >
           {drawn.map((slice, i) => (
@@ -321,20 +326,28 @@ function colorFor(kind: ActivityKind | 'other', theme: Theme): string {
   return kind === 'other' ? theme.colors.textFaint : theme.colors.tone[kind];
 }
 
+/**
+ * Slice names, from the catalog.
+ *
+ * A `switch` returning English words is invisible to both copy scanners: it has no JSX text
+ * and no `label=` prop, which is how this one survived a pass that reported every screen
+ * translated. `tr` rather than a `t` parameter because the legend renders inside a memoised
+ * component that takes its data, not its wording, from the caller.
+ */
 function labelFor(kind: ActivityKind | 'other'): string {
   switch (kind) {
     case 'run':
-      return 'Running';
+      return tr('distribution.running');
     case 'ride':
-      return 'Cycling';
+      return tr('distribution.cycling');
     case 'lift':
-      return 'Strength';
+      return tr('distribution.strength');
     case 'walk':
-      return 'Walking';
+      return tr('distribution.walking');
     case 'yoga':
-      return 'Yoga';
+      return tr('distribution.yoga');
     case 'other':
-      return 'Other';
+      return tr('distribution.other');
   }
 }
 

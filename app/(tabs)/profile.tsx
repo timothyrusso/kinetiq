@@ -23,6 +23,7 @@
  * would just be a second place to be out of date.
  */
 import { useMemo } from 'react';
+import type { TKey, TVars } from '@/i18n';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTabContentBottom } from '@/ui/insets';
@@ -31,7 +32,7 @@ import { Icon } from '@/ui/icons';
 import { BarAction, CollapsibleHeader, CollapsibleHero, useScreenHeaderScroll } from '@/ui/Screen';
 import { Avatar, NavRow } from '@/ui/rows';
 import { Badge, Card, MetricGrid, Row, SectionHeader } from '@/ui/layout';
-import { SegmentedControl, type Segment } from '@/ui/controls';
+import { SegmentedControl } from '@/ui/controls';
 import { useT } from '@/i18n/useT';
 import type { Language } from '@/i18n';
 import { IconButton } from '@/ui/Button';
@@ -46,16 +47,21 @@ import { spacing, screenGutter } from '@/theme/tokens';
 import {
   formatDistance,
   formatDurationCompact,
-  pluralWord,
 } from '@/utils/format';
 import type { UnitSystem } from '@/utils/format';
 import type { ThemeMode } from '@/settings';
 
 
-const THEME_OPTIONS: readonly Segment<ThemeMode>[] = [
-  { value: 'system', label: 'System' },
-  { value: 'light', label: 'Light' },
-  { value: 'dark', label: 'Dark' },
+/**
+ * Segment copy as catalog KEYS, resolved in the component.
+ *
+ * These live at module scope, where there is no language: a `label: 'System'` built at import
+ * time is a label that stays English when the user picks Italian.
+ */
+const THEME_OPTIONS: readonly { value: ThemeMode; label: TKey }[] = [
+  { value: 'system', label: 'common.system' },
+  { value: 'light', label: 'settings.light' },
+  { value: 'dark', label: 'settings.dark' },
 ];
 
 /**
@@ -63,15 +69,15 @@ const THEME_OPTIONS: readonly Segment<ThemeMode>[] = [
  * names are each written IN their own language: someone who has the app in a language they
  * cannot read still has to find their own.
  */
-const LANGUAGE_OPTIONS: readonly Segment<Language>[] = [
-  { value: 'system', label: 'System' },
-  { value: 'en', label: 'English' },
-  { value: 'it', label: 'Italiano' },
+const LANGUAGE_OPTIONS: readonly { value: Language; label: TKey }[] = [
+  { value: 'system', label: 'common.system' },
+  { value: 'en', label: 'settings.english' },
+  { value: 'it', label: 'settings.italian' },
 ] as const;
 
-const UNIT_OPTIONS: readonly Segment<UnitSystem>[] = [
-  { value: 'metric', label: 'Metric' },
-  { value: 'imperial', label: 'Imperial' },
+const UNIT_OPTIONS: readonly { value: UnitSystem; label: TKey }[] = [
+  { value: 'metric', label: 'settings.metric' },
+  { value: 'imperial', label: 'settings.imperial' },
 ];
 
 export default function ProfileScreen() {
@@ -87,6 +93,22 @@ export default function ProfileScreen() {
   const themeMode = useSettings((s) => s.themeMode);
   const language = useSettings((s) => s.language);
   const { t } = useT();
+
+  // Segment labels are catalog KEYS in the tables above, resolved here and memoised on `t`:
+  // a fresh array every render would defeat `SegmentedControl`'s own memo, and this screen
+  // re-renders on every settings change.
+  const unitSegments = useMemo(
+    () => UNIT_OPTIONS.map((o) => ({ value: o.value, label: t(o.label) })),
+    [t],
+  );
+  const themeSegments = useMemo(
+    () => THEME_OPTIONS.map((o) => ({ value: o.value, label: t(o.label) })),
+    [t],
+  );
+  const languageSegments = useMemo(
+    () => LANGUAGE_OPTIONS.map((o) => ({ value: o.value, label: t(o.label) })),
+    [t],
+  );
   const weeklyGoal = useSettings((s) => s.weeklyGoalWorkouts);
   const hapticsEnabled = useSettings((s) => s.hapticsEnabled);
   const update = useSettingsUpdate();
@@ -107,11 +129,11 @@ export default function ProfileScreen() {
     <View style={styles.root}>
       <CollapsibleHeader
         header={header}
-        title="Profile"
+        title={t('profile.title')}
         right={
           <BarAction
             icon="settings"
-            label="Settings"
+            label={t('profileScreen.settings')}
             onPress={() => router.push(routes.settings())}
           />
         }
@@ -123,15 +145,19 @@ export default function ProfileScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: bottomSpace }]}
         keyboardShouldPersistTaps="handled"
       >
-        <CollapsibleHero header={header} eyebrow={t('profile.eyebrow')} title={name || 'Athlete'}>
+        <CollapsibleHero header={header} eyebrow={t('profile.eyebrow')} title={name || t('profileScreen.athlete')}>
           <Row gap="md" align="center">
             <Avatar name={name} theme={theme} size={62} />
             <Stack gap="xxs" style={{ flex: 1, minWidth: 0 }}>
               <Txt variant="caption" tone="muted">
-                {heightCm} cm · {age} {pluralWord(age, 'year', 'years')} old
+                {t('profileScreen.ageLine', {
+                  height: heightCm,
+                  age,
+                  word: t('profileScreen.yearWord', { count: age }),
+                })}
               </Txt>
               <Txt variant="caption" tone="faint">
-                {summary.isPending ? 'Loading history…' : trainingSince(summary.data)}
+                {summary.isPending ? t('profileScreen.loadingHistory') : trainingSince(summary.data, t)}
               </Txt>
             </Stack>
           </Row>
@@ -146,20 +172,29 @@ export default function ProfileScreen() {
                 theme={theme}
                 size={86}
                 label={`${thisWeek?.workouts ?? 0}/${weeklyGoal}`}
-                sublabel="this week"
+                sublabel={t('profileScreen.thisWeekLabel')}
               />
               <Stack gap="xs" style={{ flex: 1, minWidth: 0 }}>
-                <Txt variant="subhead">{goalHeadline(thisWeek?.workouts ?? 0, weeklyGoal)}</Txt>
+                <Txt variant="subhead">
+                  {t(goalHeadline(thisWeek?.workouts ?? 0, weeklyGoal))}
+                </Txt>
                 <Txt variant="caption" tone="muted">
                   {thisWeek === undefined
-                    ? 'Reading your history…'
+                    ? t('profileScreen.readingHistory')
                     : thisWeek.workouts >= weeklyGoal
-                      ? `Goal met with ${countSessions(thisWeek.workouts - weeklyGoal)} to spare.`
-                      : `${countSessions(weeklyGoal - thisWeek.workouts)} left to hit your weekly goal.`}
+                      ? t('profileScreen.goalSpare', {
+                          phrase: countSessions(thisWeek.workouts - weeklyGoal, t),
+                        })
+                      : t('profileScreen.goalLeftText', {
+                          phrase: countSessions(weeklyGoal - thisWeek.workouts, t),
+                        })}
                 </Txt>
                 {summary.data !== undefined && summary.data.bestStreak > 0 ? (
                   <Badge
-                    label={`Best streak ${summary.data.bestStreak} ${pluralWord(summary.data.bestStreak, 'day', 'days')}`}
+                    label={t('profileScreen.bestStreak', {
+                      count: summary.data.bestStreak,
+                      word: t('profileScreen.dayWord', { count: summary.data.bestStreak }),
+                    })}
                     tone="warning"
                     icon={<Icon name="flame" size={12} color={theme.colors.warning} />}
                   />
@@ -170,21 +205,29 @@ export default function ProfileScreen() {
 
           <Card>
             <MetricGrid columns={2}>
-              <Stat label="Sessions" value={formatNumber(totals?.workouts)} note="last 4 weeks" />
               <Stat
-                label="Time"
+                label={t('profileScreen.sessions')}
+                value={formatNumber(totals?.workouts)}
+                note={t('profileScreen.lastFourWeeks')}
+              />
+              <Stat
+                label={t('profileScreen.time')}
                 value={totals === undefined ? '-' : formatDurationCompact(totals.durationSeconds)}
-                note="last 4 weeks"
+                note={t('profileScreen.lastFourWeeks')}
               />
               <Stat
-                label="Distance"
-                value={totals === undefined ? '-' : formatDistance(totals.distanceMeters, unitSystem, 1)}
-                note="run, ride, walk"
+                label={t('profileScreen.distance')}
+                value={
+                  totals === undefined
+                    ? '-'
+                    : formatDistance(totals.distanceMeters, unitSystem, 1)
+                }
+                note={t('profileScreen.runRideWalk')}
               />
               <Stat
-                label="Volume"
+                label={t('profileScreen.volume')}
                 value={totals === undefined ? '-' : `${Math.round(totals.volumeKg / 1000)} t`}
-                note="lifted"
+                note={t('profileScreen.lifted')}
               />
             </MetricGrid>
           </Card>
@@ -193,88 +236,98 @@ export default function ProfileScreen() {
           <SectionHeader title={t('profile.preferences')} />
           <Card padding="md">
             <Stack gap="lg">
-              <Preference label={t('profile.units')} hint="Affects every distance, weight and pace in the app.">
+              <Preference label={t('profile.units')} hint={t('profileScreen.unitsHint')}>
                 <SegmentedControl
-                  segments={UNIT_OPTIONS}
+                  segments={unitSegments}
                   value={unitSystem}
                   onChange={(next) => update({ unitSystem: next })}
                 />
               </Preference>
-              <Preference label={t('profile.appearance')} hint="Dark mode is a designed palette, not inverted colours.">
+              <Preference
+                label={t('profile.appearance')}
+                hint={t('profileScreen.appearanceHint')}
+              >
                 <SegmentedControl
-                  segments={THEME_OPTIONS}
+                  segments={themeSegments}
                   value={themeMode}
                   onChange={(next) => update({ themeMode: next })}
                 />
               </Preference>
               <Preference label={t('profile.language')} hint={t('settings.languageHint')}>
                 <SegmentedControl
-                  segments={LANGUAGE_OPTIONS}
+                  segments={languageSegments}
                   value={language}
                   onChange={(next) => update({ language: next })}
                 />
               </Preference>
-              <Preference label={t('profile.weeklyGoal')} hint={`${weeklyGoal} ${pluralWord(weeklyGoal, 'session', 'sessions')} a week.`}>
-                <GoalStepper value={weeklyGoal} onChange={(next) => update({ weeklyGoalWorkouts: next })} />
+              <Preference label={t('profile.weeklyGoal')} hint={t('profileScreen.goalHint')}>
+                <GoalStepper
+                  value={weeklyGoal}
+                  onChange={(next) => update({ weeklyGoalWorkouts: next })}
+                />
               </Preference>
             </Stack>
           </Card>
 
           {/* ---- Everything else --------------------------------------------- */}
-          <SectionHeader title="Training" />
+          <SectionHeader title={t('profileScreen.training')} />
           <Card padding="xxs">
             <NavRow
-              title="Progress & records"
-              subtitle="Volume, frequency, distance, personal records"
+              title={t('profileScreen.progressTitle')}
+              subtitle={t('profileScreen.progressSubtitle')}
               theme={theme}
               icon="trendUp"
               topDivider={false}
               onPress={() => router.push(routes.progress())}
             />
             <NavRow
-              title="All activities"
-              subtitle="Every session you have logged"
+              title={t('profileScreen.allActivities')}
+              subtitle={t('profileScreen.allActivitiesSubtitle')}
               theme={theme}
               icon="activities"
               showChevron={false}
               onPress={() => router.push(routes.workoutHistory())}
             />
             <NavRow
-              title="Start a cardio session"
-              subtitle="Run, ride or walk with GPS route tracking"
+              title={t('profileScreen.startCardio')}
+              subtitle={t('profileScreen.startCardioSubtitle')}
               theme={theme}
               icon="route"
               onPress={() => router.push(routes.cardio())}
             />
           </Card>
 
-          <SectionHeader title="App" />
+          <SectionHeader title={t('profileScreen.app')} />
           <Card padding="xxs">
             <NavRow
-              title="Training preferences"
-              subtitle="Default rest, auto-start, speed vs. pace"
+              title={t('profileScreen.trainingPrefs')}
+              subtitle={t('profileScreen.trainingPrefsSubtitle')}
               theme={theme}
               icon="target"
               topDivider={false}
               onPress={() => router.push(routes.settingsTraining())}
             />
             <NavRow
-              title="Notifications"
-              subtitle={notificationsSubtitle(hapticsEnabled)}
+              title={t('profileScreen.notifications')}
+              subtitle={t('profileScreen.notificationsSubtitle', {
+                haptics: t(
+                  hapticsEnabled ? 'profileScreen.hapticsOn' : 'profileScreen.hapticsOff',
+                ),
+              })}
               theme={theme}
               icon="bell"
               onPress={() => router.push(routes.settingsNotifications())}
             />
             <NavRow
-              title="Permissions"
-              subtitle="Location, notifications, motion"
+              title={t('profileScreen.permissions')}
+              subtitle={t('profileScreen.permissionsSubtitle')}
               theme={theme}
               icon="lock"
               onPress={() => router.push(routes.permissions())}
             />
             <NavRow
-              title="About Kinetiq"
-              subtitle="Version, data, the exercise catalog"
+              title={t('profileScreen.aboutTitle')}
+              subtitle={t('profileScreen.aboutSubtitle')}
               theme={theme}
               icon="info"
               showChevron={false}
@@ -286,7 +339,7 @@ export default function ProfileScreen() {
             <Divider inset={spacing.sm} />
           </View>
           <Txt variant="micro" tone="faint" align="center" style={{ marginTop: spacing.md }}>
-            Routines, history and settings live on this device. Only exercise search leaves it.
+            {t('profileScreen.privacyNote')}
           </Txt>
         </View>
       </ScrollView>
@@ -357,13 +410,14 @@ function Preference({
  * sixteen positions is a slider that cannot be set precisely by thumb.
  */
 function GoalStepper({ value, onChange }: { value: number; onChange: (next: number) => void }) {
+  const { t } = useT();
   const theme = useAppTheme();
   return (
     <Row gap="md" align="center">
       <IconButton
         name="minus"
         variant="surface"
-        accessibilityLabel="Decrease weekly goal"
+        accessibilityLabel={t('profileScreen.decreaseGoal')}
         disabled={value <= 1}
         onPress={() => onChange(Math.max(1, value - 1))}
       />
@@ -373,7 +427,7 @@ function GoalStepper({ value, onChange }: { value: number; onChange: (next: numb
       <IconButton
         name="plus"
         variant="surface"
-        accessibilityLabel="Increase weekly goal"
+        accessibilityLabel={t('profileScreen.increaseGoal')}
         disabled={value >= 14}
         onPress={() => onChange(Math.min(14, value + 1))}
       />
@@ -383,30 +437,28 @@ function GoalStepper({ value, onChange }: { value: number; onChange: (next: numb
 
 /* ------------------------------------------------------------------ helpers -- */
 
-function goalHeadline(workouts: number, goal: number): string {
-  if (workouts === 0) return 'Nothing logged this week';
-  if (workouts >= goal) return 'Goal met';
-  if (workouts >= goal / 2) return 'On track';
-  return 'Getting started';
+/** The key for the week's headline. Translated by the caller, which has the `t`. */
+function goalHeadline(workouts: number, goal: number): TKey {
+  if (workouts === 0) return 'profileScreen.headlineNothing';
+  if (workouts >= goal) return 'profileScreen.headlineGoalMet';
+  if (workouts >= goal / 2) return 'profileScreen.headlineOnTrack';
+  return 'profileScreen.headlineStarting';
 }
 
-function countSessions(n: number): string {
-  return `${n} ${pluralWord(n, 'session', 'sessions')}`;
+function countSessions(n: number, t: (key: TKey, vars?: TVars) => string): string {
+  return `${n} ${t('profileScreen.sessionWord', { count: n })}`;
 }
 
-function trainingSince(data: { totals: { workouts: number } } | undefined): string {
-  if (data === undefined) return 'Exercise search runs against the wger catalog';
-  return data.totals.workouts === 0
-    ? 'No sessions logged yet: search the library to build your first routine'
-    : 'Routines and history are stored on this device';
+function trainingSince(
+  data: { totals: { workouts: number } } | undefined,
+  t: (key: TKey, vars?: TVars) => string,
+): string {
+  if (data === undefined) return t('profileScreen.sinceUnknown');
+  return t(data.totals.workouts === 0 ? 'profileScreen.sinceNone' : 'profileScreen.sinceSome');
 }
 
 function formatNumber(value: number | undefined): string {
   return value === undefined ? '-' : String(value);
-}
-
-function notificationsSubtitle(hapticsEnabled: boolean): string {
-  return `Rest timer, reminders${hapticsEnabled ? ', haptics on' : ', haptics off'}`;
 }
 
 const styles = StyleSheet.create({

@@ -39,3 +39,20 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# build and QA output
+/artifacts/
+*.log
+/out/
+
+# local env files (all variants)
+.env
+.env.*
+
+# editor and agent-local state
+.idea/
+.vscode/
+.claude/settings.local.json
+
+# device QA captures
+*.screenshot.png

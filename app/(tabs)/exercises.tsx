@@ -29,9 +29,11 @@
  * revalidates in the background. A tap that waited on the network to show a name the user
  * just read would feel broken, not careful.
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import type { ExerciseFilter } from '@/domain/types';
 import { StyleSheet, View } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
+import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import { useIsFocused, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -62,7 +64,7 @@ import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
 import { useT } from '@/i18n/useT';
 import { spacing, screenGutter } from '@/theme/tokens';
-import { joinMiddleDot, pluralWord } from '@/utils/format';
+import { joinMiddleDot } from '@/utils/format';
 
 
 export default function ExercisesScreen() {
@@ -127,19 +129,71 @@ export default function ExercisesScreen() {
   // focus change: and FlashList re-binds `onEndReached` each time its identity moves. The
   // guards below still read current values, because the closure is rebuilt whenever one flips.
   const { hasMore, isFetchingNextPage, loadNextPage } = search;
+
+  /**
+   * Page when the user scrolls, never at layout.
+   *
+   * `onEndReached` fires during the FIRST layout, before the list has measured its rows, so
+   * "within 40% of the end" is trivially true of a content height that is still zero. Each
+   * page that lands re-triggers it, and the list walks the WHOLE result set without anyone
+   * touching the screen: measured at 8 requests, 200 rows, for a search showing eight of
+   * them. FlashList 2 dropped `estimatedItemSize`, so there is no size hint to fix it with.
+   *
+   * A scroll is the honest signal that the user wants more. One page is 25 rows, which
+   * overflows any phone screen, so nothing is lost by refusing to prefetch page 2 before the
+   * first scroll. The latch reopens per search, because a new term puts the list back at the
+   * top with a new result set behind it.
+   */
+  /**
+   * A committed search returns the list to the top.
+   *
+   * FlashList keeps its offset across a data change, so typing a new term left the user
+   * hundreds of points down a result set they had never seen: the first rows of the answer
+   * were above the fold, which reads as "the search did nothing". It also defeated the paging
+   * gate below, because an offset inherited from the previous term looks exactly like a user
+   * who has scrolled and wants more.
+   */
+  const listRef = useRef<FlashListRef<Exercise>>(null);
+  const lastScroll = useRef<{ y: number; filter: ExerciseFilter | null }>({ y: 0, filter: null });
+  useEffect(() => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
+    // The recorded scroll belongs to the term that produced it, so it is cleared with the
+    // list rather than left to look like intent on a result set the user has not seen.
+    lastScroll.current = { y: 0, filter };
+  }, [filter]);
+
+  const onScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      // Record the filter the scroll belonged to, not just that one happened. A boolean latch
+      // reset in an effect loses a race the full suite found and a single run did not: the
+      // effect runs on the render AFTER the filter changes, and `onEndReached` fires inside
+      // that gap, so a list left scrolled by an earlier screen paged the new search anyway.
+      // Storing the pair makes the question unambiguous and needs no effect at all.
+      lastScroll.current = { y: event.nativeEvent.contentOffset.y, filter };
+      // The header's own handler is a plain callback that writes a shared value, not a
+      // worklet, so composing it here is safe: calling a captured JS function from a worklet
+      // is what aborts this app.
+      header.onScroll(event);
+    },
+    [filter, header],
+  );
+
   const onEndReached = useCallback(() => {
+    const seen = lastScroll.current;
+    // Page only for a scroll the user made ON THIS result set.
+    if (seen.filter !== filter || seen.y <= 8) return;
     if (hasMore && !isFetchingNextPage) loadNextPage();
-  }, [hasMore, isFetchingNextPage, loadNextPage]);
+  }, [filter, hasMore, isFetchingNextPage, loadNextPage]);
 
   const listHeader = (
     <>
       <CollapsibleHero header={header} eyebrow={t('exercises.eyebrow')} title={t('exercises.title')}>
         <Txt variant="caption" tone="muted" style={{ marginTop: spacing.xs }}>
           {search.total === null
-            ? 'Search the wger catalog and add anything to a routine'
-            : `${search.total.toLocaleString()} ${pluralWord(search.total, 'exercise')}${
-                searching ? ` for “${filter.query}”` : ''
-              }`}
+            ? t('exerciseList.subtitle')
+            : searching
+              ? t('exercises.countFor', { count: search.total, query: filter.query })
+              : t('exercises.count', { count: search.total })}
         </Txt>
       </CollapsibleHero>
 
@@ -148,17 +202,24 @@ export default function ExercisesScreen() {
           label={t('exercises.searchLabel')}
           value={draft}
           onChangeText={setExerciseQuery}
-          placeholder="Deadlift, lat pulldown, lunges…"
+          placeholder={t('exerciseList.placeholder')}
           autoCorrect={false}
           returnKeyType="search"
           accessibilityLabel={t('exercises.searchHint')}
-          {...(settling ? { hint: 'Searching…' } : {})}
+          {...(settling ? { hint: t('exerciseList.searching') } : {})}
         />
 
         <Row gap="sm" align="center">
           <View style={{ flex: 1, minWidth: 0 }}>
             <Chip
-              label={activeCount === 0 ? 'Filters' : `${activeCount} ${activeCount === 1 ? 'filter' : 'filters'} on`}
+              label={
+                activeCount === 0
+                  ? t('common.filters')
+                  : t('exerciseList.filtersOn', {
+                      count: activeCount,
+                      word: t('exerciseList.filterWord', { count: activeCount }),
+                    })
+              }
               icon="filter"
               size="sm"
               selected={activeCount > 0}
@@ -166,7 +227,12 @@ export default function ExercisesScreen() {
             />
           </View>
           {activeCount > 0 ? (
-            <Button label="Clear" size="sm" variant="quiet" onPress={resetExerciseFilter} />
+            <Button
+              label={t('common.clear')}
+              size="sm"
+              variant="quiet"
+              onPress={resetExerciseFilter}
+            />
           ) : null}
         </Row>
 
@@ -202,7 +268,11 @@ export default function ExercisesScreen() {
         right={
           <BarAction
             icon="filter"
-            label={activeCount > 0 ? `Filters (${activeCount})` : 'Filters'}
+            label={
+              activeCount > 0
+                ? t('exerciseList.filtersWithCount', { count: activeCount })
+                : t('common.filters')
+            }
             onPress={() => setFilterOpen(true)}
             badge={activeCount > 0}
           />
@@ -210,10 +280,11 @@ export default function ExercisesScreen() {
       />
 
       <FlashList
+        ref={listRef}
         data={search.items}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
-        onScroll={header.onScroll}
+        onScroll={onScroll}
         scrollEventThrottle={16}
         contentContainerStyle={{ paddingBottom: bottomSpace }}
         progressViewOffset={insets.top + 52}
@@ -252,18 +323,18 @@ export default function ExercisesScreen() {
             />
           ) : searching || activeCount > 0 ? (
             <EmptyState
-              title="No exercises match"
-              message="wger's search is fuzzy, so if nothing came back the spelling is probably fine and the term is just unusual. Try fewer words, or widen the filters."
+              title={t('exerciseList.noMatchTitle')}
+              message={t('exerciseList.noMatchMessage')}
               icon="search"
-              actionLabel="Clear search"
+              actionLabel={t('exerciseList.clearSearch')}
               onAction={resetExerciseFilter}
             />
           ) : (
             <EmptyState
-              title="Nothing loaded"
-              message="The catalog answered with no exercises, which it should not. Pull to refresh, or retry below."
+              title={t('exerciseList.nothingLoadedTitle')}
+              message={t('exerciseList.nothingLoadedMessage')}
               icon="library"
-              actionLabel="Retry"
+              actionLabel={t('common.retry')}
               onAction={() => void search.refresh()}
             />
           )
@@ -286,27 +357,28 @@ export default function ExercisesScreen() {
  * a filter feel trustworthy.
  */
 function FilterSheet({ onClose }: { onClose: () => void }) {
+  const { t } = useT();
   const taxonomy = useExerciseTaxonomy();
   const { filter } = useExerciseFilter();
 
   return (
-    <Sheet title="Filter exercises" onRequestClose={onClose}>
+    <Sheet title={t('exerciseList.filterTitle')} onRequestClose={onClose}>
       <TaxonPicker
-        title="Category"
+        title={t('exerciseList.category')}
         taxons={taxonomy.data?.categories ?? []}
         value={filter.categoryId}
         onChange={setExerciseCategoryId}
         loading={taxonomy.isPending}
       />
       <TaxonPicker
-        title="Primary muscle"
+        title={t('exerciseList.primaryMuscle')}
         taxons={taxonomy.data?.muscles ?? []}
         value={filter.muscleId}
         onChange={setExerciseMuscleId}
         loading={taxonomy.isPending}
       />
       <TaxonPicker
-        title="Equipment"
+        title={t('exerciseList.equipment')}
         taxons={taxonomy.data?.equipment ?? []}
         value={filter.equipmentId}
         onChange={setExerciseEquipmentId}
@@ -314,11 +386,14 @@ function FilterSheet({ onClose }: { onClose: () => void }) {
       />
       {taxonomy.isError ? (
         <Txt variant="caption" tone="muted">
-          The list of filters could not be loaded, so there are none to pick. Searching still
-          works: filters are optional.
+          {t('exerciseList.taxonomyFailed')}
         </Txt>
       ) : null}
-      <Button label="Show all exercises" variant="secondary" onPress={resetExerciseFilter} />
+      <Button
+        label={t('exerciseList.showAll')}
+        variant="secondary"
+        onPress={resetExerciseFilter}
+      />
     </Sheet>
   );
 }
@@ -336,10 +411,11 @@ function TaxonPicker({
   onChange: (next: number | null) => void;
   loading: boolean;
 }) {
+  const { t } = useT();
   if (loading) {
     return (
       <Txt variant="caption" tone="faint">
-        Loading {title.toLowerCase()} options…
+        {t('exerciseList.loadingOptions', { what: title.toLowerCase() })}
       </Txt>
     );
   }
@@ -352,7 +428,12 @@ function TaxonPicker({
         {title}
       </Txt>
       <View style={styles.chips}>
-        <Chip label="Any" size="sm" selected={value === null} onPress={() => onChange(null)} />
+        <Chip
+          label={t('exerciseList.any')}
+          size="sm"
+          selected={value === null}
+          onPress={() => onChange(null)}
+        />
         {taxons.map((taxon) => (
           <Chip
             key={taxon.id}
@@ -397,10 +478,10 @@ function FetchNotice({
               "Updating" branch below says so in a sentence; this one used to leave the amber to
               carry it, which also meant the state was communicated by colour alone. */}
           <Txt variant="micro" tone="faint">
-            That search failed. Showing the results from before it.
+            {t('exercises.outdatedDetail')}
           </Txt>
         </View>
-        <Button label="Retry" size="sm" variant="secondary" onPress={onRetry} />
+        <Button label={t('common.retry')} size="sm" variant="secondary" onPress={onRetry} />
       </Row>
     );
   }
@@ -409,7 +490,7 @@ function FetchNotice({
     <Row gap="sm" align="center">
       <Badge label={t('exercises.updating')} tone="info" />
       <Txt variant="micro" tone="faint">
-        Showing the previous search while this one runs
+        {t('exercises.updatingDetail')}
       </Txt>
     </Row>
   );
@@ -426,16 +507,20 @@ function ListFooter({
   count: number;
   total: number | null;
 }) {
+  const { t } = useT();
   return (
     <View style={styles.footer}>
       <Txt variant="caption" tone="faint" align="center">
         {loading
-          ? 'Loading more…'
+          ? t('exerciseList.loadingMore')
           : hasMore
-            ? `${count.toLocaleString()} loaded`
+            ? t('exerciseList.countLoaded', { shown: count.toLocaleString() })
             : total === null
-              ? `${count.toLocaleString()} shown`
-              : `All ${total.toLocaleString()} ${pluralWord(total, 'exercise')} loaded`}
+              ? t('exerciseList.countShown', { shown: count.toLocaleString() })
+              : t('exerciseList.allLoaded', {
+                  shown: total.toLocaleString(),
+                  word: t('exerciseList.exerciseWord', { count: total }),
+                })}
       </Txt>
     </View>
   );

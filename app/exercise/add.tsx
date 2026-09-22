@@ -51,6 +51,7 @@ import { useSettings } from '@/settings/hooks';
 import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
 import { radius, spacing } from '@/theme/tokens';
+import { useT } from '@/i18n/useT';
 import {
   parseNumber,
   toKilograms,
@@ -84,6 +85,7 @@ const EMPTY_DRAFT: Draft = {
 };
 
 export default function AddExerciseScreen() {
+  const { t } = useT();
   const params = useLocalSearchParams<{ id?: string }>();
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
@@ -176,25 +178,25 @@ export default function AddExerciseScreen() {
               name="close"
               size={20}
               variant="surface"
-              accessibilityLabel="Cancel and go back"
+              accessibilityLabel={t('addExercise.cancel')}
               onPress={() => router.dismiss()}
             />
             <Txt variant="subhead" weight="700" style={{ flex: 1 }} numberOfLines={1}>
-              Add to routine
+              {t('addExercise.addToRoutineTitle')}
             </Txt>
             {/* A text button, not a round icon: the commit here creates something, and
                 "close" and "add" as two identical discs six centimetres apart is a
                 mis-tap waiting to happen. A labelled button also shows its disabled
                 state; a dimmed glyph does not. */}
             <Button
-              label={saving ? 'Adding…' : 'Add'}
+              label={t(saving ? 'addExercise.adding' : 'addExercise.add')}
               variant="ghost"
               size="sm"
               onPress={() => {
                 void save();
               }}
               disabled={!canSave}
-              accessibilityHint="Saves the exercise into the chosen routine"
+              accessibilityHint={t('addExercise.addHint')}
             />
           </View>
 
@@ -210,9 +212,9 @@ export default function AddExerciseScreen() {
               <View style={styles.section}>
                 <EmptyState
                   icon="info"
-                  title="This exercise could not be loaded"
-                  message="The app has to know an exercise before it can be added: otherwise the routine would save an item with no name, no instructions and no picture, permanently."
-                  actionLabel="Go back"
+                  title={t('addExercise.loadError')}
+                  message={t('addExercise.loadErrorMessage')}
+                  actionLabel={t('addExercise.goBack')}
                   onAction={() => router.dismiss()}
                 />
               </View>
@@ -233,13 +235,16 @@ export default function AddExerciseScreen() {
                     <Txt variant="caption" tone="muted" numberOfLines={1}>
                       {exercise.primaryMuscles.length > 0
                         ? exercise.primaryMuscles.join(', ')
-                        : (exercise.category ?? 'Exercise')}
+                        : (exercise.category ?? t('addExercise.exercise'))}
                     </Txt>
                   </Column>
                 </Row>
 
                 <Column gap="md" style={styles.section}>
-                  <SectionHeader title="Routine" eyebrow="Where it goes" />
+                  <SectionHeader
+                    title={t('addExercise.routine')}
+                    eyebrow={t('addExercise.whereItGoes')}
+                  />
                   {routinesLoading ? (
                     <SkeletonCard lines={1} />
                   ) : (
@@ -254,7 +259,7 @@ export default function AddExerciseScreen() {
                         />
                       ))}
                       <Chip
-                        label="New routine"
+                        label={t('addExercise.newRoutine')}
                         icon="plus"
                         selected={effectiveTarget === NEW_ROUTINE}
                         onPress={() => setTarget(NEW_ROUTINE)}
@@ -265,12 +270,12 @@ export default function AddExerciseScreen() {
 
                 {effectiveTarget === NEW_ROUTINE ? (
                   <Column gap="md" style={styles.section}>
-                    <SectionHeader title="New routine" />
+                    <SectionHeader title={t('addExercise.newRoutine')} />
                     <TextField
-                      label="Routine name"
+                      label={t('addExercise.routineName')}
                       value={draft.name}
                       onChangeText={field('name')}
-                      placeholder="Push Day"
+                      placeholder={t('addExercise.routineNamePlaceholder')}
                       placeholderTextColor={theme.colors.textFaint}
                       returnKeyType="done"
                       onSubmitEditing={() => {
@@ -279,14 +284,14 @@ export default function AddExerciseScreen() {
                       blurOnSubmit
                       autoCapitalize="words"
                       autoComplete="off"
-                      error={needsName ? 'Give the routine a name' : null}
-                      accessibilityHint="Required. The name this routine shows in your list."
+                      error={needsName ? t('addExercise.nameRequired') : null}
+                      accessibilityHint={t('addExercise.nameHint')}
                     />
                     <TextField
-                      label="Description"
+                      label={t('addExercise.description')}
                       value={draft.description}
                       onChangeText={field('description')}
-                      placeholder="Optional: what this session is for"
+                      placeholder={t('addExercise.descriptionPlaceholder')}
                       placeholderTextColor={theme.colors.textFaint}
                       returnKeyType="done"
                       autoCapitalize="sentences"
@@ -303,9 +308,9 @@ export default function AddExerciseScreen() {
                       <Row gap="md" align="center">
                         <Icon name="check" size={18} color={theme.colors.success} />
                         <Txt variant="body" style={{ flex: 1 }} numberOfLines={2}>
-                          Going into{' '}
+                          {t('addExercise.goingInto')}{' '}
                           <Txt variant="body" weight="700">
-                            {targetRoutine?.name ?? 'your routine'}
+                            {targetRoutine?.name ?? t('addExercise.yourRoutine')}
                           </Txt>
                         </Txt>
                       </Row>
@@ -314,10 +319,13 @@ export default function AddExerciseScreen() {
                 )}
 
                 <Column gap="md" style={styles.section}>
-                  <SectionHeader title="Targets" eyebrow="What you plan to do" />
+                  <SectionHeader
+                    title={t('addExercise.targets')}
+                    eyebrow={t('addExercise.targetsEyebrow')}
+                  />
                   <Row gap="md">
                     <TextField
-                      label="Sets"
+                      label={t('addExercise.sets')}
                       value={draft.sets}
                       onChangeText={field('sets')}
                       keyboardType="number-pad"
@@ -326,30 +334,30 @@ export default function AddExerciseScreen() {
                       maxLength={2}
                     />
                     <TextField
-                      label="Reps"
+                      label={t('addExercise.reps')}
                       value={draft.reps}
                       onChangeText={field('reps')}
                       returnKeyType="next"
                       style={{ flex: 1.4 }}
-                      hint="A range is fine"
+                      hint={t('addExercise.repsHint')}
                       maxLength={12}
                     />
                   </Row>
 
                   <Row gap="md" align="center">
                     <TextField
-                      label={`Weight (${weightUnit(units)})`}
+                      label={t('addExercise.weightIn', { unit: weightUnit(units) })}
                       value={draft.weight}
                       onChangeText={field('weight')}
                       keyboardType="decimal-pad"
                       returnKeyType="next"
                       unit={weightUnit(units)}
-                      hint="Blank means bodyweight"
+                      hint={t('addExercise.blankBodyweight')}
                       style={{ flex: 1 }}
                       maxLength={6}
                     />
                     <Stepper
-                      label={`Weight per set in ${weightUnit(units)}`}
+                      label={t('addExercise.weightPerSet', { unit: weightUnit(units) })}
                       compact
                       value={parseWeight(draft.weight, units)}
                       onChange={(next) =>
@@ -365,18 +373,18 @@ export default function AddExerciseScreen() {
 
                   <Row gap="md" align="center">
                     <TextField
-                      label="Rest"
+                      label={t('addExercise.rest')}
                       value={draft.rest}
                       onChangeText={field('rest')}
                       keyboardType="number-pad"
                       returnKeyType="done"
                       unit="s"
-                      hint={`Blank uses ${defaultRest}s`}
+                      hint={t('addExercise.blankUsesDefault', { seconds: defaultRest })}
                       style={{ flex: 1 }}
                       maxLength={4}
                     />
                     <Stepper
-                      label="Rest between sets"
+                      label={t('addExercise.restBetweenSets')}
                       compact
                       value={clampInt(draft.rest, 0, 600, defaultRest)}
                       onChange={(next) => setDraft((d) => ({ ...d, rest: String(next) }))}
@@ -389,10 +397,10 @@ export default function AddExerciseScreen() {
                   </Row>
 
                   <TextField
-                    label="Cue"
+                    label={t('addExercise.cue')}
                     value={draft.notes}
                     onChangeText={field('notes')}
-                    placeholder="Tempo, grip, or a reminder for yourself"
+                    placeholder={t('addExercise.notesPlaceholder')}
                     placeholderTextColor={theme.colors.textFaint}
                     returnKeyType="done"
                     autoCapitalize="sentences"
@@ -404,7 +412,11 @@ export default function AddExerciseScreen() {
                 <Column gap="md" style={styles.section}>
                   <Button
                     label={
-                      effectiveTarget === NEW_ROUTINE ? 'Create routine and add' : 'Add to routine'
+                      t(
+                        effectiveTarget === NEW_ROUTINE
+                          ? 'addExercise.createAndAdd'
+                          : 'addExercise.addToRoutine',
+                      )
                     }
                     icon="plus"
                     onPress={() => {
@@ -415,13 +427,15 @@ export default function AddExerciseScreen() {
                     weighty
                     fullWidth
                     accessibilityHint={
-                      effectiveTarget === NEW_ROUTINE
-                        ? 'Creates the routine and opens it'
-                        : 'Adds the exercise and opens the routine'
+                      t(
+                        effectiveTarget === NEW_ROUTINE
+                          ? 'addExercise.createHint'
+                          : 'addExercise.addToRoutineHint',
+                      )
                     }
                   />
                   <Txt variant="caption" tone="faint" align="center">
-                    Targets are a plan, not a limit: every set can be changed while you train.
+                    {t('addExercise.targetsNote')}
                   </Txt>
                 </Column>
                 <Gap size={Platform.OS === 'ios' ? spacing.md : spacing.xl} />

@@ -92,6 +92,7 @@ import {
   type UnitSystem,
 } from '@/utils/format';
 import { withAlpha } from '@/utils/color';
+import { useT } from '@/i18n/useT';
 import type { Exercise } from '@/domain/types';
 
 /** History rows shown before the "most recent N of M" note. */
@@ -104,6 +105,7 @@ const HISTORY_PREVIEW = 6;
 const ART_HEIGHT = 320;
 
 export default function ExerciseDetailScreen() {
+  const { t } = useT();
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
@@ -163,7 +165,8 @@ export default function ExerciseDetailScreen() {
   }, [exercise]);
 
   const title =
-    exercise?.name ?? (exerciseId === null ? 'Exercise' : provisionalExerciseName(exerciseId));
+    exercise?.name ??
+    (exerciseId === null ? t('exerciseDetail.fallbackTitle') : provisionalExerciseName(exerciseId));
 
   return (
     <>
@@ -180,8 +183,8 @@ export default function ExerciseDetailScreen() {
               name="plus"
               size={20}
               weighty
-              accessibilityLabel="Add this exercise to a routine"
-              accessibilityHint="Opens the routine picker"
+              accessibilityLabel={t('exerciseDetail.addToRoutine')}
+              accessibilityHint={t('exerciseDetail.addHint')}
               onPress={openAddSheet}
             />
           ) : undefined
@@ -204,18 +207,20 @@ export default function ExerciseDetailScreen() {
                   <ErrorState
                     error={detail.error}
                     onRetry={detail.retry}
-                    title="Could not load this exercise"
+                    title={t('exerciseDetail.loadError')}
                   />
                 ) : (
                   <EmptyState
                     icon="info"
-                    title="Nothing known about this exercise"
-                    message={
+                    title={t('exerciseDetail.unknownTitle')}
+                    message={t(
                       detail.fetchable
-                        ? 'It is not in your routines, and the exercise library did not answer. Check your connection and try again.'
-                        : 'This exercise came from the built-in library, which does not store a description for it.'
-                    }
-                    actionLabel={detail.fetchable ? 'Try again' : 'Back to library'}
+                        ? 'exerciseDetail.unknownFetchable'
+                        : 'exerciseDetail.unknownBuiltIn',
+                    )}
+                    actionLabel={t(
+                      detail.fetchable ? 'common.retry' : 'exerciseDetail.backToLibrary',
+                    )}
                     onAction={detail.fetchable ? detail.retry : openLibrary}
                   />
                 )}
@@ -235,15 +240,17 @@ export default function ExerciseDetailScreen() {
                 </Column>
 
                 <Column gap="md" style={styles.section}>
-                  <SectionHeader title="How to do it" />
+                  <SectionHeader title={t('exerciseDetail.howTo')} />
                   {exercise.instructions === null || exercise.instructions.length === 0 ? (
                     <Card tone="sunken">
                       <Row gap="md" align="start">
                         <Icon name="info" size={18} color={theme.colors.textFaint} />
                         <Txt variant="body" tone="muted" style={{ flex: 1 }}>
-                          {detail.from === 'stored'
-                            ? 'No description was saved with this exercise, and the library is offline right now.'
-                            : 'The exercise library has no description for this one. Your own notes from past sessions are the best reference.'}
+                          {t(
+                            detail.from === 'stored'
+                              ? 'exerciseDetail.noDescriptionOffline'
+                              : 'exerciseDetail.noDescription',
+                          )}
                         </Txt>
                       </Row>
                     </Card>
@@ -257,23 +264,22 @@ export default function ExerciseDetailScreen() {
                 </Column>
 
                 <Column gap="md" style={styles.section}>
-                  <SectionHeader title="Muscles" />
+                  <SectionHeader title={t('exerciseDetail.muscles')} />
                   <Column gap="sm">
                     <MuscleChips
-                      label="Primary"
+                      label={t('exerciseDetail.primary')}
                       names={exercise.primaryMuscles}
                       onPress={filterByMuscle}
                     />
                     <MuscleChips
-                      label="Also worked"
+                      label={t('exerciseDetail.alsoWorked')}
                       names={exercise.secondaryMuscles}
                       onPress={filterByMuscle}
                       muted
                     />
                     {exercise.secondaryMuscles.length > 0 ? (
                       <Txt variant="caption" tone="faint">
-                        Muscle assignments come from the library's own tagging: a guide to
-                        the movement's emphasis, not an anatomical claim about your body.
+                        {t('misc.muscleTagging')}
                       </Txt>
                     ) : null}
                   </Column>
@@ -281,7 +287,7 @@ export default function ExerciseDetailScreen() {
 
                 {exercise.equipment.length > 0 ? (
                   <Column gap="md" style={styles.section}>
-                    <SectionHeader title="Equipment" />
+                    <SectionHeader title={t('exerciseDetail.equipment')} />
                     <Row gap="sm" wrap>
                       {exercise.equipment.map((name) => (
                         <Chip
@@ -297,10 +303,12 @@ export default function ExerciseDetailScreen() {
 
                 <Column gap="lg" style={styles.section}>
                   <SectionHeader
-                    title="Your history"
+                    title={t('exerciseDetail.yourHistory')}
                     eyebrow={
                       history.history.sessionsCount > 0
-                        ? `${history.history.sessionsCount} sessions`
+                        ? t('exerciseDetail.sessionCount', {
+                            count: history.history.sessionsCount,
+                          })
                         : undefined
                     }
                   />
@@ -311,8 +319,7 @@ export default function ExerciseDetailScreen() {
                       <Row gap="md" align="center">
                         <Icon name="target" size={20} color={theme.colors.textFaint} />
                         <Txt variant="body" tone="muted" style={{ flex: 1 }}>
-                          You have not logged this exercise yet. Finish a session with it
-                          and your numbers will appear here.
+                          {t('exerciseDetail.neverLogged')}
                         </Txt>
                       </Row>
                     </Card>
@@ -321,11 +328,11 @@ export default function ExerciseDetailScreen() {
                       <MetricGrid columns={3}>
                         <MetricGridCell
                           value={formatWeight(history.history.totalVolumeKg, units)}
-                          label="Total volume"
+                          label={t('exerciseDetail.totalVolume')}
                         />
                         <MetricGridCell
                           value={String(history.history.totalSets)}
-                          label="Sets done"
+                          label={t('exerciseDetail.setsDone')}
                         />
                         <MetricGridCell
                           value={
@@ -333,7 +340,7 @@ export default function ExerciseDetailScreen() {
                               ? '-'
                               : formatAgo(history.history.lastPerformedAt)
                           }
-                          label="Last performed"
+                          label={t('exerciseDetail.lastPerformed')}
                         />
                       </MetricGrid>
                     </>
@@ -357,8 +364,9 @@ export default function ExerciseDetailScreen() {
                     {history.history.sessions.length > HISTORY_PREVIEW ? (
                       <View style={styles.bandFooter}>
                         <Txt variant="caption" tone="faint">
-                          {history.history.sessionsCount - HISTORY_PREVIEW} earlier sessions
-                          in your history.
+                          {t('exerciseDetail.earlierSessions', {
+                            count: history.history.sessionsCount - HISTORY_PREVIEW,
+                          })}
                         </Txt>
                       </View>
                     ) : null}
@@ -367,14 +375,17 @@ export default function ExerciseDetailScreen() {
 
                 {history.records.length > 0 ? (
                   <Column gap="md" style={styles.section}>
-                    <SectionHeader title="Records" eyebrow="Personal bests" />
+                    <SectionHeader
+                      title={t('exerciseDetail.records')}
+                      eyebrow={t('exerciseDetail.personalBests')}
+                    />
                     <Card tone="accent">
                       <Column gap="lg">
                         {history.records.map((record) => (
                           <Row key={record.kind} gap="md" align="center">
                             <Icon name="trophy" size={20} color={theme.colors.onAccent} />
                             <Txt variant="label" tone="muted" style={{ flex: 1 }}>
-                              {RECORD_LABEL[record.kind]}
+                              {t(RECORD_LABEL[record.kind])}
                             </Txt>
                             <Txt variant="headline" weight="700">
                               {formatRecordValue(record.kind, record.value, units)}
@@ -390,9 +401,9 @@ export default function ExerciseDetailScreen() {
                   <>
                     <Column gap="md" style={styles.section}>
                       <SectionHeader
-                        title="Variations"
+                        title={t('exerciseDetail.variations')}
                         count={variations.data.length}
-                        eyebrow="Same movement family"
+                        eyebrow={t('exerciseDetail.sameFamily')}
                       />
                     </Column>
                     <View>
@@ -403,8 +414,8 @@ export default function ExerciseDetailScreen() {
                           uri={sibling.thumbnailUrl ?? sibling.imageUrl}
                           subtitle={
                             sibling.id === exercise.id
-                              ? 'This exercise'
-                              : sibling.category ?? 'Variation'
+                              ? t('exerciseDetail.thisExercise')
+                              : sibling.category ?? t('exerciseDetail.variation')
                           }
                           theme={theme}
                           dimmed={sibling.id === exercise.id}
@@ -418,7 +429,7 @@ export default function ExerciseDetailScreen() {
                     </View>
                     <Column style={styles.section}>
                       <Button
-                        label="Browse similar exercises"
+                        label={t('exerciseDetail.browseSimilar')}
                         variant="secondary"
                         icon="search"
                         onPress={browseVariations}
@@ -430,8 +441,8 @@ export default function ExerciseDetailScreen() {
                 {externalUrl !== null ? (
                   <Column style={styles.section}>
                     <ActionRow
-                      title="View on wger"
-                      subtitle="Community page with all photos and notes"
+                      title={t('exerciseDetail.viewOnWger')}
+                      subtitle={t('exerciseDetail.wgerSubtitle')}
                       icon="link"
                       onPress={() => {
                         void Linking.openURL(externalUrl).catch(() => undefined);
@@ -442,10 +453,10 @@ export default function ExerciseDetailScreen() {
 
                 <Column style={styles.section}>
                   <Button
-                    label="Add to a routine"
+                    label={t('exerciseDetail.addButton')}
                     icon="plus"
                     onPress={openAddSheet}
-                    accessibilityHint="Choose a routine, then set reps and weight"
+                    accessibilityHint={t('exerciseDetail.addButtonHint')}
                   />
                 </Column>
               </Column>
@@ -460,6 +471,7 @@ export default function ExerciseDetailScreen() {
 /* ------------------------------------------------------------------ pieces -- */
 
 function Hero({ exercise, topInset }: { exercise: Exercise; topInset: number }) {
+  const { t } = useT();
   const theme = useAppTheme();
   const uri = exercise.imageUrl ?? exercise.thumbnailUrl;
 
@@ -476,7 +488,7 @@ function Hero({ exercise, topInset }: { exercise: Exercise; topInset: number }) 
         style={[styles.noArt, { paddingTop: topInset }]}
       >
         <Txt variant="micro" tone="faint" uppercase tracking={1}>
-          {exercise.category ?? 'Exercise'}
+          {exercise.category ?? t('exerciseDetail.fallbackTitle')}
         </Txt>
         <Gap size={spacing.lg} />
         <ExerciseThumb
@@ -490,7 +502,7 @@ function Hero({ exercise, topInset }: { exercise: Exercise; topInset: number }) 
         <Row gap="xs" align="center">
           <Icon name="image" size={13} color={theme.colors.textFaint} />
           <Txt variant="micro" tone="faint" uppercase tracking={0.8}>
-            No image in the library
+            {t('exerciseDetail.noImage')}
           </Txt>
         </Row>
       </LinearGradient>
@@ -505,7 +517,7 @@ function Hero({ exercise, topInset }: { exercise: Exercise; topInset: number }) 
         contentFit="cover"
         transition={220}
         recyclingKey={uri}
-        accessibilityLabel={`Illustration for ${exercise.name}`}
+        accessibilityLabel={t('exerciseDetail.illustrationFor', { name: exercise.name })}
         accessibilityIgnoresInvertColors
       />
       {/* Scrims are `pointerEvents="none"` so neither swallows the interactive back
@@ -540,6 +552,7 @@ function Provenance({
   onRetry: () => void;
   externalUrl: string | null;
 }) {
+  const { t } = useT();
   const theme = useAppTheme();
 
   if (from === 'stored') {
@@ -548,8 +561,8 @@ function Provenance({
         <Icon name="offline" size={14} color={theme.colors.info} />
         <Txt variant="caption" tone="muted" style={{ flex: 1 }}>
           {storedAt === null
-            ? 'Offline copy saved on this device'
-            : `Offline copy saved ${formatShortDate(storedAt)}`}
+            ? t('exerciseDetail.offlineCopy')
+            : t('exerciseDetail.offlineCopyDated', { date: formatShortDate(storedAt) })}
         </Txt>
         {/* A Text with role="button" rather than a nested Touchable: it sits in a line of
             text-width content, and VoiceOver reads the label as its own element either
@@ -562,7 +575,7 @@ function Provenance({
           onPress={onRetry}
           suppressHighlighting
         >
-          {isFetching ? 'Checking…' : 'Check for updates'}
+          {t(isFetching ? 'exerciseDetail.checking' : 'exerciseDetail.checkUpdates')}
         </Txt>
       </Row>
     );
@@ -572,7 +585,7 @@ function Provenance({
     return (
       <Row gap="sm" align="center">
         <Icon name="layers" size={14} color={theme.colors.textFaint} />
-        <Txt variant="caption" tone="muted">From your recent search results</Txt>
+        <Txt variant="caption" tone="muted">{t('exerciseDetail.fromRecentSearch')}</Txt>
       </Row>
     );
   }
@@ -582,7 +595,8 @@ function Provenance({
       <Row gap="sm" align="center">
         <Icon name="download" size={14} color={theme.colors.textFaint} />
         <Txt variant="caption" tone="muted">
-          Live from the wger community library{externalUrl !== null ? ' · just now' : ''}
+          {t('exerciseDetail.liveFromWger')}
+          {externalUrl !== null ? t('exerciseDetail.justNow') : ''}
         </Txt>
       </Row>
     );
@@ -591,7 +605,7 @@ function Provenance({
   return (
     <Row gap="sm" align="center">
       <Icon name="info" size={14} color={theme.colors.textFaint} />
-      <Txt variant="caption" tone="muted">Built-in exercise</Txt>
+      <Txt variant="caption" tone="muted">{t('exerciseDetail.builtIn')}</Txt>
     </Row>
   );
 }
@@ -646,10 +660,11 @@ function HistoryRow({
   topDivider: boolean;
   onPress: () => void;
 }) {
+  const { t } = useT();
   const load =
     session.topWeightKg > 0
       ? `${trimNumber(session.topWeightKg)} kg × ${session.topReps}`
-      : `Bodyweight × ${session.topReps}`;
+      : t('exerciseDetail.bodyweightTimes', { reps: session.topReps });
 
   return (
     <View
@@ -663,12 +678,19 @@ function HistoryRow({
         title={load}
         subtitle={
           session.completedSets === session.sets
-            ? `${formatShortDate(session.performedAt)} · ${session.completedSets} sets`
-            : `${formatShortDate(session.performedAt)} · ${session.completedSets} of ${session.sets} sets`
+            ? t('exerciseDetail.setsAll', {
+                date: formatShortDate(session.performedAt),
+                done: session.completedSets,
+              })
+            : t('exerciseDetail.setsOfTotal', {
+                date: formatShortDate(session.performedAt),
+                done: session.completedSets,
+                total: session.sets,
+              })
         }
         showChevron
         onPress={onPress}
-        accessibilityHint="Opens the session"
+        accessibilityHint={t('exerciseDetail.openSession')}
         trailing={
           session.estimated1rmKg === null ? (
             <Txt variant="caption" tone="faint">
@@ -676,7 +698,9 @@ function HistoryRow({
             </Txt>
           ) : (
             <Badge
-              label={`${formatWeight(session.estimated1rmKg, units)} est`}
+              label={t('exerciseDetail.estSuffix', {
+                value: formatWeight(session.estimated1rmKg, units),
+              })}
               tone="success"
               icon={<Icon name="trophy" size={10} color={theme.colors.success} />}
             />

@@ -35,6 +35,7 @@ import { fontSize, radius, spacing } from '@/theme/tokens';
 import type { Theme } from '@/theme/theme';
 import { Txt } from '../Text';
 import { EmptyChart } from './EmptyChart';
+import { useT } from '@/i18n/useT';
 
 export type BarPoint = {
   /** Axis label, already formatted by the caller ("17 Aug", "Mon"). */
@@ -52,7 +53,7 @@ export const BarChart = memo(function BarChart({
   showAxes = true,
   showValueForLast = false,
   interactive = true,
-  emptyLabel = 'Nothing logged yet',
+  emptyLabel,
   style,
 }: {
   points: BarPoint[];
@@ -70,6 +71,7 @@ export const BarChart = memo(function BarChart({
   emptyLabel?: string;
   style?: StyleProp<ViewStyle>;
 }) {
+  const { t } = useT();
   const fill = color ?? theme.colors.accent;
   const font = useFont(InterMedium, fontSize.micro);
   const { state, isActive } = useChartPressState({ x: 0, y: { value: 0 } });
@@ -86,7 +88,14 @@ export const BarChart = memo(function BarChart({
   const activeIndex = useDerivedValue(() => Math.round(state.x.value.value));
 
   if (points.length === 0) {
-    return <EmptyChart height={height} label={emptyLabel} theme={theme} style={style} />;
+    return (
+      <EmptyChart
+        height={height}
+        label={emptyLabel ?? t('states.nothingLogged')}
+        theme={theme}
+        style={style}
+      />
+    );
   }
 
   const last = points[points.length - 1];

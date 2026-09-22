@@ -55,28 +55,32 @@ import {
 } from '@/services/notifications';
 import { getSessionSnapshot } from '@/workout/session';
 import { haptics } from '@/services/haptics';
-import {
-  countNoun,
-  formatClock,
-} from '@/utils/format';
+import { useT } from '@/i18n/useT';
+import { tr } from '@/i18n/tr';
+import { formatClock } from '@/utils/format';
 
 /** A quarter-hour grid: nobody wants 18:07, and finer steps make the stepper pointless. */
 const REMINDER_STEP_MINUTES = 15;
 /** 23:45 is the latest slot; midnight itself belongs to the next day. */
 const REMINDER_LAST_MINUTE = 24 * 60 - REMINDER_STEP_MINUTES;
 
-/** ISO weekday (1 = Monday … 7 = Sunday) to a two-letter label. */
-const DAYS: readonly { iso: number; label: string }[] = [
-  { iso: 1, label: 'Mon' },
-  { iso: 2, label: 'Tue' },
-  { iso: 3, label: 'Wed' },
-  { iso: 4, label: 'Thu' },
-  { iso: 5, label: 'Fri' },
-  { iso: 6, label: 'Sat' },
-  { iso: 7, label: 'Sun' },
-];
+/** ISO weekdays, Monday first. Their names come from `Intl`; see `dayLabel`. */
+const ISO_DAYS: readonly number[] = [1, 2, 3, 4, 5, 6, 7];
+
+/**
+ * Short weekday names from `Intl`, not from a table of English abbreviations.
+ *
+ * A hand-written `['Mon', 'Tue', ...]` would need a translated copy per locale, and would then
+ * be a second opinion about weekday names that the platform already holds. The reference date
+ * is an arbitrary Monday (2024-01-01 was one), so ISO day 1 maps to it and the rest follow.
+ */
+function dayLabel(iso: number, locale: string): string {
+  const reference = new Date(Date.UTC(2024, 0, iso, 12));
+  return new Intl.DateTimeFormat(locale, { weekday: 'short', timeZone: 'UTC' }).format(reference);
+}
 
 export default function SettingsNotificationsScreen() {
+  const { t, locale } = useT();
   const bottomSpace = useScreenContentBottom();
   const theme = useAppTheme();
   const update = useSettingsUpdate();
@@ -156,13 +160,17 @@ export default function SettingsNotificationsScreen() {
   const minutes = Math.max(0, Math.min(REMINDER_LAST_MINUTE, reminder.minuteOfDay));
 
   return (
-    <DetailScreen title="Notifications">
+    <DetailScreen title={t('notif.title')} largeTitle>
       {(topInset) => (
         <ScrollView
           contentContainerStyle={[
             styles.content,
             { paddingTop: topInset + spacing.md, paddingBottom: bottomSpace },
           ]}
+          // `automatic`, so iOS owns the inset under the large title and can collapse it as
+          // this view scrolls. Without it the title stays large forever and the screen looks
+          // like a native header that does not work.
+          contentInsetAdjustmentBehavior="automatic"
           keyboardShouldPersistTaps="handled"
         >
           <Stack gap="xxl" style={styles.body}>
@@ -171,15 +179,11 @@ export default function SettingsNotificationsScreen() {
 
             {/* --------------------------------------------------------- master -- */}
             <View>
-              <SectionHeader title="In-app alerts" />
+              <SectionHeader title={t('notif.inAppAlerts')} />
               <Card padding="xxs">
                 <ToggleRow
-                  label="Send notifications"
-                  hint={
-                    enabled
-                      ? 'Rest timer and weekly reminder.'
-                      : 'Nothing will be delivered, and nothing will be scheduled.'
-                  }
+                  label={t('notif.sendNotifications')}
+                  hint={t(enabled ? 'notif.onBody' : 'notif.offBody')}
                   value={enabled}
                   disabled={!granted}
                   onChange={toggleMaster}
@@ -189,8 +193,7 @@ export default function SettingsNotificationsScreen() {
                     <Divider inset={spacing.lg} />
                     <View style={styles.note}>
                       <Txt variant="caption" tone="muted">
-                        This is off because iOS has not allowed notifications yet. Your rest
-                        timer still counts down on screen: you just have to look at it.
+                        {t('notif.masterOffBecause')}
                       </Txt>
                     </View>
                   </>
@@ -200,33 +203,30 @@ export default function SettingsNotificationsScreen() {
 
             {/* -------------------------------------------------- rest timer -- */}
             <View>
-              <SectionHeader title="Rest timer" eyebrow="While a session is running" />
+              <SectionHeader title={t('notif.restTimer')} eyebrow={t('notif.whileRunning')} />
               <Card>
                 <Stack gap="md">
                   <Txt variant="caption" tone="muted">
-                    Armed the moment a rest starts and fired when it ends, so the phone can go
-                    face-down between sets. Skip the rest and the alert is retracted with it.
+                    {t('notif.restBody')}
                   </Txt>
                   <Txt variant="micro" tone="faint">
-                    Follows the timer on the Training screen. There is no separate length here,
-                    and there is deliberately no second switch: two controls for one countdown
-                    is how you end up with a rest timer that says 90 and buzzes at 60.
+                    {t('notif.restNote')}
                   </Txt>
                   {enabled && granted ? (
                     <>
                       <Divider inset={0} />
                       <Row align="center" gap="md">
                         <Stack gap="xxs" style={{ flex: 1 }}>
-                          <Txt variant="strong">Send a test alert</Txt>
+                          <Txt variant="strong">{t('notif.sendTest')}</Txt>
                           <Txt variant="caption" tone="muted">
-                            Arrives in about two seconds.
+                            {t('notif.testArrives')}
                           </Txt>
                         </Stack>
                         <IconButton
                           name="bell"
                           variant="surface"
-                          accessibilityLabel="Send a test notification"
-                          accessibilityHint="Posts a notification now so you can check delivery"
+                          accessibilityLabel={t('notif.sendTestA11y')}
+                          accessibilityHint={t('notif.sendTestHint')}
                           onPress={test}
                         />
                       </Row>
@@ -239,18 +239,18 @@ export default function SettingsNotificationsScreen() {
             {/* ------------------------------------------------------- reminder -- */}
             <View>
               <SectionHeader
-                title="Weekly reminder"
+                title={t('notif.weeklyReminder')}
                 eyebrow={
                   enabled && granted && reminder.enabled && reminder.days.length > 0
-                    ? 'Scheduled'
+                    ? t('notif.scheduled')
                     : undefined
                 }
               />
               <Card padding="lg">
                 <Stack gap="lg">
                   <ToggleRow
-                    label="Remind me to train"
-                    hint={reminderHint(reminder, enabled, granted)}
+                    label={t('notif.remindMe')}
+                    hint={reminderHint(reminder, enabled, granted, locale)}
                     value={reminder.enabled && enabled && granted}
                     disabled={!enabled || !granted}
                     onChange={(next) => commit({ enabled: next })}
@@ -262,9 +262,9 @@ export default function SettingsNotificationsScreen() {
 
                       <Row align="center" gap="lg">
                         <Stack gap="xxs" style={{ flex: 1 }}>
-                          <Txt variant="strong">Time</Txt>
+                          <Txt variant="strong">{t('notif.time')}</Txt>
                           <Txt variant="caption" tone="muted">
-                            Local time, and it follows you across time zones.
+                            {t('notif.timeNote')}
                           </Txt>
                         </Stack>
                         <Row align="center" gap="sm">
@@ -306,21 +306,21 @@ export default function SettingsNotificationsScreen() {
                       <Divider inset={0} />
 
                       <Stack gap="sm">
-                        <Txt variant="strong">Days</Txt>
+                        <Txt variant="strong">{t('notif.days')}</Txt>
                         <Row gap="sm" style={styles.chips}>
-                          {DAYS.map((day) => {
-                            const on = reminder.days.includes(day.iso);
+                          {ISO_DAYS.map((iso) => {
+                            const on = reminder.days.includes(iso);
                             return (
                               <Chip
-                                key={day.iso}
-                                label={day.label}
+                                key={iso}
+                                label={dayLabel(iso, locale)}
                                 selected={on}
                                 size="sm"
                                 onPress={() =>
                                   commit({
                                     days: on
-                                      ? reminder.days.filter((d) => d !== day.iso)
-                                      : [...reminder.days, day.iso].sort((a, b) => a - b),
+                                      ? reminder.days.filter((d) => d !== iso)
+                                      : [...reminder.days, iso].sort((a, b) => a - b),
                                   })
                                 }
                               />
@@ -329,12 +329,15 @@ export default function SettingsNotificationsScreen() {
                         </Row>
                         {reminder.days.length === 0 ? (
                           <Txt variant="micro" tone="warning">
-                            No days selected, so nothing is scheduled. Pick at least one.
+                            {t('notif.noDaysWarning')}
                           </Txt>
                         ) : (
                           <Txt variant="micro" tone="faint">
-                            {describeDays(reminder.days)} · {countNoun(reminder.days.length, 'time')} a
-                            week.
+                            {t('notif.daysSummary', {
+                              days: describeDays(reminder.days, locale),
+                              count: reminder.days.length,
+                              word: t('notif.timeWord', { count: reminder.days.length }),
+                            })}
                           </Txt>
                         )}
                       </Stack>
@@ -344,9 +347,7 @@ export default function SettingsNotificationsScreen() {
                   {deferred ? (
                     <View style={[styles.note, { backgroundColor: theme.colors.accentSoft }]}>
                       <Txt variant="caption" tone="default">
-                        You are mid-session, so the schedule was saved but not re-armed: your
-                        rest timer keeps the alert it already has. It updates when the session
-                        ends.
+                        {t('misc.midSessionNote')}
                       </Txt>
                     </View>
                   ) : null}
@@ -379,19 +380,21 @@ function OsPermission({
   busy: boolean;
   onAsk: () => void;
 }) {
+  const { t } = useT();
   const theme = useAppTheme();
 
   // Two different reasons for `false`, and the second one has a different remedy. Before the
   // first answer iOS will ask again on request; after a refusal it never asks a second time,
   // so the only fix lives in the Settings app. Offering an "Allow" button there is a tap that
   // does nothing, which is why the button is conditional and the copy is not.
-  const detail = granted
-    ? 'Allowed. Everything below can be delivered.'
-    : 'If this is wrong, open iOS Settings, tap Kinetiq, then Allow Notifications. This screen re-reads the answer whenever you come back to the app.';
+  const detail = t(granted ? 'notif.systemAllowed' : 'notif.systemDenied');
 
   return (
     <View>
-      <SectionHeader title="System permission" eyebrow={granted ? 'Granted' : 'Not granted'} />
+      <SectionHeader
+        title={t('notif.systemPermission')}
+        eyebrow={t(granted ? 'perms.granted' : 'perms.notGranted')}
+      />
       <Card>
         <Stack gap="md">
           <Row gap="md" align="center">
@@ -402,7 +405,7 @@ function OsPermission({
               ]}
             />
             <Txt variant="strong" style={{ flex: 1 }}>
-              {granted ? 'Kinetiq may send notifications' : 'Kinetiq may not send notifications'}
+              {t(granted ? 'notif.maySend' : 'notif.mayNotSend')}
             </Txt>
           </Row>
           <Txt variant="caption" tone="muted">
@@ -410,15 +413,13 @@ function OsPermission({
           </Txt>
           {!granted ? (
             <Button
-              label="Ask iOS for permission"
+              label={t('notif.askForPermission')}
               variant="secondary"
               icon="bell"
               loading={busy}
               onPress={onAsk}
               accessibilityHint={
-                busy
-                  ? 'Waiting for your answer'
-                  : 'iOS shows its own prompt, or tells you to use the Settings app'
+                t(busy ? 'notif.waiting' : 'notif.askHint')
               }
             />
           ) : null}
@@ -472,19 +473,27 @@ function ToggleRow({
  * settings at once. "Remind me to train" being on while the OS says no is the state this
  * sentence exists to catch.
  */
-function reminderHint(reminder: ReminderSettings, enabled: boolean, granted: boolean): string {
-  if (!enabled) return 'Notifications are off on this screen.';
-  if (!granted) return 'iOS is blocking notifications.';
-  if (!reminder.enabled) return 'One nudge on the days you choose.';
-  if (reminder.days.length === 0) return 'Turned on, but no days selected.';
-  return `${describeDays(reminder.days)} at ${formatClock(reminder.minuteOfDay)}.`;
+function reminderHint(
+  reminder: ReminderSettings,
+  enabled: boolean,
+  granted: boolean,
+  locale: string,
+): string {
+  if (!enabled) return tr('notif.offOnScreen');
+  if (!granted) return tr('notif.blocked');
+  if (!reminder.enabled) return tr('notif.oneNudge');
+  if (reminder.days.length === 0) return tr('notif.noDaysSelected');
+  return tr('notif.scheduleAt', {
+    days: describeDays(reminder.days, locale),
+    time: formatClock(reminder.minuteOfDay),
+  });
 }
 
 /** "Mon, Wed, Fri" / "Mon-Fri" / "Every day", from an ISO day set. */
-function describeDays(days: readonly number[]): string {
-  const names = DAYS.filter((d) => days.includes(d.iso)).map((d) => d.label);
-  if (names.length === 7) return 'Every day';
-  if (names.length === 1) return names[0] ?? 'No days';
+function describeDays(days: readonly number[], locale: string): string {
+  const names = ISO_DAYS.filter((iso) => days.includes(iso)).map((iso) => dayLabel(iso, locale));
+  if (names.length === 7) return tr('notif.everyDay');
+  if (names.length === 1) return names[0] ?? tr('notif.noDays');
 
   // A run of consecutive ISO days is a range, and "Mon-Fri" is what a person would say.
   const sorted = [...days].sort((a, b) => a - b);
@@ -492,8 +501,9 @@ function describeDays(days: readonly number[]): string {
     (d, i) => i === 0 || d === (sorted[i - 1] ?? Number.NaN) + 1,
   );
   if (contiguous && sorted.length > 2) {
-    const first = DAYS.find((d) => d.iso === sorted[0])?.label;
-    const last = DAYS.find((d) => d.iso === sorted[sorted.length - 1])?.label;
+    const first = sorted[0] === undefined ? undefined : dayLabel(sorted[0], locale);
+    const lastIso = sorted[sorted.length - 1];
+    const last = lastIso === undefined ? undefined : dayLabel(lastIso, locale);
     if (first && last) return `${first}-${last}`;
   }
   return names.join(', ');

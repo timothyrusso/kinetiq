@@ -17,6 +17,7 @@
  * at a glance.
  */
 import type { Href } from 'expo-router';
+import type { TKey } from '@/i18n';
 
 export type TabKey = 'index' | 'activities' | 'workout' | 'exercises' | 'profile';
 
@@ -48,12 +49,19 @@ const TAB_HREFS: Record<TabKey, Href> = {
  * same five destinations as text and must not maintain a second spelling of them. `index` is
  * "Home" and not "Index": the group segment is a routing fact, the label is a product one.
  */
-export const TAB_LABELS: Record<TabKey, string> = {
-  index: 'Home',
-  activities: 'Activities',
-  workout: 'Workout',
-  exercises: 'Exercises',
-  profile: 'Profile',
+/**
+ * Tab names as catalog KEYS.
+ *
+ * Module scope has no language, so a map of English words here is a map that stays English.
+ * The tab bar itself reads `tabs.*` through `useT`; this table exists for the places that
+ * reference a tab by name without rendering the bar, such as the not-found screen.
+ */
+export const TAB_LABELS: Record<TabKey, TKey> = {
+  index: 'tabs.home',
+  activities: 'tabs.activities',
+  workout: 'tabs.workout',
+  exercises: 'tabs.exercises',
+  profile: 'tabs.profile',
 };
 
 export function tabHref(index: number): Href {

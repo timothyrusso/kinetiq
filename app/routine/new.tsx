@@ -48,6 +48,7 @@ import { spacing, screenGutter } from '@/theme/tokens';
 import { trimNumber, weightUnit, weightValue } from '@/utils/format';
 import { haptics } from '@/services/haptics';
 import { pairItems } from '@/routines/draft';
+import { useT } from '@/i18n/useT';
 import {
   addDraftExercise,
   clearDraft,
@@ -69,6 +70,7 @@ import {
 } from '@/routines/draftStore';
 
 export default function NewRoutineScreen() {
+  const { t } = useT();
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
   const draft = useRoutineDraft();
@@ -117,7 +119,7 @@ export default function NewRoutineScreen() {
       // An inline reason, not a permanently greyed-out primary button: a call-to-action that
       // cannot be pressed and says nothing about why is the most reliably confusing control
       // in a form.
-      setBlocked('Add at least one exercise before saving.');
+      setBlocked(t('newRoutine.addOneFirst'));
       haptics.warning();
       return;
     }
@@ -133,10 +135,10 @@ export default function NewRoutineScreen() {
       router.replace(routes.routine(saved.id));
     } catch {
       markDraftSaveFailed();
-      setBlocked('Could not save. Nothing was lost: the routine is still here as you left it.');
+      setBlocked(t('newRoutine.saveFailed'));
       haptics.warning();
     }
-  }, [saveRoutine]);
+  }, [saveRoutine, t]);
 
   // Back gesture, hardware back, the swipe and the back button all route through
   // `beforeRemove`, which is the only hook that fires for all four. Without it, the same
@@ -158,22 +160,26 @@ export default function NewRoutineScreen() {
   return (
     <>
       <DetailScreen
-        title="New routine"
+        title={t('newRoutine.title')}
         subtitle={
           draft.items.length === 0
-            ? 'Add exercises from the library'
-            : `${draft.items.length} ${draft.items.length === 1 ? 'exercise' : 'exercises'} · about ${minutes} min`
+            ? t('newRoutine.subtitleEmpty')
+            : t('newRoutine.subtitleCount', {
+                count: draft.items.length,
+                word: t('newRoutine.exerciseWord', { count: draft.items.length }),
+                minutes,
+              })
         }
         right={
           <Button
-            label={draft.status === 'saving' ? 'Saving…' : 'Done'}
+            label={t(draft.status === 'saving' ? 'newRoutine.saving' : 'newRoutine.done')}
             variant="ghost"
             size="sm"
             disabled={draft.status === 'saving'}
             onPress={() => {
               void save();
             }}
-            accessibilityHint="Saves the routine and opens it"
+            accessibilityHint={t('newRoutine.saveHint')}
           />
         }
         // The back button goes through the same guard as the gesture; `DetailScreen` calls
@@ -203,34 +209,34 @@ export default function NewRoutineScreen() {
             >
               <Column gap="md" style={{ paddingHorizontal: screenGutter }}>
                 <TextField
-                  label="Routine name"
+                  label={t('newRoutine.nameLabel')}
                   value={draft.name}
                   onChangeText={setDraftName}
-                  placeholder="Push Day, Thursday Run, Full Body B"
-                  hint={
+                  placeholder={t('newRoutine.namePlaceholder')}
+                  hint={t(
                     draft.name.trim().length === 0 && draft.items.length > 0
-                      ? 'Leave it blank and the routine is named after its first exercise.'
-                      : 'Shows on the Workout tab, and beside every session in your history.'
-                  }
+                      ? 'newRoutine.nameHintEmpty'
+                      : 'newRoutine.nameHint',
+                  )}
                   returnKeyType="next"
-                  accessibilityHint="Names the routine"
+                  accessibilityHint={t('newRoutine.nameA11y')}
                 />
                 <TextField
-                  label="Notes"
+                  label={t('newRoutine.notesLabel')}
                   value={draft.description}
                   onChangeText={setDraftDescription}
-                  placeholder="Optional: how the session should feel, what to leave at the gym"
+                  placeholder={t('newRoutine.notesPlaceholder')}
                   multiline
-                  accessibilityHint="Adds an optional description"
+                  accessibilityHint={t('newRoutine.notesA11y')}
                 />
               </Column>
 
               {rows.length === 0 ? (
                 <EmptyState
                   icon="listAdd"
-                  title="No exercises yet"
-                  message="A routine is a list of exercises with targets. Add the first one from the library: it is searched live, and everything you choose is frozen into the routine so it still opens with no signal."
-                  actionLabel="Add exercise"
+                  title={t('newRoutine.emptyTitle')}
+                  message={t('newRoutine.emptyMessage')}
+                  actionLabel={t('newRoutine.addExercise')}
                   onAction={() => {
                     haptics.light();
                     setPickerOpen(true);
@@ -239,11 +245,11 @@ export default function NewRoutineScreen() {
               ) : (
                 <Column gap="md">
                   <SectionHeader
-                    title="Exercises"
-                    eyebrow={`${rows.length} ${rows.length === 1 ? 'row' : 'rows'}`}
+                    title={t('newRoutine.exercises')}
+                    eyebrow={`${rows.length} ${t('newRoutine.rowWord', { count: rows.length })}`}
                     action={
                       <Button
-                        label="Add"
+                        label={t('common.add')}
                         variant="quiet"
                         size="sm"
                         icon="plus"
@@ -279,18 +285,17 @@ export default function NewRoutineScreen() {
                   </View>
                   <Row gap="xxl" style={{ paddingHorizontal: screenGutter }}>
                     <MetricNote
-                      label="Planned volume"
+                      label={t('newRoutine.plannedVolume')}
                       value={
                         volumeKg === 0
-                          ? 'Bodyweight'
+                          ? t('newRoutine.bodyweight')
                           : `${trimNumber(weightValue(volumeKg, units), 0)} ${weightUnit(units)}`
                       }
                     />
-                    <MetricNote label="Est. time" value={`~${minutes} min`} />
+                    <MetricNote label={t('newRoutine.estTime')} value={`~${minutes} min`} />
                   </Row>
                   <Txt variant="caption" tone="faint" style={{ paddingHorizontal: screenGutter }}>
-                    Tap a row to change its sets, reps, weight or rest. The arrows reorder it,
-                    and Done writes every row at once.
+                    {t('newRoutine.reorderNote')}
                   </Txt>
                 </Column>
               )}
@@ -338,13 +343,13 @@ export default function NewRoutineScreen() {
 
       {confirmDiscard ? (
         <ConfirmSheet
-          title="Discard this routine?"
+          title={t('newRoutine.discardTitle')}
           message={
             draft.items.length > 0
-              ? `${draft.items.length} ${draft.items.length === 1 ? 'exercise' : 'exercises'} have not been saved. Nothing has been created yet, so discarding removes the whole draft.`
-              : 'Nothing has been saved yet, so leaving now discards the name and notes.'
+              ? t('newRoutine.discardWithItems', { count: draft.items.length })
+              : t('newRoutine.discardEmpty')
           }
-          confirmLabel="Discard"
+          confirmLabel={t('newRoutine.discard')}
           onRequestClose={() => setConfirmDiscard(false)}
           onConfirm={() => {
             // Order matters: the guard reads the ref, so it must be raised before the

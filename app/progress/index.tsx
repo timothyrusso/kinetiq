@@ -80,25 +80,26 @@ import { spacing, screenGutter } from '@/theme/tokens';
 import { dayKey } from '@/domain/logic';
 import { KIND_ORDER } from '@/domain/display';
 import {
-  countNoun,
   formatDistance,
   formatDurationCompact,
   formatShortDate,
   formatWeight,
-  pluralWord,
   trimNumber,
   type UnitSystem,
   weightUnit,
 } from '@/utils/format';
 import type { ActivityKind, PersonalRecord } from '@/domain/types';
+import { useT } from '@/i18n/useT';
+import { tr } from '@/i18n/tr';
+import type { TKey, TVars } from '@/i18n';
 
 /** Weeks per option. The summary is computed per week, so the options are weeks. */
 const RANGES = [
-  { weeks: 4, label: '4 weeks' },
-  { weeks: 12, label: '3 months' },
-  { weeks: 26, label: '6 months' },
-  { weeks: 52, label: '12 months' },
-] as const;
+  { weeks: 4, label: 'progress.range4' },
+  { weeks: 12, label: 'progress.range12' },
+  { weeks: 26, label: 'progress.range26' },
+  { weeks: 52, label: 'progress.range52' },
+] as const satisfies readonly { weeks: number; label: TKey }[];
 
 type RangeWeeks = (typeof RANGES)[number]['weeks'];
 const DEFAULT_RANGE: RangeWeeks = 12;
@@ -116,6 +117,7 @@ const CHART_HEIGHT = 184;
 const BOTTOM_SPACE = 48;
 
 export default function ProgressScreen() {
+  const { t } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -149,7 +151,7 @@ export default function ProgressScreen() {
   );
 
   return (
-    <DetailScreen title="Progress" subtitle={rangeLabel(rangeWeeks)}>
+    <DetailScreen title={t('progress.title')} subtitle={rangeLabel(rangeWeeks, t)}>
       {(topInset) => (
         <ScrollView
           contentContainerStyle={[
@@ -163,7 +165,7 @@ export default function ProgressScreen() {
               {RANGES.map((option) => (
                 <Chip
                   key={option.weeks}
-                  label={option.label}
+                  label={t(option.label)}
                   size="sm"
                   selected={option.weeks === rangeWeeks}
                   onPress={() => setRangeWeeks(option.weeks)}
@@ -184,16 +186,16 @@ export default function ProgressScreen() {
               <ErrorState
                 error={summaryQuery.error}
                 onRetry={() => void summaryQuery.refetch()}
-                title="Progress could not be read"
+                title={t('progress.readError')}
               />
             ) : summary && !summary.hasAnyHistory ? (
               <EmptyState
                 icon="trendUp"
-                title="No workouts yet"
-                message="Finish a workout and everything here fills in from it. Nothing needs setting up first."
-                actionLabel="Start a workout"
+                title={t('progress.emptyTitle')}
+                message={t('progress.emptyMessage')}
+                actionLabel={t('progress.startWorkout')}
                 onAction={() => openTab(tabIndexOf('workout'))}
-                secondaryLabel="Browse the library"
+                secondaryLabel={t('progress.browseLibrary')}
                 onSecondary={() => openTab(tabIndexOf('exercises'))}
               />
             ) : summary ? (
@@ -201,23 +203,23 @@ export default function ProgressScreen() {
                 <TotalsCard summary={summary} units={units} goal={goal} />
 
                 <View>
-                  <SectionHeader title="Trend" eyebrow="Week by week" />
+                  <SectionHeader title={t('progress.trend')} eyebrow={t('progress.weekByWeek')} />
                   <Card>
                     <View style={styles.chipRow}>
                       <Chip
-                        label="Time"
+                        label={t('progress.time')}
                         size="sm"
                         selected={measure === 'duration'}
                         onPress={() => setMeasure('duration')}
                       />
                       <Chip
-                        label="Distance"
+                        label={t('progress.distance')}
                         size="sm"
                         selected={measure === 'distance'}
                         onPress={() => setMeasure('distance')}
                       />
                       <Chip
-                        label="Volume"
+                        label={t('progress.volume')}
                         size="sm"
                         selected={measure === 'volume'}
                         onPress={() => setMeasure('volume')}
@@ -241,7 +243,10 @@ export default function ProgressScreen() {
                 <DistributionCard summary={summary} />
 
                 <View>
-                  <SectionHeader title="Consistency" eyebrow="Last 6 months" />
+                  <SectionHeader
+                    title={t('progress.consistency')}
+                    eyebrow={t('progress.lastSixMonths')}
+                  />
                   <ConsistencyCard
                     heatmap={heatmapQuery.data}
                     loading={heatmapQuery.isPending && heatmapQuery.data === undefined}
@@ -253,8 +258,8 @@ export default function ProgressScreen() {
 
                 <View>
                   <SectionHeader
-                    title="Personal records"
-                    eyebrow="All time"
+                    title={t('progress.personalRecords')}
+                    eyebrow={t('progress.allTime')}
                     count={recordsQuery.data?.length}
                   />
                   <RecordsCard
@@ -275,8 +280,7 @@ export default function ProgressScreen() {
                     align="center"
                     style={{ marginTop: spacing.lg }}
                   >
-                    Every number on this screen is computed from the workouts stored on this
-                    device. Only exercise search ever leaves it.
+                    {t('misc.progressPrivacy')}
                   </Txt>
                 </View>
               </>
@@ -299,6 +303,7 @@ function TotalsCard({
   units: UnitSystem;
   goal: number;
 }) {
+  const { t } = useT();
   const totals = summary.totals;
 
   if (totals.workouts === 0) {
@@ -308,8 +313,10 @@ function TotalsCard({
       <EmptyState
         compact
         icon="calendar"
-        title={`Nothing in the last ${countNoun(summary.rangeWeeks, 'week')}`}
-        message="Pick a longer range above, or train this week and it will show here straight away."
+        title={t('progress.nothingInRange', {
+          range: `${summary.rangeWeeks} ${t('progress.weekWord', { count: summary.rangeWeeks })}`,
+        })}
+        message={t('progress.nothingInRangeMessage')}
       />
     );
   }
@@ -326,24 +333,26 @@ function TotalsCard({
     <Card>
       <MetricGrid columns={2}>
         <Metric
-          label="Workouts"
+          label={t('progress.workouts')}
           value={`${totals.workouts}`}
-          note={`${trimNumber(perWeek, 1)} per week`}
+          note={t('progress.perWeek', { value: trimNumber(perWeek, 1) })}
         />
         <Metric
-          label="Time"
+          label={t('progress.time')}
           value={formatDurationCompact(totals.durationSeconds)}
-          note={`${trimNumber(totals.durationSeconds / 3600, 1)} h total`}
+          note={t('progress.hoursTotal', {
+            value: trimNumber(totals.durationSeconds / 3600, 1),
+          })}
         />
         <Metric
-          label="Distance"
+          label={t('progress.distance')}
           value={cardio ? formatDistance(totals.distanceMeters, units) : '-'}
-          note={cardio ? 'From cardio sessions' : 'No cardio logged'}
+          note={t(cardio ? 'progress.fromCardio' : 'progress.noCardio')}
         />
         <Metric
-          label="Volume"
+          label={t('progress.volume')}
           value={weighted ? formatWeight(totals.volumeKg, units) : '-'}
-          note={weighted ? 'From strength sessions' : 'No weighted work'}
+          note={t(weighted ? 'progress.fromStrength' : 'progress.noWeighted')}
         />
       </MetricGrid>
 
@@ -353,21 +362,29 @@ function TotalsCard({
 
       <Row gap="lg">
         <Metric
-          label="Longest streak"
-          value={`${summary.bestStreak} ${pluralWord(summary.bestStreak, 'day')}`}
-          note="Anywhere in history"
+          label={t('progress.longestStreak')}
+          value={`${summary.bestStreak} ${t('progress.dayWord', { count: summary.bestStreak })}`}
+          note={t('progress.anywhereInHistory')}
         />
         <Metric
-          label="Active days"
+          label={t('progress.activeDays')}
           value={`${summary.activeDays}`}
-          note={`${Math.round(summary.consistency * 100)}% of days trained`}
+          note={t('progress.daysTrained', { percent: Math.round(summary.consistency * 100) })}
         />
       </Row>
 
       <Txt variant="micro" tone="faint" style={{ marginTop: spacing.lg }}>
         {shortfall <= 0
-          ? `At or above your goal of ${target} ${pluralWord(target, 'session')} a week across this range.`
-          : `Your goal is ${target} ${pluralWord(target, 'session')} a week: this range is ${shortfall} ${pluralWord(shortfall, 'session')} short of it.`}
+          ? t('progress.goalMet', {
+              target,
+              word: t('progress.sessionWord', { count: target }),
+            })
+          : t('progress.goalShort', {
+              target,
+              word: t('progress.sessionWord', { count: target }),
+              short: shortfall,
+              shortWord: t('progress.sessionWord', { count: shortfall }),
+            })}
       </Txt>
     </Card>
   );
@@ -411,29 +428,29 @@ const MEASURES: Record<
     includeZero: boolean;
     /** Read aloud under the chart, so units are not the y-axis's private knowledge. */
     caption: (units: UnitSystem) => string;
-    emptyLabel: string;
+    emptyLabel: TKey;
   }
 > = {
   duration: {
     value: (week) => week.durationSeconds / 60,
     format: (minutes) => `${Math.round(minutes)} min`,
     includeZero: true,
-    caption: () => 'Minutes trained per week',
-    emptyLabel: 'No training in this range',
+    caption: () => tr('progress.minutesPerWeek'),
+    emptyLabel: 'progress.noTrainingInRange',
   },
   distance: {
     value: (week) => week.distanceMeters / 1000,
     format: (km, units) => formatDistance(km * 1000, units),
     includeZero: false,
-    caption: () => 'Distance covered per week',
-    emptyLabel: 'No cardio logged in this range',
+    caption: () => tr('progress.distancePerWeek'),
+    emptyLabel: 'progress.noCardioInRange',
   },
   volume: {
     value: (week) => week.volumeKg,
     format: (kg, units) => formatWeight(kg, units),
     includeZero: false,
-    caption: (units) => `${weightUnit(units)} moved per week`,
-    emptyLabel: 'No weighted work in this range',
+    caption: (units) => tr('progress.movedPerWeek', { unit: weightUnit(units) }),
+    emptyLabel: 'progress.noWeightedInRange',
   },
 };
 
@@ -448,6 +465,7 @@ function MeasureChart({
   width: number;
   units: UnitSystem;
 }) {
+  const { t } = useT();
   const theme = useAppTheme();
   const spec = MEASURES[measure];
 
@@ -462,11 +480,11 @@ function MeasureChart({
           value,
           detail:
             value > 0
-              ? `${spec.format(value, units)} · ${countNoun(week.workouts, 'session')}`
-              : `Nothing logged · ${countNoun(week.workouts, 'session')}`,
+              ? `${spec.format(value, units)} · ${week.workouts} ${t('progress.sessionWord', { count: week.workouts })}`
+              : `${t('progress.nothingLogged')} · ${week.workouts} ${t('progress.sessionWord', { count: week.workouts })}`,
         };
       }),
-    [spec, summary.weeks, units],
+    [spec, summary.weeks, t, units],
   );
 
   // Not measured yet. Reserve the final height so the card does not jump when the real
@@ -482,11 +500,17 @@ function MeasureChart({
       <EmptyState
         compact
         icon="trendUp"
-        title={only ? `${spec.format(only.value, units)} ${spec.caption(units).toLowerCase()}` : spec.emptyLabel}
+        title={
+          only
+            ? `${spec.format(only.value, units)} ${spec.caption(units).toLowerCase()}`
+            : t(spec.emptyLabel)
+        }
         message={
           only
-            ? 'A trend needs a second week to compare against. Keep training and the line appears.'
-            : `Nothing was logged across the ${countNoun(summary.rangeWeeks, 'week')} shown. Try a longer range.`
+            ? t('progress.needSecondWeek')
+            : t('progress.nothingAcrossRange', {
+                range: `${summary.rangeWeeks} ${t('progress.weekWord', { count: summary.rangeWeeks })}`,
+              })
         }
       />
     );
@@ -504,7 +528,7 @@ function MeasureChart({
         emptyLabel={spec.emptyLabel}
       />
       <Txt variant="micro" tone="faint" style={{ marginTop: spacing.sm }}>
-        {spec.caption(units)}, oldest week on the left. Tap the line to read any week.
+        {t('misc.oldestLeft', { caption: spec.caption(units) })}
       </Txt>
     </>
   );
@@ -513,6 +537,7 @@ function MeasureChart({
 /* ---------------------------------------------------------- distribution -- */
 
 function DistributionCard({ summary }: { summary: TrainingSummary }) {
+  const { t } = useT();
   const theme = useAppTheme();
 
   const slices: DistributionSlice[] = useMemo(() => {
@@ -539,9 +564,12 @@ function DistributionCard({ summary }: { summary: TrainingSummary }) {
       <ActivityDistribution
         slices={slices}
         theme={theme}
-        formatValue={(value) => `${value} ${pluralWord(value, 'session')}`}
+        // The bare count, not "23 sessioni": the ring's own sublabel already names the unit,
+        // and repeating it in every row squeezed the label column until "Camminata" rendered
+        // as "Ca...".
+        formatValue={(value) => `${value}`}
         centerLabel={`${summary.totals.workouts}`}
-        centerSublabel="sessions"
+        centerSublabel={t('progress.sessionsSublabel')}
       />
     </Card>
   );
@@ -562,6 +590,7 @@ function ConsistencyCard({
   errorValue: unknown;
   onRetry: () => void;
 }) {
+  const { t } = useT();
   const theme = useAppTheme();
 
   // A `null` day is a day that has not happened yet. The grid's own convention for that is
@@ -586,11 +615,13 @@ function ConsistencyCard({
       <ErrorState
         error={errorValue}
         onRetry={onRetry}
-        title="The calendar could not be read"
+        title={t('progress.calendarError')}
         compact
       />
     );
-  if (days.length === 0) return <EmptyState compact icon="calendar" title="Nothing to plot" />;
+  if (days.length === 0) {
+    return <EmptyState compact icon="calendar" title={t('progress.nothingToPlot')} />;
+  }
 
   const total = heatmap?.totalWorkouts ?? 0;
   return (
@@ -598,8 +629,12 @@ function ConsistencyCard({
       <HeatmapCalendar
         days={days}
         theme={theme}
-        label="Training days"
-        footer={`${total} ${pluralWord(total, 'workout')} in the last ${heatmap?.spanWeeks ?? 26} weeks`}
+        label={t('progress.trainingDays')}
+        footer={t('progress.heatmapFooter', {
+          count: total,
+          word: t('progress.workoutWord', { count: total }),
+          weeks: heatmap?.spanWeeks ?? 26,
+        })}
       />
     </Card>
   );
@@ -622,21 +657,27 @@ function RecordsCard({
   units: UnitSystem;
   onRetry: () => void;
 }) {
+  const { t } = useT();
   const theme = useAppTheme();
   const router = useRouter();
 
   if (loading) return <SkeletonList rows={3} />;
   if (error)
     return (
-      <ErrorState error={errorValue} onRetry={onRetry} title="Records could not be read" compact />
+      <ErrorState
+        error={errorValue}
+        onRetry={onRetry}
+        title={t('progress.recordsError')}
+        compact
+      />
     );
   if (!records || records.length === 0)
     return (
       <EmptyState
         compact
         icon="trophy"
-        title="No records yet"
-        message="A record lands when a set beats anything you have done for that exercise before. Finish a strength workout and they start appearing."
+        title={t('progress.noRecordsTitle')}
+        message={t('progress.noRecordsMessage')}
       />
     );
 
@@ -650,7 +691,7 @@ function RecordsCard({
           key={`${record.exerciseId}:${record.kind}`}
           theme={theme}
           title={record.exerciseName}
-          subtitle={`${RECORD_LABEL[record.kind]} · ${formatShortDate(record.achievedAt)}`}
+          subtitle={`${t(RECORD_LABEL[record.kind])} · ${formatShortDate(record.achievedAt)}`}
           leading={
             <IconTile
               name="trophy"
@@ -666,7 +707,7 @@ function RecordsCard({
           }
           showChevron
           onPress={() => router.push(routes.exerciseDetail(record.exerciseId))}
-          accessibilityHint="Opens this exercise"
+          accessibilityHint={t('progress.opensExercise')}
           // `padding='xxs'` gives the card no vertical rhythm of its own, so rows draw
           // their own separators: the same convention `NavRow` uses inside a grouped card.
           style={index > 0 ? separator(theme.colors.hairline) : undefined}
@@ -678,9 +719,11 @@ function RecordsCard({
 
 /* ----------------------------------------------------------------- helpers -- */
 
-function rangeLabel(weeks: number): string {
+function rangeLabel(weeks: number, t: (key: TKey, vars?: TVars) => string): string {
   const match = RANGES.find((range) => range.weeks === weeks);
-  return `Last ${match?.label ?? countNoun(weeks, 'week')}`;
+  return t('progress.lastRange', {
+    label: match ? t(match.label) : `${weeks} ${t('progress.weekWord', { count: weeks })}`,
+  });
 }
 
 const styles = StyleSheet.create({

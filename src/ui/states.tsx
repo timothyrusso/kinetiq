@@ -28,6 +28,7 @@ import { Button } from './Button';
 import { Icon, type IconName } from './icons';
 import { Stack } from './layout';
 import { Txt } from './Text';
+import { useT } from '@/i18n/useT';
 
 /**
  * Shimmering placeholder block. `width` may be a percentage string for fluid rows;
@@ -112,10 +113,11 @@ export const SkeletonCard = memo(function SkeletonCard({
 });
 
 export const SkeletonList = memo(function SkeletonList({ rows = 6 }: { rows?: number }) {
+  const { t } = useT();
   const theme = useAppTheme();
   return (
     <View
-      accessibilityLabel="Loading"
+      accessibilityLabel={t('misc.loading')}
       style={{ paddingHorizontal: spacing.xl, gap: spacing.xs }}
     >
       {Array.from({ length: rows }, (_, i) => (
@@ -275,6 +277,7 @@ export const ErrorState = memo(function ErrorState({
   style?: StyleProp<ViewStyle>;
   compact?: boolean;
 }) {
+  const { t } = useT();
   const offline = isOfflineError(error);
   return (
     <StateScaffold
@@ -282,18 +285,16 @@ export const ErrorState = memo(function ErrorState({
       tone={offline ? 'warning' : 'danger'}
       title={
         title ??
-        (offline
-          ? 'You are offline'
-          : isTimeoutLike(error)
-            ? 'The server took too long'
-            : 'Could not load this')
+        t(
+          offline
+            ? 'states.offlineTitle'
+            : isTimeoutLike(error)
+              ? 'states.timeoutTitle'
+              : 'states.genericTitle',
+        )
       }
-      message={
-        offline
-          ? 'Anything you have saved is still here. Remote exercises and new images will come back as soon as you reconnect.'
-          : 'This one did not respond. Trying again usually works.'
-      }
-      actionLabel="Try again"
+      message={t(offline ? 'states.offlineMessage' : 'states.genericMessage')}
+      actionLabel={t('common.retry')}
       onAction={onRetry}
       style={style}
       compact={compact}
@@ -315,12 +316,13 @@ export const OfflineState = memo(function OfflineState({
   style?: StyleProp<ViewStyle>;
   compact?: boolean;
 }) {
+  const { t } = useT();
   return (
     <StateScaffold
       icon="offline"
       tone="warning"
-      title="No connection"
-      message="Your routines, history and progress are stored on this device and are unaffected."
+      title={t('errors.offlineTitle')}
+      message={t('misc.offlineDetail')}
       {...(onRetry ? { actionLabel: 'Retry', onAction: onRetry } : {})}
       style={style}
       compact={compact}

@@ -46,6 +46,8 @@ import {
 } from '@/utils/format';
 import type { ExerciseSnapshot, RoutineItem } from '@/domain/types';
 import type { ItemTarget } from '@/routines/draft';
+import { useT } from '@/i18n/useT';
+import { tr } from '@/i18n/tr';
 
 /** A row's position, in the form the row needs to draw its move controls. */
 export type ItemPosition = {
@@ -78,6 +80,7 @@ export const RoutineItemRow = memo(function RoutineItemRow({
   onRemove?: () => void;
   topDivider?: boolean;
 }) {
+  const { t } = useT();
   const theme = useAppTheme();
   const index = position?.index ?? 0;
   const count = position?.count ?? 1;
@@ -92,7 +95,7 @@ export const RoutineItemRow = memo(function RoutineItemRow({
         subtitle={itemSubtitle(item, snapshot, units)}
         {...(onPress === undefined ? {} : { onPress })}
         {...(onLongPress === undefined ? {} : { onLongPress })}
-        {...(onPress === undefined ? {} : { accessibilityHint: 'Changes the sets, reps, weight and rest' })}
+        {...(onPress === undefined ? {} : { accessibilityHint: t('itemEditor.editHint') })}
         leading={
           <ExerciseThumb
             uri={snapshot === null ? null : (snapshot.thumbnailUrl ?? snapshot.imageUrl)}
@@ -219,6 +222,7 @@ export const ItemEditorSheet = memo(function ItemEditorSheet({
   onRemove?: () => void;
   onRequestClose: () => void;
 }) {
+  const { t } = useT();
   const theme = useAppTheme();
   const step = weightStep(units);
   const displayWeight = weightDisplayValue(item.weightKg, units, step);
@@ -230,9 +234,9 @@ export const ItemEditorSheet = memo(function ItemEditorSheet({
       title={item.exerciseName}
       subtitle={sheetSubtitle(item, snapshot)}
     >
-      <SheetSection title="Sets">
+      <SheetSection title={t('itemEditor.sets')}>
         <Stepper
-          label="Sets"
+          label={t('itemEditor.sets')}
           value={item.sets}
           min={1}
           max={20}
@@ -241,25 +245,24 @@ export const ItemEditorSheet = memo(function ItemEditorSheet({
         />
       </SheetSection>
 
-      <SheetSection title="Reps">
+      <SheetSection title={t('itemEditor.reps')}>
         <Stepper
-          label="Reps"
+          label={t('itemEditor.reps')}
           value={repsFromRange(item.reps)}
           min={1}
           max={100}
           step={1}
-          suffix="reps"
+          suffix={t('itemEditor.repsSuffix')}
           onChange={(reps) => onChange({ reps: String(reps) })}
         />
         <Txt variant="micro" tone="faint" style={{ marginTop: spacing.sm }}>
-          Ranges like "5-8" are editable where the exercise was added; here the steppers
-          set one number.
+          {t('itemEditor.rangesNote')}
         </Txt>
       </SheetSection>
 
-      <SheetSection title={`Weight (${weightUnit(units)})`}>
+      <SheetSection title={t('itemEditor.weightIn', { unit: weightUnit(units) })}>
         <Stepper
-          label={`Weight per set in ${weightUnit(units)}`}
+          label={t('itemEditor.weightPerSet', { unit: weightUnit(units) })}
           value={displayWeight}
           min={0}
           max={units === 'imperial' ? 1000 : 450}
@@ -268,14 +271,14 @@ export const ItemEditorSheet = memo(function ItemEditorSheet({
         />
         {item.weightKg === 0 ? (
           <Txt variant="micro" tone="faint" style={{ marginTop: spacing.sm }}>
-            Bodyweight: no external load planned.
+            {t('itemEditor.bodyweightNote')}
           </Txt>
         ) : null}
       </SheetSection>
 
-      <SheetSection title="Rest between sets">
+      <SheetSection title={t('itemEditor.restBetweenSets')}>
         <Stepper
-          label="Rest between sets"
+          label={t('itemEditor.restBetweenSets')}
           value={item.restSeconds}
           min={0}
           max={600}
@@ -285,11 +288,11 @@ export const ItemEditorSheet = memo(function ItemEditorSheet({
         />
         {item.restSeconds === 0 ? (
           <Txt variant="micro" tone="faint" style={{ marginTop: spacing.sm }}>
-            Zero means no rest timer starts during this exercise.
+            {t('itemEditor.zeroRestNote')}
           </Txt>
         ) : restingAtDefault ? (
           <Txt variant="micro" tone="faint" style={{ marginTop: spacing.sm }}>
-            Matches your default in Settings.
+            {t('itemEditor.defaultRestNote')}
           </Txt>
         ) : null}
       </SheetSection>
@@ -298,7 +301,7 @@ export const ItemEditorSheet = memo(function ItemEditorSheet({
       (snapshot.primaryMuscles.length > 0 ||
         snapshot.equipment.length > 0 ||
         snapshot.instructions !== null) ? (
-        <SheetSection title="From the library">
+        <SheetSection title={t('itemEditor.fromLibrary')}>
           <Row gap="sm" wrap>
             {snapshot.primaryMuscles.map((muscle) => (
               <Row key={muscle} gap="xs" style={tagStyle(theme.colors)}>
@@ -325,9 +328,19 @@ export const ItemEditorSheet = memo(function ItemEditorSheet({
 
       <SheetFooter>
         {onRemove === undefined ? null : (
-          <Button label="Remove" variant="danger" icon="trash" onPress={onRemove} />
+          <Button
+            label={t('itemEditor.remove')}
+            variant="danger"
+            icon="trash"
+            onPress={onRemove}
+          />
         )}
-        <Button label="Done" onPress={onRequestClose} weighty style={{ flex: 1 }} />
+        <Button
+          label={t('itemEditor.done')}
+          onPress={onRequestClose}
+          weighty
+          style={{ flex: 1 }}
+        />
       </SheetFooter>
     </Sheet>
   );
@@ -347,7 +360,7 @@ export function itemSubtitle(
   snapshot: ExerciseSnapshot | null,
   units: UnitSystem,
 ): string {
-  const load = item.weightKg === 0 ? 'BW' : formatWeight(item.weightKg, units);
+  const load = item.weightKg === 0 ? tr('itemEditor.bodyweightShort') : formatWeight(item.weightKg, units);
   const targets = `${item.sets} × ${item.reps} · ${load}`;
   const muscle = snapshot?.primaryMuscles[0];
   return muscle ? `${targets} · ${muscle}` : targets;

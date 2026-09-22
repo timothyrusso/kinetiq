@@ -44,6 +44,7 @@ import { useSettings, useSettingsUpdate } from '@/settings';
 import { GOAL_PRESETS, REST_PRESETS } from '@/settings';
 import { spacing, screenGutter } from '@/theme/tokens';
 import { formatDurationCompact } from '@/utils/format';
+import { useT } from '@/i18n/useT';
 
 /** The two readings of the same run. A string union because `Segment<T extends string>`. */
 type ReadingMode = 'pace' | 'speed';
@@ -55,6 +56,7 @@ const GOAL_MIN = 1;
 const GOAL_MAX = 14;
 
 export default function SettingsTrainingScreen() {
+  const { t } = useT();
   const bottomSpace = useScreenContentBottom();
   const update = useSettingsUpdate();
 
@@ -70,24 +72,30 @@ export default function SettingsTrainingScreen() {
   );
 
   return (
-    <DetailScreen title="Training">
+    <DetailScreen title={t('trainingPrefs.title')} largeTitle>
       {(topInset) => (
         <ScrollView
           contentContainerStyle={[
             styles.content,
             { paddingTop: topInset + spacing.md, paddingBottom: bottomSpace },
           ]}
+          // `automatic`, so iOS owns the inset under the large title and can collapse it as
+          // this view scrolls. Without it the title stays large forever and the screen looks
+          // like a native header that does not work.
+          contentInsetAdjustmentBehavior="automatic"
           keyboardShouldPersistTaps="handled"
         >
           <Stack gap="xxl" style={styles.body}>
             {/* --------------------------------------------------- rest timer */}
             <View>
-              <SectionHeader title="Rest timer" eyebrow="Applies to new sessions" />
+              <SectionHeader
+                title={t('trainingPrefs.restTimer')}
+                eyebrow={t('trainingPrefs.appliesToNew')}
+              />
               <Card>
                 <Stack gap="lg">
                   <Txt variant="caption" tone="muted">
-                    Where a new rest countdown starts. Change it for one exercise inside a
-                    routine, or skip it mid-session: this is only the default.
+                    {t('misc.restDefaultBody')}
                   </Txt>
 
                   <Row gap="sm" style={styles.chips}>
@@ -102,7 +110,7 @@ export default function SettingsTrainingScreen() {
                   </Row>
 
                   <Stepper
-                    label="Rest after each set"
+                    label={t('trainingPrefs.restAfterSet')}
                     value={rest}
                     min={REST_MIN}
                     max={REST_MAX}
@@ -119,14 +127,14 @@ export default function SettingsTrainingScreen() {
 
             {/* --------------------------------------------- during a session */}
             <View>
-              <SectionHeader title="During a session" />
+              <SectionHeader title={t('trainingPrefs.duringSession')} />
               <Card padding="xxs">
                 <ToggleRow
-                  label="Start rest automatically"
+                  label={t('trainingPrefs.autoStartRest')}
                   hint={
                     autoStartRest
-                      ? 'Counting down the moment you complete a set.'
-                      : 'You tap to begin resting, so a phone call between sets costs you nothing.'
+                      ? t('states.autoStartOn')
+                      : t('states.autoStartOff')
                   }
                   value={autoStartRest}
                   onChange={(next) => update({ autoStartRest: next })}
@@ -136,41 +144,37 @@ export default function SettingsTrainingScreen() {
                     sound or appearance, because every haptic in this app is a set completed, a
                     rest that ended, or a record beaten. */}
                 <ToggleRow
-                  label="Haptics"
+                  label={t('trainingPrefs.haptics')}
                   hint="Buzz on a completed set, a rest that ends, and a new record."
                   value={hapticsEnabled}
                   onChange={(next) => update({ hapticsEnabled: next })}
                 />
               </Card>
               <Txt variant="micro" tone="faint" style={styles.footnote}>
-                Auto-start is the option to turn off if you rest by feel: a countdown you did
-                not start is a countdown you will silence.
+                {t('misc.autoStartFootnote')}
               </Txt>
             </View>
 
             {/* ------------------------------------------------ cardio numbers */}
             <View>
-              <SectionHeader title="Cardio numbers" />
+              <SectionHeader title={t('trainingPrefs.cardioNumbers')} />
               <Card>
                 <Stack gap="md">
-                  <Txt variant="strong">Pace or speed</Txt>
+                  <Txt variant="strong">{t('trainingPrefs.paceOrSpeed')}</Txt>
                   <Txt variant="caption" tone="muted">
-                    {speedInsteadOfPace
-                      ? 'Speed is how fast you are going, 13.3 km/h.'
-                      : 'Pace is how long a kilometre takes, 4:30 /km.'}{' '}
-                    The same run either way.
+                    {t(speedInsteadOfPace ? 'states.speedExample' : 'states.paceExample')}{' '}
+                    {t('states.sameRunEither')}
                   </Txt>
                   <SegmentedControl<ReadingMode>
                     value={speedInsteadOfPace ? 'speed' : 'pace'}
                     onChange={(next) => update({ showSpeedInsteadOfPace: next === 'speed' })}
                     segments={[
-                      { value: 'pace', label: 'Pace', icon: 'timer' },
-                      { value: 'speed', label: 'Speed', icon: 'bolt' },
+                      { value: 'pace', label: t('cardio.pace'), icon: 'timer' },
+                      { value: 'speed', label: t('cardio.speed'), icon: 'bolt' },
                     ]}
                   />
                   <Txt variant="micro" tone="faint">
-                    Applies to every pace in the app, including live during an activity.
-                    Strength stays in kilograms either way.
+                    {t('misc.paceAppliesBody')}
                   </Txt>
                 </Stack>
               </Card>
@@ -178,12 +182,14 @@ export default function SettingsTrainingScreen() {
 
             {/* --------------------------------------------------- weekly goal */}
             <View>
-              <SectionHeader title="Weekly goal" eyebrow="Also on your Profile tab" />
+              <SectionHeader
+                title={t('trainingPrefs.weeklyGoal')}
+                eyebrow={t('trainingPrefs.alsoOnProfile')}
+              />
               <Card>
                 <Stack gap="lg">
                   <Txt variant="caption" tone="muted">
-                    The ring on Home and the target line on Progress. Changing it never rewrites
-                    history: only what counts as on target from now on.
+                    {t('misc.goalBody')}
                   </Txt>
                   <Row gap="sm" style={styles.chips}>
                     {GOAL_PRESETS.map((n) => (
@@ -196,7 +202,7 @@ export default function SettingsTrainingScreen() {
                     ))}
                   </Row>
                   <Stepper
-                    label="Sessions per week"
+                    label={t('trainingPrefs.sessionsPerWeek')}
                     value={goal}
                     min={GOAL_MIN}
                     max={GOAL_MAX}

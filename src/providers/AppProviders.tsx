@@ -51,6 +51,7 @@ import {
   type BootstrapOutcome,
 } from './bootstrap';
 import { SplashCover } from '@/ui/SplashCover';
+import { useT } from '@/i18n/useT';
 
 /**
  * Held outside React on purpose: this has to be readable from non-component code
@@ -182,6 +183,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
  * once a retry fails outright, so this screen stays short.
  */
 function LaunchSurface({ dark, slow, onRetry }: { dark: boolean; slow: boolean; onRetry: () => void }) {
+  const { t } = useT();
   const [confirmingReset, setConfirmingReset] = useState(false);
   const [resetFailed, setResetFailed] = useState(false);
 
@@ -205,19 +207,17 @@ function LaunchSurface({ dark, slow, onRetry }: { dark: boolean; slow: boolean; 
       {slow ? (
         <View style={styles.panel}>
           <LaunchText dark={dark} size="title">
-            Taking longer than expected
+            {t('boot.takingLonger')}
           </LaunchText>
           <LaunchText dark={dark}>
-            {resetFailed
-              ? 'Kinetiq still could not open local storage, and clearing it did not help. Reinstalling the app is the remaining option; your data has already been removed.'
-              : 'Kinetiq is still starting up. This usually means local storage is busy or was left in a state it cannot read.'}
+            {t(resetFailed ? 'states.resetFailedBody' : 'states.stillStartingBody')}
           </LaunchText>
           {confirmingReset ? (
             <>
               <Row gap="sm" style={styles.actions}>
-                <Button label="Keep my data" variant="secondary" size="sm" onPress={() => setConfirmingReset(false)} />
+                <Button label={t('boot.keepMyData')} variant="secondary" size="sm" onPress={() => setConfirmingReset(false)} />
                 <Button
-                  label="Erase and start over"
+                  label={t('boot.eraseAndStart')}
                   variant="danger"
                   size="sm"
                   weighty
@@ -225,14 +225,14 @@ function LaunchSurface({ dark, slow, onRetry }: { dark: boolean; slow: boolean; 
                 />
               </Row>
               <LaunchText dark={dark} muted>
-                Erasing removes your history, routines and settings. It cannot be undone.
+                {t('boot.eraseWarning')}
               </LaunchText>
             </>
           ) : (
             <Row gap="sm" style={styles.actions}>
-              <Button label="Try again" variant="primary" size="sm" onPress={onRetry} />
+              <Button label={t('boot.tryAgain')} variant="primary" size="sm" onPress={onRetry} />
               <Button
-                label="Reset local data"
+                label={t('boot.resetLocalData')}
                 variant="ghost"
                 size="sm"
                 onPress={() => {
@@ -259,16 +259,17 @@ function LaunchSurface({ dark, slow, onRetry }: { dark: boolean; slow: boolean; 
  * request would otherwise have to ask for.
  */
 function FatalScreen({ error, onRetry }: { error: unknown; onRetry: () => void }) {
+  const { t } = useT();
   const message = error instanceof Error ? error.message : typeof error === 'string' ? error : String(error);
 
   return (
     <LaunchFrame dark>
       <View style={styles.panel}>
         <LaunchText dark size="title">
-          Kinetiq could not start
+          {t('boot.couldNotStart')}
         </LaunchText>
         <LaunchText dark>
-          Something failed before the app could open its local storage. Your data has not been changed.
+          {t('boot.couldNotStartDetail')}
         </LaunchText>
         <View style={styles.messageBox}>
           <LaunchText dark muted mono>
@@ -276,9 +277,9 @@ function FatalScreen({ error, onRetry }: { error: unknown; onRetry: () => void }
           </LaunchText>
         </View>
         <Row gap="sm" style={styles.actions}>
-          <Button label="Try again" variant="primary" size="sm" onPress={onRetry} />
+          <Button label={t('boot.tryAgain')} variant="primary" size="sm" onPress={onRetry} />
           <Button
-            label="Open device settings"
+            label={t('boot.openDeviceSettings')}
             variant="ghost"
             size="sm"
             onPress={() => {
@@ -379,6 +380,7 @@ const styles = StyleSheet.create({
  * here is a fact bootstrap observed, not a guess the UI reconstructed.
  */
 export function BootstrapDiagnostics() {
+  const { t } = useT();
   const theme = useAppTheme();
   const outcome = getBootstrapOutcome();
   if (!outcome) return null;
@@ -386,19 +388,21 @@ export function BootstrapDiagnostics() {
   const { database, seeded, resumedWorkout, migrationFailed } = outcome;
   const rows: ReadonlyArray<{ label: string; value: string; danger?: boolean }> = [
     {
-      label: 'Schema',
+      label: t('diag.schema'),
       value: migrationFailed
-        ? `Migration failed at v${database.fromVersion}`
-        : `v${database.fromVersion} → v${database.toVersion}`,
+        ? t('diag.migrationFailed', { version: database.fromVersion })
+        : t('diag.migrated', { from: database.fromVersion, to: database.toVersion }),
       danger: migrationFailed,
     },
     {
-      label: 'First run',
-      value: seeded ? `${seeded.activities} activities, ${seeded.routines} routines seeded` : 'Existing database',
+      label: t('diag.firstRun'),
+      value: seeded
+        ? t('diag.seeded', { activities: seeded.activities, routines: seeded.routines })
+        : t('diag.existing'),
     },
     {
-      label: 'Session restore',
-      value: resumedWorkout ? 'Restored a paused workout' : 'Nothing to restore',
+      label: t('diag.sessionRestore'),
+      value: t(resumedWorkout ? 'diag.restored' : 'diag.nothingToRestore'),
     },
   ];
 

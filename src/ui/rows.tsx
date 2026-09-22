@@ -32,6 +32,8 @@ import type { Theme } from '@/theme/theme';
 import { Icon, IconTile, type IconName } from './icons';
 import { fontSizeOf, lineHeightOf } from './Text';
 import type { TxtVariant } from './Text';
+import { tr } from '@/i18n/tr';
+import { useT } from '@/i18n/useT';
 
 /** Activity kind → glyph. One table, so a kind can never render the wrong icon. */
 export const ACTIVITY_ICON: Record<ActivityKind, IconName> = {
@@ -317,6 +319,7 @@ export const ActivityRow = memo(function ActivityRow({
   /** Overrides the chevron, e.g. a PR badge or a swipe-action affordance. */
   trailing?: React.ReactNode;
 }) {
+  const { t } = useT();
   return (
     <ListRow
       theme={theme}
@@ -325,7 +328,7 @@ export const ActivityRow = memo(function ActivityRow({
       selected={selected}
       onPress={onPress}
       {...(onLongPress ? { onLongPress } : {})}
-      accessibilityHint="Opens the full workout"
+      accessibilityHint={t('misc.opensWorkout')}
       leading={
         <IconTile
           name={ACTIVITY_ICON[activity.kind]}
@@ -364,13 +367,14 @@ export const RoutineRow = memo(function RoutineRow({
   trailing?: React.ReactNode;
   topDivider?: boolean;
 }) {
+  const { t } = useT();
   return (
     <Pressable
       onPress={onPress}
       onLongPress={onLongPress}
       accessibilityRole="button"
       accessibilityLabel={`${routine.name}. ${subtitle}`}
-      accessibilityHint="Opens the routine"
+      accessibilityHint={t('misc.opensRoutine')}
       style={({ pressed }) => [
         {
           paddingHorizontal: spacing.xl,
@@ -544,6 +548,7 @@ export const ExerciseRow = memo(function ExerciseRow({
   dimmed?: boolean;
   topDivider?: boolean;
 }) {
+  const { t } = useT();
   return (
     <View
       style={{
@@ -560,7 +565,7 @@ export const ExerciseRow = memo(function ExerciseRow({
         subtitle={subtitle}
         onPress={onPress}
         showChevron
-        accessibilityHint="Opens the exercise details"
+        accessibilityHint={t('misc.opensExercise')}
         leading={<ExerciseThumb uri={uri} name={name} size={48} theme={theme} />}
       />
     </View>
@@ -569,7 +574,7 @@ export const ExerciseRow = memo(function ExerciseRow({
 
 /** Up to `max` names, comma-separated, then "+n". */
 export function summarizeExerciseNames(names: string[], max = 3): string {
-  if (names.length === 0) return 'No exercises yet';
+  if (names.length === 0) return tr('states.noExercisesYet');
   const rest = names.length - max;
   const head = names.slice(0, Math.max(1, max)).join(', ');
   return rest > 0 ? `${head} +${rest}` : head;

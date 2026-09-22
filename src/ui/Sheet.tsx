@@ -41,6 +41,7 @@ import { useSheetPresence } from './sheetPresence';
 import { Button } from './Button';
 import { Icon } from './icons';
 import { Txt } from './Text';
+import { useT } from '@/i18n/useT';
 
 export type SheetHandle = {
   /** Closes without consulting any guard: call after a save has already succeeded. */
@@ -78,6 +79,7 @@ export const Sheet = forwardRef<SheetHandle, SheetProps>(function Sheet(
   },
   ref,
 ) {
+  const { t } = useT();
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
   // Tells the tabs layout this sheet exists, so the tab bar can get out of the way.
@@ -188,7 +190,7 @@ export const Sheet = forwardRef<SheetHandle, SheetProps>(function Sheet(
           requestClose();
         }}
         accessibilityRole="button"
-        accessibilityLabel="Dismiss"
+        accessibilityLabel={t('misc.dismiss')}
         style={ABSOLUTE_FILL}
       >
         <AnimatedScrim style={drag.backdropStyle} />
@@ -247,6 +249,7 @@ export const SheetHeader = memo(function SheetHeader({
   onClose?: () => void;
   accessory?: React.ReactNode;
 }) {
+  const { t } = useT();
   const theme = useAppTheme();
   return (
     <View
@@ -267,7 +270,7 @@ export const SheetHeader = memo(function SheetHeader({
           }}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel="Close"
+          accessibilityLabel={t('common.close')}
           style={{
             width: 36,
             height: 36,

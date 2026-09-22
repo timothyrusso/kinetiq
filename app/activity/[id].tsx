@@ -63,10 +63,12 @@ import {
   useDeleteActivity,
   useUpdateActivityNotes,
 } from '@/queries/useActivities';
-  // Record wording lives next to the record query, so this screen and the exercise detail,
-  // cannot drift into calling the same record two different things.,
+// Record wording lives next to the record query, so this screen and the exercise detail
+// cannot drift into calling the same record two different things.
 import { RECORD_LABEL, formatRecordValue } from '@/queries/useExerciseHistory';
 import { useSettings } from '@/settings/hooks';
+import { useT } from '@/i18n/useT';
+import type { TKey } from '@/i18n';
 import { activityDisplay, splitRows, type SplitRow } from '@/domain/display';
 import { estimatedOneRepMax } from '@/domain/logic';
 import type {
@@ -81,7 +83,6 @@ import { radius, spacing, screenGutter } from '@/theme/tokens';
 import type { UnitSystem } from '@/utils/format';
 import {
   compactNumber,
-  countNoun,
   formatAgo,
   formatCalories,
   formatDistance,
@@ -94,7 +95,6 @@ import {
   formatTimeOfDay,
   formatWeight,
   joinMiddleDot,
-  pluralWord,
 } from '@/utils/format';
 import { displayRoute } from '@/services/gps';
 
@@ -109,6 +109,7 @@ const MAX_ELEVATION_SAMPLES = 60;
 
 export default function ActivityDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { t } = useT();
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
   const units = useSettings((s) => s.unitSystem);
@@ -168,7 +169,7 @@ export default function ActivityDetailScreen() {
           flash the previous list's rows past the hero number. */}
       <Stack.Screen options={{ animation: 'fade_from_bottom' }} />
       <DetailScreen
-        title={activity?.title ?? 'Activity'}
+        title={activity?.title ?? t('activity.fallbackTitle')}
         {...(activity ? { subtitle: formatFullDate(activity.startedAt) } : {})}
         headerTransparent={activity !== null}
         right={
@@ -178,8 +179,8 @@ export default function ActivityDetailScreen() {
               variant="danger"
               size={20}
               weighty
-              accessibilityLabel="Delete this activity"
-              accessibilityHint="Opens a confirmation"
+              accessibilityLabel={t('activity.delete')}
+              accessibilityHint={t('activity.deleteHint')}
               onPress={() => setConfirmingDelete(true)}
             />
           ) : undefined
@@ -204,7 +205,7 @@ export default function ActivityDetailScreen() {
               <ErrorState
                 error={query.error}
                 onRetry={() => void query.refetch()}
-                title="Could not open this activity"
+                title={t('activity.loadError')}
               />
             ) : activity ? (
               <ActivityBody
@@ -222,7 +223,7 @@ export default function ActivityDetailScreen() {
       {notesDraft !== null ? (
         <Sheet
           onRequestClose={() => setNotesDraft(null)}
-          title="Session notes"
+          title={t('activity.notesTitle')}
           {...(activity ? { subtitle: activity.title } : {})}
         >
           {/* Not wrapped in `SheetSection`: the header already says "Session notes", and
@@ -230,7 +231,7 @@ export default function ActivityDetailScreen() {
               NOTES": the section title and the field label are the same word twice, in two
               colours, two lines apart. `SheetFooter` still supplies the divider below. */}
           <TextField
-            label="Notes"
+            label={t('activity.notesLabel')}
             value={notesDraft}
             onChangeText={(text) => {
               // Typing again means the user is trying a second time, so the previous
@@ -240,8 +241,8 @@ export default function ActivityDetailScreen() {
             }}
             multiline
             autoFocus
-            placeholder="How did it feel? What would you change next time?"
-            hint="Stored on this device alongside the activity."
+            placeholder={t('activity.notesPlaceholder')}
+            hint={t('activity.notesHint')}
             // The write is a disk write, and disks fail: full storage, a row deleted
             // from another screen, a migration that did not run. Without this the
             // sheet would simply refuse to close, which reads as an app that ignores
@@ -251,14 +252,18 @@ export default function ActivityDetailScreen() {
                   error:
                     saveNotes.error instanceof Error
                       ? saveNotes.error.message
-                      : 'The note could not be saved.',
+                      : t('activity.notesSaveFailed'),
                 }
               : {})}
           />
           <SheetFooter>
-            <Button label="Cancel" variant="quiet" onPress={() => setNotesDraft(null)} />
             <Button
-              label="Save"
+              label={t('common.cancel')}
+              variant="quiet"
+              onPress={() => setNotesDraft(null)}
+            />
+            <Button
+              label={t('common.save')}
               variant="primary"
               fullWidth
               loading={saveNotes.isPending}
@@ -270,9 +275,9 @@ export default function ActivityDetailScreen() {
 
       {confirmingDelete && activity ? (
         <ConfirmSheet
-          title="Delete this session?"
-          message={`"${activity.title}" goes with it, route included. Its numbers come out of your totals and records once it is gone, so the charts will move.`}
-          confirmLabel={removeActivity.isPending ? 'Deleting' : 'Delete session'}
+          title={t('activity.deleteTitle')}
+          message={t('activity.deleteMessage', { name: activity.title })}
+          confirmLabel={t(removeActivity.isPending ? 'activity.deleting' : 'activity.deleteConfirm')}
           onConfirm={confirmDelete}
           onRequestClose={() => {
             // Same reason as the list's delete sheet: leaving the previous failure behind
@@ -285,7 +290,7 @@ export default function ActivityDetailScreen() {
                 error:
                   removeActivity.error instanceof Error
                     ? removeActivity.error.message
-                    : 'The session could not be deleted.',
+                    : t('activity.deleteFailed'),
               }
             : {})}
         />
@@ -309,6 +314,7 @@ function ActivityBody({
   theme: Theme;
   onEditNotes: () => void;
 }) {
+  const { t } = useT();
   const [width, onLayout] = useMeasuredWidth();
   // Charts are measured, not assumed: a `Dimensions` constant would be wrong in split view,
   // on a tablet, and on the day this screen's padding changes.
@@ -332,7 +338,7 @@ function ActivityBody({
       >
         <Row gap="sm" align="center">
           <Badge
-            label={KIND_LABEL[activity.kind]}
+            label={t(KIND_LABEL[activity.kind])}
             tone={KIND_TONE[activity.kind]}
             icon={
               <Icon
@@ -370,8 +376,8 @@ function ActivityBody({
       ) : (
         <EmptyState
           style={{ paddingTop: spacing.xxxl }}
-          title="Nothing was captured"
-          message="This session has a duration and no metrics. It still counts toward your streak and your totals."
+          title={t('activity.emptyTitle')}
+          message={t('activity.emptyMessage')}
           icon="warning"
           compact
         />
@@ -383,13 +389,20 @@ function ActivityBody({
   );
 }
 
-const KIND_LABEL: Record<ActivityKind, string> = {
-  run: 'Run',
-  ride: 'Ride',
-  lift: 'Strength',
-  walk: 'Walk',
-  yoga: 'Yoga',
-};
+/**
+ * Badge copy, as catalog KEYS rather than words.
+ *
+ * A module-level map of English strings cannot be translated: it is built once, before any
+ * component has a language. Holding the key instead means the lookup happens where `t` is,
+ * and the map stays a single place to add a kind.
+ */
+const KIND_LABEL = {
+  run: 'activity.kindRun',
+  ride: 'activity.kindRide',
+  lift: 'activity.kindLift',
+  walk: 'activity.kindWalk',
+  yoga: 'activity.kindYoga',
+} as const satisfies Record<ActivityKind, TKey>;
 
 /** Badge *purposes*, not colours: the theme owns the hue, this owns the meaning. */
 const KIND_TONE: Record<ActivityKind, 'accent' | 'info' | 'success' | 'warning'> = {
@@ -417,6 +430,7 @@ function CardioBody({
   theme: Theme;
   chartWidth: number;
 }) {
+  const { t } = useT();
   // The same thinning the map applies, so "there is a route" is decided by the geometry the
   // map is about to draw rather than by a second, subtly different rule.
   const hasRoute = displayRoute(cardio.route).length >= 2;
@@ -468,11 +482,10 @@ function CardioBody({
               <Icon name="route" size={26} color={theme.colors.textFaint} />
               <Column gap="xxs" style={{ flex: 1, minWidth: 0 }}>
                 <Txt variant="subhead" weight="700">
-                  No route to draw
+                  {t('misc.noRouteToDraw')}
                 </Txt>
                 <Txt variant="caption" tone="muted">
-                  Nothing was traced. An indoor session and a GPS fix that never arrived both
-                  look like this: duration, pace and splits below are still exact.
+                  {t('misc.noRouteBody')}
                 </Txt>
               </Column>
             </Row>
@@ -481,56 +494,67 @@ function CardioBody({
       </Section>
 
       <Section gap="lg">
-        <SectionHeader title="Metrics" eyebrow="Session" />
+        <SectionHeader title={t('activity.metrics')} eyebrow={t('activity.session')} />
         <MetricGrid columns={2}>
-          <Metric label="Duration" value={formatDuration(activity.durationSeconds)} />
           <Metric
-            label="Distance"
+            label={t('activity.duration')}
+            value={formatDuration(activity.durationSeconds)}
+          />
+          <Metric
+            label={t('activity.distance')}
             value={hasDistance ? formatDistance(cardio.distanceMeters, units, 2) : null}
-            {...(hasDistance ? {} : { note: 'Indoor, or no GPS fix' })}
+            {...(hasDistance ? {} : { note: t('activity.noGps') })}
           />
           <Metric
-            label={showSpeed ? 'Speed' : 'Pace'}
+            label={t(showSpeed ? 'activity.speed' : 'activity.pace')}
             value={paceLabel}
-            {...(paceLabel === null ? { note: 'Needs distance' } : {})}
+            {...(paceLabel === null ? { note: t('activity.needsDistance') } : {})}
           />
           <Metric
-            label="Calories"
+            label={t('activity.calories')}
             value={activity.caloriesKcal > 0 ? formatCalories(activity.caloriesKcal) : null}
-            {...(activity.caloriesKcal > 0 ? {} : { note: 'Estimate unavailable' })}
+            {...(activity.caloriesKcal > 0 ? {} : { note: t('activity.noEstimate') })}
           />
           <Metric
-            label="Heart rate"
+            label={t('activity.heartRate')}
             value={cardio.avgHeartRate !== null ? `${cardio.avgHeartRate} bpm` : null}
             note={
               hasHr
                 ? cardio.maxHeartRate !== null
-                  ? `Peak ${cardio.maxHeartRate} bpm`
-                  : 'Average only'
-                : 'No sensor this session'
+                  ? t('activity.peakHr', { bpm: cardio.maxHeartRate })
+                  : t('activity.avgOnly')
+                : t('activity.noSensor')
             }
           />
           <Metric
-            label="Elevation"
+            label={t('activity.elevation')}
             value={hasClimb ? formatElevation(cardio.elevationGainMeters, units) : null}
-            note={hasClimb ? 'Total climb' : 'Flat, or no barometer'}
+            note={t(hasClimb ? 'activity.totalClimb' : 'activity.flat')}
           />
           <Metric
-            label="Cadence"
+            label={t('activity.cadence')}
             value={cardio.stridesPerMinute !== null ? `${cardio.stridesPerMinute} spm` : null}
-            note={cardio.stridesPerMinute !== null ? 'Strides per minute' : 'Not recorded'}
+            note={t(
+              cardio.stridesPerMinute !== null
+                ? 'activity.stridesPerMinute'
+                : 'activity.notRecorded',
+            )}
           />
           <Metric
-            label="Splits"
+            label={t('activity.splits')}
             value={splits !== null ? `${splits.length}` : null}
-            note={splits !== null ? `Per ${unitWord}` : 'Too short to split'}
+            note={
+              splits !== null
+                ? t('activity.perUnit', { unit: unitWord })
+                : t('activity.tooShortToSplit')
+            }
           />
         </MetricGrid>
       </Section>
 
       {elevation.length > 0 && chartWidth >= MIN_CHART_WIDTH ? (
         <Section>
-          <SectionHeader title="Elevation" eyebrow="Across the session" />
+          <SectionHeader title={t('activity.elevation')} eyebrow={t('activity.acrossSession')} />
           <Card>
             <TrendChart
               points={elevation}
@@ -543,7 +567,7 @@ function CardioBody({
               format={(value) => `${Math.round(value)} m`}
             />
             <Txt variant="micro" tone="faint" style={{ paddingTop: spacing.sm }}>
-              Altitude as the device reported it, sampled along the trace.
+              {t('activity.altitudeNote')}
             </Txt>
           </Card>
         </Section>
@@ -551,8 +575,8 @@ function CardioBody({
 
       <Section>
         <SectionHeader
-          title="Splits"
-          eyebrow={`Per ${unitWord}`}
+          title={t('activity.splits')}
+          eyebrow={t('activity.perUnit', { unit: unitWord })}
           {...(splits !== null ? { count: splits.length } : {})}
         />
         {splits === null ? (
@@ -561,12 +585,12 @@ function CardioBody({
               <Icon name="timer" size={22} color={theme.colors.textFaint} />
               <Column gap="xxs" style={{ flex: 1, minWidth: 0 }}>
                 <Txt variant="subhead" weight="700">
-                  No splits to show
+                  {t('activity.noSplitsTitle')}
                 </Txt>
                 <Txt variant="caption" tone="muted">
-                  {hasDistance
-                    ? `This session was shorter than a ${unitWord}, so there is nothing to break down.`
-                    : `Distance was never measured, so there is no ${unitWord} to break down. Duration above is still exact.`}
+                  {t(hasDistance ? 'activity.splitsTooShort' : 'activity.splitsNoDistance', {
+                    unit: unitWord,
+                  })}
                 </Txt>
               </Column>
             </Row>
@@ -588,6 +612,7 @@ function SplitTable({
   units: UnitSystem;
   theme: Theme;
 }) {
+  const { t } = useT();
   // Columns appear only when at least one split has the data. A column of dashes is worse
   // than no column: it reads as though the *session* failed rather than one sensor.
   const showHeart = splits.some((split) => split.heartRate !== null);
@@ -597,22 +622,22 @@ function SplitTable({
     <Card padding="sm">
       <Row gap="md" align="center" style={styles.headRow}>
         <Txt variant="micro" tone="faint" style={styles.narrow}>
-          {units === 'metric' ? 'KM' : 'MI'}
+          {t(units === 'metric' ? 'activity.colKm' : 'activity.colMi')}
         </Txt>
         <Txt variant="micro" tone="faint" style={styles.cell}>
-          PACE
+          {t('activity.colPace')}
         </Txt>
         <Txt variant="micro" tone="faint" style={styles.cell}>
-          TIME
+          {t('activity.colTime')}
         </Txt>
         {showHeart ? (
           <Txt variant="micro" tone="faint" align="right" style={styles.cell}>
-            HR
+            {t('activity.colHr')}
           </Txt>
         ) : null}
         {showClimb ? (
           <Txt variant="micro" tone="faint" align="right" style={styles.narrow}>
-            UP
+            {t('activity.colUp')}
           </Txt>
         ) : null}
       </Row>
@@ -624,12 +649,12 @@ function SplitTable({
           accessible
           accessibilityRole="summary"
           accessibilityLabel={joinMiddleDot([
-            `${units === 'metric' ? 'Kilometre' : 'Mile'} ${split.label}`,
+            `${t(units === 'metric' ? 'activity.kilometre' : 'activity.mile')} ${split.label}`,
             split.paceLabel,
             formatDurationCompact(split.durationSeconds),
             split.heartRate !== null ? `${split.heartRate} bpm` : null,
-            split.fastest ? 'fastest' : null,
-            split.slowest && !split.fastest ? 'slowest' : null,
+            split.fastest ? t('activity.fastest') : null,
+            split.slowest && !split.fastest ? t('activity.slowest') : null,
           ])}
         >
           {index > 0 ? <Divider inset={spacing.sm} /> : null}
@@ -690,6 +715,7 @@ function StrengthBody({
   theme: Theme;
   chartWidth: number;
 }) {
+  const { t } = useT();
   const strength = activity.strength;
   const entries = strength?.entries ?? [];
   const records = strength?.personalRecords ?? [];
@@ -721,40 +747,53 @@ function StrengthBody({
   return (
     <>
       <Section gap="lg">
-        <SectionHeader title="Session" eyebrow="Summary" />
+        <SectionHeader title={t('activity.session')} eyebrow={t('activity.summary')} />
         <MetricGrid columns={2}>
-          <Metric label="Duration" value={formatDuration(activity.durationSeconds)} />
           <Metric
-            label="Volume"
+            label={t('activity.duration')}
+            value={formatDuration(activity.durationSeconds)}
+          />
+          <Metric
+            label={t('activity.volume')}
             value={volume > 0 ? `${compactNumber(volume)} kg` : null}
-            note={volume > 0 ? 'Reps × weight' : 'Bodyweight work, or nothing completed'}
+            note={t(volume > 0 ? 'activity.repsTimesWeight' : 'activity.bodyweightWork')}
           />
           <Metric
-            label="Sets"
+            label={t('activity.sets')}
             value={planned > 0 ? `${completed}/${planned}` : null}
-            note={planned > 0 ? 'completed' : 'No sets recorded'}
+            note={t(planned > 0 ? 'activity.completed' : 'activity.noSets')}
           />
           <Metric
-            label="Movements"
+            label={t('activity.movements')}
             value={entries.length > 0 ? `${entries.length}` : null}
-            note={entries.length > 0 ? countNoun(entries.length, 'exercise') : 'Nothing added'}
+            note={
+              entries.length > 0
+                ? `${entries.length} ${t('activity.exerciseWord', { count: entries.length })}`
+                : t('activity.nothingAdded')
+            }
           />
           <Metric
-            label="Calories"
+            label={t('activity.calories')}
             value={activity.caloriesKcal > 0 ? formatCalories(activity.caloriesKcal) : null}
-            {...(activity.caloriesKcal > 0 ? {} : { note: 'Estimate unavailable' })}
+            {...(activity.caloriesKcal > 0 ? {} : { note: t('activity.noEstimate') })}
           />
           <Metric
-            label="Density"
+            label={t('activity.density')}
             value={volume > 0 && minutes >= 1 ? `${Math.round(volume / minutes)} kg/min` : null}
-            note={volume > 0 && minutes >= 1 ? 'Volume per minute' : 'Needs a minute of volume'}
+            note={t(
+              volume > 0 && minutes >= 1 ? 'activity.volumePerMinute' : 'activity.needsMinute',
+            )}
           />
         </MetricGrid>
       </Section>
 
       {volumePoints.length >= 2 && chartWidth >= MIN_CHART_WIDTH ? (
         <Section>
-          <SectionHeader title="Volume" eyebrow="Per movement" count={volumePoints.length} />
+          <SectionHeader
+            title={t('activity.volume')}
+            eyebrow={t('activity.perMovement')}
+            count={volumePoints.length}
+          />
           <Card>
             <TrendChart
               points={volumePoints}
@@ -770,7 +809,11 @@ function StrengthBody({
       ) : null}
 
       <Section>
-        <SectionHeader title="Exercises" eyebrow="Work" count={entries.length} />
+        <SectionHeader
+          title={t('activity.exercises')}
+          eyebrow={t('activity.work')}
+          count={entries.length}
+        />
         {entries.map((entry, index) => (
           <ExerciseCard key={`${entry.exerciseId}-${index}`} entry={entry} units={units} />
         ))}
@@ -778,7 +821,11 @@ function StrengthBody({
 
       {records.length > 0 ? (
         <Section>
-          <SectionHeader title="Records" eyebrow="Set this session" count={records.length} />
+          <SectionHeader
+            title={t('activity.records')}
+            eyebrow={t('activity.setThisSession')}
+            count={records.length}
+          />
           <Card tone="accent">
             <Column gap="lg">
               {records.map((record) => (
@@ -789,10 +836,12 @@ function StrengthBody({
                       {record.exerciseName}
                     </Txt>
                     <Txt variant="caption" tone="muted">
-                      {RECORD_LABEL[record.kind]}
+                      {t(RECORD_LABEL[record.kind])}
                       {record.previousValue === null
-                        ? ': first of its kind'
-                        : `: up from ${formatRecordValue(record.kind, record.previousValue, units)}`}
+                        ? t('activity.firstOfKind')
+                        : t('activity.upFrom', {
+                            value: formatRecordValue(record.kind, record.previousValue, units),
+                          })}
                     </Txt>
                   </Column>
                   <Txt variant="headline" weight="700">
@@ -809,6 +858,7 @@ function StrengthBody({
 }
 
 function ExerciseCard({ entry, units }: { entry: StrengthEntry; units: UnitSystem }) {
+  const { t } = useT();
   const top = useMemo(() => heaviestCompletedSet(entry.sets), [entry.sets]);
   const done = entry.sets.filter((set) => set.completed).length;
   const planned = entry.sets.length;
@@ -823,16 +873,28 @@ function ExerciseCard({ entry, units }: { entry: StrengthEntry; units: UnitSyste
             </Txt>
             <Txt variant="caption" tone="muted">
               {joinMiddleDot([
-                `${done}/${planned} ${pluralWord(planned, 'set')}`,
+                `${done}/${planned} ${t('activity.setWord', { count: planned })}`,
                 entry.muscleGroup,
                 top
-                  ? `Top ${top.weightKg === 0 ? 'BW' : formatWeight(top.weightKg, units)} × ${top.reps}`
+                  ? t('activity.topSet', {
+                      weight:
+                        top.weightKg === 0
+                          ? t('activity.bodyweightShort')
+                          : formatWeight(top.weightKg, units),
+                      reps: top.reps,
+                    })
                   : null,
               ])}
             </Txt>
           </Column>
           <Badge
-            label={done === 0 ? 'Skipped' : done === planned ? 'All done' : `${done}/${planned}`}
+            label={
+              done === 0
+                ? t('activity.skipped')
+                : done === planned
+                  ? t('activity.allDone')
+                  : `${done}/${planned}`
+            }
             tone={done === 0 ? 'warning' : done === planned ? 'success' : 'neutral'}
           />
         </Row>
@@ -842,16 +904,16 @@ function ExerciseCard({ entry, units }: { entry: StrengthEntry; units: UnitSyste
             <Divider />
             <Row gap="md" align="center" style={styles.headRow}>
               <Txt variant="micro" tone="faint" style={styles.narrow}>
-                SET
+                {t('activity.colSet')}
               </Txt>
               <Txt variant="micro" tone="faint" style={styles.cell}>
-                {units === 'metric' ? 'KG' : 'LB'}
+                {t(units === 'metric' ? 'activity.colKg' : 'activity.colLb')}
               </Txt>
               <Txt variant="micro" tone="faint" style={styles.cell}>
-                REPS
+                {t('activity.colReps')}
               </Txt>
               <Txt variant="micro" tone="faint" align="right" style={styles.wide}>
-                E-1RM
+                {t('activity.colE1rm')}
               </Txt>
             </Row>
             {entry.sets.map((set, index) => (
@@ -863,11 +925,13 @@ function ExerciseCard({ entry, units }: { entry: StrengthEntry; units: UnitSyste
                   accessibilityLabel={
                     set.completed
                       ? joinMiddleDot([
-                          `Set ${index + 1}`,
-                          set.weightKg === 0 ? 'bodyweight' : formatWeight(set.weightKg, units),
-                          `${set.reps} ${pluralWord(set.reps, 'rep')}`,
+                          t('activity.setNumber', { n: index + 1 }),
+                          set.weightKg === 0
+                            ? t('activity.bodyweight')
+                            : formatWeight(set.weightKg, units),
+                          `${set.reps} ${t('activity.repWord', { count: set.reps })}`,
                         ])
-                      : `Set ${index + 1} not completed`
+                      : t('activity.setNotDone', { n: index + 1 })
                   }
                   style={[styles.dataRow, styles.row, set.completed ? null : styles.dimmed]}
                 >
@@ -875,7 +939,9 @@ function ExerciseCard({ entry, units }: { entry: StrengthEntry; units: UnitSyste
                     {index + 1}
                   </Txt>
                   <Txt variant="body" weight="700" style={styles.cell}>
-                    {set.weightKg === 0 ? 'BW' : formatWeight(set.weightKg, units)}
+                    {set.weightKg === 0
+                      ? t('activity.bodyweightShort')
+                      : formatWeight(set.weightKg, units)}
                   </Txt>
                   <Txt variant="body" style={styles.cell}>
                     {set.reps}
@@ -905,25 +971,26 @@ function ExerciseCard({ entry, units }: { entry: StrengthEntry; units: UnitSyste
 /* ----------------------------------------------------------------- notes -- */
 
 function NotesBlock({ activity, onEdit }: { activity: Activity; onEdit: () => void }) {
+  const { t } = useT();
   const hasNotes = activity.notes !== null;
   return (
     <Section>
-      <SectionHeader title="Notes" eyebrow="Session" />
+      <SectionHeader title={t('activity.notesSection')} eyebrow={t('activity.session')} />
       <Card>
         {/* Selectable so a note can be copied into a training log elsewhere without the app
             needing a share sheet it does not have. */}
         <Txt selectable variant="body" numberOfLines={8}>
           {hasNotes
             ? activity.notes
-            : 'Nothing written for this session yet. A line about how it felt is the part you will wish you had in three months.'}
+            : t('activity.notesEmpty')}
         </Txt>
       </Card>
       {/* `ActionRow` paints its own surface, padding and chevron, so it is a row on this
           screen rather than something wrapped in a second card: nesting the two gives a
           card inside a card with two radii that do not line up. */}
       <ActionRow
-        title={hasNotes ? 'Edit notes' : 'Add notes'}
-        {...(hasNotes ? { subtitle: 'How it felt, what to change next time' } : {})}
+        title={t(hasNotes ? 'activity.editNotes' : 'activity.addNotes')}
+        {...(hasNotes ? { subtitle: t('activity.notesSubtitle') } : {})}
         icon="edit"
         onPress={onEdit}
       />
@@ -940,6 +1007,7 @@ function NotesBlock({ activity, onEdit }: { activity: Activity; onEdit: () => vo
  * of copy and buys the credibility of the other thirty.
  */
 function ProvenanceBlock({ activity, theme }: { activity: Activity; theme: Theme }) {
+  const { t } = useT();
   const icon: IconName = activity.seeded
     ? 'info'
     : activity.sourceSessionId
@@ -952,18 +1020,20 @@ function ProvenanceBlock({ activity, theme }: { activity: Activity; theme: Theme
           <Icon name={icon} size={20} color={theme.colors.textMuted} />
           <Column gap="xxs" style={{ flex: 1, minWidth: 0 }}>
             <Txt variant="label" weight="700">
-              {activity.seeded
-                ? 'Sample activity'
-                : activity.sourceSessionId
-                  ? 'Tracked in Kinetiq'
-                  : 'Added manually'}
+              {t(
+                activity.seeded
+                  ? 'activity.sampleTitle'
+                  : activity.sourceSessionId
+                    ? 'activity.trackedTitle'
+                    : 'activity.manualTitle',
+              )}
             </Txt>
             <Txt variant="micro" tone="muted">
               {activity.seeded
-                ? 'Ships with the app so the charts have a shape. Delete it any time.'
+                ? t('activity.sampleNote')
                 : activity.sourceSessionId
-                  ? `Recorded ${formatAgo(activity.startedAt)}`
-                  : 'Created from a routine without the tracker running'}
+                  ? t('activity.recordedAgo', { ago: formatAgo(activity.startedAt) })
+                  : t('activity.manualNote')}
             </Txt>
           </Column>
         </Row>
@@ -978,6 +1048,7 @@ function ProvenanceBlock({ activity, theme }: { activity: Activity; theme: Theme
  * One metric cell. The "`null` means unmeasured" contract is the point of the component, * see the file header.
  */
 function Metric({ label, value, note }: { label: string; value: string | null; note?: string }) {
+  const { t } = useT();
   const missing = value === null;
   return (
     <Column gap="xxs">
@@ -987,7 +1058,7 @@ function Metric({ label, value, note }: { label: string; value: string | null; n
       </Txt>
       {note || missing ? (
         <Txt variant="micro" tone="faint" numberOfLines={2}>
-          {note ?? 'Not measured'}
+          {note ?? t('activity.notMeasured')}
         </Txt>
       ) : null}
     </Column>

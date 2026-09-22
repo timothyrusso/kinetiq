@@ -108,6 +108,141 @@ function visible(n) {
   return r.y >= 0 && r.y + r.height <= VIEWPORT_HEIGHT;
 }
 
+/**
+ * Where a tap on this node will actually land, and whether anything else is there.
+ *
+ * `visible()` answers "is this inside the viewport", which is a different and weaker question
+ * than "will pressing it press it". This app pins chrome over its scrolling content at BOTH
+ * ends: a translucent header at the top, the native tab bar at the bottom, and, while a
+ * workout is running, the tab bar accessory pill on top of that. A list row scrolled under any
+ * of them is still `visible()` by rect, still returned by `seek()`, and a press on its centre
+ * hits the chrome instead. Both times that happened it was read as an app bug: once as a
+ * routine screen "not showing its exercise rows" when the tap had actually opened the running
+ * session from the pill, and once as a press that "did nothing" on a row beneath the header.
+ *
+ * So the press point is chosen rather than assumed. `occluderAt` asks the tree who is on top
+ * of a point, using tree order as paint order and ignoring the target's own ancestors (a
+ * containing view is not in the way of its child). `clearPointIn` then walks candidate points
+ * inside the node, since a full-width row overlapped at the bottom centre is still perfectly
+ * pressable 24pt in from its leading edge.
+ */
+function rectOf(n) {
+  const r = n?.rect;
+  return r && r.width > 0 && r.height > 0 ? r : null;
+}
+
+function covers(r, x, y) {
+  return x >= r.x && x <= r.x + r.width && y >= r.y && y <= r.y + r.height;
+}
+
+function contains(outer, inner) {
+  return (
+    outer.x <= inner.x &&
+    outer.y <= inner.y &&
+    outer.x + outer.width >= inner.x + inner.width &&
+    outer.y + outer.height >= inner.y + inner.height
+  );
+}
+
+/**
+ * Is this node reachable by a tap at all?
+ *
+ * `hittable` comes from the accessibility tree itself and is the runner's own answer to the
+ * question every press here is really asking. It is strictly better than the rect test: a
+ * screen left mounted UNDER the current one keeps perfectly valid on-screen rects, so
+ * `visible()` says yes about a row the user cannot see or touch. That is not hypothetical:
+ * the offline gate deep-linked the session screen over a routine detail, discarded, and then
+ * found and "pressed" that routine's Start button through two screens. The tap landed on
+ * whatever was actually in front, and the run reported the app as having started no session.
+ *
+ * `visible()` stays rect-based because reading CONTENT is a different question: a node
+ * scrolled just past the fold is still content the screen holds, and `scan()` is what
+ * answers that.
+ */
+function pressable(n) {
+  return n?.hittable === true && n?.enabled !== false && visible(n);
+}
+
+/** The chain of `parentIndex` links from a node up to the root, as a set of indices. */
+function ancestorsOf(node, ns) {
+  const out = new Set();
+  let cur = node;
+  while (cur && typeof cur.parentIndex === 'number') {
+    out.add(cur.parentIndex);
+    cur = ns.find((n) => n.index === cur.parentIndex);
+  }
+  return out;
+}
+
+function isDescendant(node, ofIndex, ns) {
+  return ancestorsOf(node, ns).has(ofIndex);
+}
+
+/** The topmost node drawn over (x, y) that is neither the target nor part of its own subtree. */
+function occluderAt(target, x, y, ns = nodes()) {
+  const tr = rectOf(target);
+  if (!tr) return null;
+  const idx = ns.findIndex((n) => n.ref === target.ref);
+  if (idx < 0) return null;
+  const mine = ancestorsOf(target, ns);
+  // Later in tree order means painted later, so only what comes after can be on top.
+  const above = ns.slice(idx + 1).filter((n) => {
+    const r = rectOf(n);
+    if (!r || n.ref === target.ref) return false;
+    if (!covers(r, x, y)) return false;
+    // Deliberately NOT filtered on `hittable`. The runner reports `hittable: false` for
+    // almost every node in this app, including the workout pill that genuinely covers the
+    // last routine row, so using it here switched occlusion detection off entirely and the
+    // tap went back to opening the running session instead of the routine. Same rule as
+    // everywhere else in this file: hittability may break a tie, it may never decide.
+    // Occlusion is geometry, paint order and ancestry.
+    // Its own ancestors and its own children are not in its way.
+    if (typeof n.index === 'number' && mine.has(n.index)) return false;
+    if (typeof target.index === 'number' && isDescendant(n, target.index, ns)) return false;
+    // Anything that WHOLLY CONTAINS the target is a background, an ancestor or a full-screen
+    // scrim: never a localised obstacle. The type no longer matters, and that matters: a
+    // sheet's dismiss backdrop is a Button covering the entire screen, painted after the
+    // sheet's own controls, so restricting this exemption to containers made the backdrop
+    // "cover" the sheet's Done button and the CRUD gate refused to press it.
+    //
+    // Real occluders are SMALLER than what they hide: the workout pill sits over the bottom
+    // of a full-width routine row, which is exactly why containment is the right test.
+    if (contains(r, tr)) return false;
+    return true;
+  });
+  return above.length ? above[above.length - 1] : null;
+}
+
+/**
+ * A point inside this node that a tap will actually reach, or null if it is buried.
+ *
+ * Tries the centre first, because that is what everything expects, then points biased away
+ * from the screen edges where the chrome lives: high in the row, low in the row, then in from
+ * each side. Returns the first one nothing is covering.
+ */
+function clearPointIn(target) {
+  const r = rectOf(target);
+  if (!r) return null;
+  const ns = nodes();
+  const cx = r.x + r.width / 2;
+  const cy = r.y + r.height / 2;
+  const inset = Math.min(24, r.width / 3);
+  const vInset = Math.min(10, r.height / 3);
+  const candidates = [
+    [cx, cy],
+    [cx, r.y + vInset],
+    [cx, r.y + r.height - vInset],
+    [r.x + inset, cy],
+    [r.x + r.width - inset, cy],
+    [r.x + inset, r.y + vInset],
+  ];
+  for (const [x, y] of candidates) {
+    if (y < 0 || y > VIEWPORT_HEIGHT) continue;
+    if (!occluderAt(target, x, y, ns)) return { x: Math.round(x), y: Math.round(y) };
+  }
+  return null;
+}
+
 /** Nodes that are both on screen and carrying the given text, in render order. */
 const onScreen = (text) => nodes().filter((n) => (n.label ?? '').includes(text) && visible(n));
 
@@ -473,6 +608,32 @@ function faultArmed() {
   return seek((n) => /Failing the next|Slowing the next/.test(n.label ?? ''), { max: 8 }) !== null;
 }
 
+/**
+ * Arm one fault, from any starting state.
+ *
+ * The dev screen's armer is a TOGGLE whose label changes with its state: "Arm" when idle,
+ * "Armed" when live. `pressRow` accepts both spellings, which is right for finding the
+ * control and wrong for arming it: pressing a row that already reads "Armed" turns the fault
+ * OFF, and the caller then verifies, sees "No fault armed", and reports that arming does not
+ * work. That is what happened when step 2 armed and step 3 re-armed a beat later.
+ *
+ * So this clears first and arms second. Disarming something already disarmed is free, and it
+ * also removes the other half of the problem: an armed fault left behind by an earlier script
+ * is a different fault from the one this caller wants, and "something is armed" is not the
+ * same claim as "this is armed".
+ */
+function armFault(title) {
+  clearFaultQuietly();
+  if (!pressRow(title, ['Arm', 'Armed'])) return false;
+  // The summary line is the app's own confirmation, e.g. `Failing the next 3 requests with
+  // "offline".` Without checking it, every later assertion rests on an assumption.
+  if (!hasAnywhere('Failing the next') && !hasAnywhere('Slowing the next')) {
+    console.error(`   !! pressed the "${title}" armer but the dev screen reports no armed fault`);
+    return false;
+  }
+  return true;
+}
+
 /** Disarm whatever is armed, if anything. Safe to call when nothing is. */
 function clearFaultQuietly() {
   if (!open('dev', 'Developer', { soft: true })) return false;
@@ -508,7 +669,9 @@ function restartApp() {
   if (/Unable to find|Error:/.test(launched)) {
     fail(`simctl could not launch ${BUNDLE_ID}: ${launched.trim().slice(0, 160)}`);
   }
-  sleep(8);
+  // Poll for the process to come up rather than paying a flat 8s: a warm launch is ready in
+  // about two. `nodes()` returns [] until the app answers, so a non-empty tree IS the signal.
+  settle(() => nodes({ tries: 1 }).length > 0, { seconds: 12, label: 'the app to relaunch' });
   // Re-attaching is deliberately NOT done here. The agent-device session survives a terminate
   // and then holds a dead attachment: every snapshot comes back empty and reads as a blank
   // app. Closing it from here raced the launch instead (open() then hit DEVICE_IN_USE against
@@ -673,14 +836,35 @@ function fail(msg) {
  * therefore always failed: silently, wherever a caller ignored the result: so it is resolved
  * here, against a snapshot, and pressed by ref.
  */
-function pressLabel(label) {
-  const want = label.startsWith('text') || label.startsWith('role')
-    ? (n) => (n.label ?? '').includes(label.split('"')[1] ?? '')
-    : (n) => (n.label ?? '').trim() === label;
+function pressLabel(label, { probe = false } = {}) {
+  // `probe` for a press whose absence is a legitimate answer: "clear the fault if one is
+  // armed", "press Retry if the screen still offers one". Those calls printed `!! never
+  // found` into a passing run, which trains a reader to skim the one line that matters.
+  const report = probe ? (msg) => console.log(`   (${msg})`) : (msg) => console.error(`   !! ${msg}`);
+  // A predicate is allowed, and preferred whenever the match is subtler than equality. It
+  // exists because the alternative here was `pressLabel('text^="Legs. "')`, a selector
+  // agent-device does not have: it fell through to a substring match that looked like a
+  // prefix match, which is the kind of near-miss that reads as an app bug later.
+  const quoted = typeof label === 'string' ? (label.split('"')[1] ?? '') : '';
+  const want =
+    typeof label === 'function'
+      ? label
+      : // `text^=` means STARTS WITH, which is the whole reason it exists: a routine row and
+        // the Resume card above it both contain the routine's name, and only the row begins
+        // with it. Implemented with `includes` it matched both, picked whichever came first
+        // in tree order, and the offline gate spent a run reporting that a routine detail
+        // "does not show its exercise rows" after resuming a workout instead of opening it.
+        label.startsWith('text^=')
+        ? (n) => (n.label ?? '').trim().startsWith(quoted)
+        : label.startsWith('text') || label.startsWith('role')
+          ? (n) => (n.label ?? '').includes(quoted)
+          : (n) => (n.label ?? '').trim() === label;
+  const what = typeof label === 'function' ? (label.name || 'predicate') : label;
   // Only hand the selector straight to agent-device when it is one agent-device HAS. The
   // supported keys are id, role, text, label, value, appname, windowtitle and the state flags, // `text^=` is not among them and comes back INVALID_ARGS every time, so trying it first just
   // buys a guaranteed-failing subprocess before the fallback does the real work.
-  const supported = /^(id|role|text|label|value|appname|windowtitle)=/.test(label);
+  const supported = typeof label === 'string'
+    && /^(id|role|text|label|value|appname|windowtitle)=/.test(label);
   if (supported) {
     // Let agent-device disambiguate itself where it can, once, before falling back.
     const out = sh(`npx agent-device press '${label}' 2>&1`, { allowFail: true });
@@ -695,18 +879,138 @@ function pressLabel(label) {
   // order. Pressing the container is a no-op that REPORTS SUCCESS, so the caller believes it
   // navigated and then asserts against the screen it never left. That is exactly how the CRUD
   // gate failed its first run: "pressed New routine: true", still on the Workout tab.
-  const node = seek((n) => want(n) && n.type === 'Button') ?? seek(want);
+  // Look in the tree we already have BEFORE asking anything to scroll.
+  //
+  // Two hard-won constraints, and they interact:
+  //
+  // 1. A BUTTON wins over anything else carrying the same label, whether or not the runner
+  //    calls it hittable. `hittable` is false on plenty of this app's working buttons (the
+  //    session screen's `Discard`, the language segments, the error state's `Try again`), so
+  //    it may break ties and must never decide. When hittability outranked node type, a
+  //    rejected Button fell through to the FULL-SCREEN `Other` with the same label, and the
+  //    tap landed in the middle of the exercise list while reporting success.
+  //
+  // 2. Searching must not move the screen while the target is already on it. `seek` scrolls,
+  //    and `scrollTop()` pans UP, which on a bottom sheet is a swipe DOWN: it dismisses the
+  //    thing being searched. That is how a press on a confirmation that `waitFor` had just
+  //    found reported "no such control": the first tier missed on hittability, the scroll
+  //    closed the sheet, and every later tier searched a screen the sheet had left.
+  //
+  // So: four passes over the CURRENT snapshot, cheapest and most specific first, and only
+  // then the scrolling search for something genuinely off-screen.
+  const present = nodes();
+  const inTree = (pred) => present.find(pred) ?? null;
+  const node =
+    inTree((n) => want(n) && n.type === 'Button' && pressable(n)) ??
+    inTree((n) => want(n) && n.type === 'Button' && visible(n)) ??
+    inTree((n) => want(n) && pressable(n)) ??
+    seek((n) => want(n) && n.type === 'Button') ??
+    seek(want);
   if (!node?.ref) {
-    console.error(`   !! never found "${label}" on screen`);
+    report(`no "${what}" on screen`);
     return false;
   }
-  const out = sh(`npx agent-device press "@${node.ref}" 2>&1`, { allowFail: true });
+  if (!pressable(node)) {
+    // A note, not a refusal. `hittable` is the runner's own hit test and it produces false
+    // negatives: the segments of the language control report `hittable: false` with nothing
+    // whatsoever covering them, and a coordinate tap on the same point switches the language.
+    // Treating it as a veto turned a working control into "not touchable" and would have had
+    // the app blamed for it. Occlusion below is the veto, because that one is evidence: a
+    // named node really is drawn over the point.
+    console.log(
+      `   (note: "${what}" reports hittable=${node.hittable}; pressing it anyway)`,
+    );
+  }
+  // Who is on top of it. `press '@ref'` taps the node's centre, so a row scrolled under the
+  // header, the tab bar or the running-workout pill is pressed THROUGH that chrome and the
+  // press silently activates something else.
+  const point = clearPointIn(node);
+  if (!point) {
+    // Scrolling is the only remedy left: the node is wholly buried. One step each way, then
+    // give up loudly rather than pressing chrome and reporting success.
+    for (const nudge of [panDown, panUp]) {
+      nudge();
+      const again = nodes().find((n) => want(n));
+      const p2 = again ? clearPointIn(again) : null;
+      if (p2) {
+        sh(`npx agent-device tap ${p2.x} ${p2.y} 2>&1`, { allowFail: true });
+        sleep(1.2);
+        return true;
+      }
+    }
+    const blocker = occluderAt(node, node.rect.x + node.rect.width / 2, node.rect.y + node.rect.height / 2);
+    report(
+      `"${what}" is on screen but completely covered by ` +
+        `"${(blocker?.label ?? blocker?.type ?? 'unknown chrome').trim()}": not pressing it`,
+    );
+    return false;
+  }
+  const out = sh(`npx agent-device tap ${point.x} ${point.y} 2>&1`, { allowFail: true });
   if (/Error|INVALID|FAILED/.test(out)) {
-    console.error(`   !! press "${label}": ${(out.split('\n').find((l) => /Error/.test(l)) ?? out).trim()}`);
+    report(`press "${what}": ${(out.split('\n').find((l) => /Error/.test(l)) ?? out).trim()}`);
     return false;
   }
   sleep(1.2);
   return true;
+}
+
+/**
+ * Wait for a condition instead of guessing how long it takes.
+ *
+ * The suite carried ~270 seconds of hardcoded `sleep` per pass, each one sized for the
+ * slowest case ever observed and paid in full every run: a `sleep(12)` after a search that
+ * usually renders in two. Polling costs one snapshot per second and returns the moment the
+ * condition holds, so the common case stops subsidising the rare one.
+ *
+ * `min` exists because some waits are genuinely about letting the app go QUIET rather than
+ * about something appearing, and a poll that fires on the first frame would beat the very
+ * traffic it is meant to let settle.
+ */
+function settle(want, { seconds = 12, min = 0, label = 'the app' } = {}) {
+  for (let waited = 0; waited < min; waited += 1) sleep(1);
+  for (let waited = min; waited < seconds; waited += 1) {
+    try {
+      if (want()) return true;
+    } catch {
+      // A snapshot mid-transition can throw; that is simply "not yet".
+    }
+    sleep(1);
+  }
+  console.log(`   (waited ${seconds}s for ${label} without the condition holding; continuing)`);
+  return false;
+}
+
+/** Sugar for the commonest case: wait until some text is on screen. */
+function settleForText(text, opts = {}) {
+  return settle(() => nodes().some((n) => (n.label ?? '').includes(text)), {
+    label: `"${text}"`,
+    ...opts,
+  });
+}
+
+/**
+ * Wait until a node matching `want` is in the tree, re-snapshotting until it is.
+ *
+ * For content that arrives in its OWN window rather than in the screen being scrolled: a
+ * sheet, a confirmation, an alert. `seek` cannot help there, because its remedy is panning
+ * and the nodes are not off-screen, they are not in the captured tree at all. Measured on the
+ * discard confirmation: three seconds after the press the snapshot held only the base window
+ * and every node in it reported `hittable: false`, while a screenshot of the same instant
+ * showed the sheet fully presented with its two buttons. Panning for it reported "never
+ * found" about a control that was on screen and working.
+ *
+ * So this re-asks rather than re-scrolls. `hittable: false` on every node of a screen is the
+ * tell that something is presented over it, which is also why it is not used as a veto
+ * anywhere in this file.
+ */
+function waitFor(want, { seconds = 8, label = 'it' } = {}) {
+  for (let waited = 0; waited < seconds; waited += 1) {
+    const match = nodes().find(want);
+    if (match) return match;
+    sleep(1);
+  }
+  console.log(`   (gave up waiting ${seconds}s for ${label} to enter the tree)`);
+  return null;
 }
 
 /**
@@ -923,7 +1227,7 @@ function ledger(label) {
 module.exports = {
   CWD, METRO, TABS, VIEWPORT_HEIGHT, sh, sleep, nodes, labels, visible, onScreen, has, hasAnywhere,
   isNotFound, scan, seek, scrollTop, panDown, panUp, signature, open, fail, pressLabel, pressText,
-  pressRow, tab, ledger, onExit, faultArmed, clearFaultQuietly, restartApp, dbQuery, dbCol, dbExec,
+  pressRow, armFault, waitFor, settle, settleForText, tab, ledger, occluderAt, clearPointIn, pressable, onExit, faultArmed, clearFaultQuietly, restartApp, dbQuery, dbCol, dbExec,
   forceEnglishUI,
   fillField,
   metroAlive,

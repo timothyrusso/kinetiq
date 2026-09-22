@@ -40,6 +40,7 @@ import { Row } from './layout';
 import { Stepper } from './controls';
 import { MetricLabel, Txt } from './Text';
 import { ConfirmSheet, Sheet, SheetFooter, SheetSection } from './Sheet';
+import { useT } from '@/i18n/useT';
 
 /**
  * One planned set: a target on the left, a checkbox on the right, and the checkbox is the
@@ -69,9 +70,9 @@ export const SetRow = memo(function SetRow({
   onOpen: (entryIndex: number, setIndex: number) => void;
   onToggle: (entryIndex: number, setIndex: number) => void;
 }) {
-  const label = `Set ${setIndex + 1}`;
+  const { t } = useT();
   const weightText =
-    set.weightKg === 0 ? 'bodyweight' : formatWeight(set.weightKg, units);
+    set.weightKg === 0 ? t('setRow.bodyweight') : formatWeight(set.weightKg, units);
   const open = () => {
     onOpen(entryIndex, setIndex);
   };
@@ -100,8 +101,12 @@ export const SetRow = memo(function SetRow({
       <Pressable
         onPress={open}
         accessibilityRole="button"
-        accessibilityLabel={`${label}: ${set.reps} reps at ${weightText}`}
-        accessibilityHint="Opens the set editor."
+        accessibilityLabel={t('setRow.setRepsAt', {
+          n: setIndex + 1,
+          reps: set.reps,
+          weight: weightText,
+        })}
+        accessibilityHint={t('setRow.opensEditor')}
         style={({ pressed }) => [
           styles.setValue,
           {
@@ -110,7 +115,7 @@ export const SetRow = memo(function SetRow({
           },
         ]}
       >
-        <MetricLabel label="Reps" />
+        <MetricLabel label={t('setRow.reps')} />
         <Txt
           variant="subhead"
           weight="700"
@@ -124,8 +129,8 @@ export const SetRow = memo(function SetRow({
       <Pressable
         onPress={open}
         accessibilityRole="button"
-        accessibilityLabel={`${label} weight: ${weightText}`}
-        accessibilityHint="Opens the set editor."
+        accessibilityLabel={t('setRow.setWeight', { n: setIndex + 1, weight: weightText })}
+        accessibilityHint={t('setRow.opensEditor')}
         style={({ pressed }) => [
           styles.setValue,
           {
@@ -134,14 +139,14 @@ export const SetRow = memo(function SetRow({
           },
         ]}
       >
-        <MetricLabel label={`Weight (${weightUnit(units)})`} />
+        <MetricLabel label={t('setRow.weightIn', { unit: weightUnit(units) })} />
         <Txt
           variant="subhead"
           weight="700"
           tone={set.completed ? 'muted' : 'default'}
           style={{ fontVariant: ['tabular-nums'] }}
         >
-          {set.weightKg === 0 ? 'BW' : trimNumber(set.weightKg)}
+          {set.weightKg === 0 ? t('setRow.bodyweightShort') : trimNumber(set.weightKg)}
         </Txt>
       </Pressable>
 
@@ -150,9 +155,9 @@ export const SetRow = memo(function SetRow({
         variant={set.completed ? 'accent' : 'plain'}
         size={24}
         weighty
-        accessibilityLabel={
-          set.completed ? `Mark set ${setIndex + 1} not done` : `Complete ${label}`
-        }
+        accessibilityLabel={t(set.completed ? 'setRow.markNotDone' : 'setRow.completeSet', {
+          n: setIndex + 1,
+        })}
         onPress={() => {
           onToggle(entryIndex, setIndex);
         }}
@@ -207,6 +212,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   onRequestRemove: (entryIndex: number) => void;
   onFocus: (entryIndex: number) => void;
 }) {
+  const { t } = useT();
   const done = entry.sets.filter((set) => set.completed).length;
   const allDone = done === entry.sets.length && entry.sets.length > 0;
 
@@ -231,8 +237,12 @@ export const ExerciseBlock = memo(function ExerciseBlock({
           onFocus(entryIndex);
         }}
         accessibilityRole="button"
-        accessibilityLabel={`${entry.exerciseName}. ${done} of ${entry.sets.length} sets done.`}
-        accessibilityHint={isCurrent ? 'This is the current exercise.' : 'Makes it the current exercise.'}
+        accessibilityLabel={t('setRow.blockA11y', {
+          name: entry.exerciseName,
+          done,
+          total: entry.sets.length,
+        })}
+        accessibilityHint={t(isCurrent ? 'setRow.isCurrent' : 'setRow.makeCurrent')}
         style={({ pressed }) => [styles.blockHead, pressed ? { opacity: 0.85 } : null]}
       >
         <Row gap="md" align="center">
@@ -302,7 +312,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
           name="plus"
           variant="surface"
           size={18}
-          accessibilityLabel="Add a set"
+          accessibilityLabel={t('setRow.addSet')}
           onPress={() => {
             onAddSet(entryIndex);
           }}
@@ -313,12 +323,12 @@ export const ExerciseBlock = memo(function ExerciseBlock({
             onSkip(entryIndex);
           }}
           accessibilityRole="button"
-          accessibilityLabel={`Skip ${entry.exerciseName}`}
+          accessibilityLabel={t('setRow.skipNamed', { name: entry.exerciseName })}
           hitSlop={8}
           style={({ pressed }) => [styles.textAction, pressed ? { opacity: 0.55 } : null]}
         >
           <Txt variant="label" weight="600" tone="muted">
-            Skip
+            {t('setRow.skip')}
           </Txt>
         </Pressable>
         <Pressable
@@ -326,12 +336,12 @@ export const ExerciseBlock = memo(function ExerciseBlock({
             onRequestRemove(entryIndex);
           }}
           accessibilityRole="button"
-          accessibilityLabel={`Remove ${entry.exerciseName} from this workout`}
+          accessibilityLabel={t('setRow.removeNamed', { name: entry.exerciseName })}
           hitSlop={8}
           style={({ pressed }) => [styles.textAction, pressed ? { opacity: 0.55 } : null]}
         >
           <Txt variant="label" weight="600" tone="danger">
-            Remove
+            {t('setRow.remove')}
           </Txt>
         </Pressable>
       </Row>
@@ -365,18 +375,22 @@ export function SetEditorSheet({
   onRemove: () => void;
   onRequestClose: () => void;
 }) {
+  const { t } = useT();
   const step = weightStep(units);
   const displayWeight = weightDisplayValue(set.weightKg, units, step);
 
   return (
     <Sheet
       onRequestClose={onRequestClose}
-      title="This set"
-      subtitle={`${entry.exerciseName} · ${trimNumber(set.reps)} reps`}
+      title={t('setRow.thisSet')}
+      subtitle={t('setRow.setSubtitle', {
+        name: entry.exerciseName,
+        reps: trimNumber(set.reps),
+      })}
     >
-      <SheetSection title="Reps">
+      <SheetSection title={t('setRow.reps')}>
         <Stepper
-          label="Reps"
+          label={t('setRow.reps')}
           value={set.reps}
           min={0}
           max={100}
@@ -387,9 +401,9 @@ export function SetEditorSheet({
         />
       </SheetSection>
 
-      <SheetSection title={`Weight (${weightUnit(units)})`}>
+      <SheetSection title={t('setRow.weightIn', { unit: weightUnit(units) })}>
         <Stepper
-          label={`Weight in ${weightUnit(units)}`}
+          label={t('setRow.weightInUnit', { unit: weightUnit(units) })}
           value={displayWeight}
           min={0}
           max={units === 'imperial' ? 1000 : 450}
@@ -402,14 +416,14 @@ export function SetEditorSheet({
         />
         {set.weightKg === 0 ? (
           <Txt variant="micro" tone="faint" style={{ marginTop: spacing.sm }}>
-            Bodyweight: no external load recorded.
+            {t('setRow.bodyweightNote')}
           </Txt>
         ) : null}
       </SheetSection>
 
-      <SheetSection title="RPE">
+      <SheetSection title={t('setRow.rpe')}>
         <Stepper
-          label="RPE"
+          label={t('setRow.rpe')}
           value={set.rpe ?? 0}
           min={0}
           max={10}
@@ -422,7 +436,7 @@ export function SetEditorSheet({
             weight section explains bodyweight. As part of the section title it became a
             twelve-word eyebrow, which stops being a heading at that length. */}
         <Txt variant="micro" tone="faint" style={{ marginTop: spacing.sm }}>
-          Effort out of 10. Zero means you did not note it.
+          {t('setRow.rpeNote')}
         </Txt>
       </SheetSection>
 
@@ -431,11 +445,11 @@ export function SetEditorSheet({
           name="trash"
           variant="danger"
           size={20}
-          accessibilityLabel="Remove this set"
+          accessibilityLabel={t('setRow.removeThisSet')}
           weighty
           onPress={onRemove}
         />
-        <Button label="Done" variant="primary" fullWidth onPress={onRequestClose} />
+        <Button label={t('setRow.done')} variant="primary" fullWidth onPress={onRequestClose} />
       </SheetFooter>
     </Sheet>
   );
@@ -465,6 +479,7 @@ export const RestDock = memo(function RestDock({
   onSkip: () => void;
   onAdjust: (seconds: number) => void;
 }) {
+  const { t } = useT();
   const insets = useSafeAreaInsets();
   const progress = totalSeconds > 0 ? Math.min(1, Math.max(0, remainingSeconds / totalSeconds)) : 0;
 
@@ -485,7 +500,7 @@ export const RestDock = memo(function RestDock({
         <View style={{ flex: 1, minWidth: 0 }}>
           <Row gap="sm" align="center">
             <Txt variant="micro" uppercase tracking={0.8} weight="700" tone="muted">
-              Rest
+              {t('misc.rest')}
             </Txt>
             <Txt
               variant="monoLg"
@@ -513,7 +528,7 @@ export const RestDock = memo(function RestDock({
             name="minus"
             variant="surface"
             size={18}
-            accessibilityLabel="Rest fifteen seconds less"
+            accessibilityLabel={t('setRow.restLess')}
             onPress={() => {
               onAdjust(Math.max(0, remainingSeconds - 15));
             }}
@@ -522,7 +537,7 @@ export const RestDock = memo(function RestDock({
             name="plus"
             variant="surface"
             size={18}
-            accessibilityLabel="Rest fifteen seconds longer"
+            accessibilityLabel={t('setRow.restMore')}
             onPress={() => {
               onAdjust(Math.min(600, remainingSeconds + 15));
             }}
@@ -533,7 +548,7 @@ export const RestDock = memo(function RestDock({
           name="close"
           variant="plain"
           size={20}
-          accessibilityLabel="Skip the rest"
+          accessibilityLabel={t('setRow.skipRest')}
           onPress={onSkip}
         />
       </Row>
@@ -559,15 +574,16 @@ export function RemoveExerciseSheet({
   onConfirm: () => void;
   onRequestClose: () => void;
 }) {
+  const { t } = useT();
   return (
     <ConfirmSheet
-      title="Remove this exercise?"
+      title={t('setRow.removeExerciseTitle')}
       message={
         completedSets > 0
-          ? `${exerciseName} and the ${completedSets} ${completedSets === 1 ? 'set' : 'sets'} already banked against it come out of this workout. Nothing else changes.`
-          : `${exerciseName} comes out of this workout. Nothing else changes.`
+          ? t('setRow.removeWithSets', { name: exerciseName, count: completedSets })
+          : t('setRow.removePlain', { name: exerciseName })
       }
-      confirmLabel="Remove"
+      confirmLabel={t('setRow.remove')}
       onConfirm={onConfirm}
       onRequestClose={onRequestClose}
     />
@@ -602,16 +618,17 @@ export function SessionTotals({
   units: UnitSystem;
   theme: Theme;
 }) {
+  const { t } = useT();
   return (
     <Row gap="xl" align="center">
       <View>
-        <MetricLabel label="Sets" />
+        <MetricLabel label={t('setRow.sets')} />
         <Txt variant="numeralSm" weight="700" style={{ fontVariant: ['tabular-nums'] }} color={theme.colors.text}>
           {completedSets}
         </Txt>
       </View>
       <View>
-        <MetricLabel label={`Volume (${weightUnit(units)})`} />
+        <MetricLabel label={t('setRow.volumeIn', { unit: weightUnit(units) })} />
         <Txt variant="numeralSm" weight="700" style={{ fontVariant: ['tabular-nums'] }} color={theme.colors.text}>
           {trimNumber(weightValue(volumeKg, units), 0)}
         </Txt>

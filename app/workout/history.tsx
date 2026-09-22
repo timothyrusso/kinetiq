@@ -71,6 +71,9 @@ import type { ActivityListParams, ActivitySort } from '@/query/keys';
 import type { Activity, ActivityKind } from '@/domain/types';
 import { useAppTheme } from '@/theme/theme';
 import { spacing, screenGutter } from '@/theme/tokens';
+import { useT } from '@/i18n/useT';
+import type { TKey } from '@/i18n';
+import { tr } from '@/i18n/tr';
 
 const BOTTOM_SPACE = 96;
 const DAY_MS = 86_400_000;
@@ -78,11 +81,11 @@ const DAY_MS = 86_400_000;
 /** Rolling windows, labelled by what they actually are: see `windowStart`. */
 type Range = '7d' | '30d' | '365d' | 'all';
 
-const RANGES: readonly { value: Range; label: string }[] = [
-  { value: '7d', label: '7 days' },
-  { value: '30d', label: '30 days' },
-  { value: '365d', label: 'Year' },
-  { value: 'all', label: 'All' },
+const RANGES: readonly { value: Range; label: TKey }[] = [
+  { value: '7d', label: 'history.range7d' },
+  { value: '30d', label: 'history.range30d' },
+  { value: '365d', label: 'history.rangeYear' },
+  { value: 'all', label: 'history.rangeAll' },
 ];
 
 /**
@@ -112,6 +115,7 @@ type RowItem =
 const SORT: ActivitySort = 'recent';
 
 export default function WorkoutHistoryScreen() {
+  const { t } = useT();
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
 
@@ -120,6 +124,13 @@ export default function WorkoutHistoryScreen() {
   // first open that shows nine rows and one that shows nine hundred both answer the wrong
   // question.
   const [range, setRange] = useState<Range>('30d');
+  // Segment labels are catalog keys in the table above; resolved here, memoised on `t` so a
+  // new array does not defeat SegmentedControl's memo on every unrelated re-render.
+  const rangeSegments = useMemo(
+    () => RANGES.map((o) => ({ value: o.value, label: t(o.label) })),
+    [t],
+  );
+
   const [kinds, setKinds] = useState<ActivityKind[]>([]);
   const [pendingDelete, setPendingDelete] = useState<Activity | null>(null);
 
@@ -215,9 +226,9 @@ export default function WorkoutHistoryScreen() {
   }, []);
 
   const summary = list.isLoading
-    ? 'Loading…'
+    ? t('states.loadingEllipsis')
     : visible.length === 0
-      ? 'Nothing in this range'
+      ? t('activityList.nothingInRange')
       : // Three segments at most. This renders into a fixed-height bar that also carries the
         // Search button, and `numberOfLines={1}` truncates whatever does not fit: with four
         // segments that landed mid-number ("24 sessions · 17h 21m · 127.6…"), which reads as
@@ -238,16 +249,16 @@ export default function WorkoutHistoryScreen() {
   return (
     <>
       <DetailScreen
-        title="History"
+        title={t('activityList.historyTitle')}
         subtitle={summary}
         right={
           <Button
-            label="Search"
+            label={t('activityList.search')}
             variant="quiet"
             size="sm"
             icon="search"
             onPress={() => router.replace(tabHref(tabIndexOf('activities')))}
-            accessibilityHint="Search every session by name, note or exercise"
+            accessibilityHint={t('activityList.searchEveryHint')}
           />
         }
       >
@@ -274,12 +285,16 @@ export default function WorkoutHistoryScreen() {
             }
             ListHeaderComponent={
               <View style={styles.controls}>
-                <SegmentedControl<Range> segments={RANGES} value={range} onChange={setRange} />
+                <SegmentedControl<Range>
+                  segments={rangeSegments}
+                  value={range}
+                  onChange={setRange}
+                />
                 <Row gap="sm" style={styles.chips}>
                   {KIND_CHIPS.map((chip) => (
                     <Chip
                       key={chip.kind}
-                      label={chip.label}
+                      label={t(chip.label)}
                       icon={chip.icon}
                       size="sm"
                       selected={kinds.includes(chip.kind)}
@@ -304,24 +319,22 @@ export default function WorkoutHistoryScreen() {
                 <ErrorState
                   error={list.error}
                   onRetry={() => void list.refresh()}
-                  title="Could not read your history"
+                  title={t('activityList.historyError')}
                 />
               ) : list.flat.length === 0 ? (
                 <EmptyState
-                  title="No sessions yet"
-                  message="Finish a workout or record a run and it lands here: route, splits, every set."
+                  title={t('activityList.noSessionsTitle')}
+                  message={t('activityList.emptyMessage')}
                   icon="activities"
-                  actionLabel="Start a workout"
+                  actionLabel={t('activityList.startWorkout')}
                   onAction={() => router.replace(routes.workoutTab())}
                 />
               ) : (
                 <EmptyState
-                  title="Nothing in this range"
-                  message={`You have ${list.flat.length} ${
-                    list.flat.length === 1 ? 'session' : 'sessions'
-                  } outside it. Widen the window to see them.`}
+                  title={t('activityList.nothingInRange')}
+                  message={t('states.outsideRange', { count: list.flat.length })}
                   icon="calendar"
-                  {...(filtering ? { actionLabel: 'Show everything', onAction: widen } : {})}
+                  {...(filtering ? { actionLabel: t('states.showEverything'), onAction: widen } : {})}
                 />
               )
             }
@@ -332,7 +345,7 @@ export default function WorkoutHistoryScreen() {
 
       {pendingDelete ? (
         <ConfirmSheet
-          title="Delete this session?"
+          title={t('activityList.deleteTitle')}
           message={`"${pendingDelete.title}" and its route will be removed. Personal records it set are recalculated from what remains.`}
           confirmLabel={removeActivity.isPending ? 'Deleting…' : 'Delete'}
           onConfirm={confirmDelete}
@@ -347,7 +360,7 @@ export default function WorkoutHistoryScreen() {
                 error:
                   removeActivity.error instanceof Error
                     ? removeActivity.error.message
-                    : 'The session could not be deleted.',
+                    : t('activity.deleteFailed'),
               }
             : {})}
         />
@@ -369,7 +382,7 @@ function DayLabel({ text, count }: { text: string; count: number }) {
     <Row align="end" justify="between" style={styles.dayLabel}>
       <MetricLabel label={text} />
       <Txt variant="micro" tone="faint">
-        {count} {count === 1 ? 'session' : 'sessions'}
+        {count} {tr('progress.sessionWord', { count })}
       </Txt>
     </Row>
   );
@@ -378,14 +391,15 @@ function DayLabel({ text, count }: { text: string; count: number }) {
 /** Icons are named per kind, so the tuple type keeps this in step with `IconName`. */
 const KIND_CHIPS: readonly {
   kind: ActivityKind;
-  label: string;
+  /** A catalog key: this table is built at import time, where there is no language. */
+  label: TKey;
   icon: 'run' | 'bike' | 'dumbbell' | 'walk' | 'yoga';
 }[] = [
-  { kind: 'run', label: 'Runs', icon: 'run' },
-  { kind: 'ride', label: 'Rides', icon: 'bike' },
-  { kind: 'lift', label: 'Strength', icon: 'dumbbell' },
-  { kind: 'walk', label: 'Walks', icon: 'walk' },
-  { kind: 'yoga', label: 'Yoga', icon: 'yoga' },
+  { kind: 'run', label: 'activities.kindRuns', icon: 'run' },
+  { kind: 'ride', label: 'activities.kindRides', icon: 'bike' },
+  { kind: 'lift', label: 'activities.kindStrength', icon: 'dumbbell' },
+  { kind: 'walk', label: 'activities.kindWalks', icon: 'walk' },
+  { kind: 'yoga', label: 'activities.kindYoga', icon: 'yoga' },
 ];
 
 const styles = StyleSheet.create({

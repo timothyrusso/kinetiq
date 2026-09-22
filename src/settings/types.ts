@@ -52,7 +52,10 @@ export const DEFAULT_SETTINGS: SettingsState = {
   autoStartRest: true,
   weeklyGoalWorkouts: 4,
   showSpeedInsteadOfPace: false,
-  profile: { name: 'Athlete', heightCm: 178, birthYear: 1994 },
+  // Empty rather than 'Athlete': the screens that show a name already fall back to a
+  // translated placeholder, and a default stored in English would print "Athlete" to an
+  // Italian user as though they had typed it.
+  profile: { name: '', heightCm: 178, birthYear: 1994 },
   reminder: DEFAULT_REMINDER,
 };
 

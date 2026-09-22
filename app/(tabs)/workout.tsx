@@ -65,6 +65,8 @@ import { routes } from '@/navigation/nav';
 import type { Routine } from '@/domain/types';
 import { useAppTheme } from '@/theme/theme';
 import { useT } from '@/i18n/useT';
+import { tr } from '@/i18n/tr';
+import type { TKey } from '@/i18n';
 import { radius, spacing, screenGutter } from '@/theme/tokens';
 import { formatAgo, formatTimer } from '@/utils/format';
 import { useSettings } from '@/settings';
@@ -74,9 +76,10 @@ import { useWorkoutSession } from '@/workout/session';
 
 type Order = 'recent' | 'name';
 
-const ORDER_SEGMENTS: readonly { value: Order; label: string }[] = [
-  { value: 'recent', label: 'Recent' },
-  { value: 'name', label: 'A-Z' },
+/** Keys, not words: module scope has no language. Resolved where the control renders. */
+const ORDER_SEGMENTS: readonly { value: Order; label: TKey }[] = [
+  { value: 'recent', label: 'workoutTab.orderRecent' },
+  { value: 'name', label: 'workoutTab.orderName' },
 ];
 
 /** Six is two rows of three on a compact phone and reads as a sample, not a list. */
@@ -166,8 +169,11 @@ export default function WorkoutScreen() {
         <CollapsibleHero header={header} eyebrow={t('workout.eyebrow')} title={t('workout.title')}>
           <Txt variant="caption" tone="muted" style={{ marginTop: spacing.xs }}>
             {routines.count === 0
-              ? 'Build a routine once, run it forever'
-              : `${routines.count} ${routines.count === 1 ? 'routine' : 'routines'} ready to train`}
+              ? t('workoutTab.buildOnce')
+              : t('workoutTab.routinesReady', {
+                  count: routines.count,
+                  word: t('workoutTab.routineWord', { count: routines.count }),
+                })}
           </Txt>
         </CollapsibleHero>
 
@@ -200,11 +206,11 @@ export default function WorkoutScreen() {
         <View style={styles.section} onLayout={measureSection}>
           <SectionHeader
             title={t('workout.yourRoutines')}
-            eyebrow="Saved"
+            eyebrow={t('workoutTab.saved')}
             {...(routines.count > 0 ? { count: routines.count } : {})}
             action={
               <Button
-                label="New"
+                label={t('workoutTab.new')}
                 size="sm"
                 variant="secondary"
                 icon="plus"
@@ -214,7 +220,7 @@ export default function WorkoutScreen() {
           />
           {routines.routines.length > 1 ? (
             <SegmentedControl
-              segments={ORDER_SEGMENTS}
+              segments={ORDER_SEGMENTS.map((seg) => ({ value: seg.value, label: t(seg.label) }))}
               value={order}
               onChange={setOrder}
               style={{ marginBottom: spacing.md }}
@@ -227,14 +233,14 @@ export default function WorkoutScreen() {
             <ErrorState
               error={routines.error}
               onRetry={() => void routines.refresh()}
-              title="Could not open your routines"
+              title={t('workoutTab.routinesError')}
             />
           ) : routines.isEmpty ? (
             <EmptyState
-              title="No routines yet"
-              message="Pick a few exercises, set your reps and weights, and the next six weeks sort themselves out."
+              title={t('workoutTab.emptyTitle')}
+              message={t('workoutTab.emptyMessage')}
               icon="dumbbell"
-              actionLabel="Create a routine"
+              actionLabel={t('workoutTab.createRoutine')}
               onAction={openNewRoutine}
               compact
             />
@@ -290,6 +296,7 @@ function ResumeCard({
   total: number;
   onPress: () => void;
 }) {
+  const { t } = useT();
   const theme = useAppTheme();
   const progress = total > 0 ? completed / total : 0;
   return (
@@ -297,7 +304,11 @@ function ResumeCard({
       <Card
         tone="accent"
         onPress={onPress}
-        accessibilityLabel={`${routineName} in progress. ${completed} of ${total} sets done. Resume.`}
+        accessibilityLabel={t('workoutTab.resumeA11y', {
+          name: routineName,
+          done: completed,
+          total,
+        })}
       >
         <Row gap="lg" align="center">
           <View style={{ flex: 1, minWidth: 0 }}>
@@ -309,14 +320,15 @@ function ResumeCard({
                 ]}
               />
               <Txt variant="micro" uppercase tracking={0.8} weight="700">
-                {paused ? 'Paused' : 'Training now'}
+                {t(paused ? 'workout.paused' : 'workoutTab.trainingNow')}
               </Txt>
             </Row>
             <Txt variant="title" weight="700" numberOfLines={1} style={{ marginTop: spacing.xs }}>
               {routineName}
             </Txt>
             <Txt variant="caption" tone="muted" style={{ marginTop: spacing.xxs }}>
-              {formatTimer(elapsedSeconds)} · {completed}/{total} sets
+              {formatTimer(elapsedSeconds)} ·{' '}
+              {t('workoutTab.setsOfTotal', { done: completed, total })}
             </Txt>
           </View>
           <ProgressRing
@@ -341,6 +353,7 @@ function ResumeCard({
  * hit, and needs no event plumbing at all.
  */
 function LastTrainedCard({ routine, onOpen }: { routine: Routine; onOpen: () => void }) {
+  const { t } = useT();
   const performedAt = routine.lastPerformedAt ?? routine.createdAt;
   // The card, not the button, shows the refusal: squeezed under a `Start` button the line
   // would be two clipped words, and this is the one case where the button correctly did
@@ -353,23 +366,26 @@ function LastTrainedCard({ routine, onOpen }: { routine: Routine; onOpen: () => 
           <Pressable
             onPress={onOpen}
             accessibilityRole="button"
-            accessibilityLabel={`${routine.name}, last trained ${formatAgo(performedAt)}. Opens the routine.`}
+            accessibilityLabel={t('workoutTab.lastTrainedA11y', {
+              name: routine.name,
+              ago: formatAgo(performedAt),
+            })}
             style={{ flex: 1, minWidth: 0, paddingVertical: spacing.xs }}
           >
-            <MetricLabel label="Last trained" />
+            <MetricLabel label={t('workoutTab.lastTrained')} />
             <Txt variant="subhead" weight="700" numberOfLines={1} style={{ marginTop: spacing.xs }}>
               {routine.name}
             </Txt>
             <Txt variant="caption" tone="muted">
               {formatAgo(performedAt)} · {routine.items.length}{' '}
-              {routine.items.length === 1 ? 'exercise' : 'exercises'}
+              {t('workoutTab.exerciseWord', { count: routine.items.length })}
             </Txt>
           </Pressable>
           <StartButton routine={routine} onRefused={() => setRefused(true)} />
         </Row>
         {refused ? (
           <Txt variant="caption" tone="danger" style={{ marginTop: spacing.sm }}>
-            Nothing to train yet: open this routine and add an exercise.
+            {t('workoutTab.nothingToTrain')}
           </Txt>
         ) : null}
       </Card>
@@ -389,13 +405,14 @@ function LastTrainedCard({ routine, onOpen }: { routine: Routine; onOpen: () => 
  * otherwise start twice and replace the session that was just created.
  */
 function StartButton({ routine, onRefused }: { routine: Routine; onRefused: () => void }) {
+  const { t } = useT();
   const router = useRouter();
   const defaultRest = useSettings((s) => s.defaultRestSeconds);
   const { start, busy } = useStartRoutine();
 
   return (
     <Button
-      label="Start"
+      label={t('workoutTab.start')}
       icon="play"
       size="sm"
       loading={busy}
@@ -432,8 +449,8 @@ function CardioCard({ onPress, style }: { onPress: () => void; style?: StyleProp
   const { t } = useT();
   return (
     <View style={style}>
-      <SectionHeader title={t('workout.recordActivity')} eyebrow="Outdoors" />
-      <Card tone="flat" onPress={onPress} accessibilityLabel="Record a run, ride or walk. Opens the recorder.">
+      <SectionHeader title={t('workout.recordActivity')} eyebrow={t('workoutTab.outdoors')} />
+      <Card tone="flat" onPress={onPress} accessibilityLabel={t('workoutTab.cardioA11y')}>
         <Row gap="lg" align="center">
           <View
             style={[
@@ -445,10 +462,10 @@ function CardioCard({ onPress, style }: { onPress: () => void; style?: StyleProp
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Txt variant="subhead" weight="700">
-              Run, ride or walk
+              {t('misc.runRideWalk')}
             </Txt>
             <Txt variant="caption" tone="muted" style={{ marginTop: spacing.xxs }}>
-              Traces a route while you move. Keeps going with the phone locked.
+              {t('misc.cardioDetail')}
             </Txt>
           </View>
           <Icon name="chevronRight" size={18} color={theme.colors.textFaint} />
@@ -473,15 +490,16 @@ function LibraryPreview({
   onOpen: (id: string) => void;
   onBrowse: () => void;
 }) {
+  const { t } = useT();
   const theme = useAppTheme();
   return (
     <View style={styles.section}>
       <SectionHeader
-        title="Exercise library"
-        eyebrow="Live from wger"
+        title={t('workoutTab.library')}
+        eyebrow={t('workoutTab.liveFromWger')}
         action={
           <Button
-            label="Browse"
+            label={t('workoutTab.browse')}
             size="sm"
             variant="quiet"
             trailingIcon="chevronRight"
@@ -493,8 +511,7 @@ function LibraryPreview({
         <SkeletonCard lines={1} />
       ) : failed ? (
         <Txt variant="caption" tone="muted">
-          The catalog is remote, so browsing needs a connection. Your saved routines are
-          unaffected: each one carries its own frozen copy of every exercise in it.
+          {t('workoutTab.catalogRemote')}
         </Txt>
       ) : (
         <View style={styles.grid}>
@@ -534,6 +551,7 @@ function LibraryPreview({
  * nothing that could disagree with the Progress tab.
  */
 function SessionCounts({ routines, width }: { routines: readonly Routine[]; width: number }) {
+  const { t } = useT();
   const theme = useAppTheme();
   const points = useMemo<BarPoint[]>(
     () =>
@@ -551,7 +569,10 @@ function SessionCounts({ routines, width }: { routines: readonly Routine[]; widt
 
   return (
     <View style={styles.section}>
-      <SectionHeader title="Sessions per routine" eyebrow="All time" />
+      <SectionHeader
+        title={t('workoutTab.sessionsPerRoutine')}
+        eyebrow={t('workoutTab.allTime')}
+      />
       <Card>
         <BarChart
           points={points}
@@ -561,7 +582,7 @@ function SessionCounts({ routines, width }: { routines: readonly Routine[]; widt
           format={(value) => `${value}`}
         />
         <Txt variant="micro" tone="faint" style={{ marginTop: spacing.sm }}>
-          How often each routine gets run, since you started tracking.
+          {t('workoutTab.sessionsChartNote')}
         </Txt>
       </Card>
     </View>
@@ -575,8 +596,12 @@ function shortLabel(name: string): string {
 }
 
 function routineSubtitle(routine: Routine): string {
-  const parts = [`${routine.items.length} ${routine.items.length === 1 ? 'exercise' : 'exercises'}`];
-  if (routine.timesCompleted > 0) parts.push(`${routine.timesCompleted}× done`);
+  const parts = [
+    `${routine.items.length} ${tr('workoutTab.exerciseWord', { count: routine.items.length })}`,
+  ];
+  if (routine.timesCompleted > 0) {
+    parts.push(tr('workoutTab.doneTimes', { count: routine.timesCompleted }));
+  }
   if (routine.lastPerformedAt !== null) parts.push(formatAgo(routine.lastPerformedAt));
   return parts.join(' · ');
 }
