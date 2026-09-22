@@ -25,17 +25,6 @@ import { spacing } from '@/theme/tokens';
 import { useWorkoutRunning } from '@/workout/session';
 
 /**
- * The tab bar's own height, excluding the safe area it sits above.
- *
- * Measured from the live tree rather than guessed: the native `TabBar` node reports
- * y=791 h=83 against an 874pt viewport, so 83 is the band it occupies INCLUDING the home
- * indicator's safe area. It is not the old hand-drawn 60: a floating Liquid Glass capsule has
- * its own metrics: and it is not composed with `insets.bottom`, because the measurement
- * already contains it.
- */
-export const TAB_BAR_HEIGHT = 83;
-
-/**
  * The navigator's own compact header, excluding the top safe area.
  *
  * Only needed by screens whose header is TRANSPARENT: with an opaque one the navigator

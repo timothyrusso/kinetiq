@@ -55,14 +55,6 @@ export const pressSpring = {
   reduceMotion: ReduceMotion.System,
 } as const;
 
-/** Things settling into place: sheets, expanding rows, snapping steppers. */
-export const settleSpring = {
-  damping: 24,
-  stiffness: 220,
-  mass: 1,
-  reduceMotion: ReduceMotion.System,
-} as const;
-
 /** Overshoot for a confirmation that should feel like it lands with weight. */
 export const popSpring = {
   damping: 14,
