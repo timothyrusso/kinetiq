@@ -66,7 +66,7 @@ process.chdir(CWD);
 // cleanup actually runs; `fail()` exits, hence the hook.
 onExit(clearFaultQuietly);
 
-const SEARCH_FIELD = 'Search the exercise catalog';
+const SEARCH_FIELD = 'Search exercises';
 
 /**
  * Every term must be one that RETURNS ROWS (see the header) and must differ from every other
@@ -196,8 +196,8 @@ function ensureFaultCleared(context) {
  */
 function coldStart(terms, { proveIdle = false } = {}) {
   restartApp();
-  open('exercises', 'SEARCH EXERCISES');
-  settleForText('SEARCH EXERCISES', { seconds: 8 });
+  open('exercises', 'Search exercises');
+  settleForText('Search exercises', { seconds: 8 });
   if (proveIdle) {
     // Once per run: prove the app goes quiet and stays there. Every later case measures a
     // BEFORE/AFTER delta around its own faulted search instead, which is immune to whatever
@@ -253,13 +253,13 @@ function coldStart(terms, { proveIdle = false } = {}) {
  * ends up typing into the wrong control and then reporting the app as unresponsive.
  */
 function searchField() {
-  open('exercises', 'SEARCH EXERCISES');
+  open('exercises', 'Search exercises');
   sleep(2);
   scrollTop({ max: 4 });
   if (!nodes().some((n) => (n.label ?? '').includes(SEARCH_FIELD))) {
     fail(`no "${SEARCH_FIELD}" text on the Exercises tab: not on the screen the harness expects`);
   }
-  const field = nodes().find((n) => n.type === 'TextField' && visible(n));
+  const field = nodes().find((n) => n.type === 'SearchField' && visible(n));
   if (!field) fail('the Exercises tab shows its search copy but has no TextField to fill');
   return field;
 }
@@ -365,7 +365,7 @@ const armed = nodes().find((n) => /Failing the next/.test(n.label ?? ''));
 console.log(`   ${armed ? armed.label.trim() : '(no status line)'}`);
 // `soft`, and then proved: the deep link may land on a not-found screen for all this check
 // cares, so the assertion is the error state itself, not the route working.
-open('exercises', 'SEARCH EXERCISES', { soft: true });
+open('exercises', 'Search exercises', { soft: true });
 sleep(14);
 if (!below('Exercise search unavailable')) {
   fail(
@@ -378,7 +378,7 @@ if (!pressLabel('Try again')) fail('the cold-load error state offered no pressab
 console.log('   full-screen error state, with its own retry');
 console.log(`   fault ${ensureFaultCleared('after the cold-load case')}`);
 sleep(2);
-open('exercises', 'SEARCH EXERCISES', { soft: true });
+open('exercises', 'Search exercises', { soft: true });
 sleep(6);
 // Two legitimate ways back, and the check must accept both. Returning to the tab can remount
 // the query and refetch on its own, in which case the error state is already gone and there is
@@ -449,7 +449,7 @@ for (const c of CASES) {
   // exactly this reason: the button was on screen and correct, and the check was looking at a
   // different screen. Probed directly afterwards: error state present, "Try again" visible at
   // y=531, found by `seek` on the first try.
-  open('exercises', 'SEARCH EXERCISES', { soft: true });
+  open('exercises', 'Search exercises', { soft: true });
   sleep(2);
   // The control may legitimately be gone by now, and that is not a defect.
   //
@@ -487,7 +487,7 @@ for (const c of CASES) {
 
 // ── Last one cleared for good, and the list must come back on its own terms ───────────────
 console.log('\nrecovery with the network healthy');
-open('exercises', 'SEARCH EXERCISES');
+open('exercises', 'Search exercises');
 sleep(2);
 const f = searchField();
 fillField(f.ref, 'leg press');

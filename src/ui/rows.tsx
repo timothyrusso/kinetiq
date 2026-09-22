@@ -317,7 +317,7 @@ export const RoutineRow = memo(function RoutineRow({
       onPress={onPress}
       onLongPress={onLongPress}
       accessibilityRole="button"
-      accessibilityLabel={`${routine.name}. ${meta.map((m) => m.a11y ?? m.label).join(', ')}`}
+      accessibilityLabel={`${routine.name}. ${meta.map((m) => m.a11y ?? m.label).join(' · ')}`}
       accessibilityHint={t('misc.opensRoutine')}
       style={({ pressed }) => [
         {

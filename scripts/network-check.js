@@ -129,14 +129,14 @@ const beforeType = ledger('tab settled, before typing');
 open('exercises', 'Exercise');
 // The field lives in the list header, so it is only reachable from the top of the list.
 scrollTop();
-const field = nodes().find((n) => n.type === 'TextField' && visible(n));
+const field = nodes().find((n) => n.type === 'SearchField' && visible(n));
 if (!field) fail('search field not found: cannot run the search half of this check');
 // `fill` replaces the field; `type` appends to it, which on a second run would measure
 // `chest703chest812` and attribute the difference to the app. Read back afterwards: the
 // node does carry `value`, so there is no need to hope the keystrokes landed.
 sh(`npx agent-device fill @${field.ref} ${term} 2>&1`, { allowFail: true });
 sleep(6);
-const typed = (nodes().find((n) => n.type === 'TextField' && visible(n)) ?? {}).value;
+const typed = (nodes().find((n) => n.type === 'SearchField' && visible(n)) ?? {}).value;
 if (typed !== term) fail(`the search field reads "${typed}" not "${term}": the ledger delta below would be measuring something else`);
 open('dev', 'Developer');
 const afterSearch = ledger(`after "${term}"`);
