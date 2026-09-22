@@ -57,7 +57,7 @@
     "check:i18n": "node scripts/check-i18n.js",
     "check:jsx": "tsx scripts/jsx-comment-check.ts",
     "check:gps": "tsx scripts/gps-check.ts",
-    "check": "npm run typecheck && npm run check:jsx && npm run check:gps && npm run check:debounce && npm run check:dashes && npm run check:i18n && npm run check:hooks",
+    "check": "npm run typecheck && npm run check:jsx && npm run check:gps && npm run check:debounce && npm run check:dashes && npm run check:i18n && npm run check:hooks && npm run check:layout",
     "lint": "expo lint",
     "qa": "agent-device",
     "check:debounce": "tsx scripts/debounce-check.ts",
@@ -67,7 +67,8 @@
     "qa:faults": "node scripts/qa/fault-matrix.js",
     "qa:crud": "node scripts/qa/routine-crud.js",
     "qa:all": "node scripts/qa/all.js",
-    "check:hooks": "node scripts/check-hooks.js"
+    "check:hooks": "node scripts/check-hooks.js",
+    "check:layout": "node scripts/check-layout.js"
   },
   "private": true
 }

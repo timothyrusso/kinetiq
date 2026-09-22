@@ -19,7 +19,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { radius, spacing } from '@/theme/tokens';
+import { radius, screenGutter, spacing } from '@/theme/tokens';
 import { useAppTheme } from '@/theme/theme';
 import { haptics } from '@/services/haptics';
 import { isOfflineError } from '@/api';
@@ -118,7 +118,7 @@ export const SkeletonList = memo(function SkeletonList({ rows = 6 }: { rows?: nu
   return (
     <View
       accessibilityLabel={t('misc.loading')}
-      style={{ paddingHorizontal: spacing.xl, gap: spacing.xs }}
+      style={{ paddingHorizontal: screenGutter, gap: spacing.xs }}
     >
       {Array.from({ length: rows }, (_, i) => (
         <View
@@ -183,7 +183,7 @@ function StateScaffold({
           alignItems: 'center',
           justifyContent: 'center',
           gap: compact ? spacing.md : spacing.xxl,
-          paddingHorizontal: spacing.xxl,
+          paddingHorizontal: screenGutter,
           paddingVertical: compact ? spacing.xxl : spacing.huge,
         },
         style,

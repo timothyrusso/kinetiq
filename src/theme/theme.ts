@@ -9,7 +9,17 @@ import { useMemo } from 'react';
 import { Platform, useColorScheme, useWindowDimensions } from 'react-native';
 import { useThemeMode } from '@/settings';
 import type { ActivityKind } from '@/domain/types';
-import { palette, radius, spacing, fontSize, weight, lineHeight, motion } from './tokens';
+import {
+  palette,
+  platformSurface,
+  radius,
+  spacing,
+  fontSize,
+  weight,
+  lineHeight,
+  motion,
+  type PlatformSurface,
+} from './tokens';
 
 export type ThemeMode = 'light' | 'dark';
 
@@ -110,6 +120,8 @@ export type Theme = {
   weight: typeof weight;
   lineHeight: typeof lineHeight;
   motion: typeof motion;
+  /** Grouped-surface skin for this platform: see `PlatformSurface`. */
+  surfaceSkin: PlatformSurface;
   /** 1 on small phones, 1.06 on tablets: used to scale display type only. */
   scale: number;
 };
@@ -326,6 +338,7 @@ function buildTheme(mode: ThemeMode, scale = 1): Theme {
     weight,
     lineHeight,
     motion,
+    surfaceSkin: platformSurface,
     scale,
   };
 }

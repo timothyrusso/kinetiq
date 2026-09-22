@@ -25,7 +25,7 @@ import { Screen } from '@/ui/Screen';
 import { Stack as Column } from '@/ui/layout';
 import { Button } from '@/ui/Button';
 import { Txt } from '@/ui/Text';
-import { spacing } from '@/theme/tokens';
+import { screenGutter, spacing } from '@/theme/tokens';
 import { TAB_ROUTES, TAB_LABELS, tabHref } from '@/navigation/nav';
 import { useT } from '@/i18n/useT';
 
@@ -95,7 +95,7 @@ export default function NotFoundScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { paddingHorizontal: spacing.xxl },
+  content: { paddingHorizontal: screenGutter },
   tabs: {
     flexDirection: 'row',
     flexWrap: 'wrap',

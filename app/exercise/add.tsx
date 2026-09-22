@@ -50,7 +50,7 @@ import { useAddRoutineExercise, useRoutines, useSaveRoutine } from '@/queries/us
 import { useSettings } from '@/settings/hooks';
 import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
-import { radius, spacing } from '@/theme/tokens';
+import { radius, screenGutter, spacing } from '@/theme/tokens';
 import { useT } from '@/i18n/useT';
 import {
   parseNumber,
@@ -482,6 +482,6 @@ function clampInt(input: string, min: number, max: number, fallback: number): nu
 
 const styles = StyleSheet.create({
   bar: { paddingHorizontal: spacing.sm, paddingBottom: spacing.sm },
-  section: { paddingHorizontal: spacing.xl },
+  section: { paddingHorizontal: screenGutter },
   multiline: { minHeight: 76, paddingTop: spacing.md, paddingBottom: spacing.md, textAlignVertical: 'top' },
 });

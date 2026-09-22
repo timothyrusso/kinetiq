@@ -83,7 +83,7 @@ import { useSettings } from '@/settings/hooks';
 import { provisionalExerciseName } from '@/domain/exerciseId';
 import { routes, tabHref, tabIndexOf } from '@/navigation/nav';
 import { useAppTheme, type Theme } from '@/theme/theme';
-import { radius, spacing } from '@/theme/tokens';
+import { radius, screenGutter, spacing } from '@/theme/tokens';
 import {
   formatAgo,
   formatShortDate,
@@ -712,7 +712,7 @@ function HistoryRow({
 }
 
 const styles = StyleSheet.create({
-  section: { paddingHorizontal: spacing.xl },
+  section: { paddingHorizontal: screenGutter },
   /** Matches `ART_HEIGHT` closely enough that switching between an exercise with art and
       one without does not move the content below the fold. */
   noArt: {
@@ -722,7 +722,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xxl,
   },
   // Row lists get no wrapper padding of their own: `ListRow` and `ExerciseRow` carry
-  // their own `spacing.xl` inset and a full-bleed hairline, so a second inset would
+  // their own `screenGutter` inset and a full-bleed hairline, so a second inset would
   // make their dividers stop short of the edge the rest of the app's dividers reach.
-  bandFooter: { paddingHorizontal: spacing.xl, paddingVertical: spacing.md },
+  bandFooter: { paddingHorizontal: screenGutter, paddingVertical: spacing.md },
 });

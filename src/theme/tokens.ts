@@ -5,6 +5,7 @@
  * Anything a component needs should be reached through the semantic `Theme`
  * built in `theme.ts`, not through these ramps directly.
  */
+import { Platform } from 'react-native';
 
 export const palette = {
   // Brand ramp
@@ -115,6 +116,37 @@ export const radius = {
   xxl: 32,
   pill: 999,
 } as const;
+
+/**
+ * How a grouped surface looks on each platform.
+ *
+ * iOS groups rows into an inset card: the card owns the gutter, rows fill it edge to edge,
+ * hairlines separate them and a pressed row highlights. Material uses a tonal surface with
+ * a smaller radius, no separators, and a ripple for press feedback; there the scroll
+ * container owns the gutter. Screens never branch on the platform for this: `Card` and the
+ * row primitives read the skin, so one token set decides it everywhere.
+ */
+export type PlatformSurface = {
+  /** Corner radius of a grouped card. */
+  radius: number;
+  /** Which theme colour paints the card. */
+  surface: 'surface' | 'surfaceRaised';
+  /** What sits between two rows inside a card. */
+  separator: 'hairline' | 'none';
+  /** How a pressed row answers the touch. */
+  rowPressed: 'highlight' | 'ripple';
+  /** Who holds the horizontal gutter for a list: the card itself, or the scroll container. */
+  gutterOwner: 'card' | 'container';
+};
+
+const platformSurfaces = {
+  ios: { radius: radius.lg, surface: 'surface', separator: 'hairline', rowPressed: 'highlight', gutterOwner: 'card' },
+  android: { radius: radius.md, surface: 'surfaceRaised', separator: 'none', rowPressed: 'ripple', gutterOwner: 'container' },
+} as const satisfies Record<'ios' | 'android', PlatformSurface>;
+
+/** The skin for the platform this build runs on. */
+export const platformSurface: PlatformSurface =
+  Platform.OS === 'android' ? platformSurfaces.android : platformSurfaces.ios;
 
 export const fontSize = {
   micro: 11,

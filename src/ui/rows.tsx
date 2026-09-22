@@ -27,7 +27,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import type { Activity, ActivityKind, ExerciseSnapshot, Routine } from '@/domain/types';
-import { fontFamily, radius, spacing } from '@/theme/tokens';
+import { fontFamily, radius, screenGutter, spacing } from '@/theme/tokens';
 import type { Theme } from '@/theme/theme';
 import { Icon, IconTile, type IconName } from './icons';
 import { fontSizeOf, lineHeightOf } from './Text';
@@ -172,7 +172,7 @@ export const ListRow = memo(function ListRow({
       {...(disabled ? { accessibilityState: { disabled: true } } : {})}
       style={({ pressed }) => [
         {
-          paddingHorizontal: spacing.xl,
+          paddingHorizontal: screenGutter,
           paddingVertical: spacing.md,
           backgroundColor:
             pressed && interactive
@@ -377,7 +377,7 @@ export const RoutineRow = memo(function RoutineRow({
       accessibilityHint={t('misc.opensRoutine')}
       style={({ pressed }) => [
         {
-          paddingHorizontal: spacing.xl,
+          paddingHorizontal: screenGutter,
           paddingVertical: spacing.lg,
           gap: spacing.lg,
           flexDirection: 'row',

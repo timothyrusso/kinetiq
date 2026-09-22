@@ -313,7 +313,7 @@ export const Chip = memo(function Chip({
           hitSlop={10}
           accessibilityRole="button"
           accessibilityLabel={`Remove ${label} filter`}
-          style={{ marginLeft: 2, opacity: 0.7 }}
+          style={{ marginLeft: spacing.xxs, opacity: 0.7 }}
         >
           <Icon name="close" size={13} color={fg} />
         </Pressable>

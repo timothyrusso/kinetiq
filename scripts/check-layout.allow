@@ -1,0 +1,4 @@
+# Files skipped by scripts/check-layout.js. One path per line, relative to the repo root.
+# Chart internals only: axis labels and cells are placed by measured pixel offsets, not layout.
+src/ui/charts/HeatmapCalendar.tsx
+src/ui/charts/BarChart.tsx

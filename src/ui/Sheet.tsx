@@ -33,7 +33,7 @@ import {
 import { GestureDetector } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { radius, spacing, touchTarget, z } from '@/theme/tokens';
+import { radius, screenGutter, spacing, touchTarget, z } from '@/theme/tokens';
 import { useAppTheme } from '@/theme/theme';
 import { haptics } from '@/services/haptics';
 import { useSheetDrag } from './animation';
@@ -128,7 +128,7 @@ export const Sheet = forwardRef<SheetHandle, SheetProps>(function Sheet(
             // The bottom inset belongs to the sheet, not the content: a save button
             // under the iOS home indicator is unreachable, not merely tight.
             paddingBottom: Math.max(insets.bottom + spacing.md, spacing.xxl),
-            paddingHorizontal: spacing.xl,
+            paddingHorizontal: screenGutter,
             maxHeight: '88%',
             ...theme.shadows.raised,
             elevation: 24,
@@ -278,7 +278,7 @@ export const SheetHeader = memo(function SheetHeader({
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: theme.colors.surfaceRaised,
-            marginLeft: -4,
+            marginLeft: -spacing.xs,
             marginTop: 2,
           }}
         >
