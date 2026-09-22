@@ -1316,6 +1316,10 @@ export const en = {
   textInput: {
     clear: 'Clear {label}',
   },
+  settingsExtra: {
+    hapticsHint: 'Buzz on a completed set, a rest that ends, and a new record.',
+    preciseLocation: 'Turn on Precise Location in iOS Settings if the numbers look wrong.',
+  },
   // --- end foundation ---
 } as const;
 

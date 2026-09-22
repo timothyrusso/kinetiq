@@ -11,10 +11,10 @@
  * in a header is read, not recognised. (On Android they draw their Material glyph: the top
  * app bar only takes icons, and Material's confirming action is the check.)
  */
-import type MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import type { SFSymbol } from 'sf-symbols-typescript';
 
 import type { TKey } from '@/i18n';
+import type { MaterialIconName } from '@/ui/materialIcons';
 
 export type HeaderActionKey =
   | 'settings'
@@ -29,8 +29,6 @@ export type HeaderActionKey =
   | 'share'
   | 'search'
   | 'cancel';
-
-export type MaterialIconName = keyof typeof MaterialIcons.glyphMap;
 
 export type HeaderActionRow = {
   sf: SFSymbol;

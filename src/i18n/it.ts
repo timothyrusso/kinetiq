@@ -1328,5 +1328,9 @@ export const it: Copy = {
   textInput: {
     clear: 'Cancella {label}',
   },
+  settingsExtra: {
+    hapticsHint: 'Vibra a una serie completata, a un recupero finito e a un nuovo record.',
+    preciseLocation: 'Attiva Posizione esatta nelle Impostazioni di iOS se i numeri non tornano.',
+  },
   // --- end foundation ---
 };

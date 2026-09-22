@@ -17,33 +17,22 @@
  * row whose image is somehow missing renders nothing rather than an empty tappable square.
  */
 import type { ReactElement } from 'react';
-import { Platform, type ImageSourcePropType } from 'react-native';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { Platform } from 'react-native';
 import { Stack } from 'expo-router';
 
 import type { SFSymbol } from 'sf-symbols-typescript';
 
 import type { TKey, TVars } from '@/i18n';
+import { materialIcon, prefetchMaterialIcons, type MaterialIconName } from '@/ui/materialIcons';
 import { HEADER_ACTIONS, type HeaderActionKey } from './headerActions';
 
-/** Rendered once at 24 dp; the bar tints template images itself, so one colour serves every theme. */
-const ANDROID_ICON_SIZE = 24;
-const androidSources = new Map<HeaderActionKey, ImageSourcePropType>();
+/** Glyphs the settings lists draw on Android, beside the header's own. */
+const LIST_GLYPHS: readonly MaterialIconName[] = ['chevron-right', 'remove', 'add', 'check'];
 
 /** Bootstrap calls this before the first navigator renders. A no-op off Android. */
-export async function prefetchHeaderIcons(): Promise<void> {
-  if (Platform.OS !== 'android') return;
-  const keys = Object.keys(HEADER_ACTIONS) as HeaderActionKey[];
-  await Promise.all(
-    keys.map(async (key) => {
-      const source = await MaterialIcons.getImageSource(
-        HEADER_ACTIONS[key].material,
-        ANDROID_ICON_SIZE,
-        '#000000',
-      ).catch(() => null);
-      if (source) androidSources.set(key, source);
-    }),
-  );
+export function prefetchHeaderIcons(): Promise<void> {
+  const header = Object.values(HEADER_ACTIONS).map((row) => row.material);
+  return prefetchMaterialIcons([...header, ...LIST_GLYPHS]);
 }
 
 /**
@@ -98,7 +87,7 @@ export function headerAction({
     return <Stack.Toolbar.Button key={action} {...shared}>{spoken}</Stack.Toolbar.Button>;
   }
   if (Platform.OS === 'android') {
-    const source = androidSources.get(action);
+    const source = materialIcon(row.material);
     if (!source) return null;
     return <Stack.Toolbar.Button key={action} {...shared} icon={source} />;
   }
@@ -131,7 +120,7 @@ export function headerMenu({
   items: readonly HeaderMenuItem[];
 }): ReactElement | null {
   const row = HEADER_ACTIONS[action];
-  const icon = Platform.OS === 'android' ? androidSources.get(action) : row.sf;
+  const icon = Platform.OS === 'android' ? materialIcon(row.material) : row.sf;
   if (!icon) return null;
   return (
     <Stack.Toolbar.Menu key={action} icon={icon} accessibilityLabel={t(label ?? row.label)}>

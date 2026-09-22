@@ -32,25 +32,12 @@
  * point of this setting is that which word you want is a preference about how you read numbers,
  * not a thing you want on or off.
  */
-import { useCallback } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { useScreenContentBottom } from '@/ui/insets';
+import { useCallback, useMemo } from 'react';
 
 import { ScreenHeader } from '@/ui/Screen';
-import { Card, Divider, Row, SectionHeader, Stack } from '@/ui/layout';
-import { Chip } from '@/ui/controls/Chip';
-import { SegmentedControl } from '@/ui/controls/SegmentedControl';
-import { Stepper } from '@/ui/controls/Stepper';
-import { Toggle } from '@/ui/controls';
-import { Txt } from '@/ui/Text';
+import { SettingsList, type SettingsSection } from '@/ui/controls/SettingsList';
 import { useSettings, useSettingsUpdate } from '@/settings';
-import { GOAL_PRESETS, REST_PRESETS } from '@/settings';
-import { spacing, screenGutter } from '@/theme/tokens';
-import { formatDurationCompact } from '@/utils/format';
 import { useT } from '@/i18n/useT';
-
-/** The two readings of the same run. A string union because `Segment<T extends string>`. */
-type ReadingMode = 'pace' | 'speed';
 
 /** The same bounds the store clamps to: see the module header. */
 const REST_MIN = 15;
@@ -60,7 +47,6 @@ const GOAL_MAX = 14;
 
 export default function SettingsTrainingScreen() {
   const { t } = useT();
-  const bottomSpace = useScreenContentBottom();
   const update = useSettingsUpdate();
 
   const rest = useSettings((s) => s.defaultRestSeconds);
@@ -74,197 +60,96 @@ export default function SettingsTrainingScreen() {
     [update],
   );
 
+  const sections = useMemo<SettingsSection[]>(
+    () => [
+      {
+        key: 'rest',
+        title: t('trainingPrefs.restTimer'),
+        footer: t('misc.restDefaultBody'),
+        rows: [
+          {
+            kind: 'stepper',
+            key: 'rest',
+            title: t('trainingPrefs.restAfterSet'),
+            subtitle: t('trainingPrefs.appliesToNew'),
+            value: rest,
+            min: REST_MIN,
+            max: REST_MAX,
+            step: 5,
+            format: (v) => `${v} s`,
+            onChange: setRest,
+          },
+        ],
+      },
+      {
+        key: 'session',
+        title: t('trainingPrefs.duringSession'),
+        footer: t('misc.autoStartFootnote'),
+        rows: [
+          {
+            kind: 'switch',
+            key: 'autoStart',
+            title: t('trainingPrefs.autoStartRest'),
+            subtitle: autoStartRest ? t('states.autoStartOn') : t('states.autoStartOff'),
+            value: autoStartRest,
+            onChange: (next) => update({ autoStartRest: next }),
+          },
+          {
+            // Haptics live with the session behaviour they fire during, because every haptic
+            // in this app is a set completed, a rest that ended, or a record beaten.
+            kind: 'switch',
+            key: 'haptics',
+            title: t('trainingPrefs.haptics'),
+            subtitle: t('settingsExtra.hapticsHint'),
+            value: hapticsEnabled,
+            onChange: (next) => update({ hapticsEnabled: next }),
+          },
+        ],
+      },
+      {
+        key: 'cardio',
+        title: t('trainingPrefs.cardioNumbers'),
+        footer: `${t(speedInsteadOfPace ? 'states.speedExample' : 'states.paceExample')} ${t('states.sameRunEither')} ${t('misc.paceAppliesBody')}`,
+        rows: [
+          {
+            kind: 'segmented',
+            key: 'reading',
+            title: t('trainingPrefs.paceOrSpeed'),
+            options: [
+              { value: 'pace', label: t('cardio.pace') },
+              { value: 'speed', label: t('cardio.speed') },
+            ],
+            value: speedInsteadOfPace ? 'speed' : 'pace',
+            onChange: (next) => update({ showSpeedInsteadOfPace: next === 'speed' }),
+          },
+        ],
+      },
+      {
+        key: 'goal',
+        title: t('trainingPrefs.weeklyGoal'),
+        footer: `${t('misc.goalBody')} ${t('trainingPrefs.alsoOnProfile')}`,
+        rows: [
+          {
+            kind: 'stepper',
+            key: 'goal',
+            title: t('trainingPrefs.sessionsPerWeek'),
+            value: goal,
+            min: GOAL_MIN,
+            max: GOAL_MAX,
+            step: 1,
+            format: (v) => `${v}×`,
+            onChange: (next) => update({ weeklyGoalWorkouts: next }),
+          },
+        ],
+      },
+    ],
+    [autoStartRest, goal, hapticsEnabled, rest, setRest, speedInsteadOfPace, t, update],
+  );
+
   return (
     <>
       <ScreenHeader title={t('trainingPrefs.title')} largeTitle />
-      <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          { paddingTop: spacing.md, paddingBottom: bottomSpace },
-        ]}
-        // `automatic`, so iOS owns the inset under the large title and can collapse it as
-        // this view scrolls. Without it the title stays large forever and the screen looks
-        // like a native header that does not work.
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
-      >
-        <Stack gap="xxl" style={styles.body}>
-          {/* --------------------------------------------------- rest timer */}
-          <View>
-            <SectionHeader
-              title={t('trainingPrefs.restTimer')}
-              eyebrow={t('trainingPrefs.appliesToNew')}
-            />
-            <Card>
-              <Stack gap="lg">
-                <Txt variant="caption" tone="muted">
-                  {t('misc.restDefaultBody')}
-                </Txt>
-
-                <Row gap="sm" style={styles.chips}>
-                  {REST_PRESETS.map((seconds) => (
-                    <Chip
-                      key={seconds}
-                      label={`${seconds}s`}
-                      selected={seconds === rest}
-                      onPress={() => setRest(seconds)}
-                    />
-                  ))}
-                </Row>
-
-                <Stepper
-                  label={t('trainingPrefs.restAfterSet')}
-                  value={rest}
-                  min={REST_MIN}
-                  max={REST_MAX}
-                  step={5}
-                  suffix="s"
-                  onChange={setRest}
-                />
-                <Txt variant="micro" tone="faint">
-                  {formatDurationCompact(rest)} of recovery between sets.
-                </Txt>
-              </Stack>
-            </Card>
-          </View>
-
-          {/* --------------------------------------------- during a session */}
-          <View>
-            <SectionHeader title={t('trainingPrefs.duringSession')} />
-            <Card padding="xxs">
-              <ToggleRow
-                label={t('trainingPrefs.autoStartRest')}
-                hint={
-                  autoStartRest
-                    ? t('states.autoStartOn')
-                    : t('states.autoStartOff')
-                }
-                value={autoStartRest}
-                onChange={(next) => update({ autoStartRest: next })}
-              />
-              <Divider inset={spacing.lg} />
-              {/* Haptics live with the session behaviour they fire during rather than with
-                  sound or appearance, because every haptic in this app is a set completed, a
-                  rest that ended, or a record beaten. */}
-              <ToggleRow
-                label={t('trainingPrefs.haptics')}
-                hint="Buzz on a completed set, a rest that ends, and a new record."
-                value={hapticsEnabled}
-                onChange={(next) => update({ hapticsEnabled: next })}
-              />
-            </Card>
-            <Txt variant="micro" tone="faint" style={styles.footnote}>
-              {t('misc.autoStartFootnote')}
-            </Txt>
-          </View>
-
-          {/* ------------------------------------------------ cardio numbers */}
-          <View>
-            <SectionHeader title={t('trainingPrefs.cardioNumbers')} />
-            <Card>
-              <Stack gap="md">
-                <Txt variant="strong">{t('trainingPrefs.paceOrSpeed')}</Txt>
-                <Txt variant="caption" tone="muted">
-                  {t(speedInsteadOfPace ? 'states.speedExample' : 'states.paceExample')}{' '}
-                  {t('states.sameRunEither')}
-                </Txt>
-                <SegmentedControl<ReadingMode>
-                  value={speedInsteadOfPace ? 'speed' : 'pace'}
-                  onChange={(next) => update({ showSpeedInsteadOfPace: next === 'speed' })}
-                  segments={[
-                    { value: 'pace', label: t('cardio.pace') },
-                    { value: 'speed', label: t('cardio.speed') },
-                  ]}
-                />
-                <Txt variant="micro" tone="faint">
-                  {t('misc.paceAppliesBody')}
-                </Txt>
-              </Stack>
-            </Card>
-          </View>
-
-          {/* --------------------------------------------------- weekly goal */}
-          <View>
-            <SectionHeader
-              title={t('trainingPrefs.weeklyGoal')}
-              eyebrow={t('trainingPrefs.alsoOnProfile')}
-            />
-            <Card>
-              <Stack gap="lg">
-                <Txt variant="caption" tone="muted">
-                  {t('misc.goalBody')}
-                </Txt>
-                <Row gap="sm" style={styles.chips}>
-                  {GOAL_PRESETS.map((n) => (
-                    <Chip
-                      key={n}
-                      label={`${n}×`}
-                      selected={n === goal}
-                      onPress={() => update({ weeklyGoalWorkouts: n })}
-                    />
-                  ))}
-                </Row>
-                <Stepper
-                  label={t('trainingPrefs.sessionsPerWeek')}
-                  value={goal}
-                  min={GOAL_MIN}
-                  max={GOAL_MAX}
-                  onChange={(next) => update({ weeklyGoalWorkouts: next })}
-                />
-              </Stack>
-            </Card>
-          </View>
-        </Stack>
-      </ScrollView>
+      <SettingsList sections={sections} />
     </>
   );
 }
-
-/* ------------------------------------------------------------------ pieces -- */
-
-/**
- * Label plus a switch, inside a card that has already done the rounding and the padding.
- *
- * The hint is part of the row rather than a separate paragraph because these hints change
- * meaning with the switch: "Counting down the moment you complete a set" becomes "You tap to
- * begin resting". A hint that describes the state you are *in* is what tells you what flipping
- * it will cost.
- */
-function ToggleRow({
-  label,
-  hint,
-  value,
-  onChange,
-}: {
-  label: string;
-  hint: string;
-  value: boolean;
-  onChange: (next: boolean) => void;
-}) {
-  return (
-    <View style={styles.toggleRow}>
-      <Stack gap="xxs" style={styles.toggleText}>
-        <Txt variant="strong">{label}</Txt>
-        <Txt variant="caption" tone="muted">
-          {hint}
-        </Txt>
-      </Stack>
-      <Toggle value={value} onChange={onChange} accessibilityLabel={label} />
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  content: { flexGrow: 1 },
-  body: { paddingHorizontal: screenGutter },
-  chips: { flexWrap: 'wrap' },
-  footnote: { marginTop: spacing.sm, paddingHorizontal: spacing.xs },
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.lg,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  toggleText: { flex: 1 },
-});

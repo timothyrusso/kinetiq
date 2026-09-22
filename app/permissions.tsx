@@ -33,25 +33,16 @@
  * so, because the alternative is a reviewer concluding the GPS filtering code is dead weight when
  * it is only unexercised.
  */
-import { useCallback } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { useScreenContentBottom } from '@/ui/insets';
+import { useCallback, useMemo } from 'react';
 import { useRouter } from 'expo-router';
 
 import { ScreenHeader } from '@/ui/Screen';
-import { Card, Divider, Row, SectionHeader, Stack } from '@/ui/layout';
-import { Button } from '@/ui/controls/Button';
-import { Toggle } from '@/ui/controls';
-import { Txt } from '@/ui/Text';
-import { Icon } from '@/ui/icons';
-import { PermissionState } from '@/ui/states';
+import { SettingsList, type SettingsSection } from '@/ui/controls/SettingsList';
 import { usePermissions } from '@/queries/usePermissions';
 import { useSettings, useSettingsUpdate } from '@/settings';
 import { degradationMessage } from '@/services/location';
 import type { LocationPermissionStatus } from '@/services/location';
 import { routes } from '@/navigation/nav';
-import { useAppTheme } from '@/theme/theme';
-import { spacing, screenGutter } from '@/theme/tokens';
 import { haptics } from '@/services/haptics';
 import { useT } from '@/i18n/useT';
 import type { TKey } from '@/i18n';
@@ -60,8 +51,6 @@ import type { TKey } from '@/i18n';
 export default function PermissionsScreen() {
   const { t } = useT();
   const router = useRouter();
-  const bottomSpace = useScreenContentBottom();
-  const theme = useAppTheme();
 
   const { location, notifications, requesting, requestLocation, requestNotifications } =
     usePermissions();
@@ -82,256 +71,128 @@ export default function PermissionsScreen() {
     else haptics.warning();
   }, [requestNotifications]);
 
-  const locationMessage = t(LOCATION_COPY[location]);
+  const sections = useMemo<SettingsSection[]>(() => {
+    const locationOk = location === 'granted';
+    const list: SettingsSection[] = [
+      {
+        key: 'location',
+        title: t('perms.location'),
+        footer: [
+          t(LOCATION_COPY[location]),
+          // Reduced accuracy is the interesting state: permission was given, so a screen that
+          // only checks "granted or not" reports it as fine while distances quietly drift.
+          location === 'reduced' ? `${degradationMessage('reduced-accuracy')} ${t('settingsExtra.preciseLocation')}` : null,
+          location === 'denied' ? t('perms.deniedNote') : null,
+          t('perms.storedLocally'),
+        ]
+          .filter(Boolean)
+          .join('\n\n'),
+        rows: [
+          {
+            kind: 'info',
+            key: 'status',
+            title: locationOk
+              ? t('perms.locGranted')
+              : location === 'reduced'
+                ? t('perms.locReduced')
+                : t('perms.locDenied'),
+            value: t(LOCATION_EYEBROW[location]),
+          },
+          ...(locationOk
+            ? []
+            : [
+                {
+                  kind: 'button' as const,
+                  key: 'ask',
+                  title: t('perms.askAgain'),
+                  disabled: requesting === 'location',
+                  onPress: () => void askLocation(),
+                },
+              ]),
+        ],
+      },
+      // The no-permission path is a feature, not an error, so it is its own section.
+      ...(locationOk
+        ? []
+        : [{ key: 'without', title: t('perms.withoutItTitle'), footer: t('perms.withoutItBody'), rows: [] }]),
+      {
+        key: 'notifications',
+        title: t('perms.notifications'),
+        footer: notifications.granted ? t('perms.notifGrantedBody') : t('perms.notifDeniedBody'),
+        rows: [
+          {
+            kind: 'info',
+            key: 'status',
+            title: notifications.granted ? t('perms.notifGranted') : t('perms.notifDenied'),
+            value: t(notifications.granted ? 'perms.granted' : 'perms.notGranted'),
+          },
+          ...(notifications.granted
+            ? []
+            : [
+                {
+                  kind: 'button' as const,
+                  key: 'ask',
+                  title: t('perms.askAgain'),
+                  disabled: requesting === 'notifications',
+                  onPress: () => void askNotifications(),
+                },
+              ]),
+          {
+            kind: 'switch',
+            key: 'send',
+            title: t('perms.sendThemAtAll'),
+            subtitle: t('perms.ownSwitch'),
+            value: notificationsEnabled,
+            onChange: (next) => update({ notificationsEnabled: next }),
+          },
+          {
+            kind: 'nav',
+            key: 'reminder',
+            title: t('perms.reminderDays'),
+            onPress: () => router.push(routes.settingsNotifications()),
+          },
+        ],
+      },
+      {
+        key: 'motion',
+        title: t('perms.motion'),
+        footer: t('perms.noSystemPermission'),
+        rows: [
+          {
+            kind: 'switch',
+            key: 'haptics',
+            title: t('perms.haptics'),
+            subtitle: t('misc.hapticsBody'),
+            value: hapticsEnabled,
+            onChange: (next) => update({ hapticsEnabled: next }),
+          },
+        ],
+      },
+      {
+        key: 'never',
+        title: t('perms.neverRequested'),
+        rows: NEVER_ASKED.map((item) => ({
+          kind: 'info' as const,
+          key: item.title,
+          title: t(item.title),
+          subtitle: t(item.detail),
+        })),
+      },
+      // Development honesty: the simulator has no GPS of its own.
+      { key: 'sim', title: t('perms.simGps'), footer: t('perms.simGpsNote'), rows: [] },
+    ];
+    return list;
+  }, [askLocation, askNotifications, hapticsEnabled, location, notifications.granted, notificationsEnabled, requesting, router, t, update]);
 
   return (
     <>
       <ScreenHeader title={t('perms.title')} largeTitle />
-      <ScrollView
-        // `automatic`, so iOS owns the inset under the large title and can collapse it as
-        // this view scrolls. Without it the title stays large forever.
-        contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={[
-          styles.content,
-          { paddingTop: spacing.md, paddingBottom: bottomSpace },
-        ]}
-      >
-        <Stack gap="xxl" style={styles.body}>
-          {/* -------------------------------------------------------- location */}
-          <View>
-            <SectionHeader title={t('perms.location')} eyebrow={t(LOCATION_EYEBROW[location])} />
-            <Card>
-              <Stack gap="md">
-                <StatusLine
-                  ok={location === 'granted'}
-                  icon="route"
-                  label={
-                    location === 'granted'
-                      ? t('perms.locGranted')
-                      : location === 'reduced'
-                        ? t('perms.locReduced')
-                        : t('perms.locDenied')
-                  }
-                />
-                <Txt variant="caption" tone="muted">
-                  {locationMessage}
-                </Txt>
-
-                {location === 'granted' ? null : (
-                  <Button
-                    label={t('perms.askAgain')}
-                    variant="secondary"
-                    icon="mapPin"
-                    loading={requesting === 'location'}
-                    onPress={() => void askLocation()}
-                    accessibilityHint={t('perms.askHint')}
-                  />
-                )}
-
-                {/* Reduced accuracy is the interesting state: permission was *given*, so a
-                    screen that only checks "granted or not" reports it as fine and the user's
-                    distances quietly drift. It gets its own warning strip. */}
-                {location === 'reduced' ? (
-                  <>
-                    <Divider inset={0} />
-                    <WarningStrip
-                      message={`${degradationMessage('reduced-accuracy')} Turn on Precise Location in iOS Settings if the numbers look wrong.`}
-                    />
-                  </>
-                ) : null}
-
-                {location === 'denied' ? (
-                  <>
-                    <Divider inset={0} />
-                    <Txt variant="micro" tone="faint">
-                      {t('perms.deniedNote')}
-                    </Txt>
-                  </>
-                ) : null}
-
-                <Divider inset={0} />
-                <Txt variant="micro" tone="faint">
-                  {t('perms.storedLocally')}
-                </Txt>
-              </Stack>
-            </Card>
-
-            {/* The no-permission path is a feature, not an error screen: so it gets its own
-                card rather than a sentence inside the permission card. */}
-            {location === 'granted' ? null : (
-              <View style={styles.after}>
-                <Card tone="sunken">
-                  <Stack gap="sm">
-                    <Txt variant="strong">{t('perms.withoutItTitle')}</Txt>
-                    <Txt variant="caption" tone="muted">
-                      {t('perms.withoutItBody')}
-                    </Txt>
-                  </Stack>
-                </Card>
-              </View>
-            )}
-          </View>
-
-          {/* --------------------------------------------------- notifications */}
-          <View>
-            <SectionHeader
-              title={t('perms.notifications')}
-              eyebrow={t(notifications.granted ? 'perms.granted' : 'perms.notGranted')}
-            />
-            <Card>
-              <Stack gap="md">
-                <StatusLine
-                  ok={notifications.granted}
-                  icon="bell"
-                  label={
-                    notifications.granted
-                      ? t('perms.notifGranted')
-                      : t('perms.notifDenied')
-                  }
-                />
-                <Txt variant="caption" tone="muted">
-                  {notifications.granted
-                    ? t('perms.notifGrantedBody')
-                    : t('perms.notifDeniedBody')}
-                </Txt>
-
-                {notifications.granted ? null : (
-                  <Button
-                    label={t('perms.askAgain')}
-                    variant="secondary"
-                    icon="bell"
-                    loading={requesting === 'notifications'}
-                    onPress={() => void askNotifications()}
-                    accessibilityHint={t('perms.askHint')}
-                  />
-                )}
-
-                <Divider inset={0} />
-                <Row align="center" gap="md">
-                  <Stack gap="xxs" style={{ flex: 1 }}>
-                    <Txt variant="strong">{t('perms.sendThemAtAll')}</Txt>
-                    <Txt variant="caption" tone="muted">
-                      {t('perms.ownSwitch')}
-                    </Txt>
-                  </Stack>
-                  <Toggle
-                    value={notificationsEnabled}
-                    onChange={(next) => update({ notificationsEnabled: next })}
-                    accessibilityLabel={t('perms.sendNotifications')}
-                  />
-                </Row>
-              </Stack>
-            </Card>
-            <View style={styles.after}>
-              <Button
-                label={t('perms.reminderDays')}
-                variant="quiet"
-                trailingIcon="chevronRight"
-                onPress={() => router.push(routes.settingsNotifications())}
-                accessibilityHint={t('perms.reminderHint')}
-              />
-            </View>
-          </View>
-
-          {/* ---------------------------------------------------------- motion */}
-          <View>
-            <SectionHeader title={t('perms.motion')} eyebrow={t('perms.noSystemPermission')} />
-            <Card padding="lg">
-              <Row align="center" gap="lg">
-                <Stack gap="xxs" style={{ flex: 1 }}>
-                  <Txt variant="strong">{t('perms.haptics')}</Txt>
-                  <Txt variant="caption" tone="muted">
-                    {t('misc.hapticsBody')}
-                  </Txt>
-                </Stack>
-                <Toggle
-                  value={hapticsEnabled}
-                  onChange={(next) => update({ hapticsEnabled: next })}
-                  accessibilityLabel={t('perms.haptics')}
-                />
-              </Row>
-            </Card>
-          </View>
-
-          {/* --------------------------------------------------- what we don't ask */}
-          <View>
-            <SectionHeader title={t('perms.neverRequested')} />
-            <Card padding="md">
-              <Stack>
-                {NEVER_ASKED.map((item, index) => (
-                  <View key={item.title}>
-                    {index > 0 ? <Hairline /> : null}
-                    <View style={styles.neverRow}>
-                      <Stack gap="xxs" style={{ flex: 1 }}>
-                        <Txt variant="body">{t(item.title)}</Txt>
-                        <Txt variant="caption" tone="muted">
-                          {t(item.detail)}
-                        </Txt>
-                      </Stack>
-                    </View>
-                  </View>
-                ))}
-              </Stack>
-            </Card>
-          </View>
-
-          {/* ------------------------------------------------------- dev honesty */}
-          <PermissionState
-            feature={t('perms.simGps')}
-            icon="warning"
-            message={t('perms.simGpsNote')}
-            actionLabel={t('perms.understood')}
-            onAction={() => router.back()}
-            style={styles.simNote}
-          />
-        </Stack>
-      </ScrollView>
+      <SettingsList sections={sections} />
     </>
   );
-
-  function StatusLine({
-    ok,
-    icon,
-    label,
-  }: {
-    ok: boolean;
-    icon: 'route' | 'bell';
-    label: string;
-  }) {
-    return (
-      <Row gap="md" align="center">
-        <View
-          style={[
-            styles.dot,
-            { backgroundColor: ok ? theme.colors.success : theme.colors.warning },
-          ]}
-        />
-        <Icon name={icon} size={18} color={theme.colors.textMuted} />
-        <Txt variant="strong" style={{ flex: 1 }}>
-          {label}
-        </Txt>
-      </Row>
-    );
-  }
 }
 
 /* ------------------------------------------------------------------ pieces -- */
-
-function WarningStrip({ message }: { message: string }) {
-  const theme = useAppTheme();
-  return (
-    <View style={[styles.strip, { backgroundColor: theme.colors.warningSoft }]}>
-      <Txt variant="caption">{message}</Txt>
-    </View>
-  );
-}
-
-function Hairline() {
-  const theme = useAppTheme();
-  return (
-    <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.hairline }} />
-  );
-}
 
 /* ----------------------------------------------------------------- helpers -- */
 
@@ -369,16 +230,3 @@ const NEVER_ASKED: readonly { title: TKey; detail: TKey }[] = [
   { title: 'perms.neverHealthTitle', detail: 'perms.neverHealthDetail' },
   { title: 'perms.neverMotionTitle', detail: 'perms.neverMotionDetail' },
 ];
-
-const styles = StyleSheet.create({
-  content: { flexGrow: 1 },
-  body: { paddingHorizontal: screenGutter },
-  after: { marginTop: spacing.md },
-  dot: { width: 10, height: 10, borderRadius: 5 },
-  strip: {
-    padding: spacing.md,
-    borderRadius: 12,
-  },
-  neverRow: { paddingVertical: spacing.sm },
-  simNote: { marginTop: spacing.sm },
-});
