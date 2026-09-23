@@ -7,6 +7,11 @@
  * trailing slot. A screen that is a form reads its input from route params and writes through
  * the stores and queries the rest of the app already uses; it never receives a callback.
  *
+ * The title and the confirming action are drawn here, inside the sheet, rather than in the
+ * native header. Android's form sheet has no header at all (react-native-screens does not
+ * draw one there), so the title and the only Save button vanished; and on iOS a `fit` body
+ * cannot be inset by a header it cannot measure, so the header sat over the first field.
+ *
  * `fit` bodies are plain views so a `fitToContents` detent can measure them. Taller editors
  * (the exercise picker) scroll, and use the list inside them instead of this body.
  */
@@ -17,10 +22,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useT } from '@/i18n/useT';
 import type { TKey } from '@/i18n';
-import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { useAppTheme } from '@/theme/theme';
 import { screenGutter, spacing } from '@/theme/tokens';
-import { ScreenHeader } from '@/ui/Screen';
+import { Button } from '@/ui/controls/Button';
 import { Txt } from '@/ui/Text';
 
 export function FormSheet({
@@ -43,33 +47,38 @@ export function FormSheet({
   const { t } = useT();
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
+  const bar = (
+    <View style={styles.bar}>
+      <Txt variant="subhead" weight="600" accessibilityRole="header" numberOfLines={1} style={styles.flex}>
+        {title}
+      </Txt>
+      <Button
+        label={t(doneLabel ?? 'headerActions.done')}
+        onPress={onDone ?? closeSheet}
+        disabled={doneDisabled}
+        size="sm"
+      />
+    </View>
+  );
   const body = (
     <View style={[styles.body, { paddingBottom: insets.bottom + spacing.lg }]}>{children}</View>
   );
   return (
     <>
-      <ScreenHeader title={title} />
-      <HeaderToolbar placement="right">
-        {headerAction({
-          action: 'done',
-          onPress: onDone ?? closeSheet,
-          t,
-          ...(doneLabel ? { label: doneLabel } : {}),
-          disabled: doneDisabled,
-          variant: 'done',
-          tint: theme.colors.accent,
-        })}
-      </HeaderToolbar>
       {scroll ? (
         <ScrollView
           style={{ backgroundColor: theme.colors.background }}
           keyboardShouldPersistTaps="handled"
           contentInsetAdjustmentBehavior="automatic"
         >
+          {bar}
           {body}
         </ScrollView>
       ) : (
-        <View style={{ backgroundColor: theme.colors.background }}>{body}</View>
+        <View style={{ backgroundColor: theme.colors.background }}>
+          {bar}
+          {body}
+        </View>
       )}
     </>
   );
@@ -117,6 +126,13 @@ export const FormFooter = memo(function FormFooter({
 });
 
 const styles = StyleSheet.create({
+  bar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: screenGutter,
+    paddingTop: spacing.xl,
+  },
   body: { paddingHorizontal: screenGutter, paddingTop: spacing.lg, gap: spacing.xl },
   section: { gap: spacing.md },
   sectionHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },

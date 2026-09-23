@@ -58,6 +58,8 @@ export function useLargeTitleOptions(): NativeStackNavigationOptions {
 export function formSheet(detents: 'fit' | 'picker'): NativeStackNavigationOptions {
   return {
     presentation: 'formSheet',
+    // `FormSheet` draws its own title bar: Android's form sheet has no native header.
+    headerShown: false,
     sheetGrabberVisible: true,
     sheetAllowedDetents: detents === 'fit' ? 'fitToContents' : [0.5, 1],
     sheetCornerRadius: radius.xxl,
