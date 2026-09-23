@@ -20,7 +20,8 @@
  *
  * ## The one case where it deliberately does *not* re-sync
  *
- * Cancelling means `cancelAllScheduledNotificationsAsync`, which cannot be selective, * expo-notifications has no cancel-by-purpose. Mid-workout, the notification that is about to
+ * Cancelling means `cancelAllScheduledNotificationsAsync`, which cannot be selective:
+ * expo-notifications has no cancel-by-purpose. Mid-workout, the notification that is about to
  * fire is a rest-timer alert the user is currently relying on. Re-syncing the *weekly*
  * reminder in that moment would silence the rest buzz to change a date days away, so when a
  * session is active the schedule is left alone and the screen says so in plain words. It is
@@ -61,13 +62,15 @@ const REMINDER_LAST_MINUTE = 24 * 60 - REMINDER_STEP_MINUTES;
 const ISO_DAYS: readonly number[] = [1, 2, 3, 4, 5, 6, 7];
 
 /**
- * Short weekday names from `Intl`, not from a table of English abbreviations.
+ * Weekday names from `Intl`, not from a table of English abbreviations.
  *
  * A hand-written `['Mon', 'Tue', ...]` would need a translated copy per locale, and would then
  * be a second opinion about weekday names that the platform already holds. The reference date
  * is an arbitrary Monday (2024-01-01 was one), so ISO day 1 maps to it and the rest follow.
+ *
+ * `dayName` is the full name, for a checklist row ("Monday", "lunedì"); `dayLabel` the short
+ * one, for a summary line.
  */
-/** The weekday's full name, for a checklist row: "Monday", "lunedì". */
 function dayName(iso: number, locale: string): string {
   const reference = new Date(Date.UTC(2024, 0, iso, 12));
   return new Intl.DateTimeFormat(locale, { weekday: 'long', timeZone: 'UTC' }).format(reference);

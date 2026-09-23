@@ -47,7 +47,6 @@ import { haptics } from '@/services/haptics';
 import { useT } from '@/i18n/useT';
 import type { TKey } from '@/i18n';
 
-
 export default function PermissionsScreen() {
   const { t } = useT();
   const router = useRouter();
@@ -191,8 +190,6 @@ export default function PermissionsScreen() {
     </>
   );
 }
-
-/* ------------------------------------------------------------------ pieces -- */
 
 /* ----------------------------------------------------------------- helpers -- */
 

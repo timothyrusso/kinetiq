@@ -23,7 +23,8 @@
  *
  * ## The counts read the list cache, not SQL
  *
- * `useActivityList` with the default params is the *same* query the Activities tab uses, * frozen default params, so the key matches: and its raw rows are cached unsorted and
+ * `useActivityList` with the default params is the *same* query the Activities tab uses (the
+ * default params are frozen, so the key matches), and its raw rows are cached unsorted and
  * ungrouped. Counting them here costs one pass over data the app is already holding. A second
  * query for "how many activities" would be a second source of truth for one number, and the
  * only thing that buys is a way for two screens to disagree.
@@ -31,8 +32,8 @@
  * ## Reset
  *
  * A destructive control that says "erase everything" is easy to tap by accident and impossible
- * to undo. `ConfirmSheet` is the app's one confirmation idiom: the same one workout discard
- * uses: and the copy spells out what is destroyed, including the demo history, because
+ * to undo. `ConfirmDialog` is the app's one confirmation idiom (the same one workout discard
+ * uses), and the copy spells out what is destroyed, including the demo history, because
  * "it came back on its own" is the most confusing possible outcome of a wipe.
  */
 import { useCallback, useMemo, useState } from 'react';
@@ -54,7 +55,6 @@ import { useRoutines } from '@/queries/useRoutines';
 import { haptics } from '@/services/haptics';
 import { useT } from '@/i18n/useT';
 import type { TKey } from '@/i18n';
-
 
 export default function SettingsAboutScreen() {
   const { t } = useT();
@@ -83,7 +83,8 @@ export default function SettingsAboutScreen() {
   const erase = useCallback(async () => {
     setErasing(true);
     try {
-      // Order matters. Data first, then the caches that describe it, then settings last, // settings is the one step that writes back to the database, so doing it earlier would
+      // Order matters. Data first, then the caches that describe it, then settings last:
+      // settings is the one step that writes back to the database, so doing it earlier would
       // have the wipe undone by its own next step.
       await clearAllUserData();
       await queryClient.cancelQueries();
@@ -114,7 +115,13 @@ export default function SettingsAboutScreen() {
             subtitle: t('about.appIdHint'),
             value: appId ?? t('about.unknown'),
           },
-          { kind: 'info', key: 'schema', title: t('about.schema'), value: `v${schema}` },
+          {
+            kind: 'info',
+            key: 'schema',
+            title: t('about.schema'),
+            // `readSchemaVersion` answers null when the read fails; "vnull" is not a version.
+            value: schema === null ? t('about.unknown') : `v${schema}`,
+          },
         ],
       },
       {
@@ -232,18 +239,14 @@ export default function SettingsAboutScreen() {
   );
 }
 
-/* ------------------------------------------------------------------ pieces -- */
-
 /* ----------------------------------------------------------------- helpers -- */
 
 /**
- * The version this install actually migrated to. The read: and why it asks the database
- * instead of importing a constant: lives in `readSchemaVersion` (src/persistence/database.ts);
+ * The version this install actually migrated to. The read, and why it asks the database
+ * instead of importing a constant, live in `readSchemaVersion` (src/persistence/database.ts);
  * this pins the answer to the first render so the row never flashes 'reading…'.
  */
 function useSchemaVersion(): number | null {
-  // The read itself lives in the persistence layer (`readSchemaVersion`): this only pins it to
-  // the first render, which is the part that is this screen's business.
   const [version] = useState<number | null>(readSchemaVersion);
   return version;
 }
