@@ -35,11 +35,11 @@ import {
   useMaterialColors,
   useNativeState,
 } from '@expo/ui/jetpack-compose';
-import { background, clickable, clip, fillMaxSize, fillMaxWidth, padding, Shapes } from '@expo/ui/jetpack-compose/modifiers';
+import { alpha, background, clickable, clip, fillMaxSize, fillMaxWidth, padding, Shapes } from '@expo/ui/jetpack-compose/modifiers';
 
 import { haptics } from '@/services/haptics';
 import { useAppTheme } from '@/theme/theme';
-import { screenGutter, spacing } from '@/theme/tokens';
+import { disabledContentAlpha, screenGutter, spacing } from '@/theme/tokens';
 import { materialIcon } from '@/ui/materialIcons';
 import type { SettingsListProps, SettingsRow, SettingsSection } from './types';
 
@@ -282,7 +282,14 @@ const Row = memo(function Row({
       return (
         <ListItem colors={item} modifiers={row.disabled ? shape : [...shape, clickable(row.onPress)]}>
           <ListItem.HeadlineContent>
-            <Text {...(row.destructive ? { color: danger } : {})}>{row.title}</Text>
+            {/* Material dims disabled content. Without it a Save that cannot save looked
+                exactly like one that can, since the row only drops its click handler. */}
+            <Text
+              {...(row.destructive ? { color: danger } : {})}
+              modifiers={row.disabled ? [alpha(disabledContentAlpha)] : []}
+            >
+              {row.title}
+            </Text>
           </ListItem.HeadlineContent>
         </ListItem>
       );

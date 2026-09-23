@@ -187,6 +187,12 @@ export const weight = {
 
 export const touchTarget = 44;
 
+/**
+ * Opacity of a disabled control's content: Material 3's disabled-state value. For native
+ * Compose content that has no disabled look of its own (a clickable list row's text).
+ */
+export const disabledContentAlpha = 0.38;
+
 /** Line heights tuned per size so Space Grotesk numerals sit tight and calm. */
 export const lineHeight = {
   tight: 1,
