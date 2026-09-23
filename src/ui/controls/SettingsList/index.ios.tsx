@@ -38,7 +38,6 @@ import {
 
 import { haptics } from '@/services/haptics';
 import { useAppTheme } from '@/theme/theme';
-import { spacing } from '@/theme/tokens';
 import type { SettingsListProps, SettingsRow } from './types';
 
 export type { SettingsListProps, SettingsRow, SettingsSection } from './types';
@@ -69,7 +68,7 @@ export function SettingsList({ sections }: SettingsListProps) {
 
 function Titles({ title, subtitle }: { title: string; subtitle?: string | undefined }) {
   return (
-    <VStack alignment="leading" spacing={spacing.xxs}>
+    <VStack alignment="leading" spacing={2}>
       <Text>{title}</Text>
       {subtitle ? <Text modifiers={[font({ textStyle: 'footnote' }), secondary]}>{subtitle}</Text> : null}
     </VStack>
@@ -81,7 +80,7 @@ const Row = memo(function Row({ row, accent }: { row: SettingsRow; accent: strin
     case 'nav':
       return (
         <Button onPress={row.onPress} modifiers={[foregroundStyle({ type: 'hierarchical', style: 'primary' })]}>
-          <HStack spacing={spacing.sm}>
+          <HStack spacing={8}>
             <Titles title={row.title} subtitle={row.subtitle} />
             <Spacer />
             {row.value ? <Text modifiers={[secondary]}>{row.value}</Text> : null}
@@ -104,7 +103,7 @@ const Row = memo(function Row({ row, accent }: { row: SettingsRow; accent: strin
       );
     case 'stepper':
       return (
-        <HStack spacing={spacing.md}>
+        <HStack spacing={12}>
           <Titles title={row.title} subtitle={row.subtitle} />
           <Spacer />
           <Text modifiers={[monospacedDigit(), secondary]}>{row.format(row.value)}</Text>
@@ -151,12 +150,9 @@ const Row = memo(function Row({ row, accent }: { row: SettingsRow; accent: strin
         </Picker>
       );
     case 'info':
-      // A fact with no value (the catalog's name, a permission the app never asks for) is a
-      // plain row: `LabeledContent` would reserve a trailing column for an empty string.
-      if (!row.value) return <Titles title={row.title} subtitle={row.subtitle} />;
       return (
         <LabeledContent label={<Titles title={row.title} subtitle={row.subtitle} />}>
-          <Text modifiers={[secondary]}>{row.value}</Text>
+          <Text modifiers={[secondary]}>{row.value ?? ''}</Text>
         </LabeledContent>
       );
     case 'button':
@@ -183,9 +179,9 @@ function FieldRow({ row }: { row: Extract<SettingsRow, { kind: 'field' }> }) {
     }
   }, [row.value, text]);
   return (
-    <VStack alignment="leading" spacing={spacing.xs}>
+    <VStack alignment="leading" spacing={4}>
       <LabeledContent label={row.title}>
-        <HStack spacing={spacing.xs}>
+        <HStack spacing={4}>
           <TextField
             text={text}
             {...(row.placeholder ? { placeholder: row.placeholder } : {})}
