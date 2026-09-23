@@ -31,8 +31,8 @@
  * field says 135, the stepper is secretly stepping in kilograms, and the third tap
  * produces 182.
  */
-import { useCallback, useState } from 'react';
-import { Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 
 import { Screen, ScreenHeader } from '@/ui/Screen';
@@ -42,10 +42,11 @@ import { Chip } from '@/ui/controls/Chip';
 import { Stepper } from '@/ui/controls/Stepper';
 import { KeyboardAvoid } from '@/ui/layout';
 import { TextInput } from '@/ui/controls/TextInput';
-import { Card, Gap, Row, Stack as Column } from '@/ui/layout';
-import { SectionHeader } from '@/ui/display';
-import { Txt } from '@/ui/Text';
-import { Icon } from '@/ui/icons';
+import { Card, Row, Stack as Column } from '@/ui/layout';
+import { SectionHeader, TagRow, exerciseTags } from '@/ui/display';
+import { Txt, fontSizeOf, lineHeightOf } from '@/ui/Text';
+import { Icon, ICON_SIZE } from '@/ui/icons';
+import { useScreenContentBottom } from '@/ui/insets';
 import { EmptyState, SkeletonCard } from '@/ui/states';
 import { ExerciseThumb } from '@/ui/rows';
 import { useExerciseResolution } from '@/queries/useExercises';
@@ -100,6 +101,8 @@ export default function AddExerciseScreen() {
   const exerciseId = firstParam(params.id);
   const detail = useExerciseResolution(exerciseId);
   const exercise = detail.exercise;
+  const tags = useMemo(() => (exercise ? exerciseTags(exercise) : []), [exercise]);
+  const bottom = useScreenContentBottom();
 
   const [target, setTarget] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
@@ -197,7 +200,7 @@ export default function AddExerciseScreen() {
         <KeyboardAvoid style={{ flex: 1 }}>
           <ScrollView
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ paddingTop: spacing.xxl, paddingBottom: spacing.huge }}
+            contentContainerStyle={{ paddingTop: spacing.xxl, paddingBottom: bottom }}
           >
             {detail.isLoading ? (
               <View style={styles.section}>
@@ -223,15 +226,11 @@ export default function AddExerciseScreen() {
                     theme={theme}
                     rounded={radius.lg}
                   />
-                  <Column gap="xxs" style={{ flex: 1 }}>
+                  <Column gap="xs" style={styles.flex}>
                     <Txt variant="title" numberOfLines={2}>
                       {exercise.name}
                     </Txt>
-                    <Txt variant="caption" tone="muted" numberOfLines={1}>
-                      {exercise.primaryMuscles.length > 0
-                        ? exercise.primaryMuscles.join(', ')
-                        : (exercise.category ?? t('addExercise.exercise'))}
-                    </Txt>
+                    <TagRow tags={tags} theme={theme} max={3} />
                   </Column>
                 </Row>
 
@@ -297,8 +296,8 @@ export default function AddExerciseScreen() {
                   <View style={styles.section}>
                     <Card tone="sunken">
                       <Row gap="md" align="center">
-                        <Icon name="check" size={18} color={theme.colors.success} />
-                        <Txt variant="body" style={{ flex: 1 }} numberOfLines={2}>
+                        <Icon name="check" size={ICON_SIZE.inline} color={theme.colors.success} />
+                        <Txt variant="body" style={styles.flex} numberOfLines={2}>
                           {t('addExercise.goingInto')}{' '}
                           <Txt variant="body" weight="700">
                             {targetRoutine?.name ?? t('addExercise.yourRoutine')}
@@ -335,7 +334,7 @@ export default function AddExerciseScreen() {
                     />
                   </Row>
 
-                  <Row gap="md" align="center">
+                  <Row gap="md" align="start">
                     <TextInput
                       label={t('addExercise.weightIn', { unit: weightUnit(units) })}
                       value={draft.weight}
@@ -347,7 +346,7 @@ export default function AddExerciseScreen() {
                       style={{ flex: 1 }}
                       maxLength={6}
                     />
-                    <View style={{ paddingTop: 22 }}>
+                    <View style={styles.besideField}>
                       <Stepper
                         label={t('addExercise.weightPerSet', { unit: weightUnit(units) })}
                         compact
@@ -363,7 +362,7 @@ export default function AddExerciseScreen() {
                     </View>
                   </Row>
 
-                  <Row gap="md" align="center">
+                  <Row gap="md" align="start">
                     <TextInput
                       label={t('addExercise.rest')}
                       value={draft.rest}
@@ -375,7 +374,7 @@ export default function AddExerciseScreen() {
                       style={{ flex: 1 }}
                       maxLength={4}
                     />
-                    <View style={{ paddingTop: 22 }}>
+                    <View style={styles.besideField}>
                       <Stepper
                         label={t('addExercise.restBetweenSets')}
                         compact
@@ -430,7 +429,6 @@ export default function AddExerciseScreen() {
                     {t('addExercise.targetsNote')}
                   </Txt>
                 </Column>
-                <Gap size={Platform.OS === 'ios' ? spacing.md : spacing.xl} />
               </Column>
             )}
           </ScrollView>
@@ -474,5 +472,12 @@ function clampInt(input: string, min: number, max: number, fallback: number): nu
 
 const styles = StyleSheet.create({
   section: { paddingHorizontal: screenGutter },
+  flex: { flex: 1 },
+  /**
+   * A stepper beside a text field starts where the field's box starts: below the field's
+   * label line and the gap under it (`TextInput`'s label is `micro`, its column gap `xs`), so
+   * the two controls share a top edge instead of centring against the hint underneath.
+   */
+  besideField: { paddingTop: Math.round(fontSizeOf('micro') * lineHeightOf('micro')) + spacing.xs },
   multiline: { minHeight: 76, paddingTop: spacing.md, paddingBottom: spacing.md, textAlignVertical: 'top' },
 });
