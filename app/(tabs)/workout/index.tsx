@@ -100,7 +100,7 @@ const CARD_PADDING = spacing.lg;
 const GRID_COLUMNS = 3;
 
 export default function WorkoutScreen() {
-  const { t } = useT();
+  const { t, locale } = useT();
   const router = useRouter();
   const theme = useAppTheme();
   const bottomSpace = useTabContentBottom();
@@ -115,7 +115,6 @@ export default function WorkoutScreen() {
   // no separate "recover" state to surface here, and inventing one would mean a second card
   // with a second button pointing at the same session. A boolean, so the tick stays in the card.
   const resuming = useWorkoutRunning();
-  const { locale } = useT();
 
   const sorted = useMemo(() => {
     const items = [...routines.routines];
