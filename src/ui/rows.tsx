@@ -474,6 +474,7 @@ export const ExerciseRow = memo(function ExerciseRow({
   name,
   uri,
   tags,
+  badge,
   theme,
   onPress,
   dimmed = false,
@@ -483,6 +484,8 @@ export const ExerciseRow = memo(function ExerciseRow({
   uri: string | null;
   /** Primary muscles first, capped at two with "+n": a row stays one line tall. */
   tags: readonly Tag[];
+  /** A status-style pill opposite the title: the exercise's category on the Exercises tab. */
+  badge?: string;
   theme: Theme;
   onPress: () => void;
   dimmed?: boolean;
@@ -508,6 +511,34 @@ export const ExerciseRow = memo(function ExerciseRow({
         showChevron
         accessibilityHint={t('misc.opensExercise')}
         leading={<ExerciseThumb uri={uri} name={name} size={48} theme={theme} />}
+        {...(badge ? { body: <RowBadge label={badge} theme={theme} /> } : {})}
+      />
+    </View>
+  );
+});
+
+/**
+ * `Badge` from `layout.tsx`, drawn the row way: theme as a prop and `CellText`, so a row that
+ * shows one does not become a theme subscriber.
+ */
+const RowBadge = memo(function RowBadge({ label, theme }: { label: string; theme: Theme }) {
+  return (
+    <View
+      style={{
+        alignSelf: 'center',
+        maxWidth: 120,
+        backgroundColor: theme.colors.accentSoft,
+        borderRadius: radius.pill,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: spacing.xxs,
+      }}
+    >
+      <CellText
+        text={label.toLocaleUpperCase()}
+        variant="micro"
+        weight="700"
+        color={theme.colors.accent}
+        numberOfLines={1}
       />
     </View>
   );
