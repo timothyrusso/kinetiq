@@ -641,7 +641,7 @@ export const it: Copy = {
   },
   progress: {
     title: 'Progressi',
-    range4: '4 settimane',
+    range4: '4 sett.',
     range12: '3 mesi',
     range26: '6 mesi',
     range52: '12 mesi',

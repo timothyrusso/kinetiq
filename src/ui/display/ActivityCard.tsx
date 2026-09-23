@@ -83,7 +83,7 @@ export const ActivityCard = memo(function ActivityCard({
             color={theme.colors.text}
             numberOfLines={1}
           />
-          <MetaLine items={summary.meta} theme={theme} />
+          <MetaLine items={summary.meta} theme={theme} wrap />
         </View>
         <CellText text={summary.headline} variant="numeralSm" color={theme.colors.text} align="right" />
       </View>
