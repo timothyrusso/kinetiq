@@ -307,9 +307,8 @@ export default function ExercisesScreen() {
         }
         ListEmptyComponent={
           search.isLoading ? (
-            <View style={styles.skeleton}>
-              <SkeletonList rows={7} />
-            </View>
+            // `SkeletonList` carries the screen gutter itself.
+            <SkeletonList rows={7} />
           ) : search.error !== null ? (
             // `ErrorState` already distinguishes offline from a server fault: different
             // icon, different copy: so this screen only supplies the subject line. The
@@ -487,6 +486,5 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   chips: { flex: 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  skeleton: { paddingHorizontal: screenGutter },
   footer: { paddingVertical: spacing.xl, paddingHorizontal: screenGutter },
 });

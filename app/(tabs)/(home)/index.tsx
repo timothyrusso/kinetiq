@@ -246,9 +246,7 @@ export default function HomeScreen() {
           onAction={openWorkoutTab}
         />
       ) : loading ? (
-        <View style={styles.skeleton}>
-          <SkeletonList rows={4} />
-        </View>
+        <SkeletonList rows={4} />
       ) : null,
     [empty, loading, openWorkoutTab, t],
   );
@@ -475,7 +473,6 @@ const styles = StyleSheet.create({
   summary: { paddingHorizontal: screenGutter, paddingTop: spacing.xxl, paddingBottom: spacing.xxl },
   recentHeader: { paddingHorizontal: screenGutter },
   cardCell: { paddingHorizontal: screenGutter, paddingBottom: spacing.md },
-  skeleton: { paddingHorizontal: screenGutter },
   divider: { marginVertical: spacing.lg },
   chartTitle: { marginBottom: spacing.lg },
   chartSpacer: { height: CHART_HEIGHT },

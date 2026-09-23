@@ -317,6 +317,7 @@ export default function ActivitiesScreen() {
         ListHeaderComponent={listHeader}
         ListEmptyComponent={
           list.isLoading ? (
+            // `SkeletonList` carries the screen gutter itself.
             <View style={styles.skeleton}>
               <SkeletonList rows={6} />
             </View>
@@ -417,6 +418,6 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   fill: { flex: 1, minWidth: 0 },
-  skeleton: { paddingHorizontal: screenGutter, paddingTop: spacing.lg },
+  skeleton: { paddingTop: spacing.lg },
   dayLabel: { paddingHorizontal: screenGutter, paddingTop: spacing.xxl, marginBottom: spacing.xs },
 });
