@@ -320,7 +320,10 @@ export default function WorkoutSessionScreen() {
     // finished on another screen. It is not an error, so it must not render like one.
     return (
       <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
-        <ScreenHeader title={t('tabs.workout')} />
+        {/* Still headerless when the session ended HERE: this render lands while the screen
+            is being popped, and showing a header on a screen mid-removal crashes Android's
+            stack ("ScreenStackFragment added into a non-stack container"). */}
+        <ScreenHeader title={t('tabs.workout')} shown={!(discarding || finishing)} />
         <EmptyState
           title={t('session.noneTitle')}
           message={t('session.noneMessage')}

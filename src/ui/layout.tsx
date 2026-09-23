@@ -311,7 +311,14 @@ export const OverlaySurface = memo(function OverlaySurface({
     // even if the material fails to initialise.
     <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.overlay }]} />
   );
-  if (Platform.OS !== 'ios') return [base, hairline];
+  if (Platform.OS !== 'ios') {
+    return (
+      <>
+        {base}
+        {hairline}
+      </>
+    );
+  }
   return (
     <>
       {base}
