@@ -3,7 +3,7 @@
  *
  * ## Two controls, and what each one governs
  *
- * The range chips pick the window; the measure chips pick which column of that same
+ * The range control picks the window; the measure control picks which column of that same
  * window the line draws. Both are local state, deliberately: `useTrainingSummary(n)` keys
  * its cache entry on `n`, so Home (which asks for 8 weeks) and this screen get separate
  * entries instead of fighting over one, and switching to "12 months" here does not
@@ -53,13 +53,12 @@ import { StyleSheet, View, type ViewStyle } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { ScreenHeader, ScreenScroll } from '@/ui/Screen';
-import { MetaLine } from '@/ui/display';
-import { Card, Divider, MetricGrid, Row, Stack } from '@/ui/layout';
-import { SectionHeader } from '@/ui/display';
-import { Chip } from '@/ui/controls/Chip';
+import { MetaLine, SectionHeader, StatTile } from '@/ui/display';
+import { Card, Divider, Row, Stack } from '@/ui/layout';
+import { SegmentedControl } from '@/ui/controls/SegmentedControl';
 import { IconTile } from '@/ui/icons';
 import { ListRow } from '@/ui/rows';
-import { MetricLabel, Txt } from '@/ui/Text';
+import { Txt } from '@/ui/Text';
 import { EmptyState, ErrorState, SkeletonCard, SkeletonList } from '@/ui/states';
 import { TrendChart, type TrendPoint } from '@/ui/charts/TrendChart';
 import { ActivityDistribution, type DistributionSlice } from '@/ui/charts/ActivityDistribution';
@@ -77,13 +76,13 @@ import { RECORD_LABEL, formatRecordValue } from '@/queries/useExerciseHistory';
 import { useSettings } from '@/settings';
 import { routes, tabHref, tabIndexOf } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
-import { spacing, screenGutter } from '@/theme/tokens';
+import { spacing } from '@/theme/tokens';
 import { dayKey } from '@/domain/logic';
 import { KIND_ORDER } from '@/domain/display';
+import { formatShortDateLocalized } from '@/utils/relativeTime';
 import {
   formatDistance,
   formatDurationCompact,
-  formatShortDate,
   formatWeight,
   trimNumber,
   type UnitSystem,
@@ -94,19 +93,30 @@ import { useT } from '@/i18n/useT';
 import { tr } from '@/i18n/tr';
 import type { TKey, TVars } from '@/i18n';
 
-/** Weeks per option. The summary is computed per week, so the options are weeks. */
+/**
+ * Weeks per option. The summary is computed per week, so the options are weeks. `value` is the
+ * same number as a string, because a segmented control's values are strings on both platforms.
+ */
 const RANGES = [
-  { weeks: 4, label: 'progress.range4' },
-  { weeks: 12, label: 'progress.range12' },
-  { weeks: 26, label: 'progress.range26' },
-  { weeks: 52, label: 'progress.range52' },
-] as const satisfies readonly { weeks: number; label: TKey }[];
+  { weeks: 4, value: '4', label: 'progress.range4' },
+  { weeks: 12, value: '12', label: 'progress.range12' },
+  { weeks: 26, value: '26', label: 'progress.range26' },
+  { weeks: 52, value: '52', label: 'progress.range52' },
+] as const satisfies readonly { weeks: number; value: string; label: TKey }[];
 
 type RangeWeeks = (typeof RANGES)[number]['weeks'];
+type RangeValue = (typeof RANGES)[number]['value'];
 const DEFAULT_RANGE: RangeWeeks = 12;
 
 /** What the line draws. All three are already columns of `WeekSummary`. */
 type Measure = 'duration' | 'distance' | 'volume';
+
+/** Catalog keys, not words: this table is built at import time. */
+const MEASURE_OPTIONS: readonly { value: Measure; label: TKey }[] = [
+  { value: 'duration', label: 'progress.time' },
+  { value: 'distance', label: 'progress.distance' },
+  { value: 'volume', label: 'progress.volume' },
+];
 
 /** Below this many non-zero weeks a line is an anecdote, not a trend. See `MeasureChart`. */
 const MIN_TREND_POINTS = 2;
@@ -124,6 +134,20 @@ export default function ProgressScreen() {
 
   const [rangeWeeks, setRangeWeeks] = useState<RangeWeeks>(DEFAULT_RANGE);
   const [measure, setMeasure] = useState<Measure>('duration');
+
+  // Resolved once per language, so a new array does not defeat the control's memo per render.
+  const rangeSegments = useMemo(
+    () => RANGES.map((option) => ({ value: option.value, label: t(option.label) })),
+    [t],
+  );
+  const measureSegments = useMemo(
+    () => MEASURE_OPTIONS.map((option) => ({ value: option.value, label: t(option.label) })),
+    [t],
+  );
+  const onRange = useCallback((next: RangeValue) => {
+    const match = RANGES.find((option) => option.value === next);
+    if (match) setRangeWeeks(match.weeks);
+  }, []);
 
   const summaryQuery = useTrainingSummary(rangeWeeks);
   const heatmapQuery = useTrainingHeatmap();
@@ -150,21 +174,17 @@ export default function ProgressScreen() {
 
   return (
     <>
-      <ScreenHeader title={t('progress.title')} />
-      <ScreenScroll gutter={false} contentContainerStyle={styles.content}>
-        <Stack gap="xxl" style={styles.body}>
-          <MetaLine items={[{ icon: 'calendar', label: rangeLabel(rangeWeeks, t) }]} theme={theme} />
-          <View style={styles.chipRow}>
-            {RANGES.map((option) => (
-              <Chip
-                key={option.weeks}
-                label={t(option.label)}
-                size="sm"
-                selected={option.weeks === rangeWeeks}
-                onPress={() => setRangeWeeks(option.weeks)}
-              />
-            ))}
-          </View>
+      <ScreenHeader title={t('progress.title')} largeTitle />
+      <ScreenScroll contentContainerStyle={styles.content}>
+        <Stack gap="xxl">
+          <Stack gap="md">
+            <MetaLine items={[{ icon: 'calendar', label: rangeLabel(rangeWeeks, t) }]} theme={theme} />
+            <SegmentedControl<RangeValue>
+              segments={rangeSegments}
+              value={`${rangeWeeks}`}
+              onChange={onRange}
+            />
+          </Stack>
 
           {showSkeleton ? (
             <Stack gap="lg">
@@ -198,24 +218,11 @@ export default function ProgressScreen() {
               <View>
                 <SectionHeader title={t('progress.trend')} eyebrow={t('progress.weekByWeek')} />
                 <Card>
-                  <View style={styles.chipRow}>
-                    <Chip
-                      label={t('progress.time')}
-                      size="sm"
-                      selected={measure === 'duration'}
-                      onPress={() => setMeasure('duration')}
-                    />
-                    <Chip
-                      label={t('progress.distance')}
-                      size="sm"
-                      selected={measure === 'distance'}
-                      onPress={() => setMeasure('distance')}
-                    />
-                    <Chip
-                      label={t('progress.volume')}
-                      size="sm"
-                      selected={measure === 'volume'}
-                      onPress={() => setMeasure('volume')}
+                  <View style={styles.measure}>
+                    <SegmentedControl<Measure>
+                      segments={measureSegments}
+                      value={measure}
+                      onChange={setMeasure}
                     />
                   </View>
                   {/* Measured *inside* the card, so the chart is handed its own real
@@ -321,49 +328,60 @@ function TotalsCard({
   const cardio = totals.distanceMeters > 0;
   const weighted = totals.volumeKg > 0;
 
+  // Every tile carries a note: a bare number with no frame is how a dashboard ends up needing
+  // a paragraph underneath it to explain what it measures. Compact numerals, because two
+  // abreast at the default size truncate a distance like "1,204.5 km".
   return (
     <Card>
-      <MetricGrid columns={2}>
-        <Metric
-          label={t('progress.workouts')}
-          value={`${totals.workouts}`}
-          note={t('progress.perWeek', { value: trimNumber(perWeek, 1) })}
-        />
-        <Metric
-          label={t('progress.time')}
-          value={formatDurationCompact(totals.durationSeconds)}
-          note={t('progress.hoursTotal', {
-            value: trimNumber(totals.durationSeconds / 3600, 1),
-          })}
-        />
-        <Metric
-          label={t('progress.distance')}
-          value={cardio ? formatDistance(totals.distanceMeters, units) : '-'}
-          note={t(cardio ? 'progress.fromCardio' : 'progress.noCardio')}
-        />
-        <Metric
-          label={t('progress.volume')}
-          value={weighted ? formatWeight(totals.volumeKg, units) : '-'}
-          note={t(weighted ? 'progress.fromStrength' : 'progress.noWeighted')}
-        />
-      </MetricGrid>
+      <Stack gap="lg">
+        <Row gap="lg" align="start">
+          <StatTile
+            label={t('progress.workouts')}
+            value={`${totals.workouts}`}
+            emphasis="compact"
+            note={t('progress.perWeek', { value: trimNumber(perWeek, 1) })}
+          />
+          <StatTile
+            label={t('progress.time')}
+            value={formatDurationCompact(totals.durationSeconds)}
+            emphasis="compact"
+            note={t('progress.hoursTotal', {
+              value: trimNumber(totals.durationSeconds / 3600, 1),
+            })}
+          />
+        </Row>
+        <Row gap="lg" align="start">
+          <StatTile
+            label={t('progress.distance')}
+            value={cardio ? formatDistance(totals.distanceMeters, units) : '-'}
+            emphasis="compact"
+            note={t(cardio ? 'progress.fromCardio' : 'progress.noCardio')}
+          />
+          <StatTile
+            label={t('progress.volume')}
+            value={weighted ? formatWeight(totals.volumeKg, units) : '-'}
+            emphasis="compact"
+            note={t(weighted ? 'progress.fromStrength' : 'progress.noWeighted')}
+          />
+        </Row>
 
-      <View style={{ marginTop: spacing.lg, marginBottom: spacing.lg }}>
         <Divider />
-      </View>
 
-      <Row gap="lg">
-        <Metric
-          label={t('progress.longestStreak')}
-          value={`${summary.bestStreak} ${t('progress.dayWord', { count: summary.bestStreak })}`}
-          note={t('progress.anywhereInHistory')}
-        />
-        <Metric
-          label={t('progress.activeDays')}
-          value={`${summary.activeDays}`}
-          note={t('progress.daysTrained', { percent: Math.round(summary.consistency * 100) })}
-        />
-      </Row>
+        <Row gap="lg" align="start">
+          <StatTile
+            label={t('progress.longestStreak')}
+            value={`${summary.bestStreak} ${t('progress.dayWord', { count: summary.bestStreak })}`}
+            emphasis="compact"
+            note={t('progress.anywhereInHistory')}
+          />
+          <StatTile
+            label={t('progress.activeDays')}
+            value={`${summary.activeDays}`}
+            emphasis="compact"
+            note={t('progress.daysTrained', { percent: Math.round(summary.consistency * 100) })}
+          />
+        </Row>
+      </Stack>
 
       <Txt variant="micro" tone="faint" style={{ marginTop: spacing.lg }}>
         {shortfall <= 0
@@ -379,24 +397,6 @@ function TotalsCard({
             })}
       </Txt>
     </Card>
-  );
-}
-
-/**
- * The 2-up cell. `note` is required rather than optional: a bare number with no frame is
- * how a dashboard ends up needing a paragraph underneath it to explain what it measures.
- */
-function Metric({ label, value, note }: { label: string; value: string; note: string }) {
-  return (
-    <Stack gap="xxs" style={{ flex: 1, minWidth: 0 }}>
-      <MetricLabel label={label} />
-      <Txt variant="numeralSm" numberOfLines={1}>
-        {value}
-      </Txt>
-      <Txt variant="micro" tone="faint" numberOfLines={1}>
-        {note}
-      </Txt>
-    </Stack>
   );
 }
 
@@ -649,7 +649,7 @@ function RecordsCard({
   units: UnitSystem;
   onRetry: () => void;
 }) {
-  const { t } = useT();
+  const { t, locale } = useT();
   const theme = useAppTheme();
   const router = useRouter();
 
@@ -685,7 +685,7 @@ function RecordsCard({
           title={record.exerciseName}
           meta={[
             { icon: 'trophy', label: t(RECORD_LABEL[record.kind]) },
-            { icon: 'calendar', label: formatShortDate(record.achievedAt) },
+            { icon: 'calendar', label: formatShortDateLocalized(record.achievedAt, locale) },
           ]}
           leading={
             <IconTile
@@ -723,8 +723,7 @@ function rangeLabel(weeks: number, t: (key: TKey, vars?: TVars) => string): stri
 
 const styles = StyleSheet.create({
   content: { flexGrow: 1, paddingTop: spacing.md },
-  body: { paddingHorizontal: screenGutter },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  measure: { marginBottom: spacing.lg },
 });
 
 /**

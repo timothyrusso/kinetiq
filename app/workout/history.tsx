@@ -20,9 +20,10 @@
  * 7/30/365-day range, with totals computed for exactly what is visible). Those are different
  * questions and neither answers the other.
  *
- * Grouping is not reimplemented here: `groupBy: 'day'` comes from the query and the window is
- * applied per group, which keeps one implementation of "what day is this" and means a windowed
- * view can never disagree with the tab about a heading.
+ * Grouping is not reimplemented here: `groupBy: 'week'` comes from the query and the window is
+ * applied per group, which keeps one implementation of "which week is this". Only the heading's
+ * words are made here, from the group's key: the query's own labels are English literals, and
+ * this screen names weeks relative to today ("This week", "Last week") in the user's language.
  *
  * ## Totals are computed over the window, not read from the cache
  *
@@ -48,21 +49,19 @@
  * few thousand rows, the fix belongs in `activityRepository.list` (a `limit`, plus windowed
  * rendering): not in this file, and the FlashList already keeps only the visible rows alive.
  */
-import { useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { router } from 'expo-router';
 
 import { SCROLL_INSETS, ScreenHeader } from '@/ui/Screen';
 import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
-import { MetaLine, type MetaItem } from '@/ui/display';
+import { ActivityCard, MetaLine, SectionHeader, type MetaItem } from '@/ui/display';
 import { useScreenContentBottom } from '@/ui/insets';
 import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { Row } from '@/ui/layout';
 import { Chip } from '@/ui/controls/Chip';
 import { SegmentedControl } from '@/ui/controls/SegmentedControl';
-import { MetricLabel, Txt } from '@/ui/Text';
-import { ActivityRow } from '@/ui/rows';
 import { EmptyState, ErrorState, SkeletonList, ThemedRefreshControl } from '@/ui/states';
 import { useActivityList, useDeleteActivity } from '@/queries/useActivities';
 import { useSettings } from '@/settings';
@@ -71,11 +70,12 @@ import { routes, tabHref, tabIndexOf } from '@/navigation/nav';
 import type { ActivityListParams, ActivitySort } from '@/query/keys';
 import type { Activity, ActivityKind } from '@/domain/types';
 import { useAppTheme } from '@/theme/theme';
+import type { Theme } from '@/theme/theme';
 import { spacing, screenGutter } from '@/theme/tokens';
 import { useT } from '@/i18n/useT';
 import type { TKey } from '@/i18n';
-import { tr } from '@/i18n/tr';
-import { activitySummary } from '@/ui/display';
+import type { UnitSystem } from '@/utils/format';
+import { weekHeading } from '@/utils/relativeTime';
 
 const DAY_MS = 86_400_000;
 
@@ -110,13 +110,13 @@ function windowStart(range: Range): number {
 }
 
 type RowItem =
-  | { type: 'label'; key: string; text: string; count: number }
+  | { type: 'label'; key: string; text: string; count: number; first: boolean }
   | { type: 'activity'; activity: Activity };
 
 const SORT: ActivitySort = 'recent';
 
 export default function WorkoutHistoryScreen() {
-  const { t } = useT();
+  const { t, locale } = useT();
   const bottomSpace = useScreenContentBottom();
   const theme = useAppTheme();
 
@@ -133,16 +133,16 @@ export default function WorkoutHistoryScreen() {
   );
 
   const [kinds, setKinds] = useState<ActivityKind[]>([]);
-  const [pendingDelete, setPendingDelete] = useState<Activity | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const units = useSettings((s) => s.unitSystem);
   const showSpeed = useSettings((s) => s.showSpeedInsteadOfPace);
   const removeActivity = useDeleteActivity();
 
-  // The query's own day grouping, so a heading here and on the Activities tab can never
-  // disagree about what day a session belongs to.
+  // The query's own week grouping (Monday start), so this screen and any other weekly view
+  // cannot disagree about which week a session belongs to.
   const params = useMemo<ActivityListParams>(
-    () => ({ kinds, search: '', sort: SORT, groupBy: 'day' }),
+    () => ({ kinds, search: '', sort: SORT, groupBy: 'week' }),
     [kinds],
   );
   const list = useActivityList(params);
@@ -165,15 +165,20 @@ export default function WorkoutHistoryScreen() {
       out.push({
         type: 'label',
         key: `g-${group.key}`,
-        text: group.label,
+        text: weekHeading(group.key, t, locale),
         count: group.activities.length,
+        first: out.length === 0,
       });
       for (const activity of group.activities) out.push({ type: 'activity', activity });
     }
     return out;
-  }, [groups]);
+  }, [groups, locale, t]);
 
   const visible = useMemo(() => groups.flatMap((group) => group.activities), [groups]);
+  const pendingDelete = useMemo(
+    () => (pendingDeleteId === null ? null : list.flat.find((a) => a.id === pendingDeleteId) ?? null),
+    [list.flat, pendingDeleteId],
+  );
 
   const totals = useMemo(() => {
     let duration = 0;
@@ -188,29 +193,37 @@ export default function WorkoutHistoryScreen() {
   }, [visible]);
 
   const openActivity = useCallback((id: string) => router.push(routes.activityDetail(id)), []);
+  const askDelete = useCallback((id: string) => setPendingDeleteId(id), []);
 
   const confirmDelete = useCallback(() => {
     if (!pendingDelete) return;
     // Success-only close; see the identical note in `(tabs)/activities.tsx`.
-    removeActivity.mutate(pendingDelete.id, { onSuccess: () => setPendingDelete(null) });
+    removeActivity.mutate(pendingDelete.id, { onSuccess: () => setPendingDeleteId(null) });
   }, [pendingDelete, removeActivity]);
 
   const renderItem = useCallback(
     ({ item }: { item: RowItem }) => {
-      if (item.type === 'label') return <DayLabel text={item.text} count={item.count} />;
-      const display = activitySummary(item.activity, units, showSpeed);
+      if (item.type === 'label') {
+        return (
+          <SectionHeader
+            title={item.text}
+            counter={item.count}
+            style={item.first ? styles.firstWeek : styles.week}
+          />
+        );
+      }
       return (
-        <ActivityRow
+        <HistoryCard
           activity={item.activity}
           theme={theme}
-          headline={display.headline}
-          meta={display.meta}
-          onPress={() => openActivity(item.activity.id)}
-          onLongPress={() => setPendingDelete(item.activity)}
+          units={units}
+          showSpeed={showSpeed}
+          onPress={openActivity}
+          onLongPress={askDelete}
         />
       );
     },
-    [openActivity, showSpeed, theme, units],
+    [askDelete, openActivity, showSpeed, theme, units],
   );
 
   const keyExtractor = useCallback(
@@ -243,6 +256,8 @@ export default function WorkoutHistoryScreen() {
           : []),
     ];
   }, [list.isLoading, visible.length, totals, units, t]);
+  // Everything a card reads besides its row, so FlashList redraws visible cards when one changes.
+  const extraData = useMemo(() => ({ units, showSpeed, theme }), [units, showSpeed, theme]);
   const openSearch = useCallback(
     () => router.replace(tabHref(tabIndexOf('activities'))),
     [router],
@@ -250,7 +265,7 @@ export default function WorkoutHistoryScreen() {
 
   return (
     <>
-      <ScreenHeader title={t('activityList.historyTitle')} />
+      <ScreenHeader title={t('activityList.historyTitle')} largeTitle />
       <HeaderToolbar placement="right">
         {headerAction({ action: 'search', onPress: openSearch, t, label: 'activityList.search' })}
       </HeaderToolbar>
@@ -260,7 +275,7 @@ export default function WorkoutHistoryScreen() {
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         getItemType={getItemType}
-        extraData={units}
+        extraData={extraData}
         contentContainerStyle={{
           paddingHorizontal: screenGutter,
           paddingTop: spacing.md,
@@ -305,7 +320,8 @@ export default function WorkoutHistoryScreen() {
         }
         ListEmptyComponent={
           list.isLoading ? (
-            <View style={{ paddingHorizontal: screenGutter, paddingTop: spacing.lg }}>
+            // The list's own gutter already applies; a second one here indented the skeleton.
+            <View style={styles.skeleton}>
               <SkeletonList rows={5} />
             </View>
           ) : list.error ? (
@@ -353,7 +369,7 @@ export default function WorkoutHistoryScreen() {
             // Dismissing clears the previous attempt: a dialog opened a second time should
             // not still be reporting why the *first* delete failed.
             removeActivity.reset();
-            setPendingDelete(null);
+            setPendingDeleteId(null);
           }}
         />
       ) : null}
@@ -364,21 +380,40 @@ export default function WorkoutHistoryScreen() {
 /* ------------------------------------------------------------------ pieces -- */
 
 /**
- * A day heading. Not sticky, for the same reason the Activities tab's are not: FlashList pins
- * headers by index against the flat data, which fights the two-item-type recycling this list
- * depends on, and a heading mis-pinned by one row is worse than one that scrolls.
+ * One session, as a card. Week headings are not sticky, for the same reason the Activities
+ * tab's are not: FlashList pins headers by index against the flat data, which fights the
+ * two-item-type recycling this list depends on.
+ *
+ * `onPress` and `onLongPress` take the id, so every card gets the same two callbacks.
  */
-function DayLabel({ text, count }: { text: string; count: number }) {
-  if (!text) return null;
+const HistoryCard = memo(function HistoryCard({
+  activity,
+  theme,
+  units,
+  showSpeed,
+  onPress,
+  onLongPress,
+}: {
+  activity: Activity;
+  theme: Theme;
+  units: UnitSystem;
+  showSpeed: boolean;
+  onPress: (id: string) => void;
+  onLongPress: (id: string) => void;
+}) {
   return (
-    <Row align="end" justify="between" style={styles.dayLabel}>
-      <MetricLabel label={text} />
-      <Txt variant="micro" tone="faint">
-        {count} {tr('progress.sessionWord', { count })}
-      </Txt>
-    </Row>
+    <View style={styles.card}>
+      <ActivityCard
+        activity={activity}
+        theme={theme}
+        units={units}
+        showSpeedInsteadOfPace={showSpeed}
+        onPress={onPress}
+        onLongPress={onLongPress}
+      />
+    </View>
   );
-}
+});
 
 /** Icons are named per kind, so the tuple type keeps this in step with `IconName`. */
 const KIND_CHIPS: readonly {
@@ -397,5 +432,8 @@ const KIND_CHIPS: readonly {
 const styles = StyleSheet.create({
   controls: { gap: spacing.md, paddingBottom: spacing.md },
   chips: { flexWrap: 'wrap' },
-  dayLabel: { paddingTop: spacing.lg, paddingBottom: spacing.sm },
+  firstWeek: { paddingTop: spacing.md },
+  week: { paddingTop: spacing.xxl },
+  card: { paddingBottom: spacing.sm },
+  skeleton: { paddingTop: spacing.lg },
 });

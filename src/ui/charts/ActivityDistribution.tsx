@@ -21,11 +21,11 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { fontFamily, spacing } from '@/theme/tokens';
+import { fontFamily, fontSize, spacing } from '@/theme/tokens';
 import type { Theme } from '@/theme/theme';
 import type { ActivityKind } from '@/domain/types';
 import { ACTIVITY_ICON } from '../rows';
-import { Icon } from '../icons';
+import { Icon, ICON_SIZE } from '../icons';
 import { arcPath, sweepTo } from './geometry';
 import { tr } from '@/i18n/tr';
 import { useT } from '@/i18n/useT';
@@ -111,7 +111,7 @@ export const ActivityDistribution = memo(function ActivityDistribution({
         <Text
           style={{
             fontFamily: fontFamily.medium,
-            fontSize: 13,
+            fontSize: fontSize.label,
             color: theme.colors.textFaint,
             textAlign: 'center',
           }}
@@ -213,7 +213,7 @@ export const ActivityDistribution = memo(function ActivityDistribution({
             <View key={`${slice.kind}-legend-${i}`} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
               <Icon
                 name={slice.kind === 'other' ? 'layers' : ACTIVITY_ICON[slice.kind]}
-                size={14}
+                size={ICON_SIZE.micro}
                 color={colorFor(slice.kind, theme)}
               />
               <Text
@@ -221,7 +221,7 @@ export const ActivityDistribution = memo(function ActivityDistribution({
                 style={{
                   flex: 1,
                   fontFamily: fontFamily.medium,
-                  fontSize: 13,
+                  fontSize: fontSize.label,
                   color: theme.colors.textMuted,
                 }}
               >
@@ -230,7 +230,7 @@ export const ActivityDistribution = memo(function ActivityDistribution({
               <Text
                 style={{
                   fontFamily: fontFamily.semibold,
-                  fontSize: 13,
+                  fontSize: fontSize.label,
                   color: theme.colors.text,
                 }}
               >
@@ -241,7 +241,7 @@ export const ActivityDistribution = memo(function ActivityDistribution({
                   width: 34,
                   textAlign: 'right',
                   fontFamily: fontFamily.medium,
-                  fontSize: 12,
+                  fontSize: fontSize.caption,
                   color: theme.colors.textFaint,
                 }}
               >
