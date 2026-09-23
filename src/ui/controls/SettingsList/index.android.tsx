@@ -40,6 +40,7 @@ import { alpha, background, clickable, clip, fillMaxSize, fillMaxWidth, padding,
 import { haptics } from '@/services/haptics';
 import { useAppTheme } from '@/theme/theme';
 import { disabledContentAlpha, screenGutter, spacing } from '@/theme/tokens';
+import { useScreenContentBottom } from '@/ui/insets';
 import { materialIcon } from '@/ui/materialIcons';
 import type { SettingsListProps, SettingsRow, SettingsSection } from './types';
 
@@ -47,20 +48,24 @@ export type { SettingsListProps, SettingsRow, SettingsSection } from './types';
 
 export function SettingsList({ sections }: SettingsListProps) {
   const theme = useAppTheme();
+  // Compose content inside a host gets no system-bar insets of its own, and Android draws
+  // edge to edge, so without this the last row scrolls to rest under the gesture bar. The
+  // same bottom every pushed screen uses.
+  const bottom = useScreenContentBottom();
   return (
     <Host style={styles.host} colorScheme={theme.mode} seedColor={theme.colors.accent}>
-      <Sections sections={sections} danger={theme.colors.danger} />
+      <Sections sections={sections} danger={theme.colors.danger} bottom={bottom} />
     </Host>
   );
 }
 
 /** Inside the host, so the Material colours are the host's own scheme. */
-function Sections({ sections, danger }: SettingsListProps & { danger: string }) {
+function Sections({ sections, danger, bottom }: SettingsListProps & { danger: string; bottom: number }) {
   const colors = useMaterialColors();
   return (
     <LazyColumn
       verticalArrangement={{ spacedBy: spacing.xxl }}
-      contentPadding={{ start: screenGutter, end: screenGutter, top: spacing.lg, bottom: spacing.lg }}
+      contentPadding={{ start: screenGutter, end: screenGutter, top: spacing.lg, bottom }}
       modifiers={[fillMaxSize(), background(colors.surface)]}
     >
       {sections.map((section) => (
