@@ -161,7 +161,24 @@ export const routes = {
     }) as Href,
   renameRoutine: (id: string) => ({ pathname: '/routine/rename', params: { id } }) as Href,
   activityNotes: (id: string) => ({ pathname: '/activity/notes', params: { id } }) as Href,
-  exerciseFilters: () => '/exercise/filters' as Href,
+  /**
+   * The library pushed over a detail screen, so back returns there (see `exerciseLibrary.tsx`).
+   * Its starting filter travels in the params: the pushed list owns its own filter store.
+   */
+  exerciseBrowse: (start: { query?: string; muscleId?: number; equipmentId?: number }) =>
+    ({
+      pathname: '/exercise/browse',
+      params: {
+        ...(start.query !== undefined ? { query: start.query } : {}),
+        ...(start.muscleId !== undefined ? { muscleId: String(start.muscleId) } : {}),
+        ...(start.equipmentId !== undefined ? { equipmentId: String(start.equipmentId) } : {}),
+      },
+    }) as Href,
+  /** The filter sheet, for the tab's list, or for a pushed list's store by its key. */
+  exerciseFilters: (storeKey?: string) =>
+    (storeKey === undefined
+      ? '/exercise/filters'
+      : { pathname: '/exercise/filters', params: { storeKey } }) as Href,
   sessionNotes: () => '/workout/notes' as Href,
   sessionSet: (entryIndex: number, setIndex: number) =>
     ({ pathname: '/workout/set', params: { entry: String(entryIndex), set: String(setIndex) } }) as Href,

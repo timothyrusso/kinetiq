@@ -1,22 +1,18 @@
 /**
  * The Exercises tab's filters, as a form sheet over the list.
  *
- * It owns no state: every selection writes straight to the shared filter store. A sheet that
+ * It owns no state: every selection writes straight to its list's filter store (the tab's,
+ * or a pushed list's, named by `storeKey`). A sheet that
  * buffered a draft filter behind an Apply button would need a second copy of the filter and a
  * diff to know whether anything changed. Writing through means what you see is what the list
  * is, and the list behind the sheet updates live.
  */
 import { StyleSheet, View } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 
 import type { Taxon } from '@/domain/types';
 import { useT } from '@/i18n/useT';
-import {
-  resetExerciseFilter,
-  setExerciseCategoryId,
-  setExerciseEquipmentId,
-  setExerciseMuscleId,
-  useExerciseFilter,
-} from '@/queries/exerciseFilters';
+import { exerciseFilterFor, useExerciseFilter } from '@/queries/exerciseFilters';
 import { useExerciseTaxonomy } from '@/queries/useExercises';
 import { spacing } from '@/theme/tokens';
 import { Button } from '@/ui/controls/Button';
@@ -27,7 +23,9 @@ import { Txt } from '@/ui/Text';
 export default function ExerciseFiltersSheet() {
   const { t } = useT();
   const taxonomy = useExerciseTaxonomy();
-  const { filter } = useExerciseFilter();
+  const { storeKey } = useLocalSearchParams<{ storeKey?: string }>();
+  const store = exerciseFilterFor(typeof storeKey === 'string' ? storeKey : undefined);
+  const { filter } = useExerciseFilter(store);
 
   return (
     <FormSheet title={t('exerciseList.filterTitle')} scroll>
@@ -35,21 +33,21 @@ export default function ExerciseFiltersSheet() {
         title={t('exerciseList.category')}
         taxons={taxonomy.data?.categories ?? []}
         value={filter.categoryId}
-        onChange={setExerciseCategoryId}
+        onChange={store.setCategoryId}
         loading={taxonomy.isPending}
       />
       <TaxonPicker
         title={t('exerciseList.primaryMuscle')}
         taxons={taxonomy.data?.muscles ?? []}
         value={filter.muscleId}
-        onChange={setExerciseMuscleId}
+        onChange={store.setMuscleId}
         loading={taxonomy.isPending}
       />
       <TaxonPicker
         title={t('exerciseList.equipment')}
         taxons={taxonomy.data?.equipment ?? []}
         value={filter.equipmentId}
-        onChange={setExerciseEquipmentId}
+        onChange={store.setEquipmentId}
         loading={taxonomy.isPending}
       />
       {taxonomy.isError ? (
@@ -57,7 +55,7 @@ export default function ExerciseFiltersSheet() {
           {t('exerciseList.taxonomyFailed')}
         </Txt>
       ) : null}
-      <Button label={t('exerciseList.showAll')} variant="secondary" onPress={resetExerciseFilter} />
+      <Button label={t('exerciseList.showAll')} variant="secondary" onPress={store.reset} />
     </FormSheet>
   );
 }
