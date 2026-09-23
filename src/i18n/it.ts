@@ -75,7 +75,8 @@ export const it: Copy = {
     height: '{height} cm',
     age_one: '{count} anno',
     age_other: '{count} anni',
-    volumeTonnes: '{value} t',
+    tonnes: 't',
+    lastFourWeeks: 'Ultime 4 settimane',
   },
   // --- end group-a ---
 

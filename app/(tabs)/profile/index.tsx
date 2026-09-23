@@ -15,6 +15,13 @@
  * virtualiser would allocate a recycle pool larger than the row count and buy nothing but
  * a second implementation of every divider.
  *
+ * ## Structured, not sentences
+ *
+ * The four totals are `StatTile`s in a two-column grid, the identity line is a `MetaLine` of
+ * separate facts (height, age), and the weekly goal is the platform stepper from
+ * `src/ui/controls`. Links out are rows with chevrons, all of them: a row that navigates and
+ * shows no chevron reads as a row that does nothing.
+ *
  * ## Streak and goal, not history
  *
  * Two numbers, both of which change daily and neither of which is available anywhere else
@@ -30,7 +37,7 @@ import { useTabContentBottom } from '@/ui/insets';
 
 import { Icon } from '@/ui/icons';
 import { SCROLL_INSETS, ScreenHeader } from '@/ui/Screen';
-import { MetaLine, type MetaItem } from '@/ui/display';
+import { MetaLine, StatTile, type MetaItem } from '@/ui/display';
 import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { Avatar, NavRow } from '@/ui/rows';
 import { Badge, Card, MetricGrid, Row } from '@/ui/layout';
@@ -38,7 +45,7 @@ import { SectionHeader } from '@/ui/display';
 import { SegmentedControl } from '@/ui/controls/SegmentedControl';
 import { useT } from '@/i18n/useT';
 import type { Language } from '@/i18n';
-import { IconButton } from '@/ui/controls/IconButton';
+import { Stepper } from '@/ui/controls/Stepper';
 import { ProgressRing } from '@/ui/charts/ProgressRing';
 import { Txt } from '@/ui/Text';
 import { Divider, Stack } from '@/ui/layout';
@@ -129,14 +136,8 @@ export default function ProfileScreen() {
   const openSettings = useCallback(() => router.push(routes.settings()), [router]);
   const identity = useMemo<MetaItem[]>(
     () => [
-      {
-        icon: 'ruler',
-        label: t('profileScreen.ageLine', {
-          height: heightCm,
-          age,
-          word: t('profileScreen.yearWord', { count: age }),
-        }),
-      },
+      { icon: 'ruler', label: t('tabsProfile.height', { height: heightCm }) },
+      { icon: 'profile', label: t('tabsProfile.age', { count: age }) },
       {
         icon: 'calendar',
         label: summary.isPending ? t('profileScreen.loadingHistory') : trainingSince(summary.data, t),
@@ -207,37 +208,31 @@ export default function ProfileScreen() {
             </Row>
           </Card>
 
+          <SectionHeader title={t('tabsProfile.lastFourWeeks')} style={styles.section} />
           <Card>
             <MetricGrid columns={2}>
-              <Stat
-                label={t('profileScreen.sessions')}
-                value={formatNumber(totals?.workouts)}
-                note={t('profileScreen.lastFourWeeks')}
-              />
-              <Stat
+              <StatTile label={t('profileScreen.sessions')} value={formatNumber(totals?.workouts)} />
+              <StatTile
                 label={t('profileScreen.time')}
-                value={totals === undefined ? '-' : formatDurationCompact(totals.durationSeconds)}
-                note={t('profileScreen.lastFourWeeks')}
+                value={totals === undefined ? t('common.noValue') : formatDurationCompact(totals.durationSeconds)}
               />
-              <Stat
+              <StatTile
                 label={t('profileScreen.distance')}
-                value={
-                  totals === undefined
-                    ? '-'
-                    : formatDistance(totals.distanceMeters, unitSystem, 1)
-                }
-                note={t('profileScreen.runRideWalk')}
+                {...valueAndUnit(
+                  totals === undefined ? null : formatDistance(totals.distanceMeters, unitSystem, 1),
+                  t('common.noValue'),
+                )}
               />
-              <Stat
+              <StatTile
                 label={t('profileScreen.volume')}
-                value={totals === undefined ? '-' : `${Math.round(totals.volumeKg / 1000)} t`}
-                note={t('profileScreen.lifted')}
+                value={totals === undefined ? t('common.noValue') : `${Math.round(totals.volumeKg / 1000)}`}
+                {...(totals === undefined ? {} : { unit: t('tabsProfile.tonnes') })}
               />
             </MetricGrid>
           </Card>
 
           {/* ---- Controls that change what this tab and the rest show --------- */}
-          <SectionHeader title={t('profile.preferences')} />
+          <SectionHeader title={t('profile.preferences')} style={styles.section} />
           <Card padding="md">
             <Stack gap="lg">
               <Preference label={t('profile.units')} hint={t('profileScreen.unitsHint')}>
@@ -265,8 +260,11 @@ export default function ProfileScreen() {
                 />
               </Preference>
               <Preference label={t('profile.weeklyGoal')} hint={t('profileScreen.goalHint')}>
-                <GoalStepper
+                <Stepper
                   value={weeklyGoal}
+                  min={1}
+                  max={14}
+                  label={t('profile.weeklyGoal')}
                   onChange={(next) => update({ weeklyGoalWorkouts: next })}
                 />
               </Preference>
@@ -274,7 +272,7 @@ export default function ProfileScreen() {
           </Card>
 
           {/* ---- Everything else --------------------------------------------- */}
-          <SectionHeader title={t('profileScreen.training')} />
+          <SectionHeader title={t('profileScreen.training')} style={styles.section} />
           <Card padding="xxs">
             <NavRow
               title={t('profileScreen.progressTitle')}
@@ -289,7 +287,6 @@ export default function ProfileScreen() {
               description={t('profileScreen.allActivitiesSubtitle')}
               theme={theme}
               icon="activities"
-              showChevron={false}
               onPress={() => router.push(routes.workoutHistory())}
             />
             <NavRow
@@ -301,7 +298,7 @@ export default function ProfileScreen() {
             />
           </Card>
 
-          <SectionHeader title={t('profileScreen.app')} />
+          <SectionHeader title={t('profileScreen.app')} style={styles.section} />
           <Card padding="xxs">
             <NavRow
               title={t('profileScreen.trainingPrefs')}
@@ -334,7 +331,6 @@ export default function ProfileScreen() {
               description={t('profileScreen.aboutSubtitle')}
               theme={theme}
               icon="info"
-              showChevron={false}
               onPress={() => router.push(routes.settingsAbout())}
             />
           </Card>
@@ -352,33 +348,6 @@ export default function ProfileScreen() {
 }
 
 /* ------------------------------------------------------------------ pieces -- */
-
-function Stat({ label, value, note }: { label: string; value: string; note: string }) {
-  const theme = useAppTheme();
-  return (
-    <Stack gap="xxs">
-      {/* One line, shrunk to fit. These cells are half the screen wide and a value like
-          "104.4 km" wraps at the space, which splits the number from its unit and pushes the
-          label below it out of alignment with the cell beside it. A metric that has to wrap is
-          a metric that should get smaller. */}
-      <Txt
-        variant="numeral"
-        numberOfLines={1}
-        adjustsFontSizeToFit
-        minimumFontScale={0.75}
-        style={{ color: theme.colors.text }}
-      >
-        {value}
-      </Txt>
-      <Txt variant="label" tone="muted">
-        {label}
-      </Txt>
-      <Txt variant="micro" tone="faint">
-        {note}
-      </Txt>
-    </Stack>
-  );
-}
 
 /**
  * A label, its explanation, and the control beneath both.
@@ -404,38 +373,6 @@ function Preference({
       </Txt>
       {children}
     </View>
-  );
-}
-
-/**
- * Goal in steps of one, bounded at 14.
- *
- * A stepper rather than a slider: the value is an integer between 1 and 14, and a slider for
- * sixteen positions is a slider that cannot be set precisely by thumb.
- */
-function GoalStepper({ value, onChange }: { value: number; onChange: (next: number) => void }) {
-  const { t } = useT();
-  const theme = useAppTheme();
-  return (
-    <Row gap="md" align="center">
-      <IconButton
-        name="minus"
-        variant="surface"
-        accessibilityLabel={t('profileScreen.decreaseGoal')}
-        disabled={value <= 1}
-        onPress={() => onChange(Math.max(1, value - 1))}
-      />
-      <Txt variant="numeral" style={{ color: theme.colors.text, minWidth: 40 }} align="center">
-        {value}
-      </Txt>
-      <IconButton
-        name="plus"
-        variant="surface"
-        accessibilityLabel={t('profileScreen.increaseGoal')}
-        disabled={value >= 14}
-        onPress={() => onChange(Math.min(14, value + 1))}
-      />
-    </Row>
   );
 }
 
@@ -465,8 +402,22 @@ function formatNumber(value: number | undefined): string {
   return value === undefined ? '-' : String(value);
 }
 
+/**
+ * "104.4 km" as a tile's value and unit.
+ *
+ * A formatted distance carries its unit after the last space. Split, the unit is drawn small
+ * beside the numeral, so a half-width tile fits the number instead of truncating "km".
+ */
+function valueAndUnit(formatted: string | null, missing: string): { value: string; unit?: string } {
+  if (formatted === null) return { value: missing };
+  const at = formatted.lastIndexOf(' ');
+  return at < 0 ? { value: formatted } : { value: formatted.slice(0, at), unit: formatted.slice(at + 1) };
+}
+
 const styles = StyleSheet.create({
   identity: { paddingHorizontal: screenGutter, paddingTop: spacing.md, paddingBottom: spacing.xl },
   content: { flexGrow: 1 },
-  body: { paddingHorizontal: screenGutter, gap: spacing.lg },
+  body: { paddingHorizontal: screenGutter, gap: spacing.md },
+  // Sections are a step further apart than blocks inside one.
+  section: { marginTop: spacing.lg, marginBottom: 0 },
 });

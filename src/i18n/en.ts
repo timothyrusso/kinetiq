@@ -73,7 +73,8 @@ export const en = {
     height: '{height} cm',
     age_one: '{count} year old',
     age_other: '{count} years old',
-    volumeTonnes: '{value} t',
+    tonnes: 't',
+    lastFourWeeks: 'Last 4 weeks',
   },
   // --- end group-a ---
 
