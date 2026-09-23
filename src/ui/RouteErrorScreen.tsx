@@ -6,22 +6,20 @@
  * unmounts the entire tree: a blank app with no message, which is the single worst
  * failure a user can be left with.
  *
- * ## Deliberately not `Txt`
+ * ## Native, and deliberately not `Txt`
  *
- * The themed primitives reach for `useAppTheme()`, which reads the settings store, which
- * reads a database. If the failure *is* the store or the theme, a themed error screen
- * throws while reporting the throw: and a boundary's boundary is a crash, not an error
- * screen. So this file takes its colours as a parameter and renders plain `Text`.
+ * `ContentUnavailable` is SwiftUI's `ContentUnavailableView` on iOS and the Material
+ * empty-state layout on Android, and it takes its colours as a prop. That matters here: the
+ * themed primitives reach for `useAppTheme()`, which reads the settings store, which reads a
+ * database. If the failure *is* the store or the theme, a themed error screen throws while
+ * reporting the throw: and a boundary's boundary is a crash, not an error screen.
  *
  * The `theme` prop rather than a hook for the same reason: the caller decides how
  * confident it is that the theme is resolvable (the router boundary knows the app
  * mounted fine; the root boundary does not, and passes a fixed dark theme).
  */
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-
 import type { Theme } from '@/theme/theme';
-import { spacing } from '@/theme/tokens';
-import { Button } from '@/ui/controls/Button';
+import { ContentUnavailable, type ContentUnavailableAction } from '@/ui/controls/ContentUnavailable';
 import { useT } from '@/i18n/useT';
 
 export function RouteErrorScreen({
@@ -36,70 +34,27 @@ export function RouteErrorScreen({
   onGoHome?: () => void;
 }) {
   const { t } = useT();
-  // Stack kept in full: the first frame is usually inside a library, and the line the
-  // user needs is the third or fourth. Truncated to a length that survives a support
-  // screenshot.
-  const stack = (error.stack ?? error.message).split('\n').slice(0, 8).join('\n');
+  // The first frames are usually inside a library, and the line the user needs is the third or
+  // fourth, so the trace is kept but cut to a length that survives a support screenshot. The
+  // message is shown on its own above it and selectable, because the job of this screen is to
+  // get the message out of the app and into a bug report.
+  const trace = error.stack ? error.stack.split('\n').slice(0, 8).join('\n') : undefined;
+  const actions: ContentUnavailableAction[] = [
+    { key: 'retry', label: t('boot.tryAgain'), prominent: true, onPress: onRetry },
+    ...(onGoHome ? [{ key: 'home', label: t('boot.goToHome'), onPress: onGoHome }] : []),
+  ];
 
   return (
-    <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        style={styles.scroll}
-        // The error text is selectable because the job of this screen is to get the
-        // message out of the app and into a bug report.
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={[styles.badge, { backgroundColor: theme.colors.dangerSoft }]}>
-          <Text style={[styles.badgeText, { color: theme.colors.danger }]}>{t('boot.somethingBroke')}</Text>
-        </View>
-
-        <Text style={[styles.title, { color: theme.colors.text }]}>
-          {t('boot.screenError')}
-        </Text>
-        <Text style={[styles.body, { color: theme.colors.textMuted }]}>
-          {t('misc.routeErrorBody')}
-        </Text>
-
-        <View style={[styles.messageBox, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-          <Text style={[styles.message, { color: theme.colors.text }]} selectable>
-            {error.message || 'Unknown error'}
-          </Text>
-        </View>
-
-        <Text
-          style={[styles.stack, { color: theme.colors.textFaint }]}
-          selectable
-          numberOfLines={8}
-        >
-          {stack}
-        </Text>
-
-        <View style={styles.actions}>
-          <Button label={t('boot.tryAgain')} variant="primary" onPress={onRetry} />
-          {onGoHome ? (
-            <Button label={t('boot.goToHome')} variant="secondary" onPress={onGoHome} />
-          ) : null}
-        </View>
-      </ScrollView>
-    </View>
+    <ContentUnavailable
+      theme={theme}
+      tone="danger"
+      title={t('boot.screenError')}
+      description={t('misc.routeErrorBody')}
+      systemImage="exclamationmark.triangle"
+      icon="warning"
+      detail={error.message || t('systemScreens.unknownError')}
+      {...(trace ? { trace } : {})}
+      actions={actions}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1 },
-  scroll: { flex: 1 },
-  content: { padding: spacing.xl, gap: spacing.md, paddingTop: spacing.huge },
-  badge: { alignSelf: 'flex-start', borderRadius: 6, paddingHorizontal: spacing.sm, paddingVertical: 3 },
-  badgeText: { fontSize: 11, fontWeight: '700', letterSpacing: 1.2 },
-  title: { fontSize: 24, lineHeight: 30, fontWeight: '700', letterSpacing: -0.4 },
-  body: { fontSize: 15, lineHeight: 22 },
-  messageBox: {
-    borderRadius: 10,
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: spacing.md,
-  },
-  message: { fontSize: 14, lineHeight: 20, fontFamily: 'monospace' },
-  stack: { fontSize: 11.5, lineHeight: 17, fontFamily: 'monospace' },
-  actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm, flexWrap: 'wrap' },
-});
