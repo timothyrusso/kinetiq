@@ -52,19 +52,21 @@
  */
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, Stack as RouterStack } from 'expo-router';
+import Animated from 'react-native-reanimated';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Screen, ScreenHeader } from '@/ui/Screen';
+import { Screen, ScreenHeader, ScreenScroll } from '@/ui/Screen';
 import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
 import { useScreenContentBottom } from '@/ui/insets';
-import { Card, Divider, MetricGrid, Row, Stack } from '@/ui/layout';
-import { SectionHeader } from '@/ui/display';
+import { Card, Divider, Row, Stack } from '@/ui/layout';
+import { SectionHeader, StatTile } from '@/ui/display';
+import { usePulse } from '@/ui/animation';
 import { ActionRow } from '@/ui/rows';
 import { Button } from '@/ui/controls/Button';
 import { Chip } from '@/ui/controls/Chip';
-import { MetricLabel, Txt } from '@/ui/Text';
+import { Txt } from '@/ui/Text';
 import { Icon, type IconName } from '@/ui/icons';
 import { TextInput } from '@/ui/controls/TextInput';
 import { EmptyState } from '@/ui/states';
@@ -214,6 +216,7 @@ export default function CardioScreen() {
     return (
       <Screen style={styles.center}>
         <ScreenHeader title={t('cardio.title')} />
+        <SwipeBack enabled />
         <EmptyState
           icon="checkCircle"
           title={t('cardio.savedTitle')}
@@ -234,6 +237,7 @@ export default function CardioScreen() {
     return (
       <Screen style={styles.center}>
         <ScreenHeader title={t('cardio.title')} />
+        <SwipeBack enabled />
         <EmptyState
           icon="clock"
           title={t('cardio.tooShortTitle')}
@@ -262,7 +266,6 @@ export default function CardioScreen() {
         resumable={cardio.resumable}
         onResume={() => void recorder.recover()}
         onDropResumable={() => void recorder.abandonResumable()}
-        bottomSpace={bottomSpace}
       />
     );
   }
@@ -283,6 +286,7 @@ export default function CardioScreen() {
       <Screen>
         {/* Immersive while recording: the exits are Stop and Discard, in content. */}
         <ScreenHeader title={cardio.title} shown={false} />
+        <SwipeBack enabled={false} />
         <ScrollView contentContainerStyle={styles.liveBody}>
           <Stack gap="xl" style={{ paddingTop: insets.top + spacing.lg }}>
             <Row align="center" gap="md">
@@ -298,37 +302,51 @@ export default function CardioScreen() {
             </Row>
 
             <Card>
-              <View style={styles.hero}>
-                <Txt variant="numeralLg">{formatDuration(cardio.elapsedSeconds)}</Txt>
-                <MetricLabel label={t(running ? 'cardio.elapsed' : 'cardio.paused')} />
-              </View>
-              <Divider inset={0} />
-              <MetricGrid columns={2}>
-                <Metric
-                  label={t('cardio.distance')}
-                  value={formatDistance(cardio.distanceMeters, units, 2)}
-                  note={t(
-                    cardio.distanceEstimated ? 'cardio.estimatedFromTime' : 'cardio.fromGps',
-                  )}
-                />
-                <Metric
-                  label={t(useSpeed ? 'cardio.speed' : 'cardio.pace')}
-                  value={
-                    useSpeed
-                      ? formatSpeed(speedMps, units)
-                      : formatPace(cardio.paceSecPerKm, units)
-                  }
-                />
-                <Metric
-                  label={t('cardio.calories')}
-                  value={`${formatCalories(cardio.caloriesKcal)} kcal`}
-                />
-                <Metric
-                  label={t('cardio.positions')}
-                  value={`${cardio.route.length}`}
-                  note={hasRoute ? undefined : t('cardio.noRouteYet')}
-                />
-              </MetricGrid>
+              {/* Tiles sit in rows: a tile fills its share of a row, and in a column that
+                  share has no height to fill. */}
+              <Stack gap="lg">
+                <Row>
+                  <StatTile
+                    label={t(running ? 'cardio.elapsed' : 'cardio.paused')}
+                    value={formatDuration(cardio.elapsedSeconds)}
+                    emphasis="hero"
+                    tabular
+                  />
+                </Row>
+                <Divider inset={0} />
+                <Row gap="md" align="start">
+                  <StatTile
+                    label={t('cardio.distance')}
+                    value={formatDistance(cardio.distanceMeters, units, 2)}
+                    emphasis="compact"
+                    note={t(
+                      cardio.distanceEstimated ? 'cardio.estimatedFromTime' : 'cardio.fromGps',
+                    )}
+                  />
+                  <StatTile
+                    label={t(useSpeed ? 'cardio.speed' : 'cardio.pace')}
+                    value={
+                      useSpeed
+                        ? formatSpeed(speedMps, units)
+                        : formatPace(cardio.paceSecPerKm, units)
+                    }
+                    emphasis="compact"
+                  />
+                </Row>
+                <Row gap="md" align="start">
+                  <StatTile
+                    label={t('cardio.calories')}
+                    value={`${formatCalories(cardio.caloriesKcal)} kcal`}
+                    emphasis="compact"
+                  />
+                  <StatTile
+                    label={t('cardio.positions')}
+                    value={`${cardio.route.length}`}
+                    emphasis="compact"
+                    {...(hasRoute ? {} : { note: t('cardio.noRouteYet') })}
+                  />
+                </Row>
+              </Stack>
             </Card>
 
             {cardio.degradations.length > 0 ? (
@@ -502,7 +520,6 @@ function StartPanel({
   resumable,
   onResume,
   onDropResumable,
-  bottomSpace,
 }: {
   kind: ActivityKind;
   onKind: (next: ActivityKind) => void;
@@ -515,7 +532,6 @@ function StartPanel({
   resumable: CardioSnapshot['resumable'];
   onResume: () => void;
   onDropResumable: () => void;
-  bottomSpace: number;
 }) {
   const { t } = useT();
   const theme = useAppTheme();
@@ -523,14 +539,12 @@ function StartPanel({
   return (
     <>
       <ScreenHeader title={t('cardio.title')} />
-      <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          { paddingTop: spacing.lg, paddingBottom: bottomSpace },
-        ]}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Stack gap="xxl" style={styles.body}>
+      {/* Nothing is running yet, so leaving is an ordinary back. */}
+      <SwipeBack enabled />
+      {/* `ScreenScroll` paints the background, holds the gutter and clears the home indicator;
+          a bare scroll view here let the previous screen show through during the push. */}
+      <ScreenScroll contentContainerStyle={styles.start}>
+        <Stack gap="xxl">
           {/* An interrupted recording, adopted from the persisted draft at boot. Offered at the
               top because it is the one thing here that is time-sensitive: every minute spent
               deciding is a minute the route cannot recover. */}
@@ -635,27 +649,20 @@ function StartPanel({
             </Txt>
           ) : null}
         </Stack>
-      </ScrollView>
+      </ScreenScroll>
     </>
   );
 }
 
 /* ------------------------------------------------------------------ pieces -- */
 
-function Metric({ label, value, note }: { label: string; value: string; note?: string }) {
-  return (
-    <Stack gap="xxs">
-      <MetricLabel label={label} />
-      <Txt variant="numeralSm" numberOfLines={1}>
-        {value}
-      </Txt>
-      {note ? (
-        <Txt variant="micro" tone="faint" numberOfLines={1}>
-          {note}
-        </Txt>
-      ) : null}
-    </Stack>
-  );
+/**
+ * Whether the edge swipe may pop this route. Off while recording (see the file header), on for
+ * the start panel and the finished states, which are ordinary pushed screens. Stated in every
+ * branch because route options persist after the element that set them unmounts.
+ */
+function SwipeBack({ enabled }: { enabled: boolean }) {
+  return <RouterStack.Screen options={{ gestureEnabled: enabled }} />;
 }
 
 /**
@@ -663,29 +670,31 @@ function Metric({ label, value, note }: { label: string; value: string; note?: s
  * beside a frozen clock is how a user tells "paused" from "crashed": and the two must never look
  * the same from across the room, which is roughly where a phone is when it is in a pocket.
  *
- * Local state and a local interval, so the blink never re-renders the metrics next to it.
+ * The pulse is a Reanimated worklet, so it runs on the UI thread and never re-renders the
+ * metrics next to it; the live dot is its own component so the animation exists only while
+ * recording.
  */
 function StatusDot({ running, colour }: { running: boolean; colour: string }) {
   const { t } = useT();
-  const [on, setOn] = useState(true);
-  useEffect(() => {
-    if (!running) {
-      setOn(true);
-      return undefined;
-    }
-    const id = setInterval(() => setOn((v) => !v), 900);
-    return () => clearInterval(id);
-  }, [running]);
-
+  const label = t(running ? 'cardio.a11yRecording' : 'cardio.a11yPaused');
+  if (running) return <LiveDot colour={colour} label={label} />;
   return (
     <View
       accessibilityRole="image"
-      accessibilityLabel={t(running ? 'cardio.a11yRecording' : 'cardio.a11yPaused')}
-      style={[
-        styles.dot,
-        { backgroundColor: running ? colour : 'transparent', borderColor: colour },
-        on ? null : styles.dotDim,
-      ]}
+      accessibilityLabel={label}
+      style={[styles.dot, { backgroundColor: 'transparent', borderColor: colour }]}
+    />
+  );
+}
+
+function LiveDot({ colour, label }: { colour: string; label: string }) {
+  // One on-and-off cycle every 1.8 s, the rhythm the old 900 ms blink had.
+  const pulse = usePulse(1800, 0.35);
+  return (
+    <Animated.View
+      accessibilityRole="image"
+      accessibilityLabel={label}
+      style={[styles.dot, { backgroundColor: colour, borderColor: colour }, pulse]}
     />
   );
 }
@@ -699,11 +708,8 @@ function placeholderFor(kind: ActivityKind): TKey {
 }
 
 const styles = StyleSheet.create({
-  content: { flexGrow: 1 },
-  body: { paddingHorizontal: screenGutter },
+  start: { flexGrow: 1, paddingTop: spacing.lg },
   center: { flex: 1, justifyContent: 'center' },
   liveBody: { paddingHorizontal: screenGutter },
-  hero: { alignItems: 'center', paddingVertical: spacing.xxl, gap: spacing.xxs },
   dot: { width: 12, height: 12, borderRadius: 6, borderWidth: 2 },
-  dotDim: { opacity: 0.35 },
 });

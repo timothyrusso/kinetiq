@@ -15,15 +15,15 @@
  * actually own (`weightStep`), so 60 → 62.5 is one press in kilograms and 135 → 137.5 is
  * one press in pounds.
  */
-import { memo } from 'react';
-import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
+import { memo, useMemo } from 'react';
+import { Pressable, StyleSheet, View, type LayoutChangeEvent, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { StrengthEntry, StrengthSet } from '@/domain/types';
 import type { Theme } from '@/theme/theme';
 import type { UnitSystem } from '@/utils/format';
-import { radius, spacing, touchTarget, z } from '@/theme/tokens';
+import { radius, screenGutter, spacing, touchTarget, z } from '@/theme/tokens';
 import {
   formatTimer,
   formatWeight,
@@ -32,7 +32,6 @@ import {
   weightFromDisplayValue,
   weightStep,
   weightUnit,
-  weightValue,
 } from '@/utils/format';
 import { Button } from '@/ui/controls/Button';
 import { withAlpha } from '@/utils/color';
@@ -43,9 +42,11 @@ import { MetricLabel, Txt } from './Text';
 import { FormFooter, FormSection } from './FormSheet';
 import { ConfirmDialog } from './controls/ConfirmDialog';
 import { useT } from '@/i18n/useT';
+import { useAppTheme } from '@/theme/theme';
 import { usePulse } from './animation';
 import { CellText } from './CellText';
 import { Icon } from './icons';
+import { MetaLine, type MetaItem } from './display';
 
 /**
  * One planned set: a target on the left, a checkbox on the right, and the checkbox is the
@@ -93,10 +94,13 @@ export const SetRow = memo(function SetRow({
           },
         ]}
       >
+        {/* On the filled accent disc the number takes the accent's own ink: accent on accent
+            was a blank disc once the set was ticked. */}
         <Txt
           variant="micro"
           weight="700"
-          tone={set.completed ? 'accent' : 'muted'}
+          tone="muted"
+          color={set.completed ? theme.colors.onAccent : undefined}
           style={{ fontVariant: ['tabular-nums'] }}
         >
           {setIndex + 1}
@@ -189,7 +193,8 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   targetSetIndex,
   units,
   theme,
-  previousLine,
+  previousLabel,
+  previousWhen,
   isCurrent,
   onOpenSet,
   onToggleSet,
@@ -208,7 +213,9 @@ export const ExerciseBlock = memo(function ExerciseBlock({
    * previous sessions yet", or nothing, because only the caller knows whether the history
    * query has answered: and "no previous data" before it has is a lie.
    */
-  previousLine: string | null;
+  previousLabel: string | null;
+  /** When that was ("3w ago"), or `null` when there is no previous session to date. */
+  previousWhen: string | null;
   isCurrent: boolean;
   onOpenSet: (entryIndex: number, setIndex: number) => void;
   onToggleSet: (entryIndex: number, setIndex: number) => void;
@@ -220,6 +227,16 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   const { t } = useT();
   const done = entry.sets.filter((set) => set.completed).length;
   const allDone = done === entry.sets.length && entry.sets.length > 0;
+  // Built from the two strings here, not handed in as an array: the screen re-renders every
+  // second for its clock, and a fresh array per tick would defeat this block's `memo`.
+  const previous = useMemo<MetaItem[]>(() => {
+    if (previousLabel === null) return [];
+    if (previousWhen === null) return [{ icon: 'info', label: previousLabel }];
+    return [
+      { icon: 'dumbbell', label: previousLabel },
+      { icon: 'calendar', label: previousWhen },
+    ];
+  }, [previousLabel, previousWhen]);
 
   return (
     <View
@@ -227,6 +244,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
         styles.block,
         {
           backgroundColor: theme.colors.surface,
+          borderRadius: theme.surfaceSkin.radius,
           borderColor: isCurrent ? theme.colors.accent : theme.colors.border,
           // A focused block lifts with a border weight rather than a shadow: shadows are
           // invisible on the dark canvas, and this has to read in both appearances.
@@ -260,16 +278,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                 {entry.exerciseName}
               </Txt>
             </Row>
-            {previousLine === null ? null : (
-              <Txt
-                variant="caption"
-                tone="muted"
-                numberOfLines={1}
-                style={{ marginTop: spacing.xxs }}
-              >
-                {previousLine}
-              </Txt>
-            )}
+            <MetaLine items={previous} theme={theme} style={styles.previous} />
           </View>
           <Txt
             variant="numeralSm"
@@ -379,14 +388,20 @@ export function SetEditorForm({
   onRemove: () => void;
 }) {
   const { t } = useT();
+  const theme = useAppTheme();
   const step = weightStep(units);
   const displayWeight = weightDisplayValue(set.weightKg, units, step);
+  const context = useMemo<MetaItem[]>(
+    () => [
+      { icon: 'dumbbell', label: entry.exerciseName },
+      { icon: 'layers', label: t('workoutFlow.repCount', { count: set.reps }) },
+    ],
+    [entry.exerciseName, set.reps, t],
+  );
 
   return (
     <>
-      <Txt variant="caption" tone="muted">
-        {t('setRow.setSubtitle', { name: entry.exerciseName, reps: trimNumber(set.reps) })}
-      </Txt>
+      <MetaLine items={context} theme={theme} wrap />
       <FormSection title={t('setRow.reps')}>
         <Stepper
           label={t('setRow.reps')}
@@ -468,12 +483,15 @@ export const RestDock = memo(function RestDock({
   theme,
   onSkip,
   onAdjust,
+  onHeight,
 }: {
   remainingSeconds: number;
   totalSeconds: number;
   theme: Theme;
   onSkip: () => void;
   onAdjust: (seconds: number) => void;
+  /** The dock's own height, so the scroll view behind it can leave room for it. */
+  onHeight?: (height: number) => void;
 }) {
   const { t } = useT();
   const insets = useSafeAreaInsets();
@@ -483,13 +501,24 @@ export const RestDock = memo(function RestDock({
     <View
       style={[styles.dock, { bottom: insets.bottom + spacing.md }]}
       pointerEvents="box-none"
+      onLayout={
+        onHeight
+          ? (e: LayoutChangeEvent) => {
+              onHeight(Math.round(e.nativeEvent.layout.height));
+            }
+          : undefined
+      }
     >
       <Row
         gap="md"
         align="center"
         style={[
           styles.dockCard,
-          { backgroundColor: theme.colors.surface, borderColor: theme.colors.borderStrong },
+          {
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.borderStrong,
+            borderRadius: theme.surfaceSkin.radius,
+          },
           theme.shadows.raised,
         ]}
       >
@@ -605,37 +634,6 @@ export function SessionProgressBar({ ratio, theme }: { ratio: number; theme: The
   );
 }
 
-/** The volume tally under the header: total sets, total kilos, both live. */
-export function SessionTotals({
-  completedSets,
-  volumeKg,
-  units,
-  theme,
-}: {
-  completedSets: number;
-  volumeKg: number;
-  units: UnitSystem;
-  theme: Theme;
-}) {
-  const { t } = useT();
-  return (
-    <Row gap="xl" align="center">
-      <View>
-        <MetricLabel label={t('setRow.sets')} />
-        <Txt variant="numeralSm" weight="700" style={{ fontVariant: ['tabular-nums'] }} color={theme.colors.text}>
-          {completedSets}
-        </Txt>
-      </View>
-      <View>
-        <MetricLabel label={t('setRow.volumeIn', { unit: weightUnit(units) })} />
-        <Txt variant="numeralSm" weight="700" style={{ fontVariant: ['tabular-nums'] }} color={theme.colors.text}>
-          {trimNumber(weightValue(volumeKg, units), 0)}
-        </Txt>
-      </View>
-    </Row>
-  );
-}
-
 const styles = StyleSheet.create({
   setRow: { paddingVertical: spacing.xs },
   setNumber: {
@@ -657,10 +655,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   block: {
-    borderRadius: radius.lg,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },
+  previous: { marginTop: spacing.xs },
   blockHead: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
   cue: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
   sets: { paddingHorizontal: spacing.lg, paddingTop: spacing.md },
@@ -671,9 +669,8 @@ const styles = StyleSheet.create({
   },
   dot: { width: 7, height: 7, borderRadius: radius.pill },
   textAction: { paddingHorizontal: spacing.sm, paddingVertical: spacing.sm },
-  dock: { position: 'absolute', left: spacing.lg, right: spacing.lg, zIndex: z.sticky },
+  dock: { position: 'absolute', left: screenGutter, right: screenGutter, zIndex: z.sticky },
   dockCard: {
-    borderRadius: radius.lg,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,

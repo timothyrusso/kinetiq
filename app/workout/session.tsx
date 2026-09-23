@@ -29,7 +29,7 @@
  * whose job is arithmetic.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
+import { ScrollView, StyleSheet, View, type LayoutChangeEvent, type ViewStyle } from 'react-native';
 import { router, Stack } from 'expo-router';
 import { ScreenHeader } from '@/ui/Screen';
 import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
@@ -69,22 +69,22 @@ import { useSettings } from '@/settings';
 import type { UnitSystem } from '@/utils/format';
 import {
   compactNumber,
-  formatAgo,
   formatDurationCompact,
   formatTimer,
   formatWeight,
-  joinMiddleDot,
   weightUnit,
   weightValue,
 } from '@/utils/format';
+import { formatAgoLocalized } from '@/utils/relativeTime';
+import type { TKey, TVars } from '@/i18n';
 import { useAppTheme } from '@/theme/theme';
 import { spacing, z, screenGutter } from '@/theme/tokens';
 import { Button } from '@/ui/controls/Button';
 import { IconButton } from '@/ui/controls/IconButton';
 import { Card, OverlaySurface, Row } from '@/ui/layout';
-import { SectionHeader } from '@/ui/display';
+import { MetaLine, SectionHeader, StatTile, type MetaItem } from '@/ui/display';
 import { Chip } from '@/ui/controls/Chip';
-import { MetricLabel, Txt } from '@/ui/Text';
+import { Txt } from '@/ui/Text';
 import { EmptyState, SkeletonCard } from '@/ui/states';
 import { Icon } from '@/ui/icons';
 import {
@@ -94,13 +94,8 @@ import {
   SessionProgressBar,
 } from '@/ui/workout';
 
-/** Rest presets, in seconds. Offered as chips because typing "90" on a rest break is absurd. */
-
-/** Bottom clearance: the footer, plus the dock when a rest is running, plus the home bar. */
-const BOTTOM_SPACE = 210;
-
 export default function WorkoutSessionScreen() {
-  const { t } = useT();
+  const { t, locale } = useT();
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
   const client = useQueryClient();
@@ -122,6 +117,20 @@ export default function WorkoutSessionScreen() {
   const [finishing, setFinishing] = useState(false);
   const [discarding, setDiscarding] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+
+  /**
+   * How much of the window the footer and the rest dock cover, measured rather than guessed.
+   *
+   * This used to be a fixed 210, which was right for one font size and one device. Both float
+   * over the scroll view, so its last card has to clear whichever reaches higher; measuring
+   * them means Dynamic Type and a taller home indicator cannot hide the notes card under the
+   * Finish button. Set on layout only, never per tick.
+   */
+  const [footerHeight, setFooterHeight] = useState(0);
+  const [dockHeight, setDockHeight] = useState(0);
+  const onFooterLayout = useCallback((e: LayoutChangeEvent) => {
+    setFooterHeight(Math.round(e.nativeEvent.layout.height));
+  }, []);
 
   /**
    * The identifier of the armed rest notification, so it can be retracted.
@@ -243,19 +252,6 @@ export default function WorkoutSessionScreen() {
     setActiveIndex(entryIndex);
   }, []);
 
-  /**
-   * An exercise chosen from the library, mid-workout.
-   *
-   * The picker deliberately stays open after a tap: the row turns into a checkmark: so
-   * adding two accessories in one go does not mean opening a sheet twice. The sheet closes on
-   * Done, which is why nothing here navigates.
-   *
-   * `void`-and-`catch` rather than an `async` handler: this is a press handler with nothing to
-   * await it, and an unhandled rejection on a button is a crash with no explanation.
-   */
-
-
-
   const discard = useCallback(async () => {
     if (session === null || discarding) return;
     setDiscarding(true);
@@ -324,6 +320,9 @@ export default function WorkoutSessionScreen() {
             is being popped, and showing a header on a screen mid-removal crashes Android's
             stack ("ScreenStackFragment added into a non-stack container"). */}
         <ScreenHeader title={t('tabs.workout')} shown={!(discarding || finishing)} />
+        {/* An ordinary pushed screen now, so the swipe back works again. Left alone while
+            leaving, for the same reason as the header above. */}
+        {discarding || finishing ? null : <Stack.Screen options={{ gestureEnabled: true }} />}
         <EmptyState
           title={t('session.noneTitle')}
           message={t('session.noneMessage')}
@@ -348,6 +347,29 @@ export default function WorkoutSessionScreen() {
       n + entry.sets.reduce((m, set) => m + (set.completed ? set.reps * set.weightKg : 0), 0),
     0,
   );
+  const dockExtent = restRemaining > 0 ? dockHeight + insets.bottom + spacing.md : 0;
+  const barMeta: MetaItem[] = [
+    {
+      id: 'elapsed',
+      icon: 'clock',
+      label: formatTimer(session.elapsedSeconds),
+      a11y: t('workoutFlow.elapsedA11y', { time: formatDurationCompact(session.elapsedSeconds) }),
+      mono: true,
+    },
+    {
+      id: 'sets',
+      icon: 'layers',
+      // The noun agrees with the denominator, not the numerator: "1/18 set" reads as though
+      // eighteen sets were one set. `1/1 set` is the only singular case, which is exactly
+      // what `progress.planned` gives.
+      label: `${doneSets}/${progress.planned} ${t('session.setWord', { count: progress.planned })}`,
+      a11y: t('workoutFlow.setsDone', {
+        done: doneSets,
+        planned: progress.planned,
+        word: t('session.setWord', { count: progress.planned }),
+      }),
+    },
+  ];
 
   return (
     <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
@@ -367,16 +389,11 @@ export default function WorkoutSessionScreen() {
               router.back();
             }}
           />
-          <View style={{ flex: 1, minWidth: 0 }}>
+          <View style={styles.barTitles}>
             <Txt variant="label" weight="700" numberOfLines={1}>
               {session.routineName}
             </Txt>
-            {/* The noun agrees with the denominator, not the numerator: "1/18 set" reads
-                as though eighteen sets were one set. `1/1 set` is the only singular case,
-                which is exactly what `progress.planned` gives. */}
-            <Txt variant="micro" tone="muted">
-              {`${formatTimer(session.elapsedSeconds)} · ${doneSets}/${progress.planned} ${t('session.setWord', { count: progress.planned })}`}
-            </Txt>
+            <MetaLine items={barMeta} theme={theme} />
           </View>
           <Chip
             size="sm"
@@ -410,7 +427,10 @@ export default function WorkoutSessionScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: BOTTOM_SPACE + insets.bottom }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: Math.max(footerHeight, dockExtent) + spacing.xl },
+        ]}
         keyboardShouldPersistTaps="handled"
       >
         {persistFailed ? (
@@ -506,10 +526,12 @@ export default function WorkoutSessionScreen() {
                   units={units}
                   theme={theme}
                   isCurrent={entryIndex === activeIndex}
-                  previousLine={previousLineFor(
+                  {...previousFor(
                     previous.get(entry.exerciseId),
                     previous.isLoading,
                     units,
+                    t,
+                    locale,
                   )}
                   onOpenSet={openSet}
                   onToggleSet={onToggleSetAt}
@@ -539,6 +561,7 @@ export default function WorkoutSessionScreen() {
 
       <View
         style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}
+        onLayout={onFooterLayout}
       >
         {/* Sibling of the buttons, never their parent: a blur that contains them
             re-blurs on every press-state change. */}
@@ -571,6 +594,7 @@ export default function WorkoutSessionScreen() {
           remainingSeconds={restRemaining}
           totalSeconds={session.restDurationSeconds ?? restRemaining}
           theme={theme}
+          onHeight={setDockHeight}
           onSkip={() => {
             retractRestAlert();
             clearRest();
@@ -664,28 +688,17 @@ function SessionTotals({
   units: UnitSystem;
 }) {
   const { t } = useT();
-  const items = [
-    { label: t('session.elapsed'), value: formatDurationCompact(elapsed) },
-    { label: t('session.sets'), value: `${sets}/${planned}` },
-    {
-      label: t('session.volumeIn', { unit: weightUnit(units) }),
-      value: compactNumber(weightValue(volumeKg, units)),
-    },
-  ];
+  // Three abreast, so the compact numeral: the default one truncates "1h 05m" on a phone.
   return (
-    <Row gap="xl" align="start" wrap>
-      {items.map((item) => (
-        <View key={item.label} style={{ minWidth: 84 }}>
-          <MetricLabel label={item.label} />
-          <Txt
-            variant="numeralSm"
-            weight="700"
-            style={{ fontVariant: ['tabular-nums'], marginTop: spacing.xxs }}
-          >
-            {item.value}
-          </Txt>
-        </View>
-      ))}
+    <Row gap="lg" align="start">
+      <StatTile label={t('session.elapsed')} value={formatDurationCompact(elapsed)} emphasis="compact" tabular />
+      <StatTile label={t('session.sets')} value={`${sets}/${planned}`} emphasis="compact" tabular />
+      <StatTile
+        label={t('session.volumeIn', { unit: weightUnit(units) })}
+        value={compactNumber(weightValue(volumeKg, units))}
+        emphasis="compact"
+        tabular
+      />
     </Row>
   );
 }
@@ -707,7 +720,7 @@ function firstOpenSetIndex(entry: {
 }
 
 /**
- * "Last time 82.5 kg × 5 · 3 weeks ago", or the honest alternative.
+ * "Last time 82.5 kg × 5" and "3w ago", or the honest alternative.
  *
  * Three distinct answers, because there are three distinct truths: the history query has
  * not answered yet (say nothing, "no previous data" before it has is a lie), it answered
@@ -716,24 +729,33 @@ function firstOpenSetIndex(entry: {
  * weight, which is why it gets the most detail: heaviest set's load and reps, not a volume
  * figure nobody can act on between sets.
  */
-function previousLineFor(
+function previousFor(
   lift: PreviousLift | undefined,
   isLoading: boolean,
   units: UnitSystem,
-): string | null {
-  if (lift === undefined) return isLoading ? null : tr('session.noPrevious');
+  t: (key: TKey, vars?: TVars) => string,
+  locale: string,
+): { previousLabel: string | null; previousWhen: string | null } {
+  // Two strings rather than the items themselves: `ExerciseBlock` is memoised and this runs on
+  // every clock tick, so it has to receive values that compare equal from one second to the
+  // next. The block builds its `MetaLine` from them.
+  if (lift === undefined) {
+    return { previousLabel: isLoading ? null : t('session.noPrevious'), previousWhen: null };
+  }
   const heaviest = lift.sets.reduce<(typeof lift.sets)[number] | null>(
     (best, set) => (best === null || set.weightKg > best.weightKg ? set : best),
     null,
   );
-  if (heaviest === null) return tr('session.noLoadRecorded');
+  if (heaviest === null) return { previousLabel: t('session.noLoadRecorded'), previousWhen: null };
   const load =
     heaviest.weightKg === 0
-      ? tr('session.bodyweight')
+      ? t('session.bodyweight')
       : `${formatWeight(heaviest.weightKg, units)} × ${heaviest.reps}`;
-  // `joinMiddleDot` rather than a template literal: the "when" half is omitted for a row
-  // whose timestamp is unusable, and a hand-joined string would leave a dangling dot.
-  return joinMiddleDot([tr('session.lastTime', { load }), formatAgo(lift.performedAt)]);
+  // The "when" half is omitted for a row whose timestamp is unusable.
+  const when = Number.isFinite(lift.performedAt) && lift.performedAt > 0
+    ? formatAgoLocalized(lift.performedAt, t, locale)
+    : null;
+  return { previousLabel: t('session.lastTime', { load }), previousWhen: when };
 }
 
 /** The body copy for the rest notification: what comes after this set, if anything. */
@@ -755,12 +777,13 @@ function nextUpLabel(
 const styles = StyleSheet.create({
   root: { flex: 1 },
   bar: {
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: screenGutter,
     paddingBottom: spacing.md,
     // No border here: `OverlaySurface` draws the hairline, and a second one on the
     // same edge reads as a thicker, fuzzier line.
     zIndex: z.sticky,
   },
+  barTitles: { flex: 1, minWidth: 0, gap: spacing.xxs },
   content: { flexGrow: 1, paddingTop: spacing.lg },
   section: { paddingHorizontal: screenGutter, paddingTop: spacing.xxl },
   // No `zIndex`: the rest dock is rendered after this and is also `z.sticky`, and the
