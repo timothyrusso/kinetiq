@@ -41,7 +41,7 @@ export const ActivityCard = memo(function ActivityCard({
   thumbnail?: 'map' | 'chart' | 'none';
   compact?: boolean;
   onPress: (id: string) => void;
-  /** Takes the id, like `onPress`, so a list hands every card the same callback. */
+  /** Same id-taking shape as `onPress`, so a list can pass one stable callback for both. */
   onLongPress?: (id: string) => void;
 }) {
   const summary = useMemo(
@@ -58,7 +58,7 @@ export const ActivityCard = memo(function ActivityCard({
   return (
     <Pressable
       onPress={press}
-      {...(onLongPress ? { onLongPress: longPress } : null)}
+      {...(onLongPress ? { onLongPress: longPress } : {})}
       accessibilityRole="button"
       accessibilityLabel={summary.accessibilityLabel}
       android_ripple={skin.rowPressed === 'ripple' ? { color: theme.colors.surfacePressed } : undefined}
@@ -95,6 +95,8 @@ export const ActivityCard = memo(function ActivityCard({
           height={THUMB_HEIGHT}
           showLegend={false}
           showStartEnd={false}
+          // List rows carry the simplified shape only, with no timing to colour a pace by.
+          paceColoured={false}
           style={styles.thumb}
         />
       ) : null}

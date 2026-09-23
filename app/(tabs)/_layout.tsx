@@ -14,7 +14,8 @@
  *    accessory inside a hand-drawn bar; this is the real thing.
  *  - The sliding accent indicator: gone, deliberately. The system bar has its own selection
  *    treatment, and a second indicator drawn on top would fight it.
- *  - Icons: SF Symbols on iOS and Material glyphs on Android, via one `Icon` carrying both, *    no icon-font dependency, since both sets are built into their platform. Every SF Symbol
+ *  - Icons: SF Symbols on iOS and Material glyphs on Android, via one `Icon` carrying both,
+ *    no icon-font dependency, since both sets are built into their platform. Every SF Symbol
  *    chosen here exists at or below iOS 16.0, this app's deployment target: `dumbbell` would
  *    have been the obvious pick for Workout and is iOS 17+, so it would render as a blank
  *    square on the floor of our support range.
@@ -101,12 +102,13 @@ export default function TabsLayout() {
  */
 function WorkoutAccessory() {
   const theme = useAppTheme();
+  const { t } = useT();
   const { session } = useWorkoutSession();
   if (session === null || (session.status !== 'active' && session.status !== 'paused')) return null;
   return (
     <ActiveWorkoutPill
       label={session.routineName}
-      detail={session.status === 'paused' ? 'Paused' : formatDuration(session.elapsedSeconds, ':')}
+      detail={session.status === 'paused' ? t('workout.paused') : formatDuration(session.elapsedSeconds, ':')}
       onPress={() => {
         router.push(routes.workoutSession());
       }}

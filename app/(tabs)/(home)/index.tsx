@@ -4,20 +4,25 @@
  * ## Order, which is the whole design
  *
  * Four questions, answered top to bottom in the order people ask them: *did I train*
- * (ring against goal, streak), *how much this week* (the metric grid), *what did I do*
- * (recent sessions), *is it working* (the six-week load chart, then the mix). The donut
- * is last and smallest on purpose: it is interesting once a month and noise the rest
- * of the time.
+ * (the hero's three tiles: today's minutes, the streak, the weekly goal), *how much this
+ * week* (the metric card), *what did I do* (recent sessions, as cards), *is it working*
+ * (the six-week load chart, then the mix). The donut is last and smallest on purpose: it
+ * is interesting once a month and noise the rest of the time.
  *
  * ## Why the FlashList owns the scroll
  *
- * There is no outer `ScrollView`. The collapsing header reads the list's own scroll
- * offset, and a wrapper cannot reach inside a list the caller owns: while nesting a
- * virtualised list in a scroll view defeats the virtualisation. So the header is an
- * absolutely-positioned sibling overlay, and everything else: hero, summary cards,
- * rows: is list content: the hero scrolls away, the cards scroll in, and the whole
- * screen stays one recycling surface. `ListHeaderComponent` is where that content goes,
- * which also means it is measured once and recycled as a unit rather than per row.
+ * There is no outer `ScrollView`. The native large title collapses by coupling to the
+ * screen's first scroll view, and nesting a virtualised list in a scroll view defeats the
+ * virtualisation. So everything: hero, summary cards, rows: is list content, and
+ * `ListHeaderComponent` is where the part above the rows goes.
+ *
+ * ## Why the header content is memoised
+ *
+ * The list header is most of this screen: two SVG charts, a ring's worth of tiles, the clock.
+ * As an inline element it was a new header on every render of this component, and FlashList
+ * re-lays out whenever its header element changes. Memoised, a render that changed nothing
+ * the header shows (a refetch settling, a units change elsewhere) leaves it alone, and the
+ * clock ticking inside it re-renders two text nodes, not the header.
  *
  * ## One read, two numbers
  *
@@ -27,7 +32,8 @@
  * streak query at 7 would silently report a 12-day streak as 7: wrong in exactly the
  * direction the user is proud of.
  */
-import { useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo, useRef } from 'react';
+import type { LayoutChangeEvent } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
@@ -35,16 +41,13 @@ import { FlashList } from '@shopify/flash-list';
 import { useTabContentBottom } from '@/ui/insets';
 
 import { SCROLL_INSETS, ScreenHeader } from '@/ui/Screen';
-import { StatTile, TagRow, type Tag } from '@/ui/display';
+import { ActivityCard, SectionHeader, StatTile, type Trend } from '@/ui/display';
 import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { LiveClock } from '@/ui/LiveClock';
-import { ActivityRow } from '@/ui/rows';
-import { Card, Divider, Row, Stack } from '@/ui/layout';
-import { SectionHeader } from '@/ui/display';
-import { MetricLabel, Txt } from '@/ui/Text';
+import { Card, Divider, MetricGrid, Row, Stack } from '@/ui/layout';
+import { Txt } from '@/ui/Text';
 import { BarChart, type BarPoint } from '@/ui/charts/BarChart';
 import { ActivityDistribution, type DistributionSlice } from '@/ui/charts/ActivityDistribution';
-import { ProgressRing } from '@/ui/charts/ProgressRing';
 import { useMeasuredWidth } from '@/ui/charts/useMeasuredWidth';
 import { EmptyState, ErrorState, SkeletonCard, SkeletonList, ThemedRefreshControl } from '@/ui/states';
 import { useRecentActivities } from '@/queries/useActivities';
@@ -57,30 +60,36 @@ import { routes, tabHref } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
 import { spacing, screenGutter } from '@/theme/tokens';
 import { useT } from '@/i18n/useT';
-import { tr } from '@/i18n/tr';
+import type { TKey, TVars } from '@/i18n';
 import {
   compactNumber,
   formatDurationCompact,
   formatDistance,
+  startOfDay,
   type UnitSystem,
 } from '@/utils/format';
-import { activitySummary } from '@/ui/display';
 
 /** Rows actually shown. The fetched set is longer: see the header note on streaks. */
 const RECENT_VISIBLE = 7;
 const RECENT_FETCHED = 60;
 
-/** Clearance for the floating tab bar plus the live-session pill above it. */
-
 /** `Card`'s default `padding='lg'`, subtracted from any chart that must fit inside one. */
 const CARD_PADDING = spacing.lg;
+const CHART_HEIGHT = 140;
+
+type Translate = (key: TKey, vars?: TVars) => string;
 
 export default function HomeScreen() {
-  const { t } = useT();
+  const { t, locale } = useT();
   const router = useRouter();
   const theme = useAppTheme();
   const bottomSpace = useTabContentBottom();
   const [chartWidth, onChartLayout] = useMeasuredWidth();
+  // The hook hands back a new handler every render; the memoised header below needs one that
+  // keeps its identity, or the memo would be rebuilt on every render and buy nothing.
+  const chartLayoutRef = useRef(onChartLayout);
+  chartLayoutRef.current = onChartLayout;
+  const onSummaryLayout = useCallback((e: LayoutChangeEvent) => chartLayoutRef.current(e), []);
 
   const units = useSettings((s) => s.unitSystem);
   const showSpeed = useSettings((s) => s.showSpeedInsteadOfPace);
@@ -94,116 +103,155 @@ export default function HomeScreen() {
   const fetched = useMemo(() => recentQuery.data ?? [], [recentQuery.data]);
   const visible = useMemo(() => fetched.slice(0, RECENT_VISIBLE), [fetched]);
   const streak = useMemo(() => computeStreak(fetched), [fetched]);
+  const todaySeconds = useMemo(() => {
+    const midnight = startOfDay(new Date()).getTime();
+    let total = 0;
+    for (const activity of fetched) if (activity.startedAt >= midnight) total += activity.durationSeconds;
+    return total;
+  }, [fetched]);
 
   const loading = summaryQuery.isPending && !summaryQuery.isError;
   // `weeks` is oldest-first, so the current week is the *last* entry. See the contract in
   // `useProgress.ts`: reading index 0 instead shows a week four (or seven) ago as today,
   // with numbers plausible enough that nothing looks broken.
-  const week = summary?.weeks.at(-1);
-  const remaining = goal - (week?.workouts ?? 0);
-  const ratio = goal > 0 ? Math.min(1, (week?.workouts ?? 0) / goal) : 0;
+  const weekWorkouts = summary?.weeks.at(-1)?.workouts ?? 0;
 
   const openActivity = useCallback(
     (id: string) => router.push(routes.activityDetail(id)),
     [router],
   );
+  const openSettings = useCallback(() => router.push(routes.settings()), [router]);
+  const openActivities = useCallback(() => router.push(tabHref(1)), [router]);
+  const openWorkoutTab = useCallback(() => router.push(tabHref(2)), [router]);
 
   const renderItem = useCallback(
-    ({ item }: { item: Activity }) => {
-      const display = activitySummary(item, units, showSpeed);
-      return (
-        <ActivityRow
+    ({ item }: { item: Activity }) => (
+      // A cell with the gutter and the gap below, so the card itself fills the width it is
+      // given and the list builds no style object per row.
+      <View style={styles.cardCell}>
+        <ActivityCard
           activity={item}
           theme={theme}
-          headline={display.headline}
-          meta={display.meta}
-          onPress={() => openActivity(item.id)}
+          units={units}
+          showSpeedInsteadOfPace={showSpeed}
+          thumbnail={item.kind === 'lift' ? 'chart' : 'map'}
+          onPress={openActivity}
         />
-      );
-    },
+      </View>
+    ),
     [openActivity, showSpeed, theme, units],
   );
 
   const keyExtractor = useCallback((item: Activity) => item.id, []);
 
+  const { refetch: refetchRecent } = recentQuery;
+  const { refetch: refetchSummary } = summaryQuery;
   const refresh = useCallback(() => {
-    void recentQuery.refetch();
-    void summaryQuery.refetch();
-  }, [recentQuery, summaryQuery]);
+    void refetchRecent();
+    void refetchSummary();
+  }, [refetchRecent, refetchSummary]);
+  const retrySummary = useCallback(() => void refetchSummary(), [refetchSummary]);
 
   const empty = summary !== undefined && !summary.hasAnyHistory && !loading;
-  const openSettings = useCallback(() => router.push(routes.settings()), [router]);
-  const heroTags = useMemo<Tag[]>(
-    () => [
-      remaining > 0
-        ? { key: 'goal', label: t('homeTab.toWeeklyGoal', { count: remaining }), tone: 'neutral' }
-        : { key: 'goal', label: t('homeTab.weeklyGoalMet'), tone: 'accent' },
-    ],
-    [remaining, t],
-  );
+  const hasHistory = summary?.hasAnyHistory === true;
 
-  const listHeader = (
-    <>
-      {/* The first content block: what the old collapsing hero said, as structured pieces. A
-          streak worth naming is a stat; anything less is the sentence that encourages. */}
-      <Stack gap="md" style={styles.hero}>
-        <Txt variant="micro" tone="faint" uppercase tracking={1.1}>
-          {greeting()}
-        </Txt>
-        {streak.current >= 2 ? (
-          <StatTile
-            emphasis="hero"
-            value={`${streak.current}`}
-            unit={t('homeHero.streakUnit', { count: streak.current })}
-            label={t('homeHero.streakLabel')}
+  const listHeader = useMemo(
+    () => (
+      <>
+        {/* The first content block: the day at a glance, as three numbers. */}
+        <Stack gap="md" style={styles.hero}>
+          <Txt variant="micro" tone="faint" uppercase tracking={1.1}>
+            {greeting(t)}
+          </Txt>
+          <Txt variant="headline">{headlineFor(streak.current, summary, t)}</Txt>
+          {/* Its own component so the per-second tick re-renders two Txt nodes rather than
+              the header and everything the header is a child of. */}
+          <LiveClock locale={locale} />
+          {hasHistory ? (
+            <Row gap="md" style={styles.tiles}>
+              <StatTile
+                value={`${Math.round(todaySeconds / 60)}`}
+                unit={t('tabsHome.minutesUnit')}
+                label={t('tabsHome.today')}
+              />
+              <StatTile
+                value={`${streak.current}`}
+                unit={t('homeHero.streakUnit', { count: streak.current })}
+                label={t('tabsHome.streak')}
+              />
+              <StatTile
+                value={`${weekWorkouts}`}
+                unit={t('tabsHome.goalOf', { goal })}
+                label={t('tabsHome.weeklyGoal')}
+              />
+            </Row>
+          ) : null}
+        </Stack>
+
+        <View style={styles.summary} onLayout={onSummaryLayout}>
+          {loading ? (
+            <Stack gap="lg">
+              <SkeletonCard lines={2} />
+              <SkeletonCard lines={3} />
+            </Stack>
+          ) : summaryQuery.isError ? (
+            <ErrorState error={summaryQuery.error} onRetry={retrySummary} compact />
+          ) : summary ? (
+            <HomeSummary summary={summary} units={units} chartWidth={chartWidth} t={t} />
+          ) : null}
+        </View>
+
+        {empty ? null : (
+          <SectionHeader
+            title={t('homeTab.recent')}
+            eyebrow={t('homeTab.latestSessions')}
+            style={styles.recentHeader}
+            {...(visible.length > 0
+              ? { action: { label: t('homeTab.seeAll'), onPress: openActivities } }
+              : {})}
           />
-        ) : (
-          <Txt variant="headline">{headlineFor(streak.current, summary)}</Txt>
         )}
-        {/* Its own component so the per-second tick re-renders two Txt nodes rather than the
-            hero and everything the hero is a child of. */}
-        <LiveClock />
-        {summary?.hasAnyHistory ? <TagRow tags={heroTags} theme={theme} /> : null}
-      </Stack>
-
-      <View
-        style={{ paddingHorizontal: screenGutter, paddingTop: spacing.xl, paddingBottom: spacing.xl }}
-        onLayout={onChartLayout}
-      >
-        {loading ? (
-          <Stack gap="lg">
-            <SkeletonCard lines={2} />
-            <SkeletonCard lines={3} />
-          </Stack>
-        ) : summaryQuery.isError ? (
-          <ErrorState
-            error={summaryQuery.error}
-            onRetry={() => void summaryQuery.refetch()}
-            compact
-          />
-        ) : summary ? (
-          <HomeSummary
-            summary={summary}
-            goal={goal}
-            ratio={ratio}
-            units={units}
-            chartWidth={chartWidth}
-          />
-        ) : null}
-      </View>
-
-      {empty ? null : (
-        <SectionHeader
-          title={t('homeTab.recent')}
-          eyebrow={t('homeTab.latestSessions')}
-          style={{ paddingHorizontal: screenGutter }}
-          {...(visible.length > 0
-            ? { action: { label: t('homeTab.seeAll'), onPress: () => router.push(tabHref(1)) } }
-            : {})}
-        />
-      )}
-    </>
+      </>
+    ),
+    [
+      chartWidth,
+      empty,
+      goal,
+      hasHistory,
+      loading,
+      locale,
+      onSummaryLayout,
+      openActivities,
+      retrySummary,
+      streak,
+      summary,
+      summaryQuery.error,
+      summaryQuery.isError,
+      t,
+      todaySeconds,
+      units,
+      visible.length,
+      weekWorkouts,
+    ],
   );
+
+  const listEmpty = useMemo(
+    () =>
+      empty ? (
+        <EmptyState
+          title={t('home.emptyTitle')}
+          message={t('home.emptyMessage')}
+          icon="target"
+          actionLabel={t('homeTab.browseRoutines')}
+          onAction={openWorkoutTab}
+        />
+      ) : loading ? (
+        <SkeletonList rows={4} />
+      ) : null,
+    [empty, loading, openWorkoutTab, t],
+  );
+  const contentContainerStyle = useMemo(() => ({ paddingBottom: bottomSpace }), [bottomSpace]);
+  const listStyle = useMemo(() => ({ backgroundColor: theme.colors.background }), [theme]);
 
   return (
     <>
@@ -216,31 +264,20 @@ export default function HomeScreen() {
 
       <FlashList
         {...SCROLL_INSETS}
+        // Keyed by locale: a card phrases its metadata with `tr()`, and its memo would keep the
+        // old language until the row recycled.
+        key={locale}
         data={visible}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         extraData={units}
-        contentContainerStyle={{ paddingBottom: bottomSpace }}
+        contentContainerStyle={contentContainerStyle}
         refreshControl={
           <ThemedRefreshControl refreshing={recentQuery.isFetching} onRefresh={refresh} />
         }
         ListHeaderComponent={listHeader}
-        ListEmptyComponent={
-          empty ? (
-            <EmptyState
-              title={t('home.emptyTitle')}
-              message={t('home.emptyMessage')}
-              icon="target"
-              actionLabel={t('homeTab.browseRoutines')}
-              onAction={() => router.push(tabHref(2))}
-            />
-          ) : loading ? (
-            <View style={{ paddingHorizontal: screenGutter }}>
-              <SkeletonList rows={4} />
-            </View>
-          ) : null
-        }
-        style={{ backgroundColor: theme.colors.background }}
+        ListEmptyComponent={listEmpty}
+        style={listStyle}
       />
       {/* No resume pill here: the tab bar's accessory owns it, for every tab. Home used to
           mount its own, and both drew at once. One owner, and it is the one that is not a
@@ -252,26 +289,25 @@ export default function HomeScreen() {
 /* ------------------------------------------------------------------ summary -- */
 
 /**
- * The weekly block: goal ring, four metrics, six-week load, kind mix.
+ * The weekly block: the week's time against the last, four metrics, six-week load, kind mix.
  *
  * `chartWidth` arrives from an `onLayout` on the container, which is why the first pass
  * renders a spacer instead of the chart: `BarChart` computes path geometry in JS and
  * needs a real width, and passing 0 would draw a chart at zero width that then snaps.
+ *
+ * Memoised, with `t` as a prop so a language change still reaches it.
  */
-function HomeSummary({
+const HomeSummary = memo(function HomeSummary({
   summary,
-  goal,
-  ratio,
   units,
   chartWidth,
+  t,
 }: {
   summary: TrainingSummary;
-  goal: number;
-  ratio: number;
   units: UnitSystem;
   chartWidth: number;
+  t: Translate;
 }) {
-  const { t } = useT();
   const theme = useAppTheme();
   const week = summary.weeks.at(-1);
   const previous = summary.weeks.at(-2);
@@ -282,12 +318,12 @@ function HomeSummary({
   const bars: BarPoint[] = useMemo(
     () =>
       summary.weeks.slice(-6).map((w, index, all) => ({
-        label: index === all.length - 1 ? 'Now' : w.label,
+        label: index === all.length - 1 ? t('tabsHome.nowBar') : w.label,
         value: Math.round(w.durationSeconds / 60),
         emphasised: index === all.length - 1,
-        detail: `${w.workouts} ${w.workouts === 1 ? 'session' : 'sessions'}`,
+        detail: t('activities.session', { count: w.workouts }),
       })),
-    [summary.weeks],
+    [summary.weeks, t],
   );
 
   const slices: DistributionSlice[] = useMemo(() => {
@@ -306,82 +342,68 @@ function HomeSummary({
     }));
   }, [summary.weeks]);
 
+  const formatMinutes = useCallback((v: number) => t('tabsHome.minutesShort', { value: v }), [t]);
+  const formatSessions = useCallback((v: number) => t('activities.session', { count: v }), [t]);
+
   const delta = deltaPercent(week?.durationSeconds ?? 0, previous?.durationSeconds ?? 0);
+  const trend: Trend | undefined =
+    delta === null
+      ? undefined
+      : {
+          delta: t('homeTab.deltaAgainstLastWeek', { delta: `${delta >= 0 ? '+' : ''}${delta}` }),
+          direction: delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat',
+        };
+  const volume = week?.volumeKg ?? 0;
+  const distance = week?.distanceMeters ?? 0;
 
   return (
     <Stack gap="lg">
       <Card>
-        <Row gap="lg" align="center">
-          <ProgressRing
-            progress={ratio}
-            theme={theme}
-            size={90}
-            label={`${week?.workouts ?? 0}`}
-            sublabel={t('homeTab.ofGoal', { goal })}
-          />
-          <Stack gap="xs" style={{ flex: 1, minWidth: 0 }}>
-            <MetricLabel label={t('home.thisWeek')} />
-            <Txt variant="title" numberOfLines={1}>
-              {formatDurationCompact(week?.durationSeconds ?? 0)}
-            </Txt>
-            <Txt variant="caption" tone="muted" numberOfLines={2}>
-              {delta === null
-                ? goal - (week?.workouts ?? 0) > 0
-                  ? t('homeTab.moreToGoal', { count: goal - (week?.workouts ?? 0) })
-                  : t('homeTab.goalComplete')
-                : t('homeTab.deltaAgainstLastWeek', {
-                    delta: `${delta >= 0 ? '+' : ''}${delta}`,
-                  })}
-            </Txt>
-          </Stack>
-        </Row>
-
-        <View style={{ marginTop: spacing.lg }}>
+        <StatTile
+          emphasis="hero"
+          value={formatDurationCompact(week?.durationSeconds ?? 0)}
+          label={t('home.thisWeek')}
+          {...(trend ? { trend } : {})}
+        />
+        <View style={styles.divider}>
           <Divider />
         </View>
-
-        <View style={{ paddingTop: spacing.lg }}>
-          <Row gap="lg">
-            <MetricCell label={t('home.sessions')} value={`${week?.workouts ?? 0}`} />
-            <MetricCell
-              label={t('home.distance')}
-              value={
-                (week?.distanceMeters ?? 0) > 0
-                  ? formatDistance(week?.distanceMeters ?? 0, units, 1)
-                  : '-'
-              }
-            />
-          </Row>
-          <Row gap="lg" style={{ marginTop: spacing.md }}>
-            <MetricCell
-              label={t('home.volume')}
-              value={(week?.volumeKg ?? 0) > 0 ? `${compactNumber(week?.volumeKg ?? 0)} kg` : '-'}
-            />
-            <MetricCell
-              label={t('home.calories')}
-              value={compactNumber(Math.round(week?.caloriesKcal ?? 0))}
-            />
-          </Row>
-        </View>
+        <MetricGrid columns={2}>
+          <StatTile label={t('home.sessions')} value={`${week?.workouts ?? 0}`} />
+          <StatTile
+            label={t('home.distance')}
+            value={distance > 0 ? formatDistance(distance, units, 1) : t('common.noValue')}
+          />
+          <StatTile
+            label={t('home.volume')}
+            value={volume > 0 ? compactNumber(volume) : t('common.noValue')}
+            {...(volume > 0 ? { unit: 'kg' } : {})}
+          />
+          <StatTile
+            label={t('home.calories')}
+            value={compactNumber(Math.round(week?.caloriesKcal ?? 0))}
+            unit="kcal"
+          />
+        </MetricGrid>
       </Card>
 
       <Card>
         <SectionHeader
           title={t('home.trainingLoad')}
           eyebrow={t('home.lastSixWeeks')}
-          style={{ marginBottom: spacing.lg }}
+          style={styles.chartTitle}
         />
         {chartWidth > CARD_PADDING * 2 ? (
           <BarChart
             points={bars}
             theme={theme}
             width={chartWidth - CARD_PADDING * 2}
-            height={140}
-            format={(v) => `${v}m`}
+            height={CHART_HEIGHT}
+            format={formatMinutes}
             showValueForLast
           />
         ) : (
-          <View style={{ height: 140 }} />
+          <View style={styles.chartSpacer} />
         )}
       </Card>
 
@@ -389,56 +411,44 @@ function HomeSummary({
         <Card>
           <SectionHeader
             title={t('homeTab.mix')}
-            eyebrow={`Sessions over ${summary.rangeWeeks} weeks`}
-            style={{ marginBottom: spacing.md }}
+            eyebrow={t('tabsHome.mixEyebrow', { count: summary.rangeWeeks })}
           />
           <ActivityDistribution
             slices={slices}
             theme={theme}
-            formatValue={(v) => `${v} ${v === 1 ? 'session' : 'sessions'}`}
+            formatValue={formatSessions}
             centerLabel={`${summary.totals.workouts}`}
-            centerSublabel="sessions"
+            centerSublabel={t('profileScreen.sessionWord', { count: summary.totals.workouts })}
           />
         </Card>
       ) : null}
     </Stack>
   );
-}
-
-function MetricCell({ label, value }: { label: string; value: string }) {
-  return (
-    <Stack gap="xxs" style={{ flex: 1, minWidth: 0 }}>
-      <MetricLabel label={label} />
-      <Txt variant="subhead" numberOfLines={1}>
-        {value}
-      </Txt>
-    </Stack>
-  );
-}
+});
 
 /* ------------------------------------------------------------------ helpers -- */
 
 /**
- * The streak line under the greeting.
+ * The line under the greeting.
  *
  * Phrased so the sentence is true in every state: no history, history but today off,
  * mid-streak: rather than a template that prints "0 day streak" on a fresh install.
  * That string is the most demoralising thing a fitness app can say to someone who has
  * just opened it for the first time.
  */
-function headlineFor(currentStreak: number, summary: TrainingSummary | undefined): string {
-  if (!summary || !summary.hasAnyHistory) return tr('homeTab.headlineFirst');
-  if (currentStreak === 0) return tr('homeTab.headlineReady');
-  if (currentStreak === 1) return tr('homeTab.headlineDayOne');
-  return tr('homeTab.headlineStreak', { count: currentStreak });
+function headlineFor(currentStreak: number, summary: TrainingSummary | undefined, t: Translate): string {
+  if (!summary || !summary.hasAnyHistory) return t('homeTab.headlineFirst');
+  if (currentStreak === 0) return t('homeTab.headlineReady');
+  if (currentStreak === 1) return t('homeTab.headlineDayOne');
+  return t('homeTab.headlineStreak', { count: currentStreak });
 }
 
-function greeting(): string {
+function greeting(t: Translate): string {
   const hour = new Date().getHours();
-  if (hour < 5) return tr('homeTab.greetLate');
-  if (hour < 12) return tr('home.eyebrowMorning');
-  if (hour < 18) return tr('home.eyebrowAfternoon');
-  return tr('home.eyebrowEvening');
+  if (hour < 5) return t('homeTab.greetLate');
+  if (hour < 12) return t('home.eyebrowMorning');
+  if (hour < 18) return t('home.eyebrowAfternoon');
+  return t('home.eyebrowEvening');
 }
 
 function firstName(full: string): string {
@@ -459,4 +469,11 @@ function deltaPercent(current: number, previous: number): number | null {
 
 const styles = StyleSheet.create({
   hero: { paddingHorizontal: screenGutter, paddingTop: spacing.md },
+  tiles: { paddingTop: spacing.xs },
+  summary: { paddingHorizontal: screenGutter, paddingTop: spacing.xxl, paddingBottom: spacing.xxl },
+  recentHeader: { paddingHorizontal: screenGutter },
+  cardCell: { paddingHorizontal: screenGutter, paddingBottom: spacing.md },
+  divider: { marginVertical: spacing.lg },
+  chartTitle: { marginBottom: spacing.lg },
+  chartSpacer: { height: CHART_HEIGHT },
 });

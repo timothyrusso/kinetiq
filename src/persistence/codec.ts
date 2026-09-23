@@ -93,7 +93,7 @@ export function rowToActivity(row: ActivityRow): Activity {
           avgSpeedMps: row.avg_speed_mps,
           stridesPerMinute: row.cadence,
           splits: parseJsonArray<ActivitySplit>(row.splits_json),
-          route: parseJsonArray<RoutePoint>(row.route_json),
+          route: parseRoute(row.route_json),
         }
       : null,
     strength: hasStrength
@@ -199,4 +199,18 @@ export function rowToSession(row: SessionRow): WorkoutSession {
     notes: row.notes,
     updatedAt: row.updated_at,
   };
+}
+
+/**
+ * A stored route, as `RoutePoint`s whichever column it came from.
+ *
+ * Detail reads `route_json` (full samples); lists read `route_simplified_json` under the same
+ * alias, which holds bare `[lat, lng]` pairs. Parsed as `RoutePoint[]` unchanged, a list row
+ * handed `[lat, lng]` to code reading `.coords`, and the first list to draw a route thumbnail
+ * crashed. Pairs become points with no timing: enough to draw the shape, never a pace.
+ */
+function parseRoute(json: string | null): RoutePoint[] {
+  return parseJsonArray<RoutePoint | [number, number]>(json).map((p) =>
+    Array.isArray(p) ? { t: 0, coords: [p[0], p[1]], elevation: 0, heartRate: null } : p,
+  );
 }

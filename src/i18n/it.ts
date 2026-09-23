@@ -48,6 +48,29 @@ export const it: Copy = {
     system: 'Sistema',
   },
 
+  // --- group-a ---
+  tabsHome: {
+    today: 'Oggi',
+    minutesUnit: 'min',
+    streak: 'Serie',
+    weeklyGoal: 'Obiettivo settimanale',
+    goalOf: 'su {goal}',
+    nowBar: 'Ora',
+    minutesShort: '{value} min',
+    mixEyebrow: 'Sessioni nelle ultime {count} settimane',
+  },
+  tabsWorkout: {
+    opensExercise: "{name}. Apre l'esercizio.",
+  },
+  tabsProfile: {
+    height: '{height} cm',
+    age_one: '{count} anno',
+    age_other: '{count} anni',
+    tonnes: 't',
+    lastFourWeeks: 'Ultime 4 settimane',
+  },
+  // --- end group-a ---
+
   home: {
     eyebrowMorning: 'Buongiorno',
     eyebrowAfternoon: 'Buon pomeriggio',

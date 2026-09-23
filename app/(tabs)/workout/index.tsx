@@ -30,13 +30,21 @@
  * you follow from a list, cardio is an activity you go out and do, and the entry points read
  * differently for that reason: pick a plan versus put your phone in your pocket.
  *
+ * ## The session is watched by the card, not by the screen
+ *
+ * The live session republishes once a second while a workout runs. Read here, that tick
+ * re-rendered the whole tab every second: the native segmented control, every routine row, the
+ * chart, and the header options (a fresh options object is a `setOptions` on the navigator),
+ * which is what the dropped frames on this tab were. The screen asks only the boolean "is one
+ * running", and the resume card is the one subscriber to the tick.
+ *
  * ## No history list
  *
  * Activities owns history. Repeating it here would be a second list with a second sort and
  * no second purpose. What this tab can answer that Activities cannot is "which routines am
  * I actually running, and when did I last do each?": so that lives on the routine rows.
  */
-import { useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -66,16 +74,16 @@ import { useRoutines } from '@/queries/useRoutines';
 import { BROWSE_FILTER, useExerciseSearch } from '@/queries/useExercises';
 import { routes } from '@/navigation/nav';
 import type { Routine } from '@/domain/types';
-import { useAppTheme } from '@/theme/theme';
+import { useAppTheme, type Theme } from '@/theme/theme';
 import { useT } from '@/i18n/useT';
-import { tr } from '@/i18n/tr';
-import type { TKey } from '@/i18n';
+import type { TKey, TVars } from '@/i18n';
 import { radius, spacing, screenGutter } from '@/theme/tokens';
-import { formatAgo, formatTimer } from '@/utils/format';
+import { formatTimer } from '@/utils/format';
 import { useSettings } from '@/settings';
 import { haptics } from '@/services/haptics';
 import { useStartRoutine } from '@/workout/startRoutine';
-import { useWorkoutSession } from '@/workout/session';
+import { useWorkoutRunning, useWorkoutSession } from '@/workout/session';
+import { formatAgoLocalized } from '@/utils/relativeTime';
 
 type Order = 'recent' | 'name';
 
@@ -93,7 +101,7 @@ const CARD_PADDING = spacing.lg;
 const GRID_COLUMNS = 3;
 
 export default function WorkoutScreen() {
-  const { t } = useT();
+  const { t, locale } = useT();
   const router = useRouter();
   const theme = useAppTheme();
   const bottomSpace = useTabContentBottom();
@@ -106,9 +114,8 @@ export default function WorkoutScreen() {
   // this screen can see either they are the same object: bootstrap restores an unfinished
   // session and immediately pauses it, so a crashed workout arrives as a paused one. There is
   // no separate "recover" state to surface here, and inventing one would mean a second card
-  // with a second button pointing at the same session.
-  const { session } = useWorkoutSession();
-  const resuming = session !== null && (session.status === 'active' || session.status === 'paused');
+  // with a second button pointing at the same session. A boolean, so the tick stays in the card.
+  const resuming = useWorkoutRunning();
 
   const sorted = useMemo(() => {
     const items = [...routines.routines];
@@ -139,6 +146,39 @@ export default function WorkoutScreen() {
 
   const openRoutine = useCallback((id: string) => router.push(routes.routine(id)), [router]);
   const openNewRoutine = useCallback(() => router.push(routes.newRoutine()), [router]);
+  const openSession = useCallback(() => router.push(routes.workoutSession()), [router]);
+  const openCardio = useCallback(() => router.push(routes.cardio()), [router]);
+  const openExercise = useCallback((id: string) => router.push(routes.exerciseDetail(id)), [router]);
+  const openLibrary = useCallback(() => router.push(routes.exercisesTab()), [router]);
+  const orderSegments = useMemo(
+    () => ORDER_SEGMENTS.map((seg) => ({ value: seg.value, label: t(seg.label) })),
+    [t],
+  );
+  const libraryTiles = useMemo(
+    () =>
+      preview.map((exercise) => ({
+        id: exercise.id,
+        name: exercise.name,
+        // `thumbUriOf` is for stored snapshots; a search hit is a live `Exercise`.
+        uri: exercise.thumbnailUrl ?? exercise.imageUrl,
+      })),
+    [preview],
+  );
+  const intro = useMemo<MetaItem[]>(
+    () => [
+      {
+        icon: 'layers',
+        label:
+          routines.count === 0
+            ? t('workoutTab.buildOnce')
+            : t('workoutTab.routinesReady', {
+                count: routines.count,
+                word: t('workoutTab.routineWord', { count: routines.count }),
+              }),
+      },
+    ],
+    [routines.count, t],
+  );
 
   const mostRecent = useMemo(() => {
     const trained = routines.routines.filter((r) => r.lastPerformedAt !== null);
@@ -166,49 +206,18 @@ export default function WorkoutScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: bottomSpace }]}
         keyboardShouldPersistTaps="handled"
       >
-        <MetaLine
-          items={[
-            {
-              icon: 'layers',
-              label:
-                routines.count === 0
-                  ? t('workoutTab.buildOnce')
-                  : t('workoutTab.routinesReady', {
-                      count: routines.count,
-                      word: t('workoutTab.routineWord', { count: routines.count }),
-                    }),
-            },
-          ]}
-          theme={theme}
-          wrap
-          style={styles.intro}
-        />
+        <MetaLine items={intro} theme={theme} wrap style={styles.intro} />
 
-        {resuming && session ? (
-          <ResumeCard
-            routineName={session.routineName}
-            paused={session.status === 'paused'}
-            elapsedSeconds={session.elapsedSeconds}
-            completed={session.entries.reduce(
-              (n, entry) => n + entry.sets.filter((set) => set.completed).length,
-              0,
-            )}
-            total={session.entries.reduce((n, entry) => n + entry.sets.length, 0)}
-            onPress={() => router.push(routes.workoutSession())}
-          />
-        ) : null}
+        {resuming ? <LiveResumeCard onPress={openSession} /> : null}
 
         {mostRecent && !resuming ? (
-          <LastTrainedCard
-            routine={mostRecent}
-            onOpen={() => openRoutine(mostRecent.id)}
-          />
+          <LastTrainedCard routine={mostRecent} onOpen={openRoutine} />
         ) : null}
 
         {/* After the "continue" affordances and before the archive of plans, because it is a
             third way to train rather than the most likely one: nobody returns to this tab
             mid-session looking for the recorder, but nobody finds it under Profile either. */}
-        <CardioCard onPress={() => router.push(routes.cardio())} style={styles.section} />
+        <CardioCard onPress={openCardio} style={styles.section} />
 
         <View style={styles.section} onLayout={measureSection}>
           <SectionHeader
@@ -218,12 +227,8 @@ export default function WorkoutScreen() {
             action={{ label: t('workoutTab.new'), onPress: openNewRoutine }}
           />
           {routines.routines.length > 1 ? (
-            <View style={{ marginBottom: spacing.md }}>
-              <SegmentedControl
-                segments={ORDER_SEGMENTS.map((seg) => ({ value: seg.value, label: t(seg.label) }))}
-                value={order}
-                onChange={setOrder}
-              />
+            <View style={styles.order}>
+              <SegmentedControl segments={orderSegments} value={order} onChange={setOrder} />
             </View>
           ) : null}
 
@@ -247,13 +252,14 @@ export default function WorkoutScreen() {
           ) : (
             <View>
               {sorted.map((routine, index) => (
-                <RoutineRow
+                <RoutineItem
                   key={routine.id}
                   routine={routine}
                   theme={theme}
-                  meta={routineMeta(routine)}
-                  topDivider={index > 0}
-                  onPress={() => openRoutine(routine.id)}
+                  t={t}
+                  locale={locale}
+                  first={index === 0}
+                  onOpen={openRoutine}
                 />
               ))}
             </View>
@@ -263,20 +269,42 @@ export default function WorkoutScreen() {
         <LibraryPreview
           loading={library.isLoading}
           failed={library.error !== null}
-          exercises={preview.map((exercise) => ({
-            id: exercise.id,
-            name: exercise.name,
-            // `thumbUriOf` is for stored snapshots; a search hit is a live `Exercise`.
-            uri: exercise.thumbnailUrl ?? exercise.imageUrl,
-          }))}
+          exercises={libraryTiles}
           tileWidth={tileWidth}
-          onOpen={(id) => router.push(routes.exerciseDetail(id))}
-          onBrowse={() => router.push(routes.exercisesTab())}
+          onOpen={openExercise}
+          onBrowse={openLibrary}
         />
 
         <SessionCounts routines={routines.routines} width={gridWidth} />
       </ScrollView>
     </>
+  );
+}
+
+/**
+ * The resume card, fed by the live session.
+ *
+ * The only component on this tab that reads the session itself, so the once-a-second tick
+ * re-renders this card and nothing above it.
+ */
+function LiveResumeCard({ onPress }: { onPress: () => void }) {
+  const { session } = useWorkoutSession();
+  if (session === null || (session.status !== 'active' && session.status !== 'paused')) return null;
+  let completed = 0;
+  let total = 0;
+  for (const entry of session.entries) {
+    total += entry.sets.length;
+    for (const set of entry.sets) if (set.completed) completed += 1;
+  }
+  return (
+    <ResumeCard
+      routineName={session.routineName}
+      paused={session.status === 'paused'}
+      elapsedSeconds={session.elapsedSeconds}
+      completed={completed}
+      total={total}
+      onPress={onPress}
+    />
   );
 }
 
@@ -299,6 +327,10 @@ function ResumeCard({
   const { t } = useT();
   const theme = useAppTheme();
   const progress = total > 0 ? completed / total : 0;
+  const meta: MetaItem[] = [
+    { icon: 'timer', label: formatTimer(elapsedSeconds) },
+    { icon: 'checkCircle', label: t('workoutTab.setsOfTotal', { done: completed, total }) },
+  ];
   return (
     <View style={styles.section}>
       <Card
@@ -326,10 +358,7 @@ function ResumeCard({
             <Txt variant="title" weight="700" numberOfLines={1} style={{ marginTop: spacing.xs }}>
               {routineName}
             </Txt>
-            <Txt variant="caption" tone="muted" style={{ marginTop: spacing.xxs }}>
-              {formatTimer(elapsedSeconds)} ·{' '}
-              {t('workoutTab.setsOfTotal', { done: completed, total })}
-            </Txt>
+            <MetaLine items={meta} theme={theme} style={styles.cardMeta} />
           </View>
           <ProgressRing
             progress={progress}
@@ -352,9 +381,15 @@ function ResumeCard({
  * separate targets: the name block opens, Start starts: is unambiguous to read and to
  * hit, and needs no event plumbing at all.
  */
-function LastTrainedCard({ routine, onOpen }: { routine: Routine; onOpen: () => void }) {
-  const { t } = useT();
+function LastTrainedCard({ routine, onOpen }: { routine: Routine; onOpen: (id: string) => void }) {
+  const { t, locale } = useT();
+  const theme = useAppTheme();
   const performedAt = routine.lastPerformedAt ?? routine.createdAt;
+  const ago = formatAgoLocalized(performedAt, t, locale);
+  const meta: MetaItem[] = [
+    { icon: 'calendar', label: ago },
+    { icon: 'layers', label: t('workout.exercise', { count: routine.items.length }) },
+  ];
   // The card, not the button, shows the refusal: squeezed under a `Start` button the line
   // would be two clipped words, and this is the one case where the button correctly did
   // nothing: it has to be readable, not merely present.
@@ -364,22 +399,16 @@ function LastTrainedCard({ routine, onOpen }: { routine: Routine; onOpen: () => 
       <Card>
         <Row gap="lg" align="center">
           <Pressable
-            onPress={onOpen}
+            onPress={() => onOpen(routine.id)}
             accessibilityRole="button"
-            accessibilityLabel={t('workoutTab.lastTrainedA11y', {
-              name: routine.name,
-              ago: formatAgo(performedAt),
-            })}
-            style={{ flex: 1, minWidth: 0, paddingVertical: spacing.xs }}
+            accessibilityLabel={t('workoutTab.lastTrainedA11y', { name: routine.name, ago })}
+            style={styles.lastTrained}
           >
             <MetricLabel label={t('workoutTab.lastTrained')} />
             <Txt variant="subhead" weight="700" numberOfLines={1} style={{ marginTop: spacing.xs }}>
               {routine.name}
             </Txt>
-            <Txt variant="caption" tone="muted">
-              {formatAgo(performedAt)} · {routine.items.length}{' '}
-              {t('workoutTab.exerciseWord', { count: routine.items.length })}
-            </Txt>
+            <MetaLine items={meta} theme={theme} style={styles.cardMeta} />
           </Pressable>
           <StartButton routine={routine} onRefused={() => setRefused(true)} />
         </Row>
@@ -441,7 +470,8 @@ function StartButton({ routine, onRefused }: { routine: Routine; onRefused: () =
  *
  * A different shape from the routine rows on purpose: a routine is chosen, cardio is begun, so
  * this is one large target with the activity kinds named on it rather than a row with a button
- * on the right. It also carries the "why is distance sometimes estimated" line in one place, * better here, where it is read before a session, than on the results screen, where it is
+ * on the right. It also carries the "why is distance sometimes estimated" line in one place,
+ * better here, where it is read before a session, than on the results screen, where it is
  * read after one.
  */
 function CardioCard({ onPress, style }: { onPress: () => void; style?: StyleProp<ViewStyle> }) {
@@ -511,7 +541,7 @@ function LibraryPreview({
             <Pressable
               key={exercise.id}
               accessibilityRole="button"
-              accessibilityLabel={`${exercise.name}. Opens the exercise.`}
+              accessibilityLabel={t('tabsWorkout.opensExercise', { name: exercise.name })}
               onPress={() => onOpen(exercise.id)}
               style={({ pressed }) => [
                 styles.tile,
@@ -587,24 +617,54 @@ function shortLabel(name: string): string {
   return clean.length <= 5 ? clean : `${clean.slice(0, 4)}.`;
 }
 
-function routineMeta(routine: Routine): MetaItem[] {
-  const items: MetaItem[] = [
-    {
-      icon: 'layers',
-      label: `${routine.items.length} ${tr('workoutTab.exerciseWord', { count: routine.items.length })}`,
-    },
-  ];
-  if (routine.timesCompleted > 0) {
-    items.push({ icon: 'checkCircle', label: tr('workoutTab.doneTimes', { count: routine.timesCompleted }) });
-  }
-  if (routine.lastPerformedAt !== null) items.push({ icon: 'calendar', label: formatAgo(routine.lastPerformedAt) });
-  return items;
-}
+/**
+ * One routine row: exercise count, times completed, last performed.
+ *
+ * Memoised with the id-taking `onOpen`, so a re-render of the tab (a new sort, a routine saved
+ * elsewhere) redraws only the rows whose routine changed. `t` is a prop rather than a `tr()`
+ * call so a language change reaches a row its memo would otherwise skip.
+ *
+ * The exercise count stays first: the row's spoken label is "<name>. <items joined>", and the
+ * offline gate finds routine rows by the "N exercises ·" at its start.
+ */
+const RoutineItem = memo(function RoutineItem({
+  routine,
+  theme,
+  t,
+  locale,
+  first,
+  onOpen,
+}: {
+  routine: Routine;
+  theme: Theme;
+  t: (key: TKey, vars?: TVars) => string;
+  locale: string;
+  first: boolean;
+  onOpen: (id: string) => void;
+}) {
+  const meta = useMemo(() => {
+    const items: MetaItem[] = [
+      { icon: 'layers', label: t('workout.exercise', { count: routine.items.length }) },
+    ];
+    if (routine.timesCompleted > 0) {
+      items.push({ icon: 'checkCircle', label: t('workoutTab.doneTimes', { count: routine.timesCompleted }) });
+    }
+    if (routine.lastPerformedAt !== null) {
+      items.push({ icon: 'calendar', label: formatAgoLocalized(routine.lastPerformedAt, t, locale) });
+    }
+    return items;
+  }, [locale, routine.items.length, routine.lastPerformedAt, routine.timesCompleted, t]);
+  const press = useCallback(() => onOpen(routine.id), [onOpen, routine.id]);
+  return <RoutineRow routine={routine} theme={theme} meta={meta} topDivider={!first} onPress={press} />;
+});
 
 const styles = StyleSheet.create({
   content: { flexGrow: 1 },
   intro: { paddingHorizontal: screenGutter, paddingTop: spacing.md },
   section: { paddingHorizontal: screenGutter, paddingTop: spacing.xxl },
+  order: { marginBottom: spacing.md },
+  cardMeta: { marginTop: spacing.xs },
+  lastTrained: { flex: 1, minWidth: 0, paddingVertical: spacing.xs },
   badge: {
     width: 44,
     height: 44,

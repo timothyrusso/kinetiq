@@ -23,13 +23,20 @@
  * When `total` is absent: the port allows it: no count is shown rather than one estimated
  * from loaded pages, which would be a number that changes as you scroll.
  *
+ * ## Rows: muscles as tags, category as a badge
+ *
+ * Primary muscles are a `TagRow` capped at two with "+n", and each is a shortcut into the
+ * muscle filter the sheet already offers. The category is a badge opposite the title, and is
+ * left out when a muscle already says the same word. The filter sheet itself is the header's
+ * filter action; the content only shows what is active, each chip removable on its own.
+ *
  * ## A row tap must not wait on a fetch
  *
  * Tapping pushes a detail screen that renders from the row's own `Exercise` immediately and
  * revalidates in the background. A tap that waited on the network to show a name the user
  * just read would feel broken, not careful.
  */
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent, TextInputFocusEventData } from 'react-native';
 import type { SearchBarCommands } from 'react-native-screens';
 import type { ExerciseFilter } from '@/domain/types';
@@ -40,7 +47,7 @@ import { useIsFocused, useRouter } from 'expo-router';
 import { useTabContentBottom } from '@/ui/insets';
 
 import { SCROLL_INSETS, ScreenHeader } from '@/ui/Screen';
-import { MetaLine } from '@/ui/display';
+import { MetaLine, type MetaItem, type Tag } from '@/ui/display';
 import { HeaderSearchBar, HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { ExerciseRow } from '@/ui/rows';
 import { Badge, Row } from '@/ui/layout';
@@ -61,11 +68,9 @@ import {
 } from '@/queries/exerciseFilters';
 import type { Exercise, Taxon } from '@/domain/types';
 import { routes } from '@/navigation/nav';
-import { useAppTheme } from '@/theme/theme';
+import { useAppTheme, type Theme } from '@/theme/theme';
 import { useT } from '@/i18n/useT';
 import { spacing, screenGutter } from '@/theme/tokens';
-import { exerciseTags } from '@/ui/display';
-
 
 export default function ExercisesScreen() {
   const { t } = useT();
@@ -102,21 +107,28 @@ export default function ExercisesScreen() {
     [router],
   );
 
+  // Muscle name to filter id, so a muscle tag in a row can set the same filter the sheet does.
+  // The catalog names a muscle the same way in both places (`name_en`, else the Latin `name`).
+  const muscleIds = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const muscle of taxonomy.data?.muscles ?? []) map.set(muscle.name, muscle.id);
+    return map;
+  }, [taxonomy.data?.muscles]);
+
   const renderItem = useCallback(
     ({ item, index }: { item: Exercise; index: number }) => (
-      <ExerciseRow
-        name={item.name}
-        uri={item.thumbnailUrl ?? item.imageUrl}
-        tags={exerciseTags(item)}
+      <ExerciseItem
+        exercise={item}
         theme={theme}
         // Rows on screen during a refetch belong to the *previous* query. Dimming them
         // rather than hiding them is the difference between "it's thinking" and "it broke".
         dimmed={search.isPlaceholder}
-        topDivider={index > 0}
-        onPress={() => openExercise(item.id)}
+        first={index === 0}
+        muscleIds={muscleIds}
+        onOpen={openExercise}
       />
     ),
-    [openExercise, search.isPlaceholder, theme],
+    [muscleIds, openExercise, search.isPlaceholder, theme],
   );
 
   const keyExtractor = useCallback((item: Exercise) => item.id, []);
@@ -193,76 +205,62 @@ export default function ExercisesScreen() {
     if (hasMore && !isFetchingNextPage) loadNextPage();
   }, [filter, hasMore, isFetchingNextPage, loadNextPage]);
 
-  const listHeader = (
-    <>
+  const countLine = useMemo<MetaItem[]>(
+    () => [
+      {
+        icon: settling ? 'refresh' : 'library',
+        label: settling
+          ? t('exerciseList.searching')
+          : search.total === null
+            ? t('exerciseList.subtitle')
+            : searching
+              ? t('exercises.countFor', { count: search.total, query: filter.query })
+              : t('exercises.count', { count: search.total }),
+      },
+    ],
+    [filter.query, search.total, searching, settling, t],
+  );
+
+  const refresh = search.refresh;
+  const onRefresh = useCallback(() => void refresh(), [refresh]);
+  const refetching = search.isRefetching && !search.isLoading;
+  const staleFailure = search.error !== null && search.items.length > 0;
+
+  // Memoised so a re-render that changed nothing up here (a page landing, a scroll latch)
+  // hands FlashList the same header element.
+  const listHeader = useMemo(
+    () => (
       <View style={styles.controls}>
-        <MetaLine
-          items={[
-            {
-              icon: settling ? 'refresh' : 'library',
-              label: settling
-                ? t('exerciseList.searching')
-                : search.total === null
-                  ? t('exerciseList.subtitle')
-                  : searching
-                    ? t('exercises.countFor', { count: search.total, query: filter.query })
-                    : t('exercises.count', { count: search.total }),
-            },
-          ]}
-          theme={theme}
-          wrap
-        />
+        <MetaLine items={countLine} theme={theme} wrap />
 
-        <Row gap="sm" align="center">
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Chip
-              label={
-                activeCount === 0
-                  ? t('common.filters')
-                  : t('exerciseList.filtersOn', {
-                      count: activeCount,
-                      word: t('exerciseList.filterWord', { count: activeCount }),
-                    })
-              }
-              icon="filter"
-              size="sm"
-              selected={activeCount > 0}
-              onPress={openFilters}
-            />
-          </View>
-          {activeCount > 0 ? (
-            <Button
-              label={t('common.clear')}
-              size="sm"
-              variant="quiet"
-              onPress={resetAll}
-            />
-          ) : null}
-        </Row>
-
-        {/* One chip per active filter, each removable on its own. A single "Filtered" pill
-            would make narrowing down a two-step affair: open the sheet, find the field. */}
-        {activeChips.length > 0 ? (
-          <View style={styles.chips}>
-            {activeChips.map((chip) => (
-              <Chip
-                key={chip.key}
-                label={chip.name}
-                size="sm"
-                selected
-                onPress={chip.clear}
-                onRemove={chip.clear}
-              />
-            ))}
-          </View>
+        {/* One chip per active filter, each removable on its own, and a Clear for all of
+            them. A single "Filtered" pill would make narrowing down a two-step affair: open
+            the sheet, find the field. Opening the sheet is the header's filter action. */}
+        {activeCount > 0 ? (
+          <Row gap="sm" align="center">
+            <View style={styles.chips}>
+              {activeChips.map((chip) => (
+                <Chip
+                  key={chip.key}
+                  label={chip.name}
+                  size="sm"
+                  selected
+                  onPress={chip.clear}
+                  onRemove={chip.clear}
+                />
+              ))}
+            </View>
+            <Button label={t('common.clear')} size="sm" variant="quiet" onPress={resetAll} />
+          </Row>
         ) : null}
 
-        <FetchNotice searching={search.isRefetching && !search.isLoading}
-                     failed={search.error !== null && search.items.length > 0}
-                     onRetry={() => void search.refresh()} />
+        <FetchNotice searching={refetching} failed={staleFailure} onRetry={onRefresh} />
       </View>
-    </>
+    ),
+    [activeChips, activeCount, countLine, onRefresh, refetching, resetAll, staleFailure, t, theme],
   );
+  const contentContainerStyle = useMemo(() => ({ paddingBottom: bottomSpace }), [bottomSpace]);
+  const listStyle = useMemo(() => ({ backgroundColor: theme.colors.background }), [theme]);
 
   return (
     <>
@@ -287,11 +285,11 @@ export default function ExercisesScreen() {
         keyExtractor={keyExtractor}
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={{ paddingBottom: bottomSpace }}
+        contentContainerStyle={contentContainerStyle}
         refreshControl={
           <ThemedRefreshControl
             refreshing={search.isRefetching && search.items.length > 0}
-            onRefresh={() => void search.refresh()}
+            onRefresh={onRefresh}
           />
         }
         onEndReached={onEndReached}
@@ -309,9 +307,8 @@ export default function ExercisesScreen() {
         }
         ListEmptyComponent={
           search.isLoading ? (
-            <View style={{ paddingHorizontal: screenGutter }}>
-              <SkeletonList rows={7} />
-            </View>
+            // `SkeletonList` carries the screen gutter itself.
+            <SkeletonList rows={7} />
           ) : search.error !== null ? (
             // `ErrorState` already distinguishes offline from a server fault: different
             // icon, different copy: so this screen only supplies the subject line. The
@@ -319,7 +316,7 @@ export default function ExercisesScreen() {
             <ErrorState
               error={search.error}
               title={t('exercises.unavailable')}
-              onRetry={() => void search.refresh()}
+              onRetry={onRefresh}
             />
           ) : searching || activeCount > 0 ? (
             <EmptyState
@@ -335,16 +332,68 @@ export default function ExercisesScreen() {
               message={t('exerciseList.nothingLoadedMessage')}
               icon="library"
               actionLabel={t('common.retry')}
-              onAction={() => void search.refresh()}
+              onAction={onRefresh}
             />
           )
         }
-        style={{ backgroundColor: theme.colors.background }}
+        style={listStyle}
       />
-
     </>
   );
 }
+
+/**
+ * One catalog row.
+ *
+ * Memoised with an id-taking `onOpen`, so `renderItem` passes the same callback to every row
+ * and the row builds its own press handler and tags only when its exercise changes.
+ */
+const ExerciseItem = memo(function ExerciseItem({
+  exercise,
+  theme,
+  dimmed,
+  first,
+  muscleIds,
+  onOpen,
+}: {
+  exercise: Exercise;
+  theme: Theme;
+  dimmed: boolean;
+  first: boolean;
+  muscleIds: ReadonlyMap<string, number>;
+  onOpen: (id: string) => void;
+}) {
+  const tags = useMemo<Tag[]>(
+    () =>
+      exercise.primaryMuscles.map((muscle) => {
+        const id = muscleIds.get(muscle);
+        return id === undefined
+          ? { key: `m:${muscle}`, label: muscle }
+          : { key: `m:${muscle}`, label: muscle, onPress: () => setExerciseMuscleId(id) };
+      }),
+    [exercise.primaryMuscles, muscleIds],
+  );
+  // Left out when a muscle already says it: wger's category and muscle taxonomies overlap
+  // ("Shoulders" and "Shoulders"), and printing both reads as a duplication bug.
+  const category = exercise.category;
+  const badge =
+    category && !exercise.primaryMuscles.some((m) => m.toLowerCase() === category.toLowerCase())
+      ? category
+      : undefined;
+  const press = useCallback(() => onOpen(exercise.id), [exercise.id, onOpen]);
+  return (
+    <ExerciseRow
+      name={exercise.name}
+      uri={exercise.thumbnailUrl ?? exercise.imageUrl}
+      tags={tags}
+      {...(badge ? { badge } : {})}
+      theme={theme}
+      dimmed={dimmed}
+      topDivider={!first}
+      onPress={press}
+    />
+  );
+});
 
 /**
  * Refetch status, which `keepPreviousData` makes invisible by design.
@@ -436,6 +485,6 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
     gap: spacing.md,
   },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  chips: { flex: 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   footer: { paddingVertical: spacing.xl, paddingHorizontal: screenGutter },
 });
