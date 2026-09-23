@@ -13,7 +13,7 @@
  *   several cache keys become stale at once. `invalidateAfterWorkout` is the single
  *   place that says which.
  */
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 import { activityRepository } from '@/persistence';
 import type { Activity, ActivityKind } from '@/domain/types';
@@ -149,6 +149,9 @@ export function useActivityList(params: ActivityListParams = DEFAULT_ACTIVITY_PA
     // selector's output is rebuilt only when the rows change, so its identity is
     // stable across unrelated notifications.
     select: useCallback((rows: Activity[]) => selectList(rows, normalized), [normalized]),
+    // A new kind or search is a new key. Holding the previous rows until it lands keeps the
+    // list from collapsing to a skeleton and back, which would throw away the scroll offset.
+    placeholderData: keepPreviousData,
   });
 
   return {

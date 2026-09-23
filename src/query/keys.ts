@@ -27,12 +27,15 @@ export type ActivityListParams = {
 export const queryKeys = {
   activities: {
     all: ['activities'] as const,
-    list: (params: ActivityListParams) =>
+    /**
+     * Only what the fetch reads. Sort and grouping are applied in `select`, so keying on
+     * them would make every sort change a cold miss: the list would empty to a skeleton for
+     * a frame and the scroll position would be lost with it.
+     */
+    list: (params: Pick<ActivityListParams, 'kinds' | 'search'>) =>
       ['activities', 'list', {
         kinds: [...params.kinds].sort(),
         search: params.search.trim().toLowerCase(),
-        sort: params.sort,
-        groupBy: params.groupBy,
       }] as const,
     /**
      * The unfiltered first page, which is exactly what Home and Progress need.

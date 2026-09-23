@@ -305,6 +305,7 @@ export default function ActivitiesScreen() {
       <FlashList
         {...SCROLL_INSETS}
         key={locale}
+        maintainVisibleContentPosition={NO_ANCHOR}
         data={rows}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
@@ -385,6 +386,13 @@ const KindChip = memo(function KindChip({
   const press = useCallback(() => onToggle(kind), [kind, onToggle]);
   return <Chip label={label} icon={icon} size="sm" selected={selected} onPress={press} />;
 });
+
+/**
+ * FlashList v2 pins the first visible row across data changes, which suits a feed that grows
+ * at the top and is wrong for a re-sort: the row it pins moves far down the new order, so the
+ * list scrolls away from the sort control the user just tapped. A re-sort keeps the offset.
+ */
+const NO_ANCHOR = { disabled: true } as const;
 
 const HEADING_DATE = new Map<string, Intl.DateTimeFormat>();
 
