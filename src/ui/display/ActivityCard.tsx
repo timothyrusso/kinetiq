@@ -32,6 +32,7 @@ export const ActivityCard = memo(function ActivityCard({
   thumbnail = 'none',
   compact = false,
   onPress,
+  onLongPress,
 }: {
   activity: Activity;
   theme: Theme;
@@ -40,12 +41,15 @@ export const ActivityCard = memo(function ActivityCard({
   thumbnail?: 'map' | 'chart' | 'none';
   compact?: boolean;
   onPress: (id: string) => void;
+  /** Same id-taking shape as `onPress`, so a list can pass one stable callback for both. */
+  onLongPress?: (id: string) => void;
 }) {
   const summary = useMemo(
     () => activitySummary(activity, units, showSpeedInsteadOfPace),
     [activity, units, showSpeedInsteadOfPace],
   );
   const press = useCallback(() => onPress(activity.id), [onPress, activity.id]);
+  const longPress = useCallback(() => onLongPress?.(activity.id), [onLongPress, activity.id]);
   const skin = theme.surfaceSkin;
   const route = activity.cardio?.route ?? [];
   const showMap = !compact && thumbnail === 'map' && route.length > 1;
@@ -54,6 +58,7 @@ export const ActivityCard = memo(function ActivityCard({
   return (
     <Pressable
       onPress={press}
+      {...(onLongPress ? { onLongPress: longPress } : {})}
       accessibilityRole="button"
       accessibilityLabel={summary.accessibilityLabel}
       android_ripple={skin.rowPressed === 'ripple' ? { color: theme.colors.surfacePressed } : undefined}
