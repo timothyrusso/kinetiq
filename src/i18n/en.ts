@@ -46,6 +46,37 @@ export const en = {
     system: 'System',
   },
 
+  // --- group-a ---
+  tabsAgo: {
+    justNow: 'Just now',
+    hours_one: '{count} hour ago',
+    hours_other: '{count} hours ago',
+    days_one: 'Yesterday',
+    days_other: '{count} days ago',
+    weeks_one: '{count} week ago',
+    weeks_other: '{count} weeks ago',
+  },
+  tabsHome: {
+    today: 'Today',
+    minutesUnit: 'min',
+    streak: 'Streak',
+    weeklyGoal: 'Weekly goal',
+    goalOf: 'of {goal}',
+    nowBar: 'Now',
+    minutesShort: '{value}m',
+    mixEyebrow: 'Sessions over {count} weeks',
+  },
+  tabsWorkout: {
+    opensExercise: '{name}. Opens the exercise.',
+  },
+  tabsProfile: {
+    height: '{height} cm',
+    age_one: '{count} year old',
+    age_other: '{count} years old',
+    volumeTonnes: '{value} t',
+  },
+  // --- end group-a ---
+
   home: {
     eyebrowMorning: 'Good morning',
     eyebrowAfternoon: 'Good afternoon',
