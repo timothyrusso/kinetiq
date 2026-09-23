@@ -160,7 +160,7 @@ const Row = memo(function Row({
             </ListItem.SupportingContent>
           ) : null}
           <ListItem.TrailingContent>
-            <ComposeRow verticalAlignment="center">
+            <ComposeRow verticalAlignment="center" horizontalArrangement={{ spacedBy: spacing.sm }}>
               {row.value ? <Text>{row.value}</Text> : null}
               <Glyph name="chevron-right" />
             </ComposeRow>
@@ -207,7 +207,7 @@ const Row = memo(function Row({
             </ListItem.SupportingContent>
           ) : null}
           <ListItem.TrailingContent>
-            <ComposeRow verticalAlignment="center">
+            <ComposeRow verticalAlignment="center" horizontalArrangement={{ spacedBy: spacing.xs }}>
               <IconButton onClick={() => move(-row.step)} enabled={row.value > row.min}>
                 <Glyph name="remove" />
               </IconButton>

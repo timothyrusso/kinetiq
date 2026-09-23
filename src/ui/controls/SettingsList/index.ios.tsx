@@ -150,9 +150,12 @@ const Row = memo(function Row({ row, accent }: { row: SettingsRow; accent: strin
         </Picker>
       );
     case 'info':
+      // A fact with no value (the catalog's name, a permission the app never asks for) is a
+      // plain row: `LabeledContent` would reserve a trailing column for an empty string.
+      if (!row.value) return <Titles title={row.title} subtitle={row.subtitle} />;
       return (
         <LabeledContent label={<Titles title={row.title} subtitle={row.subtitle} />}>
-          <Text modifiers={[secondary]}>{row.value ?? ''}</Text>
+          <Text modifiers={[secondary]}>{row.value}</Text>
         </LabeledContent>
       );
     case 'button':
