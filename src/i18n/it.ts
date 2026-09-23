@@ -553,6 +553,22 @@ export const it: Copy = {
     kindWalks: 'Camminate',
     kindYoga: 'Yoga',
   },
+  // --- group-c ---
+  workoutFlow: {
+    justNow: 'adesso',
+    hoursAgo_one: '{count} h fa',
+    hoursAgo_other: '{count} h fa',
+    daysAgo_one: '{count} g fa',
+    daysAgo_other: '{count} gg fa',
+    weeksAgo_one: '{count} sett. fa',
+    weeksAgo_other: '{count} sett. fa',
+    thisWeek: 'Questa settimana',
+    lastWeek: 'La settimana scorsa',
+    weekOf: 'Settimana del {date}',
+    elapsedA11y: 'Tempo trascorso {time}',
+    setsDone: '{done} di {planned} {word} completate',
+  },
+  // --- end group-c ---
   session: {
     thisSet: 'Questa serie',
     addNotChanged:

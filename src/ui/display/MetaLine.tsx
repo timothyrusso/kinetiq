@@ -36,11 +36,11 @@ export const MetaLine = memo(function MetaLine({
       accessibilityLabel={items.map((i) => i.a11y ?? i.label).join(', ')}
     >
       {items.map((item) => (
-        <View key={`${item.icon}:${item.label}`} style={styles.item}>
+        <View key={item.id ?? `${item.icon}:${item.label}`} style={styles.item}>
           <Icon name={item.icon} size={ICON_SIZE.micro} color={theme.colors.textFaint} />
           <CellText
             text={item.label}
-            variant="caption"
+            variant={item.mono ? 'monoSm' : 'caption'}
             color={theme.colors.textMuted}
             numberOfLines={1}
           />

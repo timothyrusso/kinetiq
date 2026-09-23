@@ -550,6 +550,22 @@ export const en = {
     kindWalks: 'Walks',
     kindYoga: 'Yoga',
   },
+  // --- group-c ---
+  workoutFlow: {
+    justNow: 'just now',
+    hoursAgo_one: '{count}h ago',
+    hoursAgo_other: '{count}h ago',
+    daysAgo_one: '{count}d ago',
+    daysAgo_other: '{count}d ago',
+    weeksAgo_one: '{count}w ago',
+    weeksAgo_other: '{count}w ago',
+    thisWeek: 'This week',
+    lastWeek: 'Last week',
+    weekOf: 'Week of {date}',
+    elapsedA11y: 'Elapsed {time}',
+    setsDone: '{done} of {planned} {word} done',
+  },
+  // --- end group-c ---
   session: {
     thisSet: 'This set',
     addNotChanged:

@@ -16,6 +16,13 @@ export type MetaItem = {
   label: string;
   /** What a screen reader says instead of `label`, when the visible form is terse ("5:58 /km"). */
   a11y?: string;
+  /**
+   * A stable identity for an item whose label changes (a ticking clock). Without it the item is
+   * keyed by its label and remounts on every change.
+   */
+  id?: string;
+  /** Fixed-width digits, for a value that ticks and must not reflow as it does. */
+  mono?: boolean;
 };
 
 /** A colour family for a tag. Activity kinds are tones, so a run tag is the run colour. */
