@@ -21,7 +21,7 @@ import { useExerciseTaxonomy } from '@/queries/useExercises';
 import { spacing } from '@/theme/tokens';
 import { Button } from '@/ui/controls/Button';
 import { Chip } from '@/ui/controls/Chip';
-import { FormSheet } from '@/ui/FormSheet';
+import { FormSection, FormSheet } from '@/ui/FormSheet';
 import { Txt } from '@/ui/Text';
 
 export default function ExerciseFiltersSheet() {
@@ -87,10 +87,9 @@ function TaxonPicker({
   // reads as a broken fetch, when the provider just has none for this install.
   if (taxons.length === 0) return null;
   return (
-    <View style={styles.group}>
-      <Txt variant="label" tone="muted" uppercase tracking={0.8}>
-        {title}
-      </Txt>
+    // The same titled group every other form sheet uses, so this sheet's section titles match
+    // the item editor's and the rename sheet's rather than being a fourth style.
+    <FormSection title={title}>
       <View style={styles.chips}>
         <Chip label={t('exerciseList.any')} size="sm" selected={value === null} onPress={() => onChange(null)} />
         {taxons.map((taxon) => (
@@ -103,11 +102,10 @@ function TaxonPicker({
           />
         ))}
       </View>
-    </View>
+    </FormSection>
   );
 }
 
 const styles = StyleSheet.create({
-  group: { gap: spacing.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
 });

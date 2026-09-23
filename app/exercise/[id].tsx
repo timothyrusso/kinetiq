@@ -38,24 +38,22 @@
  * still opens the library: searching the words the user just tapped: because a control
  * that is inert is indistinguishable from one that is broken.
  */
-import { useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Linking from 'expo-linking';
 
 import { ScreenHeader } from '@/ui/Screen';
-import { useTransparentHeaderInset } from '@/ui/insets';
+import { useScreenContentBottom, useTransparentHeaderInset } from '@/ui/insets';
 import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
-import { Badge, Card, Gap, MetricGrid, Row, Stack as Column } from '@/ui/layout';
-import { SectionHeader } from '@/ui/display';
-import { MetricLabel, Txt } from '@/ui/Text';
-import { Icon } from '@/ui/icons';
+import { Badge, Card, Gap, Row, Stack as Column } from '@/ui/layout';
+import { MetaLine, SectionHeader, StatTile, TagRow, type Tag } from '@/ui/display';
+import { Txt } from '@/ui/Text';
+import { Icon, ICON_SIZE } from '@/ui/icons';
 import { ActionRow } from '@/ui/rows';
 import { Button } from '@/ui/controls/Button';
-import { Chip } from '@/ui/controls/Chip';
 import { ExerciseRow, ExerciseThumb, ListRow } from '@/ui/rows';
 import { EmptyState, ErrorState, SkeletonCard } from '@/ui/states';
 import {
@@ -81,12 +79,13 @@ import { routes, tabHref, tabIndexOf } from '@/navigation/nav';
 import { useAppTheme, type Theme } from '@/theme/theme';
 import { radius, screenGutter, spacing } from '@/theme/tokens';
 import {
-  formatAgo,
-  formatShortDate,
+  compactNumber,
   formatWeight,
-  trimNumber,
+  weightUnit,
+  weightValue,
   type UnitSystem,
 } from '@/utils/format';
+import { agoLabel, shortDateLabel } from '@/utils/relativeTime';
 import { withAlpha } from '@/utils/color';
 import { useT } from '@/i18n/useT';
 import type { Exercise } from '@/domain/types';
@@ -104,7 +103,7 @@ export default function ExerciseDetailScreen() {
   const { t } = useT();
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useAppTheme();
-  const insets = useSafeAreaInsets();
+  const bottom = useScreenContentBottom();
   const units = useSettings((s) => s.unitSystem);
 
   const exerciseId = typeof id === 'string' && id.length > 0 ? id : null;
@@ -150,6 +149,39 @@ export default function ExerciseDetailScreen() {
     openLibrary();
   }, [exercise, openLibrary]);
 
+  // Taxonomy as tags that navigate. Built here, once per exercise, rather than per render.
+  const primaryTags = useMemo<Tag[]>(
+    () =>
+      (exercise?.primaryMuscles ?? []).map((name) => ({
+        key: `p:${name}`,
+        label: name,
+        tone: 'accent',
+        onPress: () => filterByMuscle(name),
+      })),
+    [exercise, filterByMuscle],
+  );
+  const secondaryTags = useMemo<Tag[]>(
+    () =>
+      (exercise?.secondaryMuscles ?? []).map((name) => ({
+        key: `s:${name}`,
+        label: name,
+        onPress: () => filterByMuscle(name),
+      })),
+    [exercise, filterByMuscle],
+  );
+  const equipmentTags = useMemo<Tag[]>(
+    () =>
+      (exercise?.equipment ?? []).map((name) => ({
+        key: `e:${name}`,
+        label: name,
+        onPress: () => filterByEquipment(name),
+      })),
+    [exercise, filterByEquipment],
+  );
+  const openSession = useCallback((activityId: string) => {
+    router.push(routes.activityDetail(activityId));
+  }, []);
+
   const openAddSheet = useCallback(() => {
     if (exercise === null) return;
     router.push({ pathname: '/exercise/add', params: { id: exercise.id, name: exercise.name } });
@@ -180,7 +212,7 @@ export default function ExerciseDetailScreen() {
           {headerAction({ action: 'add', onPress: openAddSheet, t, label: 'exerciseDetail.addToRoutine' })}
         </HeaderToolbar>
       ) : null}
-      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + spacing.huge }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: bottom }}>
         {detail.isLoading ? (
           <Column gap="lg" style={[styles.section, { paddingTop: topInset + spacing.xl }]}>
             <SkeletonCard lines={2} />
@@ -224,13 +256,33 @@ export default function ExerciseDetailScreen() {
               />
             </Column>
 
+            {primaryTags.length + secondaryTags.length > 0 ? (
+              <Column gap="md" style={styles.section}>
+                <SectionHeader title={t('exerciseDetail.muscles')} />
+                <TagGroup label={t('exerciseDetail.primary')} tags={primaryTags} theme={theme} />
+                <TagGroup label={t('exerciseDetail.alsoWorked')} tags={secondaryTags} theme={theme} />
+                {secondaryTags.length > 0 ? (
+                  <Txt variant="caption" tone="faint">
+                    {t('misc.muscleTagging')}
+                  </Txt>
+                ) : null}
+              </Column>
+            ) : null}
+
+            {equipmentTags.length > 0 ? (
+              <Column gap="md" style={styles.section}>
+                <SectionHeader title={t('exerciseDetail.equipment')} />
+                <TagRow tags={equipmentTags} theme={theme} />
+              </Column>
+            ) : null}
+
             <Column gap="md" style={styles.section}>
               <SectionHeader title={t('exerciseDetail.howTo')} />
               {exercise.instructions === null || exercise.instructions.length === 0 ? (
                 <Card tone="sunken">
                   <Row gap="md" align="start">
-                    <Icon name="info" size={18} color={theme.colors.textFaint} />
-                    <Txt variant="body" tone="muted" style={{ flex: 1 }}>
+                    <Icon name="info" size={ICON_SIZE.inline} color={theme.colors.textFaint} />
+                    <Txt variant="body" tone="muted" style={styles.flex}>
                       {t(
                         detail.from === 'stored'
                           ? 'exerciseDetail.noDescriptionOffline'
@@ -241,50 +293,10 @@ export default function ExerciseDetailScreen() {
                 </Card>
               ) : (
                 <Card>
-                  <Txt variant="bodyLg" style={{ lineHeight: 24 }}>
-                    {exercise.instructions}
-                  </Txt>
+                  <Txt variant="bodyLg">{exercise.instructions}</Txt>
                 </Card>
               )}
             </Column>
-
-            <Column gap="md" style={styles.section}>
-              <SectionHeader title={t('exerciseDetail.muscles')} />
-              <Column gap="sm">
-                <MuscleChips
-                  label={t('exerciseDetail.primary')}
-                  names={exercise.primaryMuscles}
-                  onPress={filterByMuscle}
-                />
-                <MuscleChips
-                  label={t('exerciseDetail.alsoWorked')}
-                  names={exercise.secondaryMuscles}
-                  onPress={filterByMuscle}
-                  muted
-                />
-                {exercise.secondaryMuscles.length > 0 ? (
-                  <Txt variant="caption" tone="faint">
-                    {t('misc.muscleTagging')}
-                  </Txt>
-                ) : null}
-              </Column>
-            </Column>
-
-            {exercise.equipment.length > 0 ? (
-              <Column gap="md" style={styles.section}>
-                <SectionHeader title={t('exerciseDetail.equipment')} />
-                <Row gap="sm" wrap>
-                  {exercise.equipment.map((name) => (
-                    <Chip
-                      key={name}
-                      label={name}
-                      size="sm"
-                      onPress={() => filterByEquipment(name)}
-                    />
-                  ))}
-                </Row>
-              </Column>
-            ) : null}
 
             <Column gap="lg" style={styles.section}>
               <SectionHeader
@@ -302,32 +314,38 @@ export default function ExerciseDetailScreen() {
               ) : history.history.sessionsCount === 0 ? (
                 <Card tone="sunken">
                   <Row gap="md" align="center">
-                    <Icon name="target" size={20} color={theme.colors.textFaint} />
-                    <Txt variant="body" tone="muted" style={{ flex: 1 }}>
+                    <Icon name="target" size={ICON_SIZE.inline} color={theme.colors.textFaint} />
+                    <Txt variant="body" tone="muted" style={styles.flex}>
                       {t('exerciseDetail.neverLogged')}
                     </Txt>
                   </Row>
                 </Card>
               ) : (
                 <>
-                  <MetricGrid columns={3}>
-                    <MetricGridCell
-                      value={formatWeight(history.history.totalVolumeKg, units)}
+                  {history.history.lastPerformedAt === null ? null : (
+                    <MetaLine
+                      items={[
+                        {
+                          icon: 'calendar',
+                          label: t('details.lastPerformedAgo', {
+                            ago: agoLabel(history.history.lastPerformedAt),
+                          }),
+                        },
+                      ]}
+                      theme={theme}
+                    />
+                  )}
+                  <View style={styles.stats}>
+                    <StatTile
                       label={t('exerciseDetail.totalVolume')}
+                      value={compactNumber(weightValue(history.history.totalVolumeKg, units))}
+                      unit={weightUnit(units)}
                     />
-                    <MetricGridCell
-                      value={String(history.history.totalSets)}
+                    <StatTile
                       label={t('exerciseDetail.setsDone')}
+                      value={String(history.history.totalSets)}
                     />
-                    <MetricGridCell
-                      value={
-                        history.history.lastPerformedAt === null
-                          ? '-'
-                          : formatAgo(history.history.lastPerformedAt)
-                      }
-                      label={t('exerciseDetail.lastPerformed')}
-                    />
-                  </MetricGrid>
+                  </View>
                 </>
               )}
             </Column>
@@ -343,7 +361,7 @@ export default function ExerciseDetailScreen() {
                     units={units}
                     theme={theme}
                     topDivider={i > 0}
-                    onPress={() => router.push(routes.activityDetail(session.activityId))}
+                    onOpen={openSession}
                   />
                 ))}
                 {history.history.sessions.length > HISTORY_PREVIEW ? (
@@ -368,8 +386,8 @@ export default function ExerciseDetailScreen() {
                   <Column gap="lg">
                     {history.records.map((record) => (
                       <Row key={record.kind} gap="md" align="center">
-                        <Icon name="trophy" size={20} color={theme.colors.onAccent} />
-                        <Txt variant="label" tone="muted" style={{ flex: 1 }}>
+                        <Icon name="trophy" size={ICON_SIZE.inline} color={theme.colors.onAccent} />
+                        <Txt variant="label" tone="muted" style={styles.flex}>
                           {t(RECORD_LABEL[record.kind])}
                         </Txt>
                         <Txt variant="headline" weight="700">
@@ -439,15 +457,6 @@ export default function ExerciseDetailScreen() {
                 />
               </Column>
             ) : null}
-
-            <Column style={styles.section}>
-              <Button
-                label={t('exerciseDetail.addButton')}
-                icon="plus"
-                onPress={openAddSheet}
-                accessibilityHint={t('exerciseDetail.addButtonHint')}
-              />
-            </Column>
           </Column>
         )}
       </ScrollView>
@@ -487,7 +496,7 @@ function Hero({ exercise, topInset }: { exercise: Exercise; topInset: number }) 
         />
         <Gap size={spacing.lg} />
         <Row gap="xs" align="center">
-          <Icon name="image" size={13} color={theme.colors.textFaint} />
+          <Icon name="image" size={ICON_SIZE.micro} color={theme.colors.textFaint} />
           <Txt variant="micro" tone="faint" uppercase tracking={0.8}>
             {t('exerciseDetail.noImage')}
           </Txt>
@@ -545,11 +554,11 @@ function Provenance({
   if (from === 'stored') {
     return (
       <Row gap="sm" align="center">
-        <Icon name="offline" size={14} color={theme.colors.info} />
-        <Txt variant="caption" tone="muted" style={{ flex: 1 }}>
+        <Icon name="offline" size={ICON_SIZE.micro} color={theme.colors.info} />
+        <Txt variant="caption" tone="muted" style={styles.flex}>
           {storedAt === null
             ? t('exerciseDetail.offlineCopy')
-            : t('exerciseDetail.offlineCopyDated', { date: formatShortDate(storedAt) })}
+            : t('exerciseDetail.offlineCopyDated', { date: shortDateLabel(storedAt) })}
         </Txt>
         {/* A Text with role="button" rather than a nested Touchable: it sits in a line of
             text-width content, and VoiceOver reads the label as its own element either
@@ -571,7 +580,7 @@ function Provenance({
   if (from === 'cache') {
     return (
       <Row gap="sm" align="center">
-        <Icon name="layers" size={14} color={theme.colors.textFaint} />
+        <Icon name="layers" size={ICON_SIZE.micro} color={theme.colors.textFaint} />
         <Txt variant="caption" tone="muted">{t('exerciseDetail.fromRecentSearch')}</Txt>
       </Row>
     );
@@ -580,7 +589,7 @@ function Provenance({
   if (from === 'remote') {
     return (
       <Row gap="sm" align="center">
-        <Icon name="download" size={14} color={theme.colors.textFaint} />
+        <Icon name="download" size={ICON_SIZE.micro} color={theme.colors.textFaint} />
         <Txt variant="caption" tone="muted">
           {t('exerciseDetail.liveFromWger')}
           {externalUrl !== null ? t('exerciseDetail.justNow') : ''}
@@ -591,101 +600,81 @@ function Provenance({
 
   return (
     <Row gap="sm" align="center">
-      <Icon name="info" size={14} color={theme.colors.textFaint} />
+      <Icon name="info" size={ICON_SIZE.micro} color={theme.colors.textFaint} />
       <Txt variant="caption" tone="muted">{t('exerciseDetail.builtIn')}</Txt>
     </Row>
   );
 }
 
-function MuscleChips({
-  label,
-  names,
-  onPress,
-  muted = false,
-}: {
-  label: string;
-  names: string[];
-  onPress: (name: string) => void;
-  muted?: boolean;
-}) {
-  if (names.length === 0) return null;
+/** One labelled row of taxonomy: "Primary" above its muscles. Nothing at all when empty. */
+function TagGroup({ label, tags, theme }: { label: string; tags: readonly Tag[]; theme: Theme }) {
+  if (tags.length === 0) return null;
   return (
-    <Row gap="md" align="start">
-      <Txt variant="label" tone="faint" style={{ width: 78, paddingTop: 6 }}>
+    <Column gap="xs">
+      <Txt variant="micro" tone="faint" uppercase tracking={0.8}>
         {label}
       </Txt>
-      <Row gap="sm" wrap style={[{ flex: 1 }, muted ? { opacity: 0.75 } : null]}>
-        {names.map((name) => (
-          <Chip key={name} label={name} size="sm" onPress={() => onPress(name)} />
-        ))}
-      </Row>
-    </Row>
-  );
-}
-
-function MetricGridCell({ value, label }: { value: string; label: string }) {
-  return (
-    <Column gap="xxs">
-      <Txt variant="headline" weight="700" numberOfLines={1}>
-        {value}
-      </Txt>
-      <MetricLabel label={label} />
+      <TagRow tags={tags} theme={theme} />
     </Column>
   );
 }
 
-function HistoryRow({
+/**
+ * One past session with this exercise: the top set as the title, the date and the sets done
+ * as items, and the estimated max (or how long ago) at the end.
+ */
+const HistoryRow = memo(function HistoryRow({
   session,
   units,
   theme,
   topDivider,
-  onPress,
+  onOpen,
 }: {
   session: ExercisePerformance;
   units: UnitSystem;
   theme: Theme;
   topDivider: boolean;
-  onPress: () => void;
+  onOpen: (activityId: string) => void;
 }) {
   const { t } = useT();
   const load =
     session.topWeightKg > 0
-      ? `${trimNumber(session.topWeightKg)} kg × ${session.topReps}`
+      ? `${formatWeight(session.topWeightKg, units)} × ${session.topReps}`
       : t('exerciseDetail.bodyweightTimes', { reps: session.topReps });
+  const meta = useMemo(
+    () => [
+      { icon: 'calendar' as const, label: shortDateLabel(session.performedAt) },
+      {
+        icon: 'layers' as const,
+        label:
+          session.completedSets === session.sets
+            ? t('workout.set', { count: session.completedSets })
+            : t('details.setsOfTotal', { done: session.completedSets, total: session.sets }),
+      },
+    ],
+    [session.completedSets, session.performedAt, session.sets, t],
+  );
+  const press = useCallback(() => onOpen(session.activityId), [onOpen, session.activityId]);
 
   return (
     <View
-      style={{
-        borderTopWidth: topDivider ? StyleSheet.hairlineWidth : 0,
-        borderTopColor: theme.colors.hairline,
-      }}
+      style={
+        topDivider
+          ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.hairline }
+          : undefined
+      }
     >
       <ListRow
         theme={theme}
         title={load}
-        meta={[
-          {
-            icon: 'calendar',
-            label:
-          session.completedSets === session.sets
-            ? t('exerciseDetail.setsAll', {
-                date: formatShortDate(session.performedAt),
-                done: session.completedSets,
-              })
-            : t('exerciseDetail.setsOfTotal', {
-                date: formatShortDate(session.performedAt),
-                done: session.completedSets,
-                total: session.sets,
-              }),
-          },
-        ]}
+        meta={meta}
         showChevron
-        onPress={onPress}
+        onPress={press}
         accessibilityHint={t('exerciseDetail.openSession')}
         trailing={
           session.estimated1rmKg === null ? (
             <Txt variant="caption" tone="faint">
-              {formatAgo(session.performedAt)}
+              {agoLabel(session.performedAt)}
             </Txt>
           ) : (
             <Badge
@@ -693,14 +682,14 @@ function HistoryRow({
                 value: formatWeight(session.estimated1rmKg, units),
               })}
               tone="success"
-              icon={<Icon name="trophy" size={10} color={theme.colors.success} />}
+              icon={<Icon name="trophy" size={ICON_SIZE.micro} color={theme.colors.success} />}
             />
           )
         }
       />
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   section: { paddingHorizontal: screenGutter },
@@ -710,8 +699,10 @@ const styles = StyleSheet.create({
     height: 270,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.xxl,
+    paddingHorizontal: screenGutter,
   },
+  stats: { flexDirection: 'row', gap: spacing.lg },
+  flex: { flex: 1 },
   // Row lists get no wrapper padding of their own: `ListRow` and `ExerciseRow` carry
   // their own `screenGutter` inset and a full-bleed hairline, so a second inset would
   // make their dividers stop short of the edge the rest of the app's dividers reach.

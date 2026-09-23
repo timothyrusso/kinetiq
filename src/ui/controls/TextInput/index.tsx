@@ -153,6 +153,7 @@ export const TextInput = memo(function TextInput({
             autoCapitalize={autoCapitalize}
             autoCorrect={autoCorrect}
             cursorColor={theme.colors.accent}
+            placeholderTextColor={theme.colors.textFaint}
             testID={accessibilityLabel ?? label}
             textStyle={{
               fontFamily: fontFamily.regular,

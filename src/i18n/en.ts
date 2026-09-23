@@ -174,6 +174,18 @@ export const en = {
     languageHint: 'Changes everything in the app straight away.',
   },
 
+  // --- group-b ---
+  details: {
+    repsValue: '{reps} reps',
+    bodyweightA11y: 'Bodyweight',
+    lastTrained: 'Last trained {ago}',
+    pickerInLibrary: '{total} exercises in the library',
+    pickerIncluded_one: '{count} is already in this routine',
+    pickerIncluded_other: '{count} are already in this routine',
+    lastPerformedAgo: 'Last performed {ago}',
+    setsOfTotal: '{done} of {total} sets',
+  },
+  // --- end group-b ---
   activity: {
     fallbackTitle: 'Activity',
     delete: 'Delete this activity',

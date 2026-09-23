@@ -142,7 +142,7 @@ export const ListRow = memo(function ListRow({
               numberOfLines={2}
             />
           ) : null}
-          {meta && meta.length > 0 ? <MetaLine items={meta} theme={theme} /> : null}
+          {meta && meta.length > 0 ? <MetaLine items={meta} theme={theme} wrap /> : null}
           {tags && tags.length > 0 ? (
             <TagRow tags={tags} theme={theme} {...(tagsMax === undefined ? {} : { max: tagsMax })} />
           ) : null}
@@ -341,7 +341,7 @@ export const RoutineRow = memo(function RoutineRow({
           color={theme.colors.text}
           numberOfLines={1}
         />
-        <MetaLine items={meta} theme={theme} />
+        <MetaLine items={meta} theme={theme} wrap />
       </View>
       {trailing ?? <Icon name="play" size={18} color={theme.colors.accent} />}
     </Pressable>

@@ -176,6 +176,18 @@ export const it: Copy = {
     languageHint: 'Cambia subito tutta l app.',
   },
 
+  // --- group-b ---
+  details: {
+    repsValue: '{reps} rip.',
+    bodyweightA11y: 'Corpo libero',
+    lastTrained: 'Ultimo allenamento {ago}',
+    pickerInLibrary: '{total} esercizi nella libreria',
+    pickerIncluded_one: '{count} è già in questa scheda',
+    pickerIncluded_other: '{count} sono già in questa scheda',
+    lastPerformedAgo: 'Ultima volta {ago}',
+    setsOfTotal: '{done} serie su {total}',
+  },
+  // --- end group-b ---
   activity: {
     fallbackTitle: 'Attività',
     delete: 'Elimina questa attività',

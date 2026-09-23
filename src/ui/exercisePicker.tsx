@@ -21,21 +21,22 @@
  * ever copied out of the cache into local state: there is no shadow array for a late response
  * to overwrite, so an old response can only repaint the list its own key asked for.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+
+import type { Theme } from '@/theme/theme';
 
 import { Button } from '@/ui/controls/Button';
 import { Chip } from '@/ui/controls/Chip';
 import { TextInput } from '@/ui/controls/TextInput';
 import { Row } from '@/ui/layout';
 import { Txt } from '@/ui/Text';
-import { Icon } from '@/ui/icons';
+import { Icon, ICON_SIZE } from '@/ui/icons';
 import { EmptyState, ErrorState, SkeletonList } from '@/ui/states';
 import { ExerciseThumb, ListRow } from '@/ui/rows';
 import { FormSheet } from '@/ui/FormSheet';
 import { useExerciseSearch, useExerciseTaxonomy } from '@/queries/useExercises';
 import { useAppTheme } from '@/theme/theme';
-import { spacing } from '@/theme/tokens';
 import { useDebouncedValue, useIsSettling } from '@/utils/useDebouncedValue';
 import type { Exercise, ExerciseFilter } from '@/domain/types';
 import { useT } from '@/i18n/useT';
@@ -75,6 +76,7 @@ export function ExercisePicker({
   isIncluded: (exerciseId: string) => boolean;
 }) {
   const { t } = useT();
+  const theme = useAppTheme();
   const [query, setQuery] = useState('');
   const [muscleId, setMuscleId] = useState<number | null>(null);
   const [equipmentId, setEquipmentId] = useState<number | null>(null);
@@ -98,8 +100,20 @@ export function ExercisePicker({
     setShown(PAGE_ROWS);
   }, [debounced, muscleId, equipmentId]);
 
-  const rows = search.items.slice(0, shown);
-  const includedCount = search.items.filter((exercise) => isIncluded(exercise.id)).length;
+  const rows = useMemo(() => search.items.slice(0, shown), [search.items, shown]);
+  const includedCount = useMemo(
+    () => search.items.filter((exercise) => isIncluded(exercise.id)).length,
+    [isIncluded, search.items],
+  );
+  const placeholder = search.isPlaceholder;
+  // One callback for every row; the row hands back its own exercise.
+  const select = useCallback(
+    (exercise: Exercise) => {
+      if (placeholder) return;
+      onPick(exercise);
+    },
+    [onPick, placeholder],
+  );
 
   return (
     <FormSheet title={t('picker.title')} doneLabel="picker.done" scroll>
@@ -119,7 +133,11 @@ export function ExercisePicker({
         autoFocus
         // Text rather than a spinner: a hint is announced, and it explains the one state
         // where typing has been received and nothing has moved yet.
-        hint={settling ? 'Searching…' : `${search.total ?? '-'} exercises in the library`}
+        hint={
+          settling
+            ? t('exerciseList.searching')
+            : t('details.pickerInLibrary', { total: search.total ?? '-' })
+        }
         accessibilityHint={t('picker.searchHint')}
       />
 
@@ -176,20 +194,18 @@ export function ExercisePicker({
           )}
         />
       ) : (
-        <View style={{ marginTop: -spacing.sm }}>
+        <View>
           {rows.map((exercise) => (
             <PickerRow
               key={exercise.id}
               exercise={exercise}
+              theme={theme}
               included={isIncluded(exercise.id)}
               // Rows from the previous filter while the new one is in flight: dimmed, because
               // they are real data that is about to be wrong. Tapping one would add the wrong
               // exercise, so they stay inert until the new results land.
               dimmed={search.isPlaceholder}
-              onPress={() => {
-                if (search.isPlaceholder) return;
-                onPick(exercise);
-              }}
+              onSelect={select}
             />
           ))}
         </View>
@@ -212,41 +228,45 @@ export function ExercisePicker({
       ) : null}
 
       {includedCount > 0 ? (
-        <Txt variant="micro" tone="faint" style={{ textAlign: 'center', marginTop: -spacing.sm }}>
-          {includedCount} {includedCount === 1 ? 'is' : 'are'} already in this routine
+        <Txt variant="micro" tone="faint" align="center">
+          {t('details.pickerIncluded', { count: includedCount })}
         </Txt>
       ) : null}
     </FormSheet>
   );
 }
 
-function PickerRow({
+/**
+ * One library result. Memoised with the theme and a shared `onSelect` as props, so typing
+ * (which re-renders the sheet on every keystroke) does not re-render two dozen rows whose
+ * exercise did not change.
+ */
+const PickerRow = memo(function PickerRow({
   exercise,
+  theme,
   included,
   dimmed,
-  onPress,
+  onSelect,
 }: {
   exercise: Exercise;
+  theme: Theme;
   included: boolean;
   dimmed: boolean;
-  onPress: () => void;
+  onSelect: (exercise: Exercise) => void;
 }) {
   const { t } = useT();
-  const theme = useAppTheme();
+  const tags = useMemo(() => exerciseTags(exercise), [exercise]);
+  const press = useCallback(() => onSelect(exercise), [onSelect, exercise]);
 
   return (
     <ListRow
       theme={theme}
       title={exercise.name}
-      tags={exerciseTags(exercise)}
+      tags={tags}
       tagsMax={2}
-      onPress={included ? undefined : onPress}
+      {...(included ? {} : { onPress: press })}
       disabled={included}
-      style={{
-        opacity: dimmed ? 0.45 : 1,
-        borderTopWidth: StyleSheet.hairlineWidth,
-        borderTopColor: theme.colors.hairline,
-      }}
+      style={[styles.row, { borderTopColor: theme.colors.hairline }, dimmed ? styles.dimmed : null]}
       accessibilityHint={
         t(included ? 'states.alreadyInRoutine' : 'states.addsToRoutine')
       }
@@ -261,10 +281,15 @@ function PickerRow({
       trailing={
         <Icon
           name={included ? 'check' : 'plus'}
-          size={18}
+          size={ICON_SIZE.inline}
           color={included ? theme.colors.accent : theme.colors.textMuted}
         />
       }
     />
   );
-}
+});
+
+const styles = StyleSheet.create({
+  row: { borderTopWidth: StyleSheet.hairlineWidth },
+  dimmed: { opacity: 0.45 },
+});
