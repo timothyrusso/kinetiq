@@ -95,6 +95,8 @@ export const ActivityCard = memo(function ActivityCard({
           height={THUMB_HEIGHT}
           showLegend={false}
           showStartEnd={false}
+          // List rows carry the simplified shape only, with no timing to colour a pace by.
+          paceColoured={false}
           style={styles.thumb}
         />
       ) : null}
