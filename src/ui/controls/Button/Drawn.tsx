@@ -86,8 +86,8 @@ export const DrawnButton = memo(function DrawnButton({
       accessibilityState={{ disabled: inactive, busy: loading }}
       {...(accessibilityHint ? { accessibilityHint } : null)}
       style={[
+        fullWidth ? FILL_STYLE : null,
         {
-          alignSelf: fullWidth ? 'stretch' : 'auto',
           minHeight: skin.height,
           paddingHorizontal: skin.padX,
           borderRadius: skin.radius,
@@ -186,3 +186,11 @@ function buttonSkin(theme: Theme, variant: ButtonVariant, size: ButtonSize): Ski
       };
   }
 }
+
+/**
+ * How a full-width button takes the width, on every platform. A width rather than
+ * `alignSelf: 'stretch'`: inside a row, stretch grows the cross axis, which is the height, and a
+ * native button became a tall sliver with no room for its label. `flexShrink` lets it share a
+ * row with a sibling.
+ */
+export const FILL_STYLE = { width: '100%', flexShrink: 1 } as const;

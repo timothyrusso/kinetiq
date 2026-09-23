@@ -21,7 +21,7 @@ export const SectionHeader = memo(function SectionHeader({
   style,
 }: {
   title: string;
-  /** The small uppercase line above the title. */
+  /** The small uppercase line above the title. Spoken before it, in the case it is drawn in. */
   eyebrow?: string;
   /** Announced with the title rather than read as a stray number. */
   counter?: number;
@@ -35,7 +35,12 @@ export const SectionHeader = memo(function SectionHeader({
         style={styles.titles}
         accessible
         accessibilityRole="header"
-        accessibilityLabel={counter === undefined ? title : `${title}, ${counter}`}
+        accessibilityLabel={[
+          eyebrow?.toLocaleUpperCase(),
+          counter === undefined ? title : `${title}, ${counter}`,
+        ]
+          .filter(Boolean)
+          .join('. ')}
       >
         {eyebrow ? (
           <Txt variant="micro" tone="faint" uppercase tracking={0.8}>

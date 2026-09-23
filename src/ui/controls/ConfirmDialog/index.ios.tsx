@@ -1,5 +1,6 @@
 import { useRef } from 'react';
-import { Alert, Button, Host, Text } from '@expo/ui/swift-ui';
+import { Alert, Button, Host, Spacer, Text } from '@expo/ui/swift-ui';
+import { accessibilityHidden, frame } from '@expo/ui/swift-ui/modifiers';
 import { StyleSheet } from 'react-native';
 
 import type { ConfirmDialogProps } from './types';
@@ -37,6 +38,11 @@ export function ConfirmDialog({
           if (!answered.current) onCancel();
         }}
       >
+        {/* The alert hangs off its trigger. Without one the native view is an EmptyView,
+            which SwiftUI never renders, so nothing is there to present from. */}
+        <Alert.Trigger>
+          <Spacer modifiers={[frame({ width: 0, height: 0 }), accessibilityHidden(true)]} />
+        </Alert.Trigger>
         <Alert.Actions>
           <Button role="cancel" label={cancelLabel} onPress={answer(onCancel)} />
           <Button

@@ -3,12 +3,13 @@
  * the app's accent; ghost, quiet, danger and any loading button are the drawn button.
  */
 import { memo } from 'react';
+import { StyleSheet } from 'react-native';
 import { Button as FilledButton, Host, OutlinedButton, Text } from '@expo/ui/jetpack-compose';
 import { fillMaxWidth } from '@expo/ui/jetpack-compose/modifiers';
 
 import { haptics } from '@/services/haptics';
 import { useAppTheme } from '@/theme/theme';
-import { DrawnButton } from './Drawn';
+import { DrawnButton, FILL_STYLE } from './Drawn';
 import type { ButtonProps } from './types';
 
 export type { ButtonProps, ButtonSize, ButtonVariant } from './types';
@@ -29,7 +30,7 @@ export const Button = memo(function Button(props: ButtonProps) {
       matchContents={fullWidth ? { vertical: true } : true}
       colorScheme={theme.mode}
       seedColor={theme.colors.accent}
-      style={[fullWidth ? { alignSelf: 'stretch' } : { alignSelf: 'flex-start' }, style]}
+      style={[fullWidth ? FILL_STYLE : styles.hug, style]}
     >
       {variant === 'primary' ? (
         <FilledButton
@@ -47,4 +48,8 @@ export const Button = memo(function Button(props: ButtonProps) {
       )}
     </Host>
   );
+});
+
+const styles = StyleSheet.create({
+  hug: { alignSelf: 'flex-start' },
 });
