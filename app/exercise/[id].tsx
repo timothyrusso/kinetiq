@@ -85,7 +85,7 @@ import {
   weightValue,
   type UnitSystem,
 } from '@/utils/format';
-import { agoLabel, shortDateLabel } from '@/utils/localeFormat';
+import { agoLabel, shortDateLabel } from '@/utils/relativeTime';
 import { withAlpha } from '@/utils/color';
 import { useT } from '@/i18n/useT';
 import type { Exercise } from '@/domain/types';

@@ -9,9 +9,13 @@
  *
  * The translator is a parameter: a component passes the `t` and `locale` from `useT()`, so
  * a memoised caller re-renders on a language change; code outside React passes `tr` and the
- * locale it has.
+ * locale it has. The `*Label` helpers at the end are the same rules with no parameters: they
+ * read the language at call time, for callers that already re-render through `useT()`.
  */
-import type { TKey, TVars } from '@/i18n';
+import { localeTag, type TKey, type TVars } from '@/i18n';
+import { tr } from '@/i18n/tr';
+import { getSettings } from '@/settings/store';
+import { toDate, type DateInput } from './format';
 
 type Translate = (key: TKey, vars?: TVars) => string;
 
@@ -27,15 +31,29 @@ function daysBetween(from: number, to: number): number {
   return Math.round((midnight(to) - midnight(from)) / DAY_MS);
 }
 
-/** Formatters are built once per locale: `Intl` construction is the expensive half. */
-const SHORT_DATE = new Map<string, Intl.DateTimeFormat>();
-function shortDate(ms: number, locale: string): string {
-  let fmt = SHORT_DATE.get(locale);
+/** Formatters are built once per locale and shape: `Intl` construction is the expensive half. */
+const FORMATTERS = new Map<string, Intl.DateTimeFormat>();
+function formatter(
+  shape: 'short' | 'full' | 'time',
+  locale: string,
+): Intl.DateTimeFormat {
+  const key = `${shape}|${locale}`;
+  let fmt = FORMATTERS.get(key);
   if (!fmt) {
-    fmt = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' });
-    SHORT_DATE.set(locale, fmt);
+    fmt = new Intl.DateTimeFormat(
+      locale,
+      shape === 'short'
+        ? { day: 'numeric', month: 'short' }
+        : shape === 'full'
+          ? { weekday: 'long', day: 'numeric', month: 'long' }
+          : { hour: 'numeric', minute: '2-digit' },
+    );
+    FORMATTERS.set(key, fmt);
   }
-  return fmt.format(ms);
+  return fmt;
+}
+function shortDate(ms: number, locale: string): string {
+  return formatter('short', locale).format(ms);
 }
 
 /** "3 days ago", "just now": the same thresholds as `formatAgo`, in the user's language. */
@@ -76,4 +94,28 @@ export function weekHeading(
   if (weeksBack === 0) return t('workoutFlow.thisWeek');
   if (weeksBack === 1) return t('workoutFlow.lastWeek');
   return t('workoutFlow.weekOf', { date: shortDate(weekStartMs, locale) });
+}
+
+function currentLocale(): string {
+  return localeTag(getSettings().language);
+}
+
+/** "5d ago" · "5 g fa": `formatAgoLocalized` in the current language. */
+export function agoLabel(date: DateInput, now: DateInput = new Date()): string {
+  return formatAgoLocalized(toDate(date).getTime(), tr, currentLocale(), toDate(now).getTime());
+}
+
+/** "12 May" · "12 mag". */
+export function shortDateLabel(date: DateInput): string {
+  return shortDate(toDate(date).getTime(), currentLocale());
+}
+
+/** "Tuesday 12 May" · "martedì 12 maggio". */
+export function fullDateLabel(date: DateInput): string {
+  return formatter('full', currentLocale()).format(toDate(date));
+}
+
+/** "07:42", in the locale's own clock. */
+export function timeOfDayLabel(date: DateInput): string {
+  return formatter('time', currentLocale()).format(toDate(date));
 }

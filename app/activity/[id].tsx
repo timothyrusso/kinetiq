@@ -87,7 +87,7 @@ import {
   weightUnit,
   weightValue,
 } from '@/utils/format';
-import { agoLabel, fullDateLabel, timeOfDayLabel } from '@/utils/localeFormat';
+import { agoLabel, fullDateLabel, timeOfDayLabel } from '@/utils/relativeTime';
 import { displayRoute } from '@/services/gps';
 
 /** A chart narrower than this cannot fit its axis labels, so it is not drawn at all. */

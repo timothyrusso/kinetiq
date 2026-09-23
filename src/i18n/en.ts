@@ -176,10 +176,6 @@ export const en = {
 
   // --- group-b ---
   details: {
-    agoJustNow: 'just now',
-    agoHours: '{n}h ago',
-    agoDays: '{n}d ago',
-    agoWeeks: '{n}w ago',
     repsValue: '{reps} reps',
     bodyweightA11y: 'Bodyweight',
     lastTrained: 'Last trained {ago}',

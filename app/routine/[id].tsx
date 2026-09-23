@@ -74,7 +74,7 @@ import { moveItem } from '@/utils/functional';
 import { orderedIdsOf, pairItems } from '@/routines/draft';
 import { estimateMinutes, plannedVolumeKg } from '@/domain/logic';
 import { compactNumber, weightUnit, weightValue } from '@/utils/format';
-import { agoLabel } from '@/utils/localeFormat';
+import { agoLabel } from '@/utils/relativeTime';
 
 type SheetKind = 'delete' | null;
 
