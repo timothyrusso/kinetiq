@@ -34,7 +34,7 @@
 const {
   settle,
   waitFor,
-  forceEnglishUI,fillField, tab, fail, onExit, pressLabel, seek, nodes, visible, sh, open,
+  forceEnglishUI,fillField, fail, onExit, pressLabel, seek, nodes, visible, sh, open,
   sleep, restartApp, dbQuery, dbCol, dbExec,
 } = require('./lib');
 
@@ -105,14 +105,18 @@ if (before.some((n) => n.startsWith('QA '))) {
 // press and the very first step reports "never found New routine", which reads as the Workout
 // tab being broken. The cache is memory-only, so a restart costs nothing but the launch.
 restartApp();
-tab('Workout');
-sleep(2);
+// `open`, not `tab`: right after a relaunch the tree can still be empty, and `tab()` then taps
+// the bar's coordinates blind. `open` deep-links, waits for this label and recovers a stale
+// agent-device session, the same way the offline gate reaches this screen.
+open('workout', 'New routine');
 if (!pressLabel('New routine')) fail('could not reach the routine builder from the Workout tab');
 sleep(2);
 if (!seek((n) => (n.label ?? '') === 'Routine name')) fail('the routine builder never opened');
 const nameField = nodes().find((n) => n.type === 'TextField' && visible(n));
 if (!nameField?.ref) fail('the routine builder has no visible field to name the routine');
-fillField(nameField.ref, NAME);
+// Blur on empty space below the form: the old blur point (201, 120) is now inside the native
+// header, and tapping the bar does not release a native text field.
+fillField(nameField.ref, NAME, { blurAt: '201 500' });
 sleep(1);
 
 // An EMPTY routine offers "Add exercise" (the empty state's own call to action); the compact
@@ -193,7 +197,7 @@ if (!items.some((i) => i[1] === pickedName)) {
 
 // ── 3. Survive a force-quit ──────────────────────────────────────────────────────────────────
 restartApp();
-tab('Workout');
+open('workout', 'New routine');
 const stillThere = dbWait(routineRow(NAME), 1);
 if (!stillThere.length) fail(`"${NAME}" vanished after a cold restart`);
 if (!seek((n) => (n.label ?? '').includes(NAME), { max: 6 })) {

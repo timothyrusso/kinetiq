@@ -26,6 +26,7 @@ import { AppState, View } from 'react-native';
 
 import { spacing } from '@/theme/tokens';
 import { Txt } from './Text';
+import { useT } from '@/i18n/useT';
 
 /** Locale-aware, and rebuilt only when the locale changes rather than on every tick. */
 function formatters(locale: string) {
@@ -47,6 +48,7 @@ export const LiveClock = memo(function LiveClock({
   locale?: string;
   align?: 'left' | 'right' | 'center';
 }) {
+  const { t } = useT();
   const [now, setNow] = useState(() => new Date());
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fmt = useRef(formatters(locale));
@@ -101,7 +103,7 @@ export const LiveClock = memo(function LiveClock({
 
   return (
     <View style={{ alignItems: items, gap: spacing.xxs }}>
-      <Txt variant="mono" tone="muted" accessibilityLabel={`Time ${fmt.current.time.format(now)}`}>
+      <Txt variant="mono" tone="muted" accessibilityLabel={t('followups.clockA11y', { time: fmt.current.time.format(now) })}>
         {fmt.current.time.format(now)}
       </Txt>
       <Txt variant="caption" tone="faint" uppercase tracking={0.6}>

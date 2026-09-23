@@ -119,3 +119,9 @@ export function fullDateLabel(date: DateInput): string {
 export function timeOfDayLabel(date: DateInput): string {
   return formatter('time', currentLocale()).format(toDate(date));
 }
+
+/** "07:30" · "7:30 AM": a time of day given as minutes from midnight, in the app's language. */
+export function formatClock(minutesFromMidnight: number): string {
+  const total = ((Math.round(minutesFromMidnight) % 1440) + 1440) % 1440;
+  return timeOfDayLabel(new Date(2024, 0, 1, Math.floor(total / 60), total % 60));
+}

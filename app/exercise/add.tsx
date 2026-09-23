@@ -313,7 +313,8 @@ export default function AddExerciseScreen() {
                     title={t('addExercise.targets')}
                     eyebrow={t('addExercise.targetsEyebrow')}
                   />
-                  <Row gap="md">
+                  {/* Top-aligned: Reps carries a hint line, and a centred row pushed Sets down. */}
+                  <Row gap="md" align="start">
                     <TextInput
                       label={t('addExercise.sets')}
                       value={draft.sets}
