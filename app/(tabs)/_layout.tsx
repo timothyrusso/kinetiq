@@ -27,13 +27,14 @@
  * and adjusts itself for the header above and the bar below. The one thing the system does not
  * account for is the bottom accessory, which `useTabContentBottom` adds while a workout runs.
  */
+import { Platform } from 'react-native';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 // `Icon` and `Label` are the shared primitives, exported from the package root rather than
 // from the native-tabs subpath.
 import { Icon, Label, router } from 'expo-router';
 
 import { routes } from '@/navigation/nav';
-import { useAppTheme } from '@/theme/theme';
+import { useAppTheme, type Theme } from '@/theme/theme';
 import { useT } from '@/i18n/useT';
 import { ActiveWorkoutPill } from '@/ui/workout';
 import { formatDuration } from '@/utils/format';
@@ -52,6 +53,7 @@ export default function TabsLayout() {
       // iOS 26: the bar shrinks to a pill as the user scrolls down and returns on scroll up.
       // This is the behaviour people now read as "a current iOS app".
       minimizeBehavior="onScrollDown"
+      {...(Platform.OS === 'android' ? androidBar(theme) : {})}
     >
       <NativeTabs.Trigger name="(home)">
         <Icon sf={{ default: 'house', selected: 'house.fill' }} md="home" />
@@ -91,6 +93,28 @@ export default function TabsLayout() {
       ) : null}
     </NativeTabs>
   );
+}
+
+/**
+ * The Android bar's colours, from the app's theme rather than the system's.
+ *
+ * Left to the defaults, `BottomNavigationView` takes Material You's dynamic colours, which
+ * follow the SYSTEM light or dark mode, not the app's. With the app dark and the phone light,
+ * that was a pale grey bar under a dark screen, with the lime accent close to invisible on it.
+ * So the bar is the app's surface, the selected tab is the accent pill with the ink that sits
+ * on the accent everywhere else (near-black in dark mode), and the labels are always shown:
+ * the default hides every label but the selected one. The press ripple is off.
+ */
+function androidBar(theme: Theme) {
+  const { colors } = theme;
+  return {
+    backgroundColor: colors.surface,
+    indicatorColor: colors.accent,
+    rippleColor: 'transparent',
+    labelVisibilityMode: 'labeled',
+    iconColor: { default: colors.textMuted, selected: colors.onAccent },
+    labelStyle: { default: { color: colors.textMuted }, selected: { color: colors.text } },
+  } as const;
 }
 
 /**

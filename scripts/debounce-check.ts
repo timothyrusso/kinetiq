@@ -45,10 +45,8 @@ function check(name: string, ok: boolean, detail = ''): void {
 /**
  * Records each query as it commits, so "how many requests would this cause" is a count.
  *
- * Polls rather than subscribes: `subscribe` is deliberately not exported (the only caller
- * is the hook), and exporting it for a script would widen a module's public surface for no
- * product reason. Reading the same accessor the hook reads observes exactly the same
- * transitions.
+ * Polls rather than subscribes, reading the same accessor the hook reads, so it observes
+ * exactly the same transitions without adding a listener the product never has.
  */
 function watchCommits(): { queries: string[]; stop: () => void } {
   const queries: string[] = [];

@@ -32,11 +32,11 @@
  * ## Chips are actions, not labels
  *
  * Muscle and equipment chips navigate: tap "Hamstrings" and the library opens filtered to
- * hamstrings, on the tab, so the change is visible. They are not badges pretending to be
- * buttons. The taxonomy id behind a name comes from the cached taxonomy; when that lookup
- * can't resolve (taxonomy never loaded, or a name the taxonomy stopped using), the chip
- * still opens the library: searching the words the user just tapped: because a control
- * that is inert is indistinguishable from one that is broken.
+ * hamstrings, pushed over this screen, so the change is visible and back returns here. They
+ * are not badges pretending to be buttons. The taxonomy id behind a name comes from the
+ * cached taxonomy; when that lookup can't resolve (taxonomy never loaded, or a name the
+ * taxonomy stopped using), the chip still opens the library: searching the words the user
+ * just tapped: because a control that is inert is indistinguishable from one that is broken.
  */
 import { memo, useCallback, useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -67,15 +67,9 @@ import {
   useExerciseHistory,
   type ExercisePerformance,
 } from '@/queries/useExerciseHistory';
-import {
-  resetExerciseFilter,
-  setExerciseEquipmentId,
-  setExerciseMuscleId,
-  setExerciseQuery,
-} from '@/queries/exerciseFilters';
 import { useSettings } from '@/settings/hooks';
 import { provisionalExerciseName } from '@/domain/exerciseId';
-import { routes, tabHref, tabIndexOf } from '@/navigation/nav';
+import { routes } from '@/navigation/nav';
 import { useAppTheme, type Theme } from '@/theme/theme';
 import { radius, screenGutter, spacing } from '@/theme/tokens';
 import {
@@ -113,30 +107,31 @@ export default function ExerciseDetailScreen() {
   const variations = useExerciseVariations(exercise);
   const taxonomy = useExerciseTaxonomy();
 
-  const openLibrary = useCallback(() => {
-    router.replace(tabHref(tabIndexOf('exercises')));
+  // An exercise that cannot be resolved has nothing to come back to, so its "back to library"
+  // is the tab itself.
+  const backToLibrary = useCallback(() => {
+    router.replace(routes.exercisesTab());
   }, []);
 
+  // Browsing is pushed, not a switch to the tab: the tab lives under this screen in the root stack, so
+  // going there popped the detail and left no way back to it. The pushed list starts from
+  // these params with a filter of its own, leaving the tab's filter as the user set it.
   const filterByMuscle = useCallback(
     (name: string) => {
       const match = taxonomy.data?.muscles.find((taxon) => taxon.name === name);
       // An unresolvable name still opens the library, searching the words the user
       // tapped: approximate, but visible and honest, unlike an inert chip.
-      if (match) setExerciseMuscleId(match.id);
-      else setExerciseQuery(name);
-      openLibrary();
+      router.push(routes.exerciseBrowse(match ? { muscleId: match.id } : { query: name }));
     },
-    [openLibrary, taxonomy.data],
+    [taxonomy.data],
   );
 
   const filterByEquipment = useCallback(
     (name: string) => {
       const match = taxonomy.data?.equipment.find((taxon) => taxon.name === name);
-      if (match) setExerciseEquipmentId(match.id);
-      else setExerciseQuery(name);
-      openLibrary();
+      router.push(routes.exerciseBrowse(match ? { equipmentId: match.id } : { query: name }));
     },
-    [openLibrary, taxonomy.data],
+    [taxonomy.data],
   );
 
   const browseVariations = useCallback(() => {
@@ -144,10 +139,8 @@ export default function ExerciseDetailScreen() {
     // Variation group ids are opaque UUIDs the search endpoint cannot take, so
     // "similar" is delivered as a search on the exercise's own name: which returns
     // the family plus near-neighbours, an honest superset rather than a fake filter.
-    resetExerciseFilter();
-    setExerciseQuery(exercise.name);
-    openLibrary();
-  }, [exercise, openLibrary]);
+    router.push(routes.exerciseBrowse({ query: exercise.name }));
+  }, [exercise]);
 
   // Taxonomy as tags that navigate. Built here, once per exercise, rather than per render.
   const primaryTags = useMemo<Tag[]>(
@@ -238,7 +231,7 @@ export default function ExerciseDetailScreen() {
                 actionLabel={t(
                   detail.fetchable ? 'common.retry' : 'exerciseDetail.backToLibrary',
                 )}
-                onAction={detail.fetchable ? detail.retry : openLibrary}
+                onAction={detail.fetchable ? detail.retry : backToLibrary}
               />
             )}
           </View>

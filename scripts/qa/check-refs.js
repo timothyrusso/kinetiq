@@ -47,7 +47,9 @@ function routeExists(route) {
       .filter((seg) => !seg.startsWith('(')) // groups are layout-only, transparent to the path
       .join('/')
       .split('/')
-      .filter(Boolean),
+      .filter(Boolean)
+      // `x/index.tsx` is the route `x`: every tab is a folder with its own stack.
+      .filter((seg, i, all) => !(seg === 'index' && i === all.length - 1)),
   );
   return candidates.some((segs) => {
     const shape = segs.map((s) => (s.startsWith('[') ? null : s)); // null = wildcard segment
@@ -91,9 +93,10 @@ for (const rel of scripts) {
   // not-found screen and the script times out waiting for a heading. The route names are the
   // ones the app's own navigation module exports.
   const routes = new Set([...src.matchAll(/open\(\s*'([\w[\]/.-]*)'/g)].map((m) => m[1]));
-  // Built from the router's own file tree rather than a list someone has to remember to edit, // a hardcoded allow-list was half the reason this guard existed, and it went stale the first
-  // time a screen was added. `app/(tabs)/x.tsx` is reachable as `x`, `app/x.tsx` as `x`, a
-  // dynamic `[id]` segment matches any one segment, and groups in parens are transparent.
+  // Built from the router's own file tree rather than a list someone has to remember to edit:
+  // a hardcoded allow-list was half the reason this guard existed, and it went stale the first
+  // time a screen was added. `app/(tabs)/x/index.tsx` and `app/x.tsx` are both reachable as
+  // `x`, a dynamic `[id]` segment matches any one segment, and groups in parens are transparent.
   for (const r of routes) if (!routeExists(r)) {
     fail(`${rel}: open('${r}') matches no screen under app/: mistyped or deleted route`);
   }
