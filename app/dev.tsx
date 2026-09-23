@@ -79,7 +79,6 @@ import { readSettingsSnapshot } from '@/providers/bootstrap';
 import { flushSettings, hydrateSettings } from '@/settings';
 import { countNoun, pluralWord } from '@/utils/format';
 
-
 /**
  * The kinds worth reaching for, in the order someone asks for them: "it broke", "there's no
  * signal", "it hung", "it said slow down", then the two that must never be retried.
@@ -135,6 +134,9 @@ export default function DevScreen() {
   const [log, setLog] = useState(() => requestLog());
   const [notice, setNotice] = useState<Notice | null>(null);
   const [busy, setBusy] = useState(false);
+  // Asked of the database rather than imported as `TARGET_SCHEMA_VERSION`: the point of printing
+  // it is what THIS install has been through (a downgrade, a half-applied migration), which a
+  // constant cannot report. A `useState` initialiser so it never flashes a placeholder.
   const [schema] = useState<number | null>(readSchemaVersion);
 
   /**
@@ -292,7 +294,7 @@ export default function DevScreen() {
             on this screen and *then* navigating is the point: the first request the
             app makes afterwards is the one that fails. A heading naming one screen
             makes the others look unaffected. */}
-        <SectionHeader title="Arm a failure" eyebrow="Consumed by the next request" />
+            <SectionHeader title="Arm a failure" eyebrow="Consumed by the next request" />
             <Card>
               <Stack gap="lg">
                 <Txt variant="caption" tone="muted">
@@ -564,18 +566,6 @@ function StatusLine({
 /* ----------------------------------------------------------------- helpers -- */
 
 /**
- * The version this install actually migrated to.
- *
- * Asked of the database rather than imported as `TARGET_SCHEMA_VERSION`, because the point of
- * printing it is what *this* install has been through: a constant can only report what the
- * code was written against, which is precisely the case that matters (a downgrade, a
- * half-applied migration). Read in a `useState` initialiser rather than an effect so it never
- * flashes 'reading…' on a number that was never in question, and a failure returns `null`
- * instead of throwing in a render path.
- */
-
-
-/**
  * How many requests one screen puts in flight at once, which is how long an outage has to last
  * to be worth arming.
  *
@@ -584,7 +574,7 @@ function StatusLine({
  *     /api/v2/equipment/ ×1   /api/v2/exercisecategory/ ×1   /api/v2/exerciseinfo/ ×1
  *     /api/v2/language/ ×1    /api/v2/muscle/ ×1
  *
- *: the page itself plus the four taxonomy lookups that let rows render names instead of ids.
+ * That is the page itself plus the four taxonomy lookups that let rows render names instead of ids.
  * (A *subsequent* search is smaller, `exerciseinfo ×2`, because the taxonomies are already
  * cached. The cold open is the number that matters here, because it is the larger one and the
  * one an error state has to survive.)

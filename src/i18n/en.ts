@@ -847,6 +847,12 @@ export const en = {
     sessionsChartNote: 'How often each routine gets run, since you started tracking.',
     doneTimes: '{count}× done',
   },
+  // --- group-d ---
+  systemScreens: {
+    openTab: 'Open a tab',
+    unknownError: 'Unknown error',
+  },
+  // --- end group-d ---
   settingsScreen: {
     namePlaceholder: 'Athlete',
     nameHint: 'Shown on your Profile tab and in your history.',

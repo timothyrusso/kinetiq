@@ -47,6 +47,9 @@ const tertiary = foregroundStyle({ type: 'hierarchical', style: 'tertiary' });
 
 export function SettingsList({ sections }: SettingsListProps) {
   const theme = useAppTheme();
+  // No bottom padding here, on purpose. The host respects the safe area, so SwiftUI's `Form`
+  // already insets its scroll content past the home indicator and ends with its own grouped
+  // margin; `useScreenContentBottom` would add the home indicator a second time.
   return (
     <Host style={styles.host} colorScheme={theme.mode} seedColor={theme.colors.accent}>
       <Form>
@@ -150,9 +153,12 @@ const Row = memo(function Row({ row, accent }: { row: SettingsRow; accent: strin
         </Picker>
       );
     case 'info':
+      // A fact with no value (the catalog's name, a permission the app never asks for) is a
+      // plain row: `LabeledContent` would reserve a trailing column for an empty string.
+      if (!row.value) return <Titles title={row.title} subtitle={row.subtitle} />;
       return (
         <LabeledContent label={<Titles title={row.title} subtitle={row.subtitle} />}>
-          <Text modifiers={[secondary]}>{row.value ?? ''}</Text>
+          <Text modifiers={[secondary]}>{row.value}</Text>
         </LabeledContent>
       );
     case 'button':
