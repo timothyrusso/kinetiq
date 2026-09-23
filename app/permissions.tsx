@@ -16,8 +16,7 @@
  * `usePermissions` re-reads both answers whenever the app returns to the foreground, which is
  * the only way this screen can be truthful: the user can revoke either permission in the system
  * app while Kinetiq is suspended, and a screen that cached the answer at mount would keep
- * saying "Granted" to a phone that has stopped granting. The header's count-down to "you can
- * come back and we will notice" is not reassurance, it is the mechanism.
+ * saying "Granted" to a phone that has stopped granting.
  *
  * ## Every denial here is a supported configuration
  *
