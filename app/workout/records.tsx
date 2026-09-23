@@ -16,7 +16,7 @@ import { useT } from '@/i18n/useT';
 import { formatRecordValue, RECORD_LABEL } from '@/queries/useExerciseHistory';
 import { useSettings } from '@/settings';
 import { useAppTheme } from '@/theme/theme';
-import { radius, spacing } from '@/theme/tokens';
+import { spacing } from '@/theme/tokens';
 import { FormSheet } from '@/ui/FormSheet';
 import { Icon } from '@/ui/icons';
 import { Row } from '@/ui/layout';
@@ -47,7 +47,14 @@ export default function RecordsSheet() {
         {records.map((record) => (
           <View
             key={`${record.exerciseId}-${record.kind}`}
-            style={[styles.record, { backgroundColor: theme.colors.accentSoft, borderColor: theme.colors.border }]}
+            style={[
+              styles.record,
+              {
+                backgroundColor: theme.colors.accentSoft,
+                borderColor: theme.colors.border,
+                borderRadius: theme.surfaceSkin.radius,
+              },
+            ]}
           >
             <Row gap="md" align="center">
               <Icon name="trophy" size={20} color={theme.colors.accent} />
@@ -72,6 +79,6 @@ export default function RecordsSheet() {
 
 const styles = StyleSheet.create({
   list: { gap: spacing.sm },
-  record: { borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, padding: spacing.lg },
+  record: { borderWidth: StyleSheet.hairlineWidth, padding: spacing.lg },
   flex: { flex: 1, minWidth: 0 },
 });

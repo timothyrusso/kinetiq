@@ -42,6 +42,7 @@ import { MetricLabel, Txt } from './Text';
 import { FormFooter, FormSection } from './FormSheet';
 import { ConfirmDialog } from './controls/ConfirmDialog';
 import { useT } from '@/i18n/useT';
+import { useAppTheme } from '@/theme/theme';
 import { usePulse } from './animation';
 import { CellText } from './CellText';
 import { Icon } from './icons';
@@ -387,14 +388,20 @@ export function SetEditorForm({
   onRemove: () => void;
 }) {
   const { t } = useT();
+  const theme = useAppTheme();
   const step = weightStep(units);
   const displayWeight = weightDisplayValue(set.weightKg, units, step);
+  const context = useMemo<MetaItem[]>(
+    () => [
+      { icon: 'dumbbell', label: entry.exerciseName },
+      { icon: 'layers', label: t('workoutFlow.repCount', { count: set.reps }) },
+    ],
+    [entry.exerciseName, set.reps, t],
+  );
 
   return (
     <>
-      <Txt variant="caption" tone="muted">
-        {t('setRow.setSubtitle', { name: entry.exerciseName, reps: trimNumber(set.reps) })}
-      </Txt>
+      <MetaLine items={context} theme={theme} wrap />
       <FormSection title={t('setRow.reps')}>
         <Stepper
           label={t('setRow.reps')}

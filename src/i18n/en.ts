@@ -564,6 +564,8 @@ export const en = {
     weekOf: 'Week of {date}',
     elapsedA11y: 'Elapsed {time}',
     setsDone: '{done} of {planned} {word} done',
+    repCount_one: '{count} rep',
+    repCount_other: '{count} reps',
   },
   // --- end group-c ---
   session: {

@@ -567,6 +567,8 @@ export const it: Copy = {
     weekOf: 'Settimana del {date}',
     elapsedA11y: 'Tempo trascorso {time}',
     setsDone: '{done} di {planned} {word} completate',
+    repCount_one: '{count} ripetizione',
+    repCount_other: '{count} ripetizioni',
   },
   // --- end group-c ---
   session: {
