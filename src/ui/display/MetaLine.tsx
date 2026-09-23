@@ -36,7 +36,7 @@ export const MetaLine = memo(function MetaLine({
       accessibilityLabel={items.map((i) => i.a11y ?? i.label).join(', ')}
     >
       {items.map((item) => (
-        <View key={item.id ?? `${item.icon}:${item.label}`} style={styles.item}>
+        <View key={item.id ?? `${item.icon}:${item.label}`} style={wrap ? styles.itemWrap : styles.item}>
           <Icon name={item.icon} size={ICON_SIZE.micro} color={theme.colors.textFaint} />
           <CellText
             text={item.label}
@@ -55,4 +55,7 @@ const styles = StyleSheet.create({
   wrap: { flexWrap: 'wrap' },
   nowrap: { flexWrap: 'nowrap', overflow: 'hidden' },
   item: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, flexShrink: 1 },
+  // Wrapping lines move a whole item to the next row. A shrinkable item was squeezed instead,
+  // and its label clipped mid-word ("40 k") while the row still had room below it.
+  itemWrap: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, maxWidth: '100%' },
 });
