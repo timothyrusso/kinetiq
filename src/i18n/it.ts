@@ -49,15 +49,6 @@ export const it: Copy = {
   },
 
   // --- group-a ---
-  tabsAgo: {
-    justNow: 'Adesso',
-    hours_one: '{count} ora fa',
-    hours_other: '{count} ore fa',
-    days_one: 'Ieri',
-    days_other: '{count} giorni fa',
-    weeks_one: '{count} settimana fa',
-    weeks_other: '{count} settimane fa',
-  },
   tabsHome: {
     today: 'Oggi',
     minutesUnit: 'min',

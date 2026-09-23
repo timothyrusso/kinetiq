@@ -78,11 +78,12 @@ import { useAppTheme, type Theme } from '@/theme/theme';
 import { useT } from '@/i18n/useT';
 import type { TKey, TVars } from '@/i18n';
 import { radius, spacing, screenGutter } from '@/theme/tokens';
-import { daysBetween, formatTimer } from '@/utils/format';
+import { formatTimer } from '@/utils/format';
 import { useSettings } from '@/settings';
 import { haptics } from '@/services/haptics';
 import { useStartRoutine } from '@/workout/startRoutine';
 import { useWorkoutRunning, useWorkoutSession } from '@/workout/session';
+import { formatAgoLocalized } from '@/utils/relativeTime';
 
 type Order = 'recent' | 'name';
 
@@ -384,7 +385,7 @@ function LastTrainedCard({ routine, onOpen }: { routine: Routine; onOpen: (id: s
   const { t, locale } = useT();
   const theme = useAppTheme();
   const performedAt = routine.lastPerformedAt ?? routine.createdAt;
-  const ago = agoLabel(performedAt, t, locale);
+  const ago = formatAgoLocalized(performedAt, t, locale);
   const meta: MetaItem[] = [
     { icon: 'calendar', label: ago },
     { icon: 'layers', label: t('workout.exercise', { count: routine.items.length }) },
@@ -649,37 +650,13 @@ const RoutineItem = memo(function RoutineItem({
       items.push({ icon: 'checkCircle', label: t('workoutTab.doneTimes', { count: routine.timesCompleted }) });
     }
     if (routine.lastPerformedAt !== null) {
-      items.push({ icon: 'calendar', label: agoLabel(routine.lastPerformedAt, t, locale) });
+      items.push({ icon: 'calendar', label: formatAgoLocalized(routine.lastPerformedAt, t, locale) });
     }
     return items;
   }, [locale, routine.items.length, routine.lastPerformedAt, routine.timesCompleted, t]);
   const press = useCallback(() => onOpen(routine.id), [onOpen, routine.id]);
   return <RoutineRow routine={routine} theme={theme} meta={meta} topDivider={!first} onPress={press} />;
 });
-
-const OLDER_DATE = new Map<string, Intl.DateTimeFormat>();
-
-/**
- * "3 days ago", in the user's language.
- *
- * `formatAgo` in `src/utils/format.ts` is English only ("3d ago"), so this tab builds the
- * phrase from the catalog and falls back to a short date in the user's locale past a month.
- */
-function agoLabel(at: number, t: (key: TKey, vars?: TVars) => string, locale: string): string {
-  const now = Date.now();
-  const hours = Math.max(0, (now - at) / 3_600_000);
-  if (hours < 1) return t('tabsAgo.justNow');
-  if (hours < 24) return t('tabsAgo.hours', { count: Math.round(hours) });
-  const days = daysBetween(at, now);
-  if (days < 7) return t('tabsAgo.days', { count: days });
-  if (days < 31) return t('tabsAgo.weeks', { count: Math.floor(days / 7) });
-  let fmt = OLDER_DATE.get(locale);
-  if (fmt === undefined) {
-    fmt = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' });
-    OLDER_DATE.set(locale, fmt);
-  }
-  return fmt.format(at);
-}
 
 const styles = StyleSheet.create({
   content: { flexGrow: 1 },

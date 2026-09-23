@@ -47,15 +47,6 @@ export const en = {
   },
 
   // --- group-a ---
-  tabsAgo: {
-    justNow: 'Just now',
-    hours_one: '{count} hour ago',
-    hours_other: '{count} hours ago',
-    days_one: 'Yesterday',
-    days_other: '{count} days ago',
-    weeks_one: '{count} week ago',
-    weeks_other: '{count} weeks ago',
-  },
   tabsHome: {
     today: 'Today',
     minutesUnit: 'min',
