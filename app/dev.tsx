@@ -53,10 +53,11 @@ import { useFocusEffect } from 'expo-router';
 import { useScreenContentBottom } from '@/ui/insets';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { DetailScreen } from '@/ui/Screen';
-import { Card, Divider, SectionHeader, Stack } from '@/ui/layout';
-import { Button } from '@/ui/Button';
-import { Stepper } from '@/ui/controls';
+import { ScreenHeader } from '@/ui/Screen';
+import { Card, Divider, Stack } from '@/ui/layout';
+import { SectionHeader } from '@/ui/display';
+import { Button } from '@/ui/controls/Button';
+import { Stepper } from '@/ui/controls/Stepper';
 import { Txt } from '@/ui/Text';
 import { Icon, type IconName } from '@/ui/icons';
 import {
@@ -240,220 +241,218 @@ export default function DevScreen() {
 
   if (!__DEV__) return null;
 
-  // No `largeTitle` on this screen, deliberately. It is the QA harness's instrument panel:
-  // every gate reads its request ledger by scrolling to a known position, and a native large
-  // title changes both the scroll geometry and the content inset under it. The first run
-  // after it was added reported "(none sent)" for a COLD START, which cannot happen. A
-  // developer console gains nothing from a collapsing title, and the gates lose their only
-  // measurement of what the app sent.
+  // The platform's compact header, and never a large title. This is the QA harness's
+  // instrument panel: every gate reads its request ledger by scrolling to a known position,
+  // and a collapsing title changes both the scroll geometry and the content inset under it.
+  // The first run after one was added reported "(none sent)" for a COLD START, which cannot
+  // happen. A developer console gains nothing from a collapsing title.
   return (
-    <DetailScreen title="Developer" ownBar>
-      {(topInset) => (
-        <ScrollView
-          contentContainerStyle={[
-            styles.content,
-            { paddingTop: topInset + spacing.md, paddingBottom: bottomSpace },
-          ]}
-          keyboardShouldPersistTaps="handled"
-        >
-          <Stack gap="xxl" style={styles.body}>
-            {/* ------------------------------------------------------ fault status */}
-            <View>
-              <SectionHeader title="Injected fault" eyebrow="Memory only" />
-              <Card>
-                <Stack gap="md">
-                  <StatusLine
-                    icon={armed === null ? 'checkCircle' : 'warning'}
-                    tone={armed === null ? 'ok' : 'bad'}
-                    // `faultSummary()` always returns a sentence, including the disarmed
-                    // one ("No fault armed: requests go to wger normally."), so there is no
-                    // null case to cover. The `??` fallback that used to sit here could never
-                    // render and worded the same state differently, which is exactly the kind
-                    // of second copy that a check then goes looking for and never finds.
-                    text={status}
-                  />
-                  {armed !== null ? (
-                    <Button
-                      label="Stop injecting"
-                      variant="secondary"
-                      size="sm"
-                      onPress={stopFault}
-                      style={styles.selfEnd}
-                    />
-                  ) : null}
-                  {notice ? <StatusLine icon="info" tone={notice.tone} text={notice.text} /> : null}
-                </Stack>
-              </Card>
-            </View>
-
-            {/* ------------------------------------------------------------- arming */}
-            <View>
-              {/* Not "then open Exercises": these faults hold until consumed, so arming one
-              on this screen and *then* navigating is the point: the first request the
-              app makes afterwards is the one that fails. A heading naming one screen
-              makes the others look unaffected. */}
-          <SectionHeader title="Arm a failure" eyebrow="Consumed by the next request" />
-              <Card>
-                <Stack gap="lg">
-                  <Txt variant="caption" tone="muted">
-                    Each button arms enough failures to exhaust that kind’s retry budget, so one tap
-                    is enough to reach an error state. Arming a single request on a transient kind
-                    would show nothing at all: the retry succeeds and the screen never changes.
-                  </Txt>
-                  <Divider inset={0} />
-                  {FAULTS.map((fault, index) => (
-                    <Fragment key={fault.kind}>
-                      {index > 0 ? <Divider inset={0} /> : null}
-                      <ActionRow
-                        label={fault.label}
-                        blurb={fault.blurb}
-                        icon={fault.icon}
-                        actionLabel={armed === fault.kind ? 'Armed' : 'Arm'}
-                        active={armed === fault.kind}
-                        onPress={() => arm(fault.kind)}
-                      />
-                    </Fragment>
-                  ))}
-                </Stack>
-              </Card>
-            </View>
-
-            {/* ----------------------------------------------------------- latency */}
-            <View>
-              <SectionHeader title="Slow, no error" eyebrow="Skeletons" />
-              <Card>
-                <Stack gap="lg">
-                  <Stack gap="sm">
-                    <Txt variant="label" tone="muted">
-                      Delay the next request
-                    </Txt>
-                    <Stepper
-                      value={slowMs}
-                      onChange={setSlowMs}
-                      min={500}
-                      max={40000}
-                      step={500}
-                      suffix="ms"
-                      label="delay in milliseconds"
-                    />
-                  </Stack>
-                  <Divider inset={0} />
-                  <Txt variant="caption" tone="muted">
-                    A slow request and a failed one are two different screens, and an error state is
-                    no proof that a skeleton is readable. This one succeeds after the delay, so the
-                    way out of loading is visible too. Waiting is abortable: abandoning a search
-                    cancels the wait instead of leaving a promise to land later.
-                  </Txt>
+    <>
+      <ScreenHeader title="Developer" />
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: spacing.md, paddingBottom: bottomSpace },
+        ]}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Stack gap="xxl" style={styles.body}>
+          {/* ------------------------------------------------------ fault status */}
+          <View>
+            <SectionHeader title="Injected fault" eyebrow="Memory only" />
+            <Card>
+              <Stack gap="md">
+                <StatusLine
+                  icon={armed === null ? 'checkCircle' : 'warning'}
+                  tone={armed === null ? 'ok' : 'bad'}
+                  // `faultSummary()` always returns a sentence, including the disarmed
+                  // one ("No fault armed: requests go to wger normally."), so there is no
+                  // null case to cover. The `??` fallback that used to sit here could never
+                  // render and worded the same state differently, which is exactly the kind
+                  // of second copy that a check then goes looking for and never finds.
+                  text={status}
+                />
+                {armed !== null ? (
                   <Button
-                    label="Delay the next request"
+                    label="Stop injecting"
                     variant="secondary"
                     size="sm"
-                    onPress={armSlow}
+                    onPress={stopFault}
                     style={styles.selfEnd}
                   />
-                </Stack>
-              </Card>
-            </View>
+                ) : null}
+                {notice ? <StatusLine icon="info" tone={notice.tone} text={notice.text} /> : null}
+              </Stack>
+            </Card>
+          </View>
 
-            {/* ------------------------------------------------------ request ledger */}
-            <View>
-              <SectionHeader
-                title="Requests since launch"
-                eyebrow={log.total === 0 ? undefined : countNoun(log.total, 'request', 'requests')}
-              />
-              <Card>
-                <Stack gap="md">
-                  {log.entries.length === 0 ? (
-                    <Txt variant="caption" tone="muted">
-                      Nothing sent since this process started. Nothing here sends a request on
-                      purpose; go use the app, then come back and refresh.
-                    </Txt>
-                  ) : (
-                    <>
-                      {log.entries.map((entry) => (
-                        <LedgerRow key={entry.path} path={entry.path} count={entry.count} />
-                      ))}
-                      <Divider inset={0} />
-                      <Txt variant="micro" tone="faint">
-                        Grouped by path with query parameters removed, so a query re-firing under new
-                        parameters reads as one path with a large count rather than as many paths
-                        with a count of one. A number climbing while the app sits still is a loop.
-                      </Txt>
-                      <Divider inset={0} />
-                      <Txt variant="caption" tone="muted">
-                        The repeated-request check: open Exercises, note the counts, leave to Home and
-                        come back. They must not move: a fresh cache entry is good for five minutes.
-                        Typing a new search *should* raise the page count once, not once per
-                        keystroke.
-                      </Txt>
-                    </>
-                  )}
-                  <View style={styles.ledgerActions}>
-                    <Button
-                      label="Refresh counters"
-                      icon="refresh"
-                      variant="quiet"
-                      size="sm"
-                      onPress={readCounters}
+          {/* ------------------------------------------------------------- arming */}
+          <View>
+            {/* Not "then open Exercises": these faults hold until consumed, so arming one
+            on this screen and *then* navigating is the point: the first request the
+            app makes afterwards is the one that fails. A heading naming one screen
+            makes the others look unaffected. */}
+        <SectionHeader title="Arm a failure" eyebrow="Consumed by the next request" />
+            <Card>
+              <Stack gap="lg">
+                <Txt variant="caption" tone="muted">
+                  Each button arms enough failures to exhaust that kind’s retry budget, so one tap
+                  is enough to reach an error state. Arming a single request on a transient kind
+                  would show nothing at all: the retry succeeds and the screen never changes.
+                </Txt>
+                <Divider inset={0} />
+                {FAULTS.map((fault, index) => (
+                  <Fragment key={fault.kind}>
+                    {index > 0 ? <Divider inset={0} /> : null}
+                    <ActionRow
+                      label={fault.label}
+                      blurb={fault.blurb}
+                      icon={fault.icon}
+                      actionLabel={armed === fault.kind ? 'Armed' : 'Arm'}
+                      active={armed === fault.kind}
+                      onPress={() => arm(fault.kind)}
                     />
-                    {log.entries.length > 0 ? (
-                      <Button label="Reset" variant="quiet" size="sm" onPress={clearLog} />
-                    ) : null}
-                  </View>
-                </Stack>
-              </Card>
-            </View>
+                  </Fragment>
+                ))}
+              </Stack>
+            </Card>
+          </View>
 
-            {/* ------------------------------------------------------------ schema */}
-            <View>
-              <SectionHeader title="Database" eyebrow="Migration state" />
-              <Card>
+          {/* ----------------------------------------------------------- latency */}
+          <View>
+            <SectionHeader title="Slow, no error" eyebrow="Skeletons" />
+            <Card>
+              <Stack gap="lg">
                 <Stack gap="sm">
-                  <Txt variant="body">Schema v{schema ?? 'unknown'}</Txt>
-                  <Txt variant="micro" tone="faint">
-                    The version this install actually migrated to, read from the database rather than
-                    from the target constant: which is the only way a failed or half-applied
-                    migration would show itself.
+                  <Txt variant="label" tone="muted">
+                    Delay the next request
                   </Txt>
-                </Stack>
-              </Card>
-            </View>
-
-            {/* ----------------------------------------------------------- history */}
-            <View>
-              <SectionHeader title="Starter history" eyebrow="Erases first" />
-              <Card>
-                <Stack gap="lg">
-                  <Txt variant="caption" tone="muted">
-                    Erases everything and writes the seeded thirteen weeks back: ending in the
-                    current week, so Home shows a real streak rather than an empty one: so a
-                    destructive QA run is recoverable without reinstalling the app. Settings go with
-                    it: the seed owns the weekly goal and default rest its history was built around.
-                  </Txt>
-                  <Txt variant="micro" tone="faint">
-                    Deliberately not offered from About, which leaves the app genuinely empty: a
-                    wipe that silently refilled itself would be the most confusing possible outcome
-                    of a wipe.
-                  </Txt>
-                  <Button
-                    label={busy ? 'Restoring…' : 'Erase and re-seed'}
-                    variant="danger"
-                    size="sm"
-                    weighty
-                    loading={busy}
-                    disabled={busy}
-                    onPress={() => {
-                      if (!busy) void reseed();
-                    }}
-                    style={styles.selfEnd}
+                  <Stepper
+                    value={slowMs}
+                    onChange={setSlowMs}
+                    min={500}
+                    max={40000}
+                    step={500}
+                    suffix="ms"
+                    label="delay in milliseconds"
                   />
                 </Stack>
-              </Card>
-            </View>
-          </Stack>
-        </ScrollView>
-      )}
-    </DetailScreen>
+                <Divider inset={0} />
+                <Txt variant="caption" tone="muted">
+                  A slow request and a failed one are two different screens, and an error state is
+                  no proof that a skeleton is readable. This one succeeds after the delay, so the
+                  way out of loading is visible too. Waiting is abortable: abandoning a search
+                  cancels the wait instead of leaving a promise to land later.
+                </Txt>
+                <Button
+                  label="Delay the next request"
+                  variant="secondary"
+                  size="sm"
+                  onPress={armSlow}
+                  style={styles.selfEnd}
+                />
+              </Stack>
+            </Card>
+          </View>
+
+          {/* ------------------------------------------------------ request ledger */}
+          <View>
+            <SectionHeader
+              title="Requests since launch"
+              eyebrow={log.total === 0 ? undefined : countNoun(log.total, 'request', 'requests')}
+            />
+            <Card>
+              <Stack gap="md">
+                {log.entries.length === 0 ? (
+                  <Txt variant="caption" tone="muted">
+                    Nothing sent since this process started. Nothing here sends a request on
+                    purpose; go use the app, then come back and refresh.
+                  </Txt>
+                ) : (
+                  <>
+                    {log.entries.map((entry) => (
+                      <LedgerRow key={entry.path} path={entry.path} count={entry.count} />
+                    ))}
+                    <Divider inset={0} />
+                    <Txt variant="micro" tone="faint">
+                      Grouped by path with query parameters removed, so a query re-firing under new
+                      parameters reads as one path with a large count rather than as many paths
+                      with a count of one. A number climbing while the app sits still is a loop.
+                    </Txt>
+                    <Divider inset={0} />
+                    <Txt variant="caption" tone="muted">
+                      The repeated-request check: open Exercises, note the counts, leave to Home and
+                      come back. They must not move: a fresh cache entry is good for five minutes.
+                      Typing a new search *should* raise the page count once, not once per
+                      keystroke.
+                    </Txt>
+                  </>
+                )}
+                <View style={styles.ledgerActions}>
+                  <Button
+                    label="Refresh counters"
+                    icon="refresh"
+                    variant="quiet"
+                    size="sm"
+                    onPress={readCounters}
+                  />
+                  {log.entries.length > 0 ? (
+                    <Button label="Reset" variant="quiet" size="sm" onPress={clearLog} />
+                  ) : null}
+                </View>
+              </Stack>
+            </Card>
+          </View>
+
+          {/* ------------------------------------------------------------ schema */}
+          <View>
+            <SectionHeader title="Database" eyebrow="Migration state" />
+            <Card>
+              <Stack gap="sm">
+                <Txt variant="body">Schema v{schema ?? 'unknown'}</Txt>
+                <Txt variant="micro" tone="faint">
+                  The version this install actually migrated to, read from the database rather than
+                  from the target constant: which is the only way a failed or half-applied
+                  migration would show itself.
+                </Txt>
+              </Stack>
+            </Card>
+          </View>
+
+          {/* ----------------------------------------------------------- history */}
+          <View>
+            <SectionHeader title="Starter history" eyebrow="Erases first" />
+            <Card>
+              <Stack gap="lg">
+                <Txt variant="caption" tone="muted">
+                  Erases everything and writes the seeded thirteen weeks back: ending in the
+                  current week, so Home shows a real streak rather than an empty one: so a
+                  destructive QA run is recoverable without reinstalling the app. Settings go with
+                  it: the seed owns the weekly goal and default rest its history was built around.
+                </Txt>
+                <Txt variant="micro" tone="faint">
+                  Deliberately not offered from About, which leaves the app genuinely empty: a
+                  wipe that silently refilled itself would be the most confusing possible outcome
+                  of a wipe.
+                </Txt>
+                <Button
+                  label={busy ? 'Restoring…' : 'Erase and re-seed'}
+                  variant="danger"
+                  size="sm"
+                  weighty
+                  loading={busy}
+                  disabled={busy}
+                  onPress={() => {
+                    if (!busy) void reseed();
+                  }}
+                  style={styles.selfEnd}
+                />
+              </Stack>
+            </Card>
+          </View>
+        </Stack>
+      </ScrollView>
+    </>
   );
 }
 

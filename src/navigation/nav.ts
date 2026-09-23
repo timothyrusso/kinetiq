@@ -17,17 +17,19 @@
  * at a glance.
  */
 import type { Href } from 'expo-router';
+import type { PersonalRecord } from '@/domain/types';
 import type { TKey } from '@/i18n';
 
-export type TabKey = 'index' | 'activities' | 'workout' | 'exercises' | 'profile';
+export type TabKey = '(home)' | 'activities' | 'workout' | 'exercises' | 'profile';
 
 /**
- * Tab routes in bar order. `index` rather than `home` because the folder is
- * `(tabs)/index.tsx`, and a mismatch here is the kind of typo that compiles under a
- * cast: which is precisely why the cast has one home.
+ * Tab routes in bar order. `(home)` rather than `home` because Home is the group
+ * `(tabs)/(home)/`: a group, not a folder, so its URL stays `/` while it still gets a
+ * stack of its own. A mismatch here is the kind of typo that compiles under a cast, which
+ * is precisely why the cast has one home.
  */
 export const TAB_ROUTES: readonly [TabKey, TabKey, TabKey, TabKey, TabKey] = [
-  'index',
+  '(home)',
   'activities',
   'workout',
   'exercises',
@@ -35,7 +37,7 @@ export const TAB_ROUTES: readonly [TabKey, TabKey, TabKey, TabKey, TabKey] = [
 ] as const;
 
 const TAB_HREFS: Record<TabKey, Href> = {
-  index: '/(tabs)' as Href,
+  '(home)': '/(tabs)' as Href,
   activities: '/activities' as Href,
   workout: '/workout' as Href,
   exercises: '/exercises' as Href,
@@ -46,8 +48,8 @@ const TAB_HREFS: Record<TabKey, Href> = {
  * What each tab is called in the bar.
  *
  * Lives here rather than beside the bar's own list because the not-found screen offers the
- * same five destinations as text and must not maintain a second spelling of them. `index` is
- * "Home" and not "Index": the group segment is a routing fact, the label is a product one.
+ * same five destinations as text and must not maintain a second spelling of them. `(home)` is
+ * "Home": the group segment is a routing fact, the label is a product one.
  */
 /**
  * Tab names as catalog KEYS.
@@ -57,7 +59,7 @@ const TAB_HREFS: Record<TabKey, Href> = {
  * reference a tab by name without rendering the bar, such as the not-found screen.
  */
 export const TAB_LABELS: Record<TabKey, TKey> = {
-  index: 'tabs.home',
+  '(home)': 'tabs.home',
   activities: 'tabs.activities',
   workout: 'tabs.workout',
   exercises: 'tabs.exercises',
@@ -65,7 +67,7 @@ export const TAB_LABELS: Record<TabKey, TKey> = {
 };
 
 export function tabHref(index: number): Href {
-  const key = TAB_ROUTES[index] ?? 'index';
+  const key = TAB_ROUTES[index] ?? '(home)';
   return TAB_HREFS[key];
 }
 
@@ -89,8 +91,9 @@ export function tabKeyForPathname(pathname: string): TabKey | undefined {
   const segments = pathname.split('/').filter(Boolean);
   // `(tabs)` is the group segment and is not part of any tab's URL.
   if (segments[0] === '(tabs)') segments.shift();
+  if (segments[0] === '(home)') segments.shift();
   const first = segments[0];
-  if (first === undefined) return 'index';
+  if (first === undefined) return '(home)';
   return (TAB_ROUTES as readonly string[]).includes(first) ? (first as TabKey) : undefined;
 }
 
@@ -144,4 +147,24 @@ export const routes = {
   settingsAbout: () => '/settings/about' as Href,
   permissions: () => '/permissions' as Href,
   dev: () => '/dev' as Href,
+
+  /**
+   * The editors, presented as form sheets. Each takes what it edits as params and writes
+   * through the store or query that owns it, so nothing comes back through the navigation.
+   */
+  pickExercise: (target: 'draft' | 'session' | 'routine', routineId?: string) =>
+    ({ pathname: '/pick-exercise', params: routineId ? { target, id: routineId } : { target } }) as Href,
+  routineItem: (target: 'draft' | 'routine', itemId: string, routineId?: string) =>
+    ({
+      pathname: '/routine/item',
+      params: routineId ? { target, item: itemId, id: routineId } : { target, item: itemId },
+    }) as Href,
+  renameRoutine: (id: string) => ({ pathname: '/routine/rename', params: { id } }) as Href,
+  activityNotes: (id: string) => ({ pathname: '/activity/notes', params: { id } }) as Href,
+  exerciseFilters: () => '/exercise/filters' as Href,
+  sessionNotes: () => '/workout/notes' as Href,
+  sessionSet: (entryIndex: number, setIndex: number) =>
+    ({ pathname: '/workout/set', params: { entry: String(entryIndex), set: String(setIndex) } }) as Href,
+  sessionRecords: (records: readonly PersonalRecord[]) =>
+    ({ pathname: '/workout/records', params: { records: JSON.stringify(records) } }) as Href,
 } as const;

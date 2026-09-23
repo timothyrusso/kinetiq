@@ -29,9 +29,9 @@ import { ExerciseThumb, ListRow } from '@/ui/rows';
 import { Icon, type IconName } from '@/ui/icons';
 import { Row } from '@/ui/layout';
 import { Txt } from '@/ui/Text';
-import { Stepper } from '@/ui/controls';
-import { Sheet, SheetFooter, SheetSection } from '@/ui/Sheet';
-import { Button } from '@/ui/Button';
+import { Stepper } from '@/ui/controls/Stepper';
+import { FormFooter, FormSection } from '@/ui/FormSheet';
+import { Button } from '@/ui/controls/Button';
 import { haptics } from '@/services/haptics';
 import { useAppTheme } from '@/theme/theme';
 import { radius, spacing, touchTarget } from '@/theme/tokens';
@@ -48,6 +48,7 @@ import type { ExerciseSnapshot, RoutineItem } from '@/domain/types';
 import type { ItemTarget } from '@/routines/draft';
 import { useT } from '@/i18n/useT';
 import { tr } from '@/i18n/tr';
+import type { MetaItem } from '@/ui/display/types';
 
 /** A row's position, in the form the row needs to draw its move controls. */
 export type ItemPosition = {
@@ -92,7 +93,10 @@ export const RoutineItemRow = memo(function RoutineItemRow({
       <ListRow
         theme={theme}
         title={item.exerciseName}
-        subtitle={itemSubtitle(item, snapshot, units)}
+        meta={itemMeta(item, units)}
+        {...(snapshot?.primaryMuscles[0]
+          ? { tags: [{ key: 'muscle', label: snapshot.primaryMuscles[0] }] }
+          : {})}
         {...(onPress === undefined ? {} : { onPress })}
         {...(onLongPress === undefined ? {} : { onLongPress })}
         {...(onPress === undefined ? {} : { accessibilityHint: t('itemEditor.editHint') })}
@@ -110,13 +114,13 @@ export const RoutineItemRow = memo(function RoutineItemRow({
               <>
                 <RowButton
                   icon="chevronUp"
-                  label={`Move ${item.exerciseName} up`}
+                  label={t('routineItemA11y.moveUp', { name: item.exerciseName })}
                   disabled={index === 0}
                   onPress={() => position.onMove(index - 1)}
                 />
                 <RowButton
                   icon="chevronDown"
-                  label={`Move ${item.exerciseName} down`}
+                  label={t('routineItemA11y.moveDown', { name: item.exerciseName })}
                   disabled={index >= count - 1}
                   onPress={() => position.onMove(index + 1)}
                 />
@@ -125,7 +129,7 @@ export const RoutineItemRow = memo(function RoutineItemRow({
             {onRemove ? (
               <RowButton
                 icon="trash"
-                label={`Remove ${item.exerciseName} from this routine`}
+                label={t('routineItemA11y.remove', { name: item.exerciseName })}
                 tone="danger"
                 onPress={onRemove}
               />
@@ -205,14 +209,13 @@ function RowButton({
  * again on close: is how a units-aware form ends up with a field reading 135 while the
  * stepper is quietly stepping kilograms.
  */
-export const ItemEditorSheet = memo(function ItemEditorSheet({
+export const ItemEditorForm = memo(function ItemEditorForm({
   item,
   snapshot,
   units,
   defaultRestSeconds,
   onChange,
   onRemove,
-  onRequestClose,
 }: {
   item: RoutineItem;
   snapshot: ExerciseSnapshot | null;
@@ -220,7 +223,6 @@ export const ItemEditorSheet = memo(function ItemEditorSheet({
   defaultRestSeconds: number;
   onChange: (patch: Partial<ItemTarget>) => void;
   onRemove?: () => void;
-  onRequestClose: () => void;
 }) {
   const { t } = useT();
   const theme = useAppTheme();
@@ -229,12 +231,11 @@ export const ItemEditorSheet = memo(function ItemEditorSheet({
   const restingAtDefault = item.restSeconds === defaultRestSeconds;
 
   return (
-    <Sheet
-      onRequestClose={onRequestClose}
-      title={item.exerciseName}
-      subtitle={sheetSubtitle(item, snapshot)}
-    >
-      <SheetSection title={t('itemEditor.sets')}>
+    <>
+      <Txt variant="caption" tone="muted">
+        {sheetSubtitle(item, snapshot)}
+      </Txt>
+      <FormSection title={t('itemEditor.sets')}>
         <Stepper
           label={t('itemEditor.sets')}
           value={item.sets}
@@ -243,9 +244,9 @@ export const ItemEditorSheet = memo(function ItemEditorSheet({
           step={1}
           onChange={(sets) => onChange({ sets })}
         />
-      </SheetSection>
+      </FormSection>
 
-      <SheetSection title={t('itemEditor.reps')}>
+      <FormSection title={t('itemEditor.reps')}>
         <Stepper
           label={t('itemEditor.reps')}
           value={repsFromRange(item.reps)}
@@ -258,9 +259,9 @@ export const ItemEditorSheet = memo(function ItemEditorSheet({
         <Txt variant="micro" tone="faint" style={{ marginTop: spacing.sm }}>
           {t('itemEditor.rangesNote')}
         </Txt>
-      </SheetSection>
+      </FormSection>
 
-      <SheetSection title={t('itemEditor.weightIn', { unit: weightUnit(units) })}>
+      <FormSection title={t('itemEditor.weightIn', { unit: weightUnit(units) })}>
         <Stepper
           label={t('itemEditor.weightPerSet', { unit: weightUnit(units) })}
           value={displayWeight}
@@ -274,9 +275,9 @@ export const ItemEditorSheet = memo(function ItemEditorSheet({
             {t('itemEditor.bodyweightNote')}
           </Txt>
         ) : null}
-      </SheetSection>
+      </FormSection>
 
-      <SheetSection title={t('itemEditor.restBetweenSets')}>
+      <FormSection title={t('itemEditor.restBetweenSets')}>
         <Stepper
           label={t('itemEditor.restBetweenSets')}
           value={item.restSeconds}
@@ -295,13 +296,13 @@ export const ItemEditorSheet = memo(function ItemEditorSheet({
             {t('itemEditor.defaultRestNote')}
           </Txt>
         ) : null}
-      </SheetSection>
+      </FormSection>
 
       {snapshot !== null &&
       (snapshot.primaryMuscles.length > 0 ||
         snapshot.equipment.length > 0 ||
         snapshot.instructions !== null) ? (
-        <SheetSection title={t('itemEditor.fromLibrary')}>
+        <FormSection title={t('itemEditor.fromLibrary')}>
           <Row gap="sm" wrap>
             {snapshot.primaryMuscles.map((muscle) => (
               <Row key={muscle} gap="xs" style={tagStyle(theme.colors)}>
@@ -323,26 +324,15 @@ export const ItemEditorSheet = memo(function ItemEditorSheet({
               {snapshot.instructions}
             </Txt>
           ) : null}
-        </SheetSection>
+        </FormSection>
       ) : null}
 
-      <SheetFooter>
-        {onRemove === undefined ? null : (
-          <Button
-            label={t('itemEditor.remove')}
-            variant="danger"
-            icon="trash"
-            onPress={onRemove}
-          />
-        )}
-        <Button
-          label={t('itemEditor.done')}
-          onPress={onRequestClose}
-          weighty
-          style={{ flex: 1 }}
-        />
-      </SheetFooter>
-    </Sheet>
+      {onRemove === undefined ? null : (
+        <FormFooter>
+          <Button label={t('itemEditor.remove')} variant="danger" icon="trash" onPress={onRemove} />
+        </FormFooter>
+      )}
+    </>
   );
 });
 
@@ -355,15 +345,12 @@ export const ItemEditorSheet = memo(function ItemEditorSheet({
  * formatted; reps and sets are unit-free. A missing snapshot costs the muscle name and
  * nothing else: which is exactly why the exercise name is stored on the item.
  */
-export function itemSubtitle(
-  item: RoutineItem,
-  snapshot: ExerciseSnapshot | null,
-  units: UnitSystem,
-): string {
+function itemMeta(item: RoutineItem, units: UnitSystem): MetaItem[] {
   const load = item.weightKg === 0 ? tr('itemEditor.bodyweightShort') : formatWeight(item.weightKg, units);
-  const targets = `${item.sets} × ${item.reps} · ${load}`;
-  const muscle = snapshot?.primaryMuscles[0];
-  return muscle ? `${targets} · ${muscle}` : targets;
+  return [
+    { icon: 'layers', label: `${item.sets} × ${item.reps}` },
+    { icon: 'dumbbell', label: load },
+  ];
 }
 
 function sheetSubtitle(item: RoutineItem, snapshot: ExerciseSnapshot | null): string {

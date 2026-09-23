@@ -21,7 +21,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { Theme } from '@/theme/theme';
 import { spacing } from '@/theme/tokens';
-import { Button } from '@/ui/Button';
+import { Button } from '@/ui/controls/Button';
 import { useT } from '@/i18n/useT';
 
 export function RouteErrorScreen({

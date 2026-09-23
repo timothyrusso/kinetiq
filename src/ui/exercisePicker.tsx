@@ -1,14 +1,9 @@
 /**
- * The remote-library exercise picker, as a sheet.
+ * The remote-library exercise picker: the body of the `pick-exercise` form-sheet route.
  *
- * Shared by the two places that put an exercise into a list of exercises: the routine
- * builder (writing into the draft store) and a saved routine's detail screen (writing
- * through a mutation). They differ only in what happens on tap, which is why this takes
- * `onPick` and nothing else about either destination.
- *
- * A sheet rather than a pushed screen for both: a pushed library has to hand the choice back
- * across a navigation boundary, and pushing a *routine picker* in front of someone who is
- * already inside one routine is answering a question nobody asked.
+ * Shared by the three places that put an exercise into a list: the routine builder, a saved
+ * routine and the live session. The route decides the destination and passes `onPick`; this
+ * component knows nothing about any of them.
  *
  * ## Its own search state, deliberately
  *
@@ -29,21 +24,22 @@
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button } from '@/ui/Button';
-import { Chip } from '@/ui/controls';
-import { TextField } from '@/ui/TextField';
+import { Button } from '@/ui/controls/Button';
+import { Chip } from '@/ui/controls/Chip';
+import { TextInput } from '@/ui/controls/TextInput';
 import { Row } from '@/ui/layout';
 import { Txt } from '@/ui/Text';
 import { Icon } from '@/ui/icons';
 import { EmptyState, ErrorState, SkeletonList } from '@/ui/states';
 import { ExerciseThumb, ListRow } from '@/ui/rows';
-import { Sheet, SheetFooter } from '@/ui/Sheet';
+import { FormSheet } from '@/ui/FormSheet';
 import { useExerciseSearch, useExerciseTaxonomy } from '@/queries/useExercises';
 import { useAppTheme } from '@/theme/theme';
 import { spacing } from '@/theme/tokens';
 import { useDebouncedValue, useIsSettling } from '@/utils/useDebouncedValue';
 import type { Exercise, ExerciseFilter } from '@/domain/types';
 import { useT } from '@/i18n/useT';
+import { exerciseTags } from '@/ui/display/exerciseTags';
 
 /**
  * Rows the sheet renders before asking for more.
@@ -61,14 +57,15 @@ const PAGE_ROWS = 24;
 const MUSCLE_CHIPS = 6;
 const EQUIPMENT_CHIPS = 5;
 
-export function ExercisePickerSheet({
+export function ExercisePicker({
   onPick,
-  onClose,
   isIncluded,
+  error,
 }: {
   /** Called once per chosen exercise, with the provider's row. */
   onPick: (exercise: Exercise) => void;
-  onClose: () => void;
+  /** Why the last pick did not land, shown above the results. */
+  error: string | null;
   /**
    * Whether this exercise is already in the destination list. Included rows stay visible,
    * checked and disabled, rather than disappearing: a result set that silently loses rows
@@ -105,12 +102,16 @@ export function ExercisePickerSheet({
   const includedCount = search.items.filter((exercise) => isIncluded(exercise.id)).length;
 
   return (
-    <Sheet
-      onRequestClose={onClose}
-      title={t('picker.title')}
-      subtitle={t('picker.subtitle')}
-    >
-      <TextField
+    <FormSheet title={t('picker.title')} doneLabel="picker.done" scroll>
+      <Txt variant="caption" tone="muted">
+        {t('picker.subtitle')}
+      </Txt>
+      {error ? (
+        <Txt variant="caption" tone="danger">
+          {error}
+        </Txt>
+      ) : null}
+      <TextInput
         label={t('picker.search')}
         value={query}
         onChangeText={setQuery}
@@ -210,16 +211,12 @@ export function ExercisePickerSheet({
         />
       ) : null}
 
-      <SheetFooter>
-        <Button label={t('picker.done')} onPress={onClose} weighty />
-      </SheetFooter>
-
       {includedCount > 0 ? (
         <Txt variant="micro" tone="faint" style={{ textAlign: 'center', marginTop: -spacing.sm }}>
           {includedCount} {includedCount === 1 ? 'is' : 'are'} already in this routine
         </Txt>
       ) : null}
-    </Sheet>
+    </FormSheet>
   );
 }
 
@@ -241,7 +238,8 @@ function PickerRow({
     <ListRow
       theme={theme}
       title={exercise.name}
-      subtitle={pickerSubtitle(exercise)}
+      tags={exerciseTags(exercise)}
+      tagsMax={2}
       onPress={included ? undefined : onPress}
       disabled={included}
       style={{
@@ -269,16 +267,4 @@ function PickerRow({
       }
     />
   );
-}
-
-/**
- * The row's second line.
- *
- * The same order the rest of the app uses for an exercise's caption: muscles, then category,
- * then a bare "Exercise": because two screens falling back to two different words for the
- * same missing field is how a library starts to look unfinished.
- */
-function pickerSubtitle(exercise: Exercise): string {
-  if (exercise.primaryMuscles.length > 0) return exercise.primaryMuscles.join(', ');
-  return exercise.category ?? 'Exercise';
 }

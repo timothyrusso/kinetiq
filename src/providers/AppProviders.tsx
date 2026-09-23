@@ -38,7 +38,7 @@ import { getQueryClient } from '@/query/client';
 import { haptics } from '@/services/haptics';
 import { themeFor, useAppTheme } from '@/theme/theme';
 import { spacing } from '@/theme/tokens';
-import { Button } from '@/ui/Button';
+import { Button } from '@/ui/controls/Button';
 import { Txt } from '@/ui/Text';
 import { Card, Divider, Row } from '@/ui/layout';
 

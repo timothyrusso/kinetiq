@@ -99,7 +99,7 @@ if (inProgress) console.log(`   "${inProgress}" is mid-session; starting "${name
 // the third time running. Mount and settle the screen that will be measured, then arm.
 console.log('2. settle the exercise screen, then arm "No connection"');
 open('exercises', 'Exercise');
-settleForText('SEARCH EXERCISES', { seconds: 8 });
+settleForText('Search exercises', { seconds: 8 });
 open('dev', 'Developer');
 // armFault clears first: the armer is a toggle, so pressing a row that already reads
 // "Armed" disarms it. It also verifies the summary line the app prints, e.g.
@@ -123,11 +123,11 @@ for (let attempt = 1; attempt <= 3 && !cut; attempt++) {
   if (!armFault('No connection')) fail('could not re-arm the offline fault');
   open('exercises', 'Exercise');
   scrollTop();
-  const field = nodes().find((n) => n.type === 'TextField' && visible(n));
+  const field = nodes().find((n) => n.type === 'SearchField' && visible(n));
   if (!field) fail('no visible search field to type into');
   fillField(field.ref, probe);
   sleep(7);
-  const typed = (nodes().find((n) => n.type === 'TextField' && visible(n)) ?? {}).value;
+  const typed = (nodes().find((n) => n.type === 'SearchField' && visible(n)) ?? {}).value;
   if (typed !== probe) {
     fail(`search field reads "${typed}" not "${probe}": the keystroke, not the network, failed`);
   }

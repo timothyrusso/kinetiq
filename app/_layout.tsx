@@ -32,6 +32,7 @@ import { router, Stack, ThemeProvider, type ErrorBoundaryProps } from 'expo-rout
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { formSheet, useHeaderOptions } from '@/navigation/headerOptions';
 import { NAV_DARK_THEME, NAV_LIGHT_THEME } from '@/navigation/theme';
 import { AppProviders } from '@/providers/AppProviders';
 import { GestureRoot } from '@/providers/bootstrap';
@@ -58,6 +59,7 @@ export default function RootLayout() {
  */
 function ThemedRoot() {
   const theme = useAppTheme();
+  const headerOptions = useHeaderOptions();
   return (
     <SafeAreaProvider>
       <GestureRoot canvasColor={theme.colors.background}>
@@ -70,30 +72,46 @@ function ThemedRoot() {
             still mount their own and win while focused.
           */}
           <StatusBar style={statusBarStyle(theme.mode)} animated />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              // Transparent, so the canvas colour comes from one place (`GestureRoot`)
-              // rather than every navigator repainting it mid-push.
-              contentStyle: { backgroundColor: 'transparent' },
-            }}
-          >
-            <Stack.Screen name="(tabs)" />
-            {/* `workout` is a card, not a sheet: it hosts nested push screens (session →
-                exercise picker → history), which a `modal` presentation would trap: a
-                sheet cannot push, and the usual workaround (a nested stack inside the
-                sheet) buys a grabber bar and costs back-gesture reliability. The
-                bottom-sheet *feel* comes from the rounded top corners, the slide-from-below
-                transition and the scrim, none of which need `presentation`. */}
-            <Stack.Screen name="workout" />
-            {/* Full-cover sheets: each hosts one self-contained flow with no nesting. */}
-            <Stack.Screen name="routine" />
-            <Stack.Screen name="exercise" />
-            <Stack.Screen name="activity" />
-            <Stack.Screen name="progress" />
-            <Stack.Screen name="settings" />
-            <Stack.Screen name="permissions" />
-            <Stack.Screen name="dev" />
+          <Stack screenOptions={headerOptions}>
+            {/* The tabs draw no header of their own at this level: each tab is a stack with its
+                own native header (`src/navigation/TabStack.tsx`), and a second bar here would
+                stack on top of it. */}
+            <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Kinetiq' }} />
+            {/*
+              Every pushed route lives in THIS stack rather than in a nested one per folder. A
+              nested stack's first screen has nothing inside its own stack to pop to, so the
+              platform draws no back button there, which is why the old header replaced the
+              back button on every screen. Flat, the system back button, its long-press history
+              menu and the Android back gesture all work unaided.
+
+              The player and the recorder keep `gestureEnabled: false`: a swipe must not be
+              able to discard an unfinished workout or appear to cancel a recording. Their exits
+              are explicit buttons, and the destructive ones are confirmed.
+            */}
+            <Stack.Screen
+              name="workout/session"
+              options={{ animation: 'slide_from_bottom', gestureEnabled: false }}
+            />
+            <Stack.Screen
+              name="workout/cardio"
+              options={{ animation: 'slide_from_bottom', gestureEnabled: false }}
+            />
+            <Stack.Screen name="routine/new" options={{ presentation: 'modal' }} />
+            {/* Editors are routes presented as the platform's sheet. Each reads its input from
+                route params and writes through the store or query the screen underneath
+                already reads, so nothing is handed back across the navigation. */}
+            <Stack.Screen name="pick-exercise" options={formSheet('picker')} />
+            <Stack.Screen name="exercise/filters" options={formSheet('picker')} />
+            <Stack.Screen name="routine/item" options={formSheet('fit')} />
+            <Stack.Screen name="routine/rename" options={formSheet('fit')} />
+            <Stack.Screen name="activity/notes" options={formSheet('fit')} />
+            <Stack.Screen name="workout/notes" options={formSheet('fit')} />
+            <Stack.Screen name="workout/set" options={formSheet('fit')} />
+            <Stack.Screen
+              name="workout/records"
+              options={{ ...formSheet('fit'), gestureEnabled: false }}
+            />
+            <Stack.Screen name="exercise/add" options={{ presentation: 'modal' }} />
             <Stack.Screen
               name="+not-found"
               options={{

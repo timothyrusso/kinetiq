@@ -33,14 +33,17 @@
  */
 import { useCallback, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router, useLocalSearchParams } from 'expo-router';
 
-import { Screen } from '@/ui/Screen';
-import { Button, IconButton } from '@/ui/Button';
-import { Chip, Stepper } from '@/ui/controls';
-import { KeyboardAvoid, TextField } from '@/ui/TextField';
-import { Card, Gap, Row, SectionHeader, Stack as Column } from '@/ui/layout';
+import { Screen, ScreenHeader } from '@/ui/Screen';
+import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
+import { Button } from '@/ui/controls/Button';
+import { Chip } from '@/ui/controls/Chip';
+import { Stepper } from '@/ui/controls/Stepper';
+import { KeyboardAvoid } from '@/ui/layout';
+import { TextInput } from '@/ui/controls/TextInput';
+import { Card, Gap, Row, Stack as Column } from '@/ui/layout';
+import { SectionHeader } from '@/ui/display';
 import { Txt } from '@/ui/Text';
 import { Icon } from '@/ui/icons';
 import { EmptyState, SkeletonCard } from '@/ui/states';
@@ -50,7 +53,7 @@ import { useAddRoutineExercise, useRoutines, useSaveRoutine } from '@/queries/us
 import { useSettings } from '@/settings/hooks';
 import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
-import { radius, spacing } from '@/theme/tokens';
+import { radius, screenGutter, spacing } from '@/theme/tokens';
 import { useT } from '@/i18n/useT';
 import {
   parseNumber,
@@ -88,7 +91,6 @@ export default function AddExerciseScreen() {
   const { t } = useT();
   const params = useLocalSearchParams<{ id?: string }>();
   const theme = useAppTheme();
-  const insets = useSafeAreaInsets();
   const units = useSettings((s) => s.unitSystem);
   const defaultRest = useSettings((s) => s.defaultRestSeconds);
   const { routines, isLoading: routinesLoading } = useRoutines();
@@ -167,39 +169,32 @@ export default function AddExerciseScreen() {
       // error boundary for something the form can simply be re-tapped to retry.
     }
   }, [addItem, defaultRest, draft, effectiveTarget, exercise, saveRoutine, saving, units]);
+  const commit = useCallback(() => {
+    void save();
+  }, [save]);
+  const dismiss = useCallback(() => router.dismiss(), []);
 
   return (
     <>
-      <Stack.Screen options={{ headerShown: false }} />
+      <ScreenHeader title={t('addExercise.addToRoutineTitle')} />
+      <HeaderToolbar placement="left">
+        {headerAction({ action: 'cancel', onPress: dismiss, t, label: 'addExercise.cancel' })}
+      </HeaderToolbar>
+      {/* A text action, not a glyph: the commit here creates something, and a labelled
+          action also shows its disabled state, which a dimmed glyph does not. */}
+      <HeaderToolbar placement="right">
+        {headerAction({
+          action: 'save',
+          onPress: commit,
+          t,
+          label: saving ? 'addExercise.adding' : 'addExercise.add',
+          disabled: !canSave,
+          variant: 'done',
+          tint: theme.colors.accent,
+        })}
+      </HeaderToolbar>
       <Screen>
         <KeyboardAvoid style={{ flex: 1 }}>
-          <View style={[styles.bar, { paddingTop: insets.top + spacing.xs }]}>
-            <IconButton
-              name="close"
-              size={20}
-              variant="surface"
-              accessibilityLabel={t('addExercise.cancel')}
-              onPress={() => router.dismiss()}
-            />
-            <Txt variant="subhead" weight="700" style={{ flex: 1 }} numberOfLines={1}>
-              {t('addExercise.addToRoutineTitle')}
-            </Txt>
-            {/* A text button, not a round icon: the commit here creates something, and
-                "close" and "add" as two identical discs six centimetres apart is a
-                mis-tap waiting to happen. A labelled button also shows its disabled
-                state; a dimmed glyph does not. */}
-            <Button
-              label={t(saving ? 'addExercise.adding' : 'addExercise.add')}
-              variant="ghost"
-              size="sm"
-              onPress={() => {
-                void save();
-              }}
-              disabled={!canSave}
-              accessibilityHint={t('addExercise.addHint')}
-            />
-          </View>
-
           <ScrollView
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={{ paddingTop: spacing.xxl, paddingBottom: spacing.huge }}
@@ -271,28 +266,24 @@ export default function AddExerciseScreen() {
                 {effectiveTarget === NEW_ROUTINE ? (
                   <Column gap="md" style={styles.section}>
                     <SectionHeader title={t('addExercise.newRoutine')} />
-                    <TextField
+                    <TextInput
                       label={t('addExercise.routineName')}
                       value={draft.name}
                       onChangeText={field('name')}
                       placeholder={t('addExercise.routineNamePlaceholder')}
-                      placeholderTextColor={theme.colors.textFaint}
                       returnKeyType="done"
                       onSubmitEditing={() => {
                         void save();
                       }}
-                      blurOnSubmit
                       autoCapitalize="words"
-                      autoComplete="off"
                       error={needsName ? t('addExercise.nameRequired') : null}
                       accessibilityHint={t('addExercise.nameHint')}
                     />
-                    <TextField
+                    <TextInput
                       label={t('addExercise.description')}
                       value={draft.description}
                       onChangeText={field('description')}
                       placeholder={t('addExercise.descriptionPlaceholder')}
-                      placeholderTextColor={theme.colors.textFaint}
                       returnKeyType="done"
                       autoCapitalize="sentences"
                       multiline
@@ -324,7 +315,7 @@ export default function AddExerciseScreen() {
                     eyebrow={t('addExercise.targetsEyebrow')}
                   />
                   <Row gap="md">
-                    <TextField
+                    <TextInput
                       label={t('addExercise.sets')}
                       value={draft.sets}
                       onChangeText={field('sets')}
@@ -333,7 +324,7 @@ export default function AddExerciseScreen() {
                       style={{ flex: 1 }}
                       maxLength={2}
                     />
-                    <TextField
+                    <TextInput
                       label={t('addExercise.reps')}
                       value={draft.reps}
                       onChangeText={field('reps')}
@@ -345,7 +336,7 @@ export default function AddExerciseScreen() {
                   </Row>
 
                   <Row gap="md" align="center">
-                    <TextField
+                    <TextInput
                       label={t('addExercise.weightIn', { unit: weightUnit(units) })}
                       value={draft.weight}
                       onChangeText={field('weight')}
@@ -356,23 +347,24 @@ export default function AddExerciseScreen() {
                       style={{ flex: 1 }}
                       maxLength={6}
                     />
-                    <Stepper
-                      label={t('addExercise.weightPerSet', { unit: weightUnit(units) })}
-                      compact
-                      value={parseWeight(draft.weight, units)}
-                      onChange={(next) =>
-                        setDraft((d) => ({ ...d, weight: next === 0 ? '' : String(next) }))
-                      }
-                      min={0}
-                      max={units === 'imperial' ? 1000 : 450}
-                      step={weightStep(units)}
-                      suffix={weightUnit(units)}
-                      style={{ paddingTop: 22 }}
-                    />
+                    <View style={{ paddingTop: 22 }}>
+                      <Stepper
+                        label={t('addExercise.weightPerSet', { unit: weightUnit(units) })}
+                        compact
+                        value={parseWeight(draft.weight, units)}
+                        onChange={(next) =>
+                          setDraft((d) => ({ ...d, weight: next === 0 ? '' : String(next) }))
+                        }
+                        min={0}
+                        max={units === 'imperial' ? 1000 : 450}
+                        step={weightStep(units)}
+                        suffix={weightUnit(units)}
+                      />
+                    </View>
                   </Row>
 
                   <Row gap="md" align="center">
-                    <TextField
+                    <TextInput
                       label={t('addExercise.rest')}
                       value={draft.rest}
                       onChangeText={field('rest')}
@@ -383,25 +375,25 @@ export default function AddExerciseScreen() {
                       style={{ flex: 1 }}
                       maxLength={4}
                     />
-                    <Stepper
-                      label={t('addExercise.restBetweenSets')}
-                      compact
-                      value={clampInt(draft.rest, 0, 600, defaultRest)}
-                      onChange={(next) => setDraft((d) => ({ ...d, rest: String(next) }))}
-                      min={0}
-                      max={600}
-                      step={15}
-                      suffix="s"
-                      style={{ paddingTop: 22 }}
-                    />
+                    <View style={{ paddingTop: 22 }}>
+                      <Stepper
+                        label={t('addExercise.restBetweenSets')}
+                        compact
+                        value={clampInt(draft.rest, 0, 600, defaultRest)}
+                        onChange={(next) => setDraft((d) => ({ ...d, rest: String(next) }))}
+                        min={0}
+                        max={600}
+                        step={15}
+                        suffix="s"
+                      />
+                    </View>
                   </Row>
 
-                  <TextField
+                  <TextInput
                     label={t('addExercise.cue')}
                     value={draft.notes}
                     onChangeText={field('notes')}
                     placeholder={t('addExercise.notesPlaceholder')}
-                    placeholderTextColor={theme.colors.textFaint}
                     returnKeyType="done"
                     autoCapitalize="sentences"
                     multiline
@@ -481,7 +473,6 @@ function clampInt(input: string, min: number, max: number, fallback: number): nu
 }
 
 const styles = StyleSheet.create({
-  bar: { paddingHorizontal: spacing.sm, paddingBottom: spacing.sm },
-  section: { paddingHorizontal: spacing.xl },
+  section: { paddingHorizontal: screenGutter },
   multiline: { minHeight: 76, paddingTop: spacing.md, paddingBottom: spacing.md, textAlignVertical: 'top' },
 });

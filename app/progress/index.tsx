@@ -49,13 +49,14 @@
  * states, not one with conditional copy.
  */
 import { useCallback, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type ViewStyle } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { DetailScreen } from '@/ui/Screen';
-import { Card, Divider, MetricGrid, Row, SectionHeader, Stack } from '@/ui/layout';
-import { Chip } from '@/ui/controls';
+import { ScreenHeader, ScreenScroll } from '@/ui/Screen';
+import { MetaLine } from '@/ui/display';
+import { Card, Divider, MetricGrid, Row, Stack } from '@/ui/layout';
+import { SectionHeader } from '@/ui/display';
+import { Chip } from '@/ui/controls/Chip';
 import { IconTile } from '@/ui/icons';
 import { ListRow } from '@/ui/rows';
 import { MetricLabel, Txt } from '@/ui/Text';
@@ -113,13 +114,10 @@ const MIN_TREND_POINTS = 2;
 /** Reserved before measurement, matching `TrendChart`'s own default height. */
 const CHART_HEIGHT = 184;
 
-/** This tab is pushed rather than tabbed into, so it scrolls under nothing at the bottom. */
-const BOTTOM_SPACE = 48;
-
 export default function ProgressScreen() {
   const { t } = useT();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const theme = useAppTheme();
 
   const units = useSettings((s) => s.unitSystem);
   const goal = useSettings((s) => s.weeklyGoalWorkouts);
@@ -151,144 +149,138 @@ export default function ProgressScreen() {
   );
 
   return (
-    <DetailScreen title={t('progress.title')} subtitle={rangeLabel(rangeWeeks, t)}>
-      {(topInset) => (
-        <ScrollView
-          contentContainerStyle={[
-            styles.content,
-            { paddingTop: topInset + spacing.md, paddingBottom: BOTTOM_SPACE + insets.bottom },
-          ]}
-          keyboardShouldPersistTaps="handled"
-        >
-          <Stack gap="xxl" style={styles.body}>
-            <View style={styles.chipRow}>
-              {RANGES.map((option) => (
-                <Chip
-                  key={option.weeks}
-                  label={t(option.label)}
-                  size="sm"
-                  selected={option.weeks === rangeWeeks}
-                  onPress={() => setRangeWeeks(option.weeks)}
+    <>
+      <ScreenHeader title={t('progress.title')} />
+      <ScreenScroll gutter={false} contentContainerStyle={styles.content}>
+        <Stack gap="xxl" style={styles.body}>
+          <MetaLine items={[{ icon: 'calendar', label: rangeLabel(rangeWeeks, t) }]} theme={theme} />
+          <View style={styles.chipRow}>
+            {RANGES.map((option) => (
+              <Chip
+                key={option.weeks}
+                label={t(option.label)}
+                size="sm"
+                selected={option.weeks === rangeWeeks}
+                onPress={() => setRangeWeeks(option.weeks)}
+              />
+            ))}
+          </View>
+
+          {showSkeleton ? (
+            <Stack gap="lg">
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonList rows={3} />
+            </Stack>
+          ) : summaryQuery.isError && summary === undefined ? (
+            // History lives in the local database, so a failure here is a read failure
+            // rather than a connection one: the copy has to say that, or someone waits
+            // for a signal that was never the problem.
+            <ErrorState
+              error={summaryQuery.error}
+              onRetry={() => void summaryQuery.refetch()}
+              title={t('progress.readError')}
+            />
+          ) : summary && !summary.hasAnyHistory ? (
+            <EmptyState
+              icon="trendUp"
+              title={t('progress.emptyTitle')}
+              message={t('progress.emptyMessage')}
+              actionLabel={t('progress.startWorkout')}
+              onAction={() => openTab(tabIndexOf('workout'))}
+              secondaryLabel={t('progress.browseLibrary')}
+              onSecondary={() => openTab(tabIndexOf('exercises'))}
+            />
+          ) : summary ? (
+            <>
+              <TotalsCard summary={summary} units={units} goal={goal} />
+
+              <View>
+                <SectionHeader title={t('progress.trend')} eyebrow={t('progress.weekByWeek')} />
+                <Card>
+                  <View style={styles.chipRow}>
+                    <Chip
+                      label={t('progress.time')}
+                      size="sm"
+                      selected={measure === 'duration'}
+                      onPress={() => setMeasure('duration')}
+                    />
+                    <Chip
+                      label={t('progress.distance')}
+                      size="sm"
+                      selected={measure === 'distance'}
+                      onPress={() => setMeasure('distance')}
+                    />
+                    <Chip
+                      label={t('progress.volume')}
+                      size="sm"
+                      selected={measure === 'volume'}
+                      onPress={() => setMeasure('volume')}
+                    />
+                  </View>
+                  {/* Measured *inside* the card, so the chart is handed its own real
+                      width directly. Subtracting a hard-coded card padding from the
+                      outer width would quietly go wrong the day the card's padding
+                      changed: the layout event already knows the answer. */}
+                  <View onLayout={onChartLayout}>
+                    <MeasureChart
+                      summary={summary}
+                      measure={measure}
+                      width={chartWidth}
+                      units={units}
+                    />
+                  </View>
+                </Card>
+              </View>
+
+              <DistributionCard summary={summary} />
+
+              <View>
+                <SectionHeader
+                  title={t('progress.consistency')}
+                  eyebrow={t('progress.lastSixMonths')}
                 />
-              ))}
-            </View>
+                <ConsistencyCard
+                  heatmap={heatmapQuery.data}
+                  loading={heatmapQuery.isPending && heatmapQuery.data === undefined}
+                  error={heatmapQuery.isError}
+                  errorValue={heatmapQuery.error}
+                  onRetry={() => void heatmapQuery.refetch()}
+                />
+              </View>
 
-            {showSkeleton ? (
-              <Stack gap="lg">
-                <SkeletonCard />
-                <SkeletonCard />
-                <SkeletonList rows={3} />
-              </Stack>
-            ) : summaryQuery.isError && summary === undefined ? (
-              // History lives in the local database, so a failure here is a read failure
-              // rather than a connection one: the copy has to say that, or someone waits
-              // for a signal that was never the problem.
-              <ErrorState
-                error={summaryQuery.error}
-                onRetry={() => void summaryQuery.refetch()}
-                title={t('progress.readError')}
-              />
-            ) : summary && !summary.hasAnyHistory ? (
-              <EmptyState
-                icon="trendUp"
-                title={t('progress.emptyTitle')}
-                message={t('progress.emptyMessage')}
-                actionLabel={t('progress.startWorkout')}
-                onAction={() => openTab(tabIndexOf('workout'))}
-                secondaryLabel={t('progress.browseLibrary')}
-                onSecondary={() => openTab(tabIndexOf('exercises'))}
-              />
-            ) : summary ? (
-              <>
-                <TotalsCard summary={summary} units={units} goal={goal} />
+              <View>
+                <SectionHeader
+                  title={t('progress.personalRecords')}
+                  eyebrow={t('progress.allTime')}
+                  counter={recordsQuery.data?.length}
+                />
+                <RecordsCard
+                  records={recordsQuery.data}
+                  loading={recordsQuery.isPending && recordsQuery.data === undefined}
+                  error={recordsQuery.isError}
+                  errorValue={recordsQuery.error}
+                  units={units}
+                  onRetry={() => void recordsQuery.refetch()}
+                />
+              </View>
 
-                <View>
-                  <SectionHeader title={t('progress.trend')} eyebrow={t('progress.weekByWeek')} />
-                  <Card>
-                    <View style={styles.chipRow}>
-                      <Chip
-                        label={t('progress.time')}
-                        size="sm"
-                        selected={measure === 'duration'}
-                        onPress={() => setMeasure('duration')}
-                      />
-                      <Chip
-                        label={t('progress.distance')}
-                        size="sm"
-                        selected={measure === 'distance'}
-                        onPress={() => setMeasure('distance')}
-                      />
-                      <Chip
-                        label={t('progress.volume')}
-                        size="sm"
-                        selected={measure === 'volume'}
-                        onPress={() => setMeasure('volume')}
-                      />
-                    </View>
-                    {/* Measured *inside* the card, so the chart is handed its own real
-                        width directly. Subtracting a hard-coded card padding from the
-                        outer width would quietly go wrong the day the card's padding
-                        changed: the layout event already knows the answer. */}
-                    <View onLayout={onChartLayout}>
-                      <MeasureChart
-                        summary={summary}
-                        measure={measure}
-                        width={chartWidth}
-                        units={units}
-                      />
-                    </View>
-                  </Card>
-                </View>
-
-                <DistributionCard summary={summary} />
-
-                <View>
-                  <SectionHeader
-                    title={t('progress.consistency')}
-                    eyebrow={t('progress.lastSixMonths')}
-                  />
-                  <ConsistencyCard
-                    heatmap={heatmapQuery.data}
-                    loading={heatmapQuery.isPending && heatmapQuery.data === undefined}
-                    error={heatmapQuery.isError}
-                    errorValue={heatmapQuery.error}
-                    onRetry={() => void heatmapQuery.refetch()}
-                  />
-                </View>
-
-                <View>
-                  <SectionHeader
-                    title={t('progress.personalRecords')}
-                    eyebrow={t('progress.allTime')}
-                    count={recordsQuery.data?.length}
-                  />
-                  <RecordsCard
-                    records={recordsQuery.data}
-                    loading={recordsQuery.isPending && recordsQuery.data === undefined}
-                    error={recordsQuery.isError}
-                    errorValue={recordsQuery.error}
-                    units={units}
-                    onRetry={() => void recordsQuery.refetch()}
-                  />
-                </View>
-
-                <View style={{ marginTop: spacing.lg }}>
-                  <Divider inset={spacing.sm} />
-                  <Txt
-                    variant="micro"
-                    tone="faint"
-                    align="center"
-                    style={{ marginTop: spacing.lg }}
-                  >
-                    {t('misc.progressPrivacy')}
-                  </Txt>
-                </View>
-              </>
-            ) : null}
-          </Stack>
-        </ScrollView>
-      )}
-    </DetailScreen>
+              <View style={{ marginTop: spacing.lg }}>
+                <Divider inset={spacing.sm} />
+                <Txt
+                  variant="micro"
+                  tone="faint"
+                  align="center"
+                  style={{ marginTop: spacing.lg }}
+                >
+                  {t('misc.progressPrivacy')}
+                </Txt>
+              </View>
+            </>
+          ) : null}
+        </Stack>
+      </ScreenScroll>
+    </>
   );
 }
 
@@ -691,7 +683,10 @@ function RecordsCard({
           key={`${record.exerciseId}:${record.kind}`}
           theme={theme}
           title={record.exerciseName}
-          subtitle={`${t(RECORD_LABEL[record.kind])} · ${formatShortDate(record.achievedAt)}`}
+          meta={[
+            { icon: 'trophy', label: t(RECORD_LABEL[record.kind]) },
+            { icon: 'calendar', label: formatShortDate(record.achievedAt) },
+          ]}
           leading={
             <IconTile
               name="trophy"
@@ -727,7 +722,7 @@ function rangeLabel(weeks: number, t: (key: TKey, vars?: TVars) => string): stri
 }
 
 const styles = StyleSheet.create({
-  content: { flexGrow: 1 },
+  content: { flexGrow: 1, paddingTop: spacing.md },
   body: { paddingHorizontal: screenGutter },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
 });

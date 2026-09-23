@@ -31,29 +31,27 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 import { router, Stack } from 'expo-router';
+import { ScreenHeader } from '@/ui/Screen';
+import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
   addSet,
-  setSessionNotes,
   clearRest,
   discardSession,
   finishSession,
   pauseSession,
   removeExercise,
-  removeSet,
   resumeSession,
   setActiveIndex,
   setRestTimer,
   skipExercise,
   toggleSet,
-  updateSet,
   useRestRemaining,
   useSessionProgress,
   useWorkoutSession,
 } from '@/workout/session';
-import { formatRecordValue, RECORD_LABEL } from '@/queries/useExerciseHistory';
 import { invalidateAfterWorkout } from '@/query/invalidation';
 import {
   usePreviousPerformance,
@@ -69,7 +67,6 @@ import {
 import { routes } from '@/navigation/nav';
 import { useSettings } from '@/settings';
 import type { UnitSystem } from '@/utils/format';
-import type { Exercise, PersonalRecord } from '@/domain/types';
 import {
   compactNumber,
   formatAgo,
@@ -81,27 +78,23 @@ import {
   weightValue,
 } from '@/utils/format';
 import { useAppTheme } from '@/theme/theme';
-import { radius, spacing, z, screenGutter } from '@/theme/tokens';
-import { Button, IconButton } from '@/ui/Button';
-import { Card, OverlaySurface, Row, SectionHeader } from '@/ui/layout';
-import { Chip } from '@/ui/controls';
+import { spacing, z, screenGutter } from '@/theme/tokens';
+import { Button } from '@/ui/controls/Button';
+import { IconButton } from '@/ui/controls/IconButton';
+import { Card, OverlaySurface, Row } from '@/ui/layout';
+import { SectionHeader } from '@/ui/display';
+import { Chip } from '@/ui/controls/Chip';
 import { MetricLabel, Txt } from '@/ui/Text';
 import { EmptyState, SkeletonCard } from '@/ui/states';
 import { Icon } from '@/ui/icons';
 import {
   ExerciseBlock,
   RestDock,
-  RemoveExerciseSheet,
+  RemoveExerciseDialog,
   SessionProgressBar,
-  SetEditorSheet,
 } from '@/ui/workout';
-import { ConfirmSheet, OptionSheet, Sheet, SheetFooter } from '@/ui/Sheet';
-import { ExercisePickerSheet } from '@/ui/exercisePicker';
-import { addExerciseToSession } from '@/workout/sessionExercises';
-import { TextField } from '@/ui/TextField';
 
 /** Rest presets, in seconds. Offered as chips because typing "90" on a rest break is absurd. */
-const REST_PRESETS = [45, 60, 90, 120, 180] as const;
 
 /** Bottom clearance: the footer, plus the dock when a rest is running, plus the home bar. */
 const BOTTOM_SPACE = 210;
@@ -122,19 +115,13 @@ export default function WorkoutSessionScreen() {
     (s) => s.notificationsEnabled && s.notificationsGranted,
   );
   const autoStartRest = useSettings((s) => s.autoStartRest);
-  const defaultRest = useSettings((s) => s.defaultRestSeconds);
 
-  const [editor, setEditor] = useState<{ entryIndex: number; setIndex: number } | null>(null);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [confirmFinish, setConfirmFinish] = useState(false);
-  const [restSheet, setRestSheet] = useState(false);
-  const [notesSheet, setNotesSheet] = useState(false);
   const [removing, setRemoving] = useState<number | null>(null);
-  const [records, setRecords] = useState<PersonalRecord[] | null>(null);
   const [finishing, setFinishing] = useState(false);
   const [discarding, setDiscarding] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [addingExercise, setAddingExercise] = useState(false);
 
   /**
    * The identifier of the armed rest notification, so it can be retracted.
@@ -237,7 +224,7 @@ export default function WorkoutSessionScreen() {
 
   const openSet = useCallback((entryIndex: number, setIndex: number) => {
     setActiveIndex(entryIndex);
-    setEditor({ entryIndex, setIndex });
+    router.push(routes.sessionSet(entryIndex, setIndex));
   }, []);
 
   const onAddSet = useCallback(
@@ -266,53 +253,8 @@ export default function WorkoutSessionScreen() {
    * `void`-and-`catch` rather than an `async` handler: this is a press handler with nothing to
    * await it, and an unhandled rejection on a button is a crash with no explanation.
    */
-  const onPickExercise = useCallback(
-    (exercise: Exercise) => {
-      void addExerciseToSession({
-        exercise,
-        defaultRestSeconds: defaultRest,
-        isDuplicate: (liveRef.current.session?.entries ?? []).some(
-          (entry) => entry.exerciseId === exercise.id,
-        ),
-      })
-        .then((added) => {
-          if (added) {
-            haptics.success();
-            return;
-          }
-          // The two reasons this returns false are indistinguishable from here, and both mean
-          // the list did not change: it was already in the workout, or the workout finished
-          // while the sheet was open. Either way the honest statement is "nothing changed".
-          setActionError(
-            t('session.addNotChanged'),
-          );
-          haptics.warning();
-        })
-        .catch(() => {
-          setActionError(
-            t('session.addFailed'),
-          );
-          haptics.warning();
-        });
-    },
-    [defaultRest, t],
-  );
 
-  const isInThisWorkout = useCallback(
-    (exerciseId: string) => entryIds.includes(exerciseId),
-    [entryIds],
-  );
 
-  const patchSet = useCallback(
-    (
-      entryIndex: number,
-      setIndex: number,
-      patch: { reps?: number; weightKg?: number; rpe?: number | null },
-    ) => {
-      updateSet(entryIndex, setIndex, patch);
-    },
-    [],
-  );
 
   const discard = useCallback(async () => {
     if (session === null || discarding) return;
@@ -348,12 +290,11 @@ export default function WorkoutSessionScreen() {
         return;
       }
       haptics.success();
+      // The finished workout lives in history now, so that is where this screen goes. A PR
+      // is then presented over it as a sheet, not a toast: it is worth stopping for.
+      router.replace(routes.workoutHistory());
       if (result.personalRecords.length > 0) {
-        // The sheet, not a toast: a PR is worth stopping for, and it is also the moment
-        // someone decides whether the session was worth doing.
-        setRecords(result.personalRecords);
-      } else {
-        router.replace(routes.workoutHistory());
+        router.push(routes.sessionRecords(result.personalRecords));
       }
     } catch {
       setActionError(t('session.saveFailedKept'));
@@ -364,6 +305,9 @@ export default function WorkoutSessionScreen() {
   if (!hydrated) {
     return (
       <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
+        {/* Headerless while restoring, because what it restores is almost always the live
+            workout, which is headerless: a bar that appears and vanishes reads as a glitch. */}
+        <ScreenHeader title={t('tabs.workout')} shown={false} />
         <View style={{ paddingTop: insets.top + spacing.xl, paddingHorizontal: screenGutter }}>
           <SkeletonCard lines={3} />
         </View>
@@ -376,6 +320,10 @@ export default function WorkoutSessionScreen() {
     // finished on another screen. It is not an error, so it must not render like one.
     return (
       <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
+        {/* Still headerless when the session ended HERE: this render lands while the screen
+            is being popped, and showing a header on a screen mid-removal crashes Android's
+            stack ("ScreenStackFragment added into a non-stack container"). */}
+        <ScreenHeader title={t('tabs.workout')} shown={!(discarding || finishing)} />
         <EmptyState
           title={t('session.noneTitle')}
           message={t('session.noneMessage')}
@@ -384,14 +332,13 @@ export default function WorkoutSessionScreen() {
           onAction={() => {
             router.replace(routes.workoutTab());
           }}
-          style={{ paddingTop: insets.top + spacing.xxxl }}
+          style={{ paddingTop: spacing.xxxl }}
         />
       </View>
     );
   }
 
   const running = session.status === 'active';
-  const active = session.entries[activeIndex] ?? session.entries[0];
   const doneSets = session.entries.reduce(
     (n, entry) => n + entry.sets.filter((set) => set.completed).length,
     0,
@@ -404,7 +351,8 @@ export default function WorkoutSessionScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
-      <Stack.Screen options={{ gestureEnabled: false }} />
+      {/* Immersive: the bar below is the only chrome, and its exits are explicit buttons. */}
+      <Stack.Screen options={{ gestureEnabled: false, headerShown: false }} />
 
       <View style={[styles.bar, { paddingTop: insets.top + spacing.xs }]}>
         <OverlaySurface theme={theme} edge="bottom" />
@@ -530,19 +478,10 @@ export default function WorkoutSessionScreen() {
           <SectionHeader
             title={t('session.exercises')}
             eyebrow={`${session.entries.length} ${t('session.exerciseWord', { count: session.entries.length })}`}
-            action={
-              <Button
-                label={t('common.add')}
-                size="sm"
-                variant="secondary"
-                icon="plus"
-                onPress={() => {
+            action={{ label: t('common.add'), onPress: () => {
                   haptics.light();
-                  setAddingExercise(true);
-                }}
-                accessibilityHint={t('session.addHint')}
-              />
-            }
+                  router.push(routes.pickExercise('session'));
+                } }}
           />
           {session.entries.length === 0 ? (
             <EmptyState
@@ -552,7 +491,7 @@ export default function WorkoutSessionScreen() {
               actionLabel={t('session.addAnExercise')}
               onAction={() => {
                 haptics.light();
-                setAddingExercise(true);
+                router.push(routes.pickExercise('session'));
               }}
               compact
             />
@@ -586,7 +525,7 @@ export default function WorkoutSessionScreen() {
 
         <View style={styles.section}>
           <SectionHeader title={t('session.notesTitle')} eyebrow={t('session.notesEyebrow')} />
-          <Card onPress={() => setNotesSheet(true)}>
+          <Card onPress={() => router.push(routes.sessionNotes())}>
             <Txt
               variant={session.notes === null ? 'body' : 'bodyLg'}
               tone={session.notes === null ? 'faint' : 'default'}
@@ -654,67 +593,24 @@ export default function WorkoutSessionScreen() {
 
       {/* ---- Sheets ---- */}
 
-      {editor ? (
-        <EditorFor
-          session={session}
-          target={editor}
-          units={units}
-          onChange={patchSet}
-          onRemove={(entryIndex, setIndex) => {
-            removeSet(entryIndex, setIndex);
-            setEditor(null);
-            // Only if a set remains to stand in its place; otherwise the sheet closed
-            // because there was nothing left to edit.
-          }}
-          onRequestClose={() => setEditor(null)}
-        />
-      ) : null}
-
-      {restSheet ? (
-        <OptionSheet<number>
-          title={t('session.restTimer')}
-          value={session.restDurationSeconds ?? active?.restSeconds ?? 90}
-          options={REST_PRESETS.map((seconds) => ({
-            value: seconds,
-            label:
-              seconds >= 60
-                ? t('session.minutes', { count: seconds / 60 })
-                : t('session.seconds', { count: seconds }),
-          }))}
-          onSelect={(seconds) => {
-            setRestSheet(false);
-            armRest(seconds);
-            haptics.selection();
-          }}
-          onRequestClose={() => setRestSheet(false)}
-        />
-      ) : null}
-
-      {notesSheet ? (
-        <NotesSheet
-          initial={session.notes ?? ''}
-          onSave={(notes) => {
-            setSessionNotesSafely(notes);
-            setNotesSheet(false);
-          }}
-          onRequestClose={() => setNotesSheet(false)}
-        />
-      ) : null}
-
       {confirmDiscard ? (
-        <ConfirmSheet
+        <ConfirmDialog
+          visible={!discarding}
           title={t('session.discardTitle')}
           message={t('session.discardMessage', { count: doneSets })}
-          confirmLabel={t(discarding ? 'session.discarding' : 'session.discardConfirm')}
+          confirmLabel={t('session.discardConfirm')}
+          cancelLabel={t('common.cancel')}
+          destructive
           onConfirm={() => {
             void discard();
           }}
-          onRequestClose={() => setConfirmDiscard(false)}
+          onCancel={() => setConfirmDiscard(false)}
         />
       ) : null}
 
       {confirmFinish ? (
-        <ConfirmSheet
+        <ConfirmDialog
+          visible={!finishing}
           title={t('session.finishTitle')}
           message={
             progress.ratio < 1
@@ -725,16 +621,17 @@ export default function WorkoutSessionScreen() {
                 })
               : t('session.finishAll', { planned: progress.planned })
           }
-          confirmLabel={t(finishing ? 'session.saving' : 'session.finishConfirm')}
+          confirmLabel={t('session.finishConfirm')}
+          cancelLabel={t('common.cancel')}
           onConfirm={() => {
             void finish();
           }}
-          onRequestClose={() => setConfirmFinish(false)}
+          onCancel={() => setConfirmFinish(false)}
         />
       ) : null}
 
       {removing !== null ? (
-        <RemoveExerciseSheet
+        <RemoveExerciseDialog
           exerciseName={session.entries[removing]?.exerciseName ?? t('session.thisExercise')}
           completedSets={session.entries[removing]?.sets.filter((set) => set.completed).length ?? 0}
           onConfirm={() => {
@@ -746,188 +643,11 @@ export default function WorkoutSessionScreen() {
         />
       ) : null}
 
-      {addingExercise ? (
-        /*
-          A sheet over the session rather than a pushed screen, which is what the `picker`
-          route in this group was for. `ExercisePickerSheet` already hands the chosen exercise
-          back through a callback; routing there instead would mean parking the choice in a
-          store and reading it out on unmount: a shared mutable mailbox, on the one screen in
-          the app that must not lose state. The sheet also keeps the workout visible behind the
-          scrim, so the set you were on is still on screen while you pick.
-        */
-        <ExercisePickerSheet
-          isIncluded={isInThisWorkout}
-          onPick={onPickExercise}
-          onClose={() => setAddingExercise(false)}
-        />
-      ) : null}
-
-      {records !== null ? (
-        <RecordsSheet
-          records={records}
-          units={units}
-          onDone={() => {
-            setRecords(null);
-            router.replace(routes.workoutHistory());
-          }}
-        />
-      ) : null}
     </View>
   );
 }
 
 /* --------------------------------------------------------------- fragments -- */
-
-/**
- * The sheet for one set, resolved from the live session on every render.
- *
- * Not a `useState` holding a `StrengthSet`: the engine writes through on every stepper
- * press, and a snapshot in state would freeze the sheet at the moment it opened while the
- * row behind it moved. Reading by index is free and always agrees with the screen.
- */
-function EditorFor({
-  session,
-  target,
-  units,
-  onChange,
-  onRemove,
-  onRequestClose,
-}: {
-  session: NonNullable<ReturnType<typeof useWorkoutSession>['session']>;
-  target: { entryIndex: number; setIndex: number };
-  units: UnitSystem;
-  onChange: (
-    entryIndex: number,
-    setIndex: number,
-    patch: { reps?: number; weightKg?: number; rpe?: number | null },
-  ) => void;
-  onRemove: (entryIndex: number, setIndex: number) => void;
-  onRequestClose: () => void;
-}) {
-  const entry = session.entries[target.entryIndex];
-  const set = entry?.sets[target.setIndex];
-  if (!entry || !set) return null;
-  return (
-    <SetEditorSheet
-      entry={entry}
-      set={set}
-      units={units}
-      onChange={(patch) => {
-        onChange(target.entryIndex, target.setIndex, patch);
-      }}
-      onRemove={() => {
-        onRemove(target.entryIndex, target.setIndex);
-      }}
-      onRequestClose={onRequestClose}
-    />
-  );
-}
-
-/**
- * Session notes.
- *
- * A sheet with a text field, because notes are the one place in a workout that is prose.
- * It opens *from* a card rather than showing a field inline so the keyboard can never be
- * sitting over the set list when someone scrolls past.
- */
-function NotesSheet({
-  initial,
-  onSave,
-  onRequestClose,
-}: {
-  initial: string;
-  onSave: (notes: string) => void;
-  onRequestClose: () => void;
-}) {
-  const { t } = useT();
-  const [draft, setDraft] = useState(initial);
-  return (
-    <Sheet onRequestClose={onRequestClose} title={t('session.notesTitle')}>
-      {/* The sentence here is a hint about where the text goes, not a section heading, so
-          it rides on the field: as a `SheetSection` title it stacked a second caption
-          above the field's own "Notes" label. `SheetFooter` supplies the divider. */}
-      <TextField
-        label={t('session.notesLabel')}
-        value={draft}
-        onChangeText={setDraft}
-        multiline
-        autoFocus
-        placeholder={t('session.notesPlaceholder')}
-        hint={t('session.notesHint')}
-      />
-      <SheetFooter>
-        <Button label={t('common.cancel')} variant="quiet" onPress={onRequestClose} />
-        <Button
-          label={t('common.save')}
-          variant="primary"
-          fullWidth
-          onPress={() => onSave(draft)}
-        />
-      </SheetFooter>
-    </Sheet>
-  );
-}
-
-/**
- * What you just did better than you have ever done it.
- *
- * Not dismissible by backdrop, because the only correct action is to acknowledge it and
- * then land somewhere sensible. `onDone` is the sole exit and it goes to history: back
- * would return to a session screen that no longer has a session.
- */
-function RecordsSheet({
-  records,
-  units,
-  onDone,
-}: {
-  records: readonly PersonalRecord[];
-  units: UnitSystem;
-  onDone: () => void;
-}) {
-  const { t } = useT();
-  const theme = useAppTheme();
-  return (
-    <Sheet
-      title={
-        records.length === 1
-          ? t('session.recordOne')
-          : t('session.recordMany', { count: records.length })
-      }
-      dismissible={false}
-      onRequestClose={onDone}
-    >
-      <View style={{ gap: spacing.sm }}>
-        {records.map((record) => (
-          <View
-            key={`${record.exerciseId}-${record.kind}`}
-            style={[
-              styles.record,
-              { backgroundColor: theme.colors.accentSoft, borderColor: theme.colors.border },
-            ]}
-          >
-            <Row gap="md" align="center">
-              <Icon name="trophy" size={20} color={theme.colors.accent} />
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Txt variant="strong" weight="700" numberOfLines={1}>
-                  {record.exerciseName}
-                </Txt>
-                <Txt variant="caption" tone="muted">
-                  {t(RECORD_LABEL[record.kind])}
-                </Txt>
-              </View>
-              <Txt variant="numeralSm" weight="700" tone="accent">
-                {formatRecordValue(record.kind, record.value, units)}
-              </Txt>
-            </Row>
-          </View>
-        ))}
-      </View>
-      <SheetFooter>
-        <Button label={t('session.seeInHistory')} variant="primary" fullWidth onPress={onDone} />
-      </SheetFooter>
-    </Sheet>
-  );
-}
 
 /** Elapsed, sets and total volume. The three numbers someone asks for afterwards. */
 function SessionTotals({
@@ -1032,18 +752,6 @@ function nextUpLabel(
   return nextEntry?.exerciseName ?? '';
 }
 
-/**
- * Notes, guarded.
- *
- * `setSessionNotes` is fire-and-forget inside the engine and swallows its own write
- * failure into `persistFailed`, which the banner on this screen already reports. Calling it
- * raw is correct; the comment is here because "no try/catch around an async-looking call"
- * looks like an oversight and is not one.
- */
-function setSessionNotesSafely(notes: string): void {
-  setSessionNotes(notes.trim().length > 0 ? notes.trim() : null);
-}
-
 const styles = StyleSheet.create({
   root: { flex: 1 },
   bar: {
@@ -1065,10 +773,5 @@ const styles = StyleSheet.create({
     bottom: 0,
     paddingHorizontal: screenGutter,
     paddingTop: spacing.md,
-  },
-  record: {
-    borderRadius: radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: spacing.lg,
   },
 } satisfies Record<string, ViewStyle>);

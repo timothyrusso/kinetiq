@@ -43,27 +43,17 @@
  * is right for a genuine empty submission and wrong for a field the user never opened.
  */
 import { useCallback, useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useScreenContentBottom } from '@/ui/insets';
 
-import { DetailScreen } from '@/ui/Screen';
-import { NavRow } from '@/ui/rows';
-import { Card, Divider, SectionHeader, Stack } from '@/ui/layout';
-import { Button } from '@/ui/Button';
-import { TextField } from '@/ui/TextField';
-import { Txt } from '@/ui/Text';
+import { ScreenHeader } from '@/ui/Screen';
+import { SettingsList, type SettingsSection } from '@/ui/controls/SettingsList';
 import { useAllSettings, useSettingsUpdate } from '@/settings';
 import type { Profile, SettingsState } from '@/settings';
 import { routes } from '@/navigation/nav';
-import { useAppTheme } from '@/theme/theme';
-import { spacing, screenGutter } from '@/theme/tokens';
 import { haptics } from '@/services/haptics';
 import { useT } from '@/i18n/useT';
 import { tr } from '@/i18n/tr';
-import {
-  parseNumber,
-} from '@/utils/format';
+import { parseNumber } from '@/utils/format';
 
 const HEIGHT_MIN = 100;
 const HEIGHT_MAX = 230;
@@ -73,115 +63,9 @@ const BIRTH_YEAR_MIN = 1930;
 export default function SettingsScreen() {
   const { t } = useT();
   const router = useRouter();
-  const theme = useAppTheme();
-  const bottomSpace = useScreenContentBottom();
-
   const settings = useAllSettings();
   const update = useSettingsUpdate();
-
-  return (
-    <DetailScreen title={t('settings.title')} largeTitle>
-      {(topInset) => (
-        <ScrollView
-          contentContainerStyle={[
-            styles.content,
-            { paddingTop: topInset + spacing.md, paddingBottom: bottomSpace },
-          ]}
-          // `automatic`, so iOS owns the inset under the large title and can collapse it as
-          // this view scrolls. Without it the title stays large forever and the screen looks
-          // like a native header that does not work.
-          contentInsetAdjustmentBehavior="automatic"
-          keyboardShouldPersistTaps="handled"
-        >
-          <Stack gap="xxl" style={styles.body}>
-            <View>
-              <SectionHeader title={t('settings.you')} eyebrow={t('settings.usedForEstimates')} />
-              <ProfileForm
-                profile={settings.profile}
-                onSave={(patch) => {
-                  update({ profile: { ...settings.profile, ...patch } });
-                  haptics.success();
-                }}
-              />
-            </View>
-
-            <View>
-              <SectionHeader title={t('settings.app')} />
-              <Card padding="xxs">
-                <NavRow
-                  title={t('settings.trainingPreferences')}
-                  subtitle={t('settings.trainingSubtitle')}
-                  theme={theme}
-                  icon="target"
-                  topDivider={false}
-                  onPress={() => router.push(routes.settingsTraining())}
-                />
-                <NavRow
-                  title={t('settings.notifications')}
-                  subtitle={notificationSummary(settings)}
-                  theme={theme}
-                  icon="bell"
-                  onPress={() => router.push(routes.settingsNotifications())}
-                />
-                <NavRow
-                  title={t('settings.permissions')}
-                  subtitle={t('settings.permissionsSubtitle')}
-                  theme={theme}
-                  icon="lock"
-                  onPress={() => router.push(routes.permissions())}
-                />
-                <NavRow
-                  title={t('profileScreen.aboutTitle')}
-                  subtitle={t('profileScreen.aboutSubtitle')}
-                  theme={theme}
-                  icon="info"
-                  onPress={() => router.push(routes.settingsAbout())}
-                />
-              </Card>
-            </View>
-
-            <Txt variant="micro" tone="faint" align="center">
-              {t('misc.settingsFootnote')}
-            </Txt>
-
-            <View>
-              <Divider inset={spacing.sm} />
-            </View>
-          </Stack>
-        </ScrollView>
-      )}
-    </DetailScreen>
-  );
-}
-
-/* ------------------------------------------------------------- profile form -- */
-
-type Draft = { name: string; heightCm: string; birthYear: string };
-
-function draftOf(profile: Profile): Draft {
-  return {
-    name: profile.name,
-    heightCm: `${profile.heightCm}`,
-    birthYear: `${profile.birthYear}`,
-  };
-}
-
-/**
- * The three fields, as one unit with one Save.
- *
- * `key` is not needed to reset it: the store's profile is only ever changed by this form, so
- * after a successful save the draft already matches what the user typed. Leaving the screen
- * mid-edit and coming back re-mounts it from the store, which is the correct behaviour: a
- * discard you never confirmed is still a discard, so the draft is not kept anywhere.
- */
-function ProfileForm({
-  profile,
-  onSave,
-}: {
-  profile: Profile;
-  onSave: (patch: Partial<Profile>) => void;
-}) {
-  const { t } = useT();
+  const profile = settings.profile;
   const [draft, setDraft] = useState<Draft>(() => draftOf(profile));
 
   const errors = useMemo(() => validate(draft), [draft]);
@@ -197,69 +81,115 @@ function ProfileForm({
 
   const save = useCallback(() => {
     if (errors) return;
-    // Only the fields that actually moved. See the module header: a blank, untouched name
-    // must not be submitted as `''`, which the store would read as "reset to Athlete".
+    // Only the fields that actually moved: a blank, untouched name must not be submitted as
+    // '', which the store would read as "reset to Athlete".
     const patch: Partial<Profile> = {};
     if (draft.name.trim() !== profile.name) patch.name = draft.name.trim();
     if (draft.heightCm !== `${profile.heightCm}`) patch.heightCm = parseNumber(draft.heightCm) ?? profile.heightCm;
     if (draft.birthYear !== `${profile.birthYear}`)
       patch.birthYear = parseNumber(draft.birthYear) ?? profile.birthYear;
-    onSave(patch);
-  }, [draft, errors, onSave, profile]);
+    update({ profile: { ...profile, ...patch } });
+    haptics.success();
+  }, [draft, errors, profile, update]);
+
+  const sections = useMemo<SettingsSection[]>(
+    () => [
+      {
+        key: 'you',
+        title: t('settings.you'),
+        footer: dirty ? t('settingsScreen.unsaved') : t('settings.usedForEstimates'),
+        rows: [
+          {
+            kind: 'field',
+            key: 'name',
+            title: t('settings.name'),
+            value: draft.name,
+            onChangeText: set('name'),
+            placeholder: t('settingsScreen.namePlaceholder'),
+            maxLength: 40,
+            error: errors?.name ?? null,
+          },
+          {
+            kind: 'field',
+            key: 'height',
+            title: t('settings.height'),
+            value: draft.heightCm,
+            onChangeText: set('heightCm'),
+            numeric: true,
+            unit: 'cm',
+            maxLength: 3,
+            error: errors?.heightCm ?? null,
+          },
+          {
+            kind: 'field',
+            key: 'birthYear',
+            title: t('settings.birthYear'),
+            value: draft.birthYear,
+            onChangeText: set('birthYear'),
+            numeric: true,
+            maxLength: 4,
+            error: errors?.birthYear ?? null,
+          },
+          { kind: 'button', key: 'save', title: t('common.save'), disabled: !dirty || errors !== null, onPress: save },
+        ],
+      },
+      {
+        key: 'app',
+        title: t('settings.app'),
+        footer: t('misc.settingsFootnote'),
+        rows: [
+          {
+            kind: 'nav',
+            key: 'training',
+            title: t('settings.trainingPreferences'),
+            subtitle: t('settings.trainingSubtitle'),
+            onPress: () => router.push(routes.settingsTraining()),
+          },
+          {
+            kind: 'nav',
+            key: 'notifications',
+            title: t('settings.notifications'),
+            subtitle: notificationSummary(settings),
+            onPress: () => router.push(routes.settingsNotifications()),
+          },
+          {
+            kind: 'nav',
+            key: 'permissions',
+            title: t('settings.permissions'),
+            subtitle: t('settings.permissionsSubtitle'),
+            onPress: () => router.push(routes.permissions()),
+          },
+          {
+            kind: 'nav',
+            key: 'about',
+            title: t('profileScreen.aboutTitle'),
+            subtitle: t('profileScreen.aboutSubtitle'),
+            onPress: () => router.push(routes.settingsAbout()),
+          },
+        ],
+      },
+    ],
+    [dirty, draft, errors, router, save, set, settings, t],
+  );
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <Stack gap="lg">
-        <TextField
-          label={t('settings.name')}
-          value={draft.name}
-          onChangeText={set('name')}
-          placeholder={t('settingsScreen.namePlaceholder')}
-          autoCapitalize="words"
-          autoCorrect={false}
-          returnKeyType="done"
-          error={errors?.name ?? null}
-          hint={t('settingsScreen.nameHint')}
-          maxLength={40}
-        />
-        <TextField
-          label={t('settings.height')}
-          value={draft.heightCm}
-          onChangeText={set('heightCm')}
-          keyboardType="number-pad"
-          unit="cm"
-          returnKeyType="done"
-          error={errors?.heightCm ?? null}
-          hint={t('settingsScreen.heightHint', { min: HEIGHT_MIN, max: HEIGHT_MAX })}
-          maxLength={3}
-        />
-        <TextField
-          label={t('settings.birthYear')}
-          value={draft.birthYear}
-          onChangeText={set('birthYear')}
-          keyboardType="number-pad"
-          returnKeyType="done"
-          error={errors?.birthYear ?? null}
-          hint={t('settingsScreen.birthYearHint')}
-          maxLength={4}
-        />
-
-        <Button
-          label={t('common.save')}
-          onPress={save}
-          disabled={!dirty || errors !== null}
-          accessibilityHint={t(
-            dirty ? 'settingsScreen.saveHintDirty' : 'settingsScreen.saveHintClean',
-          )}
-        />
-        {dirty ? (
-          <Txt variant="micro" tone="faint" align="center">
-            {t('settingsScreen.unsaved')}
-          </Txt>
-        ) : null}
-      </Stack>
-    </KeyboardAvoidingView>
+    <>
+      <ScreenHeader title={t('settings.title')} largeTitle />
+      <SettingsList sections={sections} />
+    </>
   );
+}
+
+/* ------------------------------------------------------------- profile form -- */
+
+type Draft = { name: string; heightCm: string; birthYear: string };
+
+function draftOf(profile: Profile): Draft {
+  return {
+    name: profile.name,
+    heightCm: `${profile.heightCm}`,
+    birthYear: `${profile.birthYear}`,
+  };
 }
 
 /**
@@ -320,8 +250,3 @@ function notificationSummary(settings: SettingsState): string {
     word: tr('settingsScreen.dayWord', { count: settings.reminder.days.length }),
   });
 }
-
-const styles = StyleSheet.create({
-  content: { flexGrow: 1 },
-  body: { paddingHorizontal: screenGutter },
-});

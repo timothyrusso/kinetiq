@@ -19,19 +19,23 @@ import { memo, useState } from 'react';
 import {
   Pressable,
   StyleSheet,
-  Text,
   View,
+  type GestureResponderEvent,
   type StyleProp,
-  type TextStyle,
   type ViewStyle,
 } from 'react-native';
 import { Image } from 'expo-image';
 import type { Activity, ActivityKind, ExerciseSnapshot, Routine } from '@/domain/types';
-import { fontFamily, radius, spacing } from '@/theme/tokens';
-import type { Theme } from '@/theme/theme';
+import { haptics } from '@/services/haptics';
+import { radius, screenGutter, spacing, touchTarget } from '@/theme/tokens';
+import { useAppTheme, type Theme } from '@/theme/theme';
+import { AnimatedPressable, usePressScale } from './animation';
 import { Icon, IconTile, type IconName } from './icons';
-import { fontSizeOf, lineHeightOf } from './Text';
-import type { TxtVariant } from './Text';
+import { Txt } from './Text';
+import { CellText } from './CellText';
+import { MetaLine } from './display/MetaLine';
+import { TagRow } from './display/TagRow';
+import type { MetaItem, Tag } from './display/types';
 import { tr } from '@/i18n/tr';
 import { useT } from '@/i18n/useT';
 
@@ -44,81 +48,6 @@ export const ACTIVITY_ICON: Record<ActivityKind, IconName> = {
   yoga: 'yoga',
 };
 
-/**
- * Row text: `Txt`'s typography without `Txt`'s theme subscription.
- *
- * `color` is required rather than defaulted precisely so no row can quietly opt
- * back into a context read by omission.
- */
-export const CellText = memo(function CellText({
-  text,
-  variant = 'caption',
-  color,
-  weight,
-  numberOfLines,
-  align,
-  style,
-}: {
-  text: string;
-  variant?: TxtVariant;
-  color: string;
-  weight?: TextStyle['fontWeight'];
-  numberOfLines?: number;
-  align?: TextStyle['textAlign'];
-  style?: StyleProp<TextStyle>;
-}) {
-  const size = fontSizeOf(variant);
-  return (
-    <Text
-      numberOfLines={numberOfLines}
-      style={[
-        {
-          fontFamily: fontFamily[variantFont(variant)],
-          fontSize: size,
-          lineHeight: Math.round(size * lineHeightOf(variant)),
-          fontWeight: weight ?? variantWeight(variant),
-          color,
-          ...(align ? { textAlign: align } : null),
-        },
-        style,
-      ]}
-    >
-      {text}
-    </Text>
-  );
-});
-
-function variantFont(variant: TxtVariant): keyof typeof fontFamily {
-  if (variant === 'numeral' || variant === 'numeralLg' || variant === 'hero' || variant === 'display') {
-    return 'display';
-  }
-  if (variant === 'numeralSm') return 'displayMedium';
-  if (variant === 'mono' || variant === 'monoLg' || variant === 'monoSm') return 'monoSemiBold';
-  if (variant === 'subhead' || variant === 'title' || variant === 'headline') return 'heading';
-  if (variant === 'strong' || variant === 'micro') return 'semibold';
-  if (variant === 'label' || variant === 'caption') return 'medium';
-  return 'regular';
-}
-
-function variantWeight(variant: TxtVariant): TextStyle['fontWeight'] {
-  switch (variantFont(variant)) {
-    case 'display':
-      return '700';
-    case 'displayMedium':
-      return '600';
-    case 'monoSemiBold':
-      return '600';
-    case 'heading':
-      return '600';
-    case 'semibold':
-      return '600';
-    case 'medium':
-      return '500';
-    default:
-      return '400';
-  }
-}
-
 const ROW: ViewStyle = { flexDirection: 'row', alignItems: 'center', gap: spacing.md };
 
 /**
@@ -129,7 +58,10 @@ const ROW: ViewStyle = { flexDirection: 'row', alignItems: 'center', gap: spacin
  */
 export const ListRow = memo(function ListRow({
   title,
-  subtitle,
+  description,
+  meta,
+  tags,
+  tagsMax,
   theme,
   leading,
   trailing,
@@ -144,7 +76,15 @@ export const ListRow = memo(function ListRow({
   accessibilityHint,
 }: {
   title: string;
-  subtitle?: string;
+  /**
+   * A sentence about the row, for rows that are links (Profile's "Settings, units..."). Prose,
+   * not metadata: facts about the thing go in `meta` and `tags`, never joined into a string.
+   */
+  description?: string;
+  meta?: readonly MetaItem[];
+  tags?: readonly Tag[];
+  /** Tags shown before the rest collapse into "+n". */
+  tagsMax?: number;
   theme: Theme;
   leading?: React.ReactNode;
   trailing?: React.ReactNode;
@@ -172,7 +112,7 @@ export const ListRow = memo(function ListRow({
       {...(disabled ? { accessibilityState: { disabled: true } } : {})}
       style={({ pressed }) => [
         {
-          paddingHorizontal: spacing.xl,
+          paddingHorizontal: screenGutter,
           paddingVertical: spacing.md,
           backgroundColor:
             pressed && interactive
@@ -194,13 +134,17 @@ export const ListRow = memo(function ListRow({
             color={theme.colors.text}
             numberOfLines={2}
           />
-          {subtitle ? (
+          {description ? (
             <CellText
-              text={subtitle}
+              text={description}
               variant="caption"
               color={theme.colors.textMuted}
               numberOfLines={2}
             />
+          ) : null}
+          {meta && meta.length > 0 ? <MetaLine items={meta} theme={theme} /> : null}
+          {tags && tags.length > 0 ? (
+            <TagRow tags={tags} theme={theme} {...(tagsMax === undefined ? {} : { max: tagsMax })} />
           ) : null}
         </View>
         {body}
@@ -231,7 +175,7 @@ export const ListRow = memo(function ListRow({
  */
 export const NavRow = memo(function NavRow({
   title,
-  subtitle,
+  description,
   value,
   theme,
   onPress,
@@ -241,7 +185,7 @@ export const NavRow = memo(function NavRow({
   topDivider = true,
 }: {
   title: string;
-  subtitle?: string;
+  description?: string;
   /** Current value, e.g. "Metric", "90 s", "Athlete". */
   value?: string;
   theme: Theme;
@@ -255,7 +199,7 @@ export const NavRow = memo(function NavRow({
     <ListRow
       theme={theme}
       title={title}
-      {...(subtitle ? { subtitle } : {})}
+      {...(description ? { description } : {})}
       onPress={onPress}
       showChevron={showChevron}
       style={
@@ -300,7 +244,7 @@ export const ActivityRow = memo(function ActivityRow({
   onPress,
   onLongPress,
   headline,
-  subtitle,
+  meta,
   selected = false,
   trailing,
 }: {
@@ -314,7 +258,7 @@ export const ActivityRow = memo(function ActivityRow({
    * for this kind, so a row that guessed would be wrong half the time.
    */
   headline: string;
-  subtitle: string;
+  meta: readonly MetaItem[];
   selected?: boolean;
   /** Overrides the chevron, e.g. a PR badge or a swipe-action affordance. */
   trailing?: React.ReactNode;
@@ -324,7 +268,7 @@ export const ActivityRow = memo(function ActivityRow({
     <ListRow
       theme={theme}
       title={activity.title}
-      subtitle={subtitle}
+      meta={meta}
       selected={selected}
       onPress={onPress}
       {...(onLongPress ? { onLongPress } : {})}
@@ -349,13 +293,13 @@ export const ActivityRow = memo(function ActivityRow({
   );
 });
 
-/** Routine row. Subtitle carries the volume of the routine, not its description. */
+/** Routine row. Its metadata is the routine's volume and history, not its description. */
 export const RoutineRow = memo(function RoutineRow({
   routine,
   theme,
   onPress,
   onLongPress,
-  subtitle,
+  meta,
   trailing,
   topDivider = true,
 }: {
@@ -363,7 +307,7 @@ export const RoutineRow = memo(function RoutineRow({
   theme: Theme;
   onPress: () => void;
   onLongPress?: () => void;
-  subtitle: string;
+  meta: readonly MetaItem[];
   trailing?: React.ReactNode;
   topDivider?: boolean;
 }) {
@@ -373,11 +317,11 @@ export const RoutineRow = memo(function RoutineRow({
       onPress={onPress}
       onLongPress={onLongPress}
       accessibilityRole="button"
-      accessibilityLabel={`${routine.name}. ${subtitle}`}
+      accessibilityLabel={`${routine.name}. ${meta.map((m) => m.a11y ?? m.label).join(' · ')}`}
       accessibilityHint={t('misc.opensRoutine')}
       style={({ pressed }) => [
         {
-          paddingHorizontal: spacing.xl,
+          paddingHorizontal: screenGutter,
           paddingVertical: spacing.lg,
           gap: spacing.lg,
           flexDirection: 'row',
@@ -397,12 +341,7 @@ export const RoutineRow = memo(function RoutineRow({
           color={theme.colors.text}
           numberOfLines={1}
         />
-        <CellText
-          text={subtitle}
-          variant="caption"
-          color={theme.colors.textMuted}
-          numberOfLines={1}
-        />
+        <MetaLine items={meta} theme={theme} />
       </View>
       {trailing ?? <Icon name="play" size={18} color={theme.colors.accent} />}
     </Pressable>
@@ -534,7 +473,7 @@ export function initials(name: string): string {
 export const ExerciseRow = memo(function ExerciseRow({
   name,
   uri,
-  subtitle,
+  tags,
   theme,
   onPress,
   dimmed = false,
@@ -542,7 +481,8 @@ export const ExerciseRow = memo(function ExerciseRow({
 }: {
   name: string;
   uri: string | null;
-  subtitle: string;
+  /** Primary muscles first, capped at two with "+n": a row stays one line tall. */
+  tags: readonly Tag[];
   theme: Theme;
   onPress: () => void;
   dimmed?: boolean;
@@ -562,7 +502,8 @@ export const ExerciseRow = memo(function ExerciseRow({
       <ListRow
         theme={theme}
         title={name}
-        subtitle={subtitle}
+        tags={tags}
+        tagsMax={2}
         onPress={onPress}
         showChevron
         accessibilityHint={t('misc.opensExercise')}
@@ -584,5 +525,85 @@ export function summarizeExerciseNames(names: string[], max = 3): string {
 export function thumbUriOf(snapshot: ExerciseSnapshot): string | null {
   return snapshot.thumbnailUrl ?? snapshot.imageUrl;
 }
+
+/**
+ * A full-width row that behaves like a button: a list cell, a settings item. Kept
+ * separate from `Button` because its anatomy is different (title + supporting text
+ * + trailing accessory) and because it must not inherit button skin.
+ */
+export const ActionRow = memo(function ActionRow({
+  title,
+  subtitle,
+  icon,
+  trailing,
+  onPress,
+  tone = 'default',
+  style,
+}: {
+  title: string;
+  subtitle?: string;
+  icon?: IconName;
+  trailing?: React.ReactNode;
+  onPress: (e: GestureResponderEvent) => void;
+  tone?: 'default' | 'danger';
+  style?: StyleProp<ViewStyle>;
+}) {
+  const theme = useAppTheme();
+  const scale = usePressScale(0.995);
+  const color = tone === 'danger' ? theme.colors.danger : theme.colors.text;
+
+  return (
+    <AnimatedPressable
+      onPress={(e: GestureResponderEvent) => {
+        haptics.light();
+        onPress(e);
+      }}
+      onPressIn={scale.onPressIn}
+      onPressOut={scale.onPressOut}
+      accessibilityRole="button"
+      accessibilityLabel={subtitle ? `${title}. ${subtitle}` : title}
+      style={[
+        {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: spacing.lg,
+          minHeight: touchTarget,
+          paddingVertical: spacing.md,
+          paddingHorizontal: spacing.lg,
+          borderRadius: radius.md,
+          backgroundColor: theme.colors.surface,
+        },
+        scale.style,
+        style,
+      ]}
+    >
+      {icon ? (
+        <View
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: radius.sm,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: tone === 'danger' ? theme.colors.dangerSoft : theme.colors.placeholder,
+          }}
+        >
+          <Icon name={icon} size={18} color={color} />
+        </View>
+      ) : null}
+      <View style={{ flex: 1, gap: 2 }}>
+        <Txt variant="bodyLg" weight="semibold" color={color} numberOfLines={1}>
+          {title}
+        </Txt>
+        {subtitle ? (
+          <Txt variant="caption" tone="muted" numberOfLines={2}>
+            {subtitle}
+          </Txt>
+        ) : null}
+      </View>
+      {trailing ?? <Icon name="chevronRight" size={18} color={theme.colors.textFaint} />}
+    </AnimatedPressable>
+  );
+});
 
 export type ListRowProps = React.ComponentProps<typeof ListRow>;

@@ -1293,6 +1293,39 @@ export const en = {
     saveFailed: 'Could not save. Nothing was lost, the routine is still here as you left it.',
     permissionDenied: 'Permission denied',
   },
+  // --- foundation ---
+  headerActions: {
+    settings: 'Settings',
+    filter: 'Filters',
+    add: 'Add',
+    more: 'More options',
+    play: 'Start',
+    delete: 'Delete',
+    save: 'Save',
+    done: 'Done',
+    edit: 'Edit',
+    share: 'Share',
+    search: 'Search',
+    cancel: 'Cancel',
+  },
+  homeHero: {
+    streakLabel: 'Current streak',
+    streakUnit_one: 'day',
+    streakUnit_other: 'days',
+  },
+  textInput: {
+    clear: 'Clear {label}',
+  },
+  settingsExtra: {
+    hapticsHint: 'Buzz on a completed set, a rest that ends, and a new record.',
+    preciseLocation: 'Turn on Precise Location in iOS Settings if the numbers look wrong.',
+  },
+  routineItemA11y: {
+    moveUp: 'Move {name} up',
+    moveDown: 'Move {name} down',
+    remove: 'Remove {name} from this routine',
+  },
+  // --- end foundation ---
 } as const;
 
 /**

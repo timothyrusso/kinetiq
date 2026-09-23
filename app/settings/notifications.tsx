@@ -34,20 +34,13 @@
  * stated rather than implied, because the alternative is a settings screen that reads as
  * broken to the ~30% of users who never grant it.
  */
-import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { useScreenContentBottom } from '@/ui/insets';
+import { useCallback, useMemo, useState } from 'react';
 
-import { DetailScreen } from '@/ui/Screen';
-import { Card, Divider, Row, SectionHeader, Stack } from '@/ui/layout';
-import { Chip, Toggle } from '@/ui/controls';
-import { Button, IconButton } from '@/ui/Button';
-import { Txt } from '@/ui/Text';
+import { ScreenHeader } from '@/ui/Screen';
+import { SettingsList, type SettingsSection } from '@/ui/controls/SettingsList';
 import { useSettings, useSettingsUpdate } from '@/settings';
 import type { ReminderSettings } from '@/settings';
 import { usePermissions } from '@/queries/usePermissions';
-import { useAppTheme } from '@/theme/theme';
-import { spacing, screenGutter } from '@/theme/tokens';
 import {
   clearScheduledNotifications,
   notifySettingsTest,
@@ -74,6 +67,12 @@ const ISO_DAYS: readonly number[] = [1, 2, 3, 4, 5, 6, 7];
  * be a second opinion about weekday names that the platform already holds. The reference date
  * is an arbitrary Monday (2024-01-01 was one), so ISO day 1 maps to it and the rest follow.
  */
+/** The weekday's full name, for a checklist row: "Monday", "lunedì". */
+function dayName(iso: number, locale: string): string {
+  const reference = new Date(Date.UTC(2024, 0, iso, 12));
+  return new Intl.DateTimeFormat(locale, { weekday: 'long', timeZone: 'UTC' }).format(reference);
+}
+
 function dayLabel(iso: number, locale: string): string {
   const reference = new Date(Date.UTC(2024, 0, iso, 12));
   return new Intl.DateTimeFormat(locale, { weekday: 'short', timeZone: 'UTC' }).format(reference);
@@ -81,8 +80,6 @@ function dayLabel(iso: number, locale: string): string {
 
 export default function SettingsNotificationsScreen() {
   const { t, locale } = useT();
-  const bottomSpace = useScreenContentBottom();
-  const theme = useAppTheme();
   const update = useSettingsUpdate();
   const { notifications, requestNotifications } = usePermissions();
 
@@ -158,315 +155,132 @@ export default function SettingsNotificationsScreen() {
 
   const granted = notifications.granted;
   const minutes = Math.max(0, Math.min(REMINDER_LAST_MINUTE, reminder.minuteOfDay));
+  const scheduling = reminder.enabled && enabled && granted;
 
-  return (
-    <DetailScreen title={t('notif.title')} largeTitle>
-      {(topInset) => (
-        <ScrollView
-          contentContainerStyle={[
-            styles.content,
-            { paddingTop: topInset + spacing.md, paddingBottom: bottomSpace },
-          ]}
-          // `automatic`, so iOS owns the inset under the large title and can collapse it as
-          // this view scrolls. Without it the title stays large forever and the screen looks
-          // like a native header that does not work.
-          contentInsetAdjustmentBehavior="automatic"
-          keyboardShouldPersistTaps="handled"
-        >
-          <Stack gap="xxl" style={styles.body}>
-            {/* --------------------------------------------------- OS permission -- */}
-            <OsPermission granted={granted} busy={granting} onAsk={() => void ask()} />
-
-            {/* --------------------------------------------------------- master -- */}
-            <View>
-              <SectionHeader title={t('notif.inAppAlerts')} />
-              <Card padding="xxs">
-                <ToggleRow
-                  label={t('notif.sendNotifications')}
-                  hint={t(enabled ? 'notif.onBody' : 'notif.offBody')}
-                  value={enabled}
-                  disabled={!granted}
-                  onChange={toggleMaster}
-                />
-                {!granted ? (
-                  <>
-                    <Divider inset={spacing.lg} />
-                    <View style={styles.note}>
-                      <Txt variant="caption" tone="muted">
-                        {t('notif.masterOffBecause')}
-                      </Txt>
-                    </View>
-                  </>
-                ) : null}
-              </Card>
-            </View>
-
-            {/* -------------------------------------------------- rest timer -- */}
-            <View>
-              <SectionHeader title={t('notif.restTimer')} eyebrow={t('notif.whileRunning')} />
-              <Card>
-                <Stack gap="md">
-                  <Txt variant="caption" tone="muted">
-                    {t('notif.restBody')}
-                  </Txt>
-                  <Txt variant="micro" tone="faint">
-                    {t('notif.restNote')}
-                  </Txt>
-                  {enabled && granted ? (
-                    <>
-                      <Divider inset={0} />
-                      <Row align="center" gap="md">
-                        <Stack gap="xxs" style={{ flex: 1 }}>
-                          <Txt variant="strong">{t('notif.sendTest')}</Txt>
-                          <Txt variant="caption" tone="muted">
-                            {t('notif.testArrives')}
-                          </Txt>
-                        </Stack>
-                        <IconButton
-                          name="bell"
-                          variant="surface"
-                          accessibilityLabel={t('notif.sendTestA11y')}
-                          accessibilityHint={t('notif.sendTestHint')}
-                          onPress={test}
-                        />
-                      </Row>
-                    </>
-                  ) : null}
-                </Stack>
-              </Card>
-            </View>
-
-            {/* ------------------------------------------------------- reminder -- */}
-            <View>
-              <SectionHeader
-                title={t('notif.weeklyReminder')}
-                eyebrow={
-                  enabled && granted && reminder.enabled && reminder.days.length > 0
-                    ? t('notif.scheduled')
-                    : undefined
-                }
-              />
-              <Card padding="lg">
-                <Stack gap="lg">
-                  <ToggleRow
-                    label={t('notif.remindMe')}
-                    hint={reminderHint(reminder, enabled, granted, locale)}
-                    value={reminder.enabled && enabled && granted}
-                    disabled={!enabled || !granted}
-                    onChange={(next) => commit({ enabled: next })}
-                  />
-
-                  {reminder.enabled && enabled && granted ? (
-                    <>
-                      <Divider inset={0} />
-
-                      <Row align="center" gap="lg">
-                        <Stack gap="xxs" style={{ flex: 1 }}>
-                          <Txt variant="strong">{t('notif.time')}</Txt>
-                          <Txt variant="caption" tone="muted">
-                            {t('notif.timeNote')}
-                          </Txt>
-                        </Stack>
-                        <Row align="center" gap="sm">
-                          <IconButton
-                            name="minus"
-                            variant="surface"
-                            accessibilityLabel={`Earlier, ${formatClock(
-                              minutes - REMINDER_STEP_MINUTES,
-                            )}`}
-                            disabled={minutes <= 0}
-                            onPress={() =>
-                              commit({ minuteOfDay: Math.max(0, minutes - REMINDER_STEP_MINUTES) })
-                            }
-                          />
-                          {/* The readout is a live region: the arrows repeat and the number
-                              changing in silence is otherwise unreadable without looking. */}
-                          <View style={styles.clock} accessibilityLiveRegion="polite">
-                            <Txt variant="numeralSm">{formatClock(minutes)}</Txt>
-                          </View>
-                          <IconButton
-                            name="plus"
-                            variant="surface"
-                            accessibilityLabel={`Later, ${formatClock(
-                              minutes + REMINDER_STEP_MINUTES,
-                            )}`}
-                            disabled={minutes >= REMINDER_LAST_MINUTE}
-                            onPress={() =>
-                              commit({
-                                minuteOfDay: Math.min(
-                                  REMINDER_LAST_MINUTE,
-                                  minutes + REMINDER_STEP_MINUTES,
-                                ),
-                              })
-                            }
-                          />
-                        </Row>
-                      </Row>
-
-                      <Divider inset={0} />
-
-                      <Stack gap="sm">
-                        <Txt variant="strong">{t('notif.days')}</Txt>
-                        <Row gap="sm" style={styles.chips}>
-                          {ISO_DAYS.map((iso) => {
-                            const on = reminder.days.includes(iso);
-                            return (
-                              <Chip
-                                key={iso}
-                                label={dayLabel(iso, locale)}
-                                selected={on}
-                                size="sm"
-                                onPress={() =>
-                                  commit({
-                                    days: on
-                                      ? reminder.days.filter((d) => d !== iso)
-                                      : [...reminder.days, iso].sort((a, b) => a - b),
-                                  })
-                                }
-                              />
-                            );
-                          })}
-                        </Row>
-                        {reminder.days.length === 0 ? (
-                          <Txt variant="micro" tone="warning">
-                            {t('notif.noDaysWarning')}
-                          </Txt>
-                        ) : (
-                          <Txt variant="micro" tone="faint">
-                            {t('notif.daysSummary', {
-                              days: describeDays(reminder.days, locale),
-                              count: reminder.days.length,
-                              word: t('notif.timeWord', { count: reminder.days.length }),
-                            })}
-                          </Txt>
-                        )}
-                      </Stack>
-                    </>
-                  ) : null}
-
-                  {deferred ? (
-                    <View style={[styles.note, { backgroundColor: theme.colors.accentSoft }]}>
-                      <Txt variant="caption" tone="default">
-                        {t('misc.midSessionNote')}
-                      </Txt>
-                    </View>
-                  ) : null}
-                </Stack>
-              </Card>
-            </View>
-          </Stack>
-        </ScrollView>
-      )}
-    </DetailScreen>
-  );
-}
-
-/* ------------------------------------------------------------------ pieces -- */
-
-/**
- * The OS answer, stated as the separate fact it is.
- *
- * `status === 'denied'` is the interesting case: iOS stops asking after the first refusal, so
- * the button here cannot fix it: only send the user to Settings. Showing a "Allow" button in
- * that state is the classic dead-end, so the copy says where to go instead of offering a tap
- * that does nothing.
- */
-function OsPermission({
-  granted,
-  busy,
-  onAsk,
-}: {
-  granted: boolean;
-  busy: boolean;
-  onAsk: () => void;
-}) {
-  const { t } = useT();
-  const theme = useAppTheme();
-
-  // Two different reasons for `false`, and the second one has a different remedy. Before the
-  // first answer iOS will ask again on request; after a refusal it never asks a second time,
-  // so the only fix lives in the Settings app. Offering an "Allow" button there is a tap that
-  // does nothing, which is why the button is conditional and the copy is not.
-  const detail = t(granted ? 'notif.systemAllowed' : 'notif.systemDenied');
-
-  return (
-    <View>
-      <SectionHeader
-        title={t('notif.systemPermission')}
-        eyebrow={t(granted ? 'perms.granted' : 'perms.notGranted')}
-      />
-      <Card>
-        <Stack gap="md">
-          <Row gap="md" align="center">
-            <View
-              style={[
-                styles.dot,
-                { backgroundColor: granted ? theme.colors.success : theme.colors.warning },
-              ]}
-            />
-            <Txt variant="strong" style={{ flex: 1 }}>
-              {t(granted ? 'notif.maySend' : 'notif.mayNotSend')}
-            </Txt>
-          </Row>
-          <Txt variant="caption" tone="muted">
-            {detail}
-          </Txt>
-          {!granted ? (
-            <Button
-              label={t('notif.askForPermission')}
-              variant="secondary"
-              icon="bell"
-              loading={busy}
-              onPress={onAsk}
-              accessibilityHint={
-                t(busy ? 'notif.waiting' : 'notif.askHint')
+  const sections = useMemo<SettingsSection[]>(() => {
+    const list: SettingsSection[] = [
+      {
+        // The OS answer, as the separate fact it is. After a refusal iOS never asks again, so
+        // the ask row only exists while asking can still work.
+        key: 'system',
+        title: t('notif.systemPermission'),
+        footer: t(granted ? 'notif.systemAllowed' : 'notif.systemDenied'),
+        rows: [
+          {
+            kind: 'info',
+            key: 'status',
+            title: t(granted ? 'notif.maySend' : 'notif.mayNotSend'),
+            value: t(granted ? 'perms.granted' : 'perms.notGranted'),
+          },
+          ...(granted
+            ? []
+            : [
+                {
+                  kind: 'button' as const,
+                  key: 'ask',
+                  title: t(granting ? 'notif.waiting' : 'notif.askForPermission'),
+                  disabled: granting,
+                  onPress: () => void ask(),
+                },
+              ]),
+        ],
+      },
+      {
+        key: 'master',
+        title: t('notif.inAppAlerts'),
+        ...(granted ? {} : { footer: t('notif.masterOffBecause') }),
+        rows: [
+          {
+            kind: 'switch',
+            key: 'send',
+            title: t('notif.sendNotifications'),
+            subtitle: t(enabled ? 'notif.onBody' : 'notif.offBody'),
+            value: enabled,
+            disabled: !granted,
+            onChange: toggleMaster,
+          },
+        ],
+      },
+      {
+        key: 'rest',
+        title: t('notif.restTimer'),
+        footer: `${t('notif.restBody')} ${t('notif.restNote')}`,
+        rows:
+          enabled && granted
+            ? [{ kind: 'button', key: 'test', title: t('notif.sendTest'), onPress: test }]
+            : [],
+      },
+      {
+        key: 'reminder',
+        title: t('notif.weeklyReminder'),
+        ...(deferred
+          ? { footer: t('misc.midSessionNote') }
+          : scheduling
+            ? {
+                footer:
+                  reminder.days.length === 0
+                    ? t('notif.noDaysWarning')
+                    : t('notif.daysSummary', {
+                        days: describeDays(reminder.days, locale),
+                        count: reminder.days.length,
+                        word: t('notif.timeWord', { count: reminder.days.length }),
+                      }),
               }
-            />
-          ) : null}
-        </Stack>
-      </Card>
-    </View>
-  );
-}
+            : {}),
+        rows: [
+          {
+            kind: 'switch',
+            key: 'remind',
+            title: t('notif.remindMe'),
+            subtitle: reminderHint(reminder, enabled, granted, locale),
+            value: scheduling,
+            disabled: !enabled || !granted,
+            onChange: (next) => commit({ enabled: next }),
+          },
+          ...(scheduling
+            ? [
+                {
+                  kind: 'stepper' as const,
+                  key: 'time',
+                  title: t('notif.time'),
+                  subtitle: t('notif.timeNote'),
+                  value: minutes,
+                  min: 0,
+                  max: REMINDER_LAST_MINUTE,
+                  step: REMINDER_STEP_MINUTES,
+                  format: formatClock,
+                  onChange: (next: number) => commit({ minuteOfDay: next }),
+                },
+                ...ISO_DAYS.map((iso) => {
+                  const on = reminder.days.includes(iso);
+                  return {
+                    kind: 'check' as const,
+                    key: `day-${iso}`,
+                    title: dayName(iso, locale),
+                    checked: on,
+                    onPress: () =>
+                      commit({
+                        days: on
+                          ? reminder.days.filter((d) => d !== iso)
+                          : [...reminder.days, iso].sort((a, b) => a - b),
+                      }),
+                  };
+                }),
+              ]
+            : []),
+        ],
+      },
+    ];
+    return list.filter((section) => section.rows.length > 0 || section.footer);
+  }, [ask, commit, deferred, enabled, granted, granting, locale, minutes, reminder, scheduling, t, test, toggleMaster]);
 
-/**
- * Label plus a switch. Same shape as the Training screen's row, and duplicated rather than
- * shared for the reason in `hooks.md`'s worklet note carried over to components: two screens
- * that happen to look alike today diverge the moment one of them needs a badge, and the
- * extraction would have to be undone rather than extended.
- */
-function ToggleRow({
-  label,
-  hint,
-  value,
-  onChange,
-  disabled = false,
-}: {
-  label: string;
-  hint: string;
-  value: boolean;
-  onChange: (next: boolean) => void;
-  disabled?: boolean;
-}) {
   return (
-    <View style={styles.toggleRow}>
-      <Stack gap="xxs" style={styles.toggleText}>
-        <Txt variant="strong">{label}</Txt>
-        <Txt variant="caption" tone="muted">
-          {hint}
-        </Txt>
-      </Stack>
-      <Toggle
-        value={value}
-        onChange={onChange}
-        disabled={disabled}
-        accessibilityLabel={label}
-      />
-    </View>
+    <>
+      <ScreenHeader title={t('notif.title')} largeTitle />
+      <SettingsList sections={sections} />
+    </>
   );
 }
-
-/* ----------------------------------------------------------------- helpers -- */
 
 /**
  * The hint describes the outcome the user is actually in, which is why it reads three
@@ -508,22 +322,3 @@ function describeDays(days: readonly number[], locale: string): string {
   }
   return names.join(', ');
 }
-
-const styles = StyleSheet.create({
-  content: { flexGrow: 1 },
-  body: { paddingHorizontal: screenGutter },
-  chips: { flexWrap: 'wrap' },
-  dot: { width: 10, height: 10, borderRadius: 5 },
-  clock: { minWidth: 62, alignItems: 'center' },
-  note: {
-    padding: spacing.md,
-    borderRadius: 12,
-    backgroundColor: 'transparent',
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.lg,
-  },
-  toggleText: { flex: 1 },
-});

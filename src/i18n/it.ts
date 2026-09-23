@@ -1305,4 +1305,37 @@ export const it: Copy = {
     saveFailed: 'Salvataggio non riuscito. Non hai perso nulla, la scheda è come l hai lasciata.',
     permissionDenied: 'Autorizzazione negata',
   },
+  // --- foundation ---
+  headerActions: {
+    settings: 'Impostazioni',
+    filter: 'Filtri',
+    add: 'Aggiungi',
+    more: 'Altre opzioni',
+    play: 'Avvia',
+    delete: 'Elimina',
+    save: 'Salva',
+    done: 'Fine',
+    edit: 'Modifica',
+    share: 'Condividi',
+    search: 'Cerca',
+    cancel: 'Annulla',
+  },
+  homeHero: {
+    streakLabel: 'Serie attuale',
+    streakUnit_one: 'giorno',
+    streakUnit_other: 'giorni',
+  },
+  textInput: {
+    clear: 'Cancella {label}',
+  },
+  settingsExtra: {
+    hapticsHint: 'Vibra a una serie completata, a un recupero finito e a un nuovo record.',
+    preciseLocation: 'Attiva Posizione esatta nelle Impostazioni di iOS se i numeri non tornano.',
+  },
+  routineItemA11y: {
+    moveUp: 'Sposta {name} in alto',
+    moveDown: 'Sposta {name} in basso',
+    remove: 'Rimuovi {name} da questa scheda',
+  },
+  // --- end foundation ---
 };

@@ -17,6 +17,7 @@
  */
 import { memo } from 'react';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { StrengthEntry, StrengthSet } from '@/domain/types';
@@ -33,14 +34,18 @@ import {
   weightUnit,
   weightValue,
 } from '@/utils/format';
-import { Button } from './Button';
+import { Button } from '@/ui/controls/Button';
 import { withAlpha } from '@/utils/color';
-import { IconButton } from './Button';
-import { Row } from './layout';
-import { Stepper } from './controls';
+import { IconButton } from '@/ui/controls/IconButton';
+import { Row } from '@/ui/layout';
+import { Stepper } from '@/ui/controls/Stepper';
 import { MetricLabel, Txt } from './Text';
-import { ConfirmSheet, Sheet, SheetFooter, SheetSection } from './Sheet';
+import { FormFooter, FormSection } from './FormSheet';
+import { ConfirmDialog } from './controls/ConfirmDialog';
 import { useT } from '@/i18n/useT';
+import { usePulse } from './animation';
+import { CellText } from './CellText';
+import { Icon } from './icons';
 
 /**
  * One planned set: a target on the left, a checkbox on the right, and the checkbox is the
@@ -360,35 +365,29 @@ export const ExerciseBlock = memo(function ExerciseBlock({
  * RPE uses a stepper rather than a slider because a slider's hit region loses to a callus
  * at arm's length. RPE 0 means "not recorded", which is the default for most sets.
  */
-export function SetEditorSheet({
+export function SetEditorForm({
   entry,
   set,
   units,
   onChange,
   onRemove,
-  onRequestClose,
 }: {
   entry: StrengthEntry;
   set: StrengthSet;
   units: UnitSystem;
   onChange: (patch: { reps?: number; weightKg?: number; rpe?: number | null }) => void;
   onRemove: () => void;
-  onRequestClose: () => void;
 }) {
   const { t } = useT();
   const step = weightStep(units);
   const displayWeight = weightDisplayValue(set.weightKg, units, step);
 
   return (
-    <Sheet
-      onRequestClose={onRequestClose}
-      title={t('setRow.thisSet')}
-      subtitle={t('setRow.setSubtitle', {
-        name: entry.exerciseName,
-        reps: trimNumber(set.reps),
-      })}
-    >
-      <SheetSection title={t('setRow.reps')}>
+    <>
+      <Txt variant="caption" tone="muted">
+        {t('setRow.setSubtitle', { name: entry.exerciseName, reps: trimNumber(set.reps) })}
+      </Txt>
+      <FormSection title={t('setRow.reps')}>
         <Stepper
           label={t('setRow.reps')}
           value={set.reps}
@@ -399,9 +398,9 @@ export function SetEditorSheet({
             onChange({ reps });
           }}
         />
-      </SheetSection>
+      </FormSection>
 
-      <SheetSection title={t('setRow.weightIn', { unit: weightUnit(units) })}>
+      <FormSection title={t('setRow.weightIn', { unit: weightUnit(units) })}>
         <Stepper
           label={t('setRow.weightInUnit', { unit: weightUnit(units) })}
           value={displayWeight}
@@ -419,9 +418,9 @@ export function SetEditorSheet({
             {t('setRow.bodyweightNote')}
           </Txt>
         ) : null}
-      </SheetSection>
+      </FormSection>
 
-      <SheetSection title={t('setRow.rpe')}>
+      <FormSection title={t('setRow.rpe')}>
         <Stepper
           label={t('setRow.rpe')}
           value={set.rpe ?? 0}
@@ -438,20 +437,17 @@ export function SetEditorSheet({
         <Txt variant="micro" tone="faint" style={{ marginTop: spacing.sm }}>
           {t('setRow.rpeNote')}
         </Txt>
-      </SheetSection>
+      </FormSection>
 
-      <SheetFooter>
-        <IconButton
-          name="trash"
+      <FormFooter>
+        <Button
+          label={t('setRow.removeThisSet')}
           variant="danger"
-          size={20}
-          accessibilityLabel={t('setRow.removeThisSet')}
-          weighty
+          icon="trash"
           onPress={onRemove}
         />
-        <Button label={t('setRow.done')} variant="primary" fullWidth onPress={onRequestClose} />
-      </SheetFooter>
-    </Sheet>
+      </FormFooter>
+    </>
   );
 }
 
@@ -563,7 +559,7 @@ export const RestDock = memo(function RestDock({
  * un-ticked: recoverable, so no prompt. Removing deletes the entry and the sets already
  * banked against it, so it goes through the same confirm path as discarding the workout.
  */
-export function RemoveExerciseSheet({
+export function RemoveExerciseDialog({
   exerciseName,
   completedSets,
   onConfirm,
@@ -576,7 +572,8 @@ export function RemoveExerciseSheet({
 }) {
   const { t } = useT();
   return (
-    <ConfirmSheet
+    <ConfirmDialog
+      visible
       title={t('setRow.removeExerciseTitle')}
       message={
         completedSets > 0
@@ -584,8 +581,10 @@ export function RemoveExerciseSheet({
           : t('setRow.removePlain', { name: exerciseName })
       }
       confirmLabel={t('setRow.remove')}
+      cancelLabel={t('common.cancel')}
+      destructive
       onConfirm={onConfirm}
-      onRequestClose={onRequestClose}
+      onCancel={onRequestClose}
     />
   );
 }
@@ -687,3 +686,65 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 } satisfies Record<string, ViewStyle>);
+
+/**
+ * Live-session pill, floating above the bar so it is reachable from every tab without
+ * covering what the user is reading. The dot breathes: a static dot says "a session
+ * exists", a breathing one says it is happening now: which is the distinction that
+ * matters when you come back to the app twenty minutes later.
+ */
+export const ActiveWorkoutPill = memo(function ActiveWorkoutPill({
+  label,
+  detail,
+  onPress,
+  theme,
+}: {
+  label: string;
+  /** Elapsed time or set count: whatever the session wants to advertise. */
+  detail?: string;
+  onPress: () => void;
+  theme: Theme;
+}) {
+  const { t } = useT();
+  const pulse = usePulse(1600, 0.35);
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={detail ? `${label}, ${detail}` : label}
+      accessibilityHint={t('misc.opensWorkoutInProgress')}
+      style={({ pressed }) => [
+        {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: spacing.sm,
+          paddingHorizontal: spacing.lg,
+          paddingVertical: spacing.sm + 2,
+          borderRadius: radius.pill,
+          backgroundColor: theme.colors.surfaceRaised,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: theme.colors.border,
+          opacity: pressed ? 0.88 : 1,
+          ...theme.shadows.raised,
+        },
+      ]}
+    >
+      <Animated.View
+        style={[
+          {
+            width: 8,
+            height: 8,
+            borderRadius: radius.pill,
+            backgroundColor: theme.colors.tertiary,
+          },
+          pulse,
+        ]}
+      />
+      <CellText text={label} variant="label" weight="600" color={theme.colors.text} />
+      {detail ? (
+        <CellText text={detail} variant="monoSm" color={theme.colors.textMuted} />
+      ) : null}
+      <Icon name="chevronRight" size={15} color={theme.colors.textFaint} />
+    </Pressable>
+  );
+});

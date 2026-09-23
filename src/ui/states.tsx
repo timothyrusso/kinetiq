@@ -10,23 +10,24 @@
  * a metric card means the layout will not jump when data arrives, which is the whole
  * point; a spinner in the middle of an empty page means everything moves twice.
  */
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 import {
   Pressable,
   RefreshControl,
+  type RefreshControlProps,
   View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { radius, spacing } from '@/theme/tokens';
+import { radius, screenGutter, spacing } from '@/theme/tokens';
 import { useAppTheme } from '@/theme/theme';
 import { haptics } from '@/services/haptics';
 import { isOfflineError } from '@/api';
 import { useShimmer } from './animation';
-import { Button } from './Button';
+import { Button } from '@/ui/controls/Button';
 import { Icon, type IconName } from './icons';
-import { Stack } from './layout';
+import { Stack } from '@/ui/layout';
 import { Txt } from './Text';
 import { useT } from '@/i18n/useT';
 
@@ -118,7 +119,7 @@ export const SkeletonList = memo(function SkeletonList({ rows = 6 }: { rows?: nu
   return (
     <View
       accessibilityLabel={t('misc.loading')}
-      style={{ paddingHorizontal: spacing.xl, gap: spacing.xs }}
+      style={{ paddingHorizontal: screenGutter, gap: spacing.xs }}
     >
       {Array.from({ length: rows }, (_, i) => (
         <View
@@ -183,7 +184,7 @@ function StateScaffold({
           alignItems: 'center',
           justifyContent: 'center',
           gap: compact ? spacing.md : spacing.xxl,
-          paddingHorizontal: spacing.xxl,
+          paddingHorizontal: screenGutter,
           paddingVertical: compact ? spacing.xxl : spacing.huge,
         },
         style,
@@ -367,27 +368,31 @@ export function ThemedRefreshControl({
   refreshing,
   onRefresh,
   progressViewOffset,
-}: {
+  ...forwarded
+}: Omit<RefreshControlProps, 'refreshing' | 'onRefresh'> & {
   refreshing: boolean;
   onRefresh: () => void;
   progressViewOffset?: number;
 }) {
   const theme = useAppTheme();
-  return useMemo(
-    () => (
-      <RefreshControl
-        refreshing={refreshing}
-        onRefresh={() => {
-          haptics.light();
-          onRefresh();
-        }}
-        tintColor={theme.colors.accent}
-        colors={[theme.colors.accent]}
-        progressBackgroundColor={theme.colors.surface}
-        {...(progressViewOffset === undefined ? {} : { progressViewOffset })}
-      />
-    ),
-    [onRefresh, progressViewOffset, refreshing, theme.colors.accent, theme.colors.surface],
+  // Everything else is forwarded, children included, and that is load-bearing on Android: a
+  // ScrollView there renders INSIDE its refresh control (React Native clones the element and
+  // hands it the list as a child). A wrapper that dropped its children rendered every
+  // FlashList screen blank on Android, while iOS, which nests the control the other way
+  // round, looked fine.
+  return (
+    <RefreshControl
+      {...forwarded}
+      refreshing={refreshing}
+      onRefresh={() => {
+        haptics.light();
+        onRefresh();
+      }}
+      tintColor={theme.colors.accent}
+      colors={[theme.colors.accent]}
+      progressBackgroundColor={theme.colors.surface}
+      {...(progressViewOffset === undefined ? {} : { progressViewOffset })}
+    />
   );
 }
 

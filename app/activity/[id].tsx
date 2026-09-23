@@ -36,24 +36,20 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { routes } from '@/navigation/nav';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { DetailScreen } from '@/ui/Screen';
-import {
-  Badge,
-  Card,
-  Divider,
-  MetricGrid,
-  Row,
-  SectionHeader,
-  Stack as Column,
-} from '@/ui/layout';
+import { ScreenHeader } from '@/ui/Screen';
+import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
+import { MetaLine } from '@/ui/display';
+import { useTransparentHeaderInset } from '@/ui/insets';
+import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
+import { Badge, Card, Divider, MetricGrid, Row, Stack as Column } from '@/ui/layout';
+import { SectionHeader } from '@/ui/display';
 import { MetricLabel, Txt } from '@/ui/Text';
 import { Icon, type IconName } from '@/ui/icons';
-import { ActionRow, Button, IconButton } from '@/ui/Button';
+import { ActionRow } from '@/ui/rows';
 import { ACTIVITY_ICON } from '@/ui/rows';
-import { ConfirmSheet, Sheet, SheetFooter } from '@/ui/Sheet';
-import { TextField } from '@/ui/TextField';
 import { EmptyState, ErrorState, SkeletonCard } from '@/ui/states';
 import { RouteMap } from '@/ui/RouteMap';
 import { TrendChart, type TrendPoint } from '@/ui/charts/TrendChart';
@@ -61,7 +57,6 @@ import { useMeasuredWidth } from '@/ui/charts/useMeasuredWidth';
 import {
   useActivity,
   useDeleteActivity,
-  useUpdateActivityNotes,
 } from '@/queries/useActivities';
 // Record wording lives next to the record query, so this screen and the exercise detail
 // cannot drift into calling the same record two different things.
@@ -123,25 +118,8 @@ export default function ActivityDetailScreen() {
   // The draft *is* the open/closed flag: `null` means no sheet, a string (including `''`)
   // means an open one. Two pieces of state would be two ways to disagree about whether a
   // sheet is up.
-  const [notesDraft, setNotesDraft] = useState<string | null>(null);
 
   const removeActivity = useDeleteActivity();
-  const saveNotes = useUpdateActivityNotes();
-
-  const commitNotes = useCallback(() => {
-    if (activityId === null || notesDraft === null) return;
-    const trimmed = notesDraft.trim();
-    saveNotes.mutate(
-      // An emptied field clears the note rather than storing `""`: `notes` is `string |
-      // null` in the schema, and an empty string would make every edited row look annotated.
-      { id: activityId, notes: trimmed.length === 0 ? null : trimmed },
-      // `onSuccess`, not `onSettled`. Closing on settle closes on *failure* too, and
-      // the draft lives only in this screen's state: the user's typed paragraph would
-      // vanish while the note it describes stayed unwritten. On failure the sheet stays
-      // up, the field keeps its text, and the reason appears under it.
-      { onSuccess: () => setNotesDraft(null) },
-    );
-  }, [activityId, notesDraft, saveNotes]);
 
   const confirmDelete = useCallback(() => {
     if (activityId === null) return;
@@ -162,137 +140,82 @@ export default function ActivityDetailScreen() {
     });
   }, [activityId, removeActivity]);
 
+  const askDelete = useCallback(() => setConfirmingDelete(true), []);
+  const transparentInset = useTransparentHeaderInset();
+  const topInset = activity !== null ? transparentInset : 0;
+
   return (
     <>
       {/* A fade rather than a push: this screen is reached from Home, from the list and
           from Progress, and its content is a full-bleed surface: a horizontal slide would
           flash the previous list's rows past the hero number. */}
       <Stack.Screen options={{ animation: 'fade_from_bottom' }} />
-      <DetailScreen
+      <ScreenHeader
         title={activity?.title ?? t('activity.fallbackTitle')}
-        {...(activity ? { subtitle: formatFullDate(activity.startedAt) } : {})}
-        headerTransparent={activity !== null}
-        right={
-          activity ? (
-            <IconButton
-              name="trash"
-              variant="danger"
-              size={20}
-              weighty
-              accessibilityLabel={t('activity.delete')}
-              accessibilityHint={t('activity.deleteHint')}
-              onPress={() => setConfirmingDelete(true)}
-            />
-          ) : undefined
-        }
-      >
-        {(topInset, header) => (
-          <ScrollView
-            contentContainerStyle={[
-              styles.content,
-              { paddingTop: topInset, paddingBottom: insets.bottom + spacing.huge },
-            ]}
-            onScroll={header.onScroll}
-            scrollEventThrottle={16}
-            keyboardShouldPersistTaps="handled"
-          >
-            {query.isPending ? (
-              <Column gap="lg" style={{ paddingTop: spacing.xl }}>
-                <SkeletonCard lines={3} />
-                <SkeletonCard lines={5} />
-              </Column>
-            ) : query.isError ? (
-              <ErrorState
-                error={query.error}
-                onRetry={() => void query.refetch()}
-                title={t('activity.loadError')}
-              />
-            ) : activity ? (
-              <ActivityBody
-                activity={activity}
-                units={units}
-                showSpeed={showSpeed}
-                theme={theme}
-                onEditNotes={() => setNotesDraft(activity.notes ?? '')}
-              />
-            ) : null}
-          </ScrollView>
-        )}
-      </DetailScreen>
-
-      {notesDraft !== null ? (
-        <Sheet
-          onRequestClose={() => setNotesDraft(null)}
-          title={t('activity.notesTitle')}
-          {...(activity ? { subtitle: activity.title } : {})}
-        >
-          {/* Not wrapped in `SheetSection`: the header already says "Session notes", and
-              `TextField` prints its own label above the box. Both at once reads as "NOTES /
-              NOTES": the section title and the field label are the same word twice, in two
-              colours, two lines apart. `SheetFooter` still supplies the divider below. */}
-          <TextField
-            label={t('activity.notesLabel')}
-            value={notesDraft}
-            onChangeText={(text) => {
-              // Typing again means the user is trying a second time, so the previous
-              // failure stops being true information about the field.
-              if (saveNotes.isError) saveNotes.reset();
-              setNotesDraft(text);
-            }}
-            multiline
-            autoFocus
-            placeholder={t('activity.notesPlaceholder')}
-            hint={t('activity.notesHint')}
-            // The write is a disk write, and disks fail: full storage, a row deleted
-            // from another screen, a migration that did not run. Without this the
-            // sheet would simply refuse to close, which reads as an app that ignores
-            // the Save button. Naming the reason turns a mystery into a retry.
-            {...(saveNotes.isError
-              ? {
-                  error:
-                    saveNotes.error instanceof Error
-                      ? saveNotes.error.message
-                      : t('activity.notesSaveFailed'),
-                }
-              : {})}
-          />
-          <SheetFooter>
-            <Button
-              label={t('common.cancel')}
-              variant="quiet"
-              onPress={() => setNotesDraft(null)}
-            />
-            <Button
-              label={t('common.save')}
-              variant="primary"
-              fullWidth
-              loading={saveNotes.isPending}
-              onPress={commitNotes}
-            />
-          </SheetFooter>
-        </Sheet>
+        transparent={activity !== null}
+      />
+      {activity ? (
+        <HeaderToolbar placement="right">
+          {headerAction({ action: 'delete', onPress: askDelete, t, label: 'activity.delete' })}
+        </HeaderToolbar>
       ) : null}
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: topInset, paddingBottom: insets.bottom + spacing.huge },
+        ]}
+        keyboardShouldPersistTaps="handled"
+      >
+        {activity ? (
+          <MetaLine
+            items={[{ icon: 'calendar', label: formatFullDate(activity.startedAt) }]}
+            theme={theme}
+            style={styles.dateLine}
+          />
+        ) : null}
+        {query.isPending ? (
+          <Column gap="lg" style={{ paddingTop: spacing.xl }}>
+            <SkeletonCard lines={3} />
+            <SkeletonCard lines={5} />
+          </Column>
+        ) : query.isError ? (
+          <ErrorState
+            error={query.error}
+            onRetry={() => void query.refetch()}
+            title={t('activity.loadError')}
+          />
+        ) : activity ? (
+          <ActivityBody
+            activity={activity}
+            units={units}
+            showSpeed={showSpeed}
+            theme={theme}
+            onEditNotes={() => router.push(routes.activityNotes(activity.id))}
+          />
+        ) : null}
+      </ScrollView>
 
       {confirmingDelete && activity ? (
-        <ConfirmSheet
+        <ConfirmDialog
+          visible={!removeActivity.isPending}
           title={t('activity.deleteTitle')}
-          message={t('activity.deleteMessage', { name: activity.title })}
-          confirmLabel={t(removeActivity.isPending ? 'activity.deleting' : 'activity.deleteConfirm')}
+          message={
+            removeActivity.isError
+              ? removeActivity.error instanceof Error
+                ? removeActivity.error.message
+                : t('activity.deleteFailed')
+              : t('activity.deleteMessage', { name: activity.title })
+          }
+          confirmLabel={t('activity.deleteConfirm')}
+          cancelLabel={t('common.cancel')}
+          destructive
           onConfirm={confirmDelete}
-          onRequestClose={() => {
-            // Same reason as the list's delete sheet: leaving the previous failure behind
-            // would make a reopened sheet report an attempt that has not happened yet.
+          onCancel={() => {
+            // Same reason as the list's delete: leaving the previous failure behind would
+            // make a reopened dialog report an attempt that has not happened yet.
             removeActivity.reset();
             setConfirmingDelete(false);
           }}
-          {...(removeActivity.isError
-            ? {
-                error:
-                  removeActivity.error instanceof Error
-                    ? removeActivity.error.message
-                    : t('activity.deleteFailed'),
-              }
-            : {})}
         />
       ) : null}
     </>
@@ -792,7 +715,7 @@ function StrengthBody({
           <SectionHeader
             title={t('activity.volume')}
             eyebrow={t('activity.perMovement')}
-            count={volumePoints.length}
+            counter={volumePoints.length}
           />
           <Card>
             <TrendChart
@@ -812,7 +735,7 @@ function StrengthBody({
         <SectionHeader
           title={t('activity.exercises')}
           eyebrow={t('activity.work')}
-          count={entries.length}
+          counter={entries.length}
         />
         {entries.map((entry, index) => (
           <ExerciseCard key={`${entry.exerciseId}-${index}`} entry={entry} units={units} />
@@ -824,7 +747,7 @@ function StrengthBody({
           <SectionHeader
             title={t('activity.records')}
             eyebrow={t('activity.setThisSession')}
-            count={records.length}
+            counter={records.length}
           />
           <Card tone="accent">
             <Column gap="lg">
@@ -1121,6 +1044,7 @@ function axisLabel(name: string): string {
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: screenGutter },
+  dateLine: { paddingTop: spacing.md },
   hero: { marginTop: spacing.md, padding: spacing.lg, borderRadius: radius.xl },
   section: { paddingTop: spacing.xxxl },
   headRow: { paddingVertical: spacing.xs },

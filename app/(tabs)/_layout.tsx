@@ -19,14 +19,12 @@
  *    have been the obvious pick for Workout and is iOS 17+, so it would render as a blank
  *    square on the floor of our support range.
  *
- * ## Content insets
+ * ## Content insets and headers
  *
- * Every trigger sets `disableAutomaticContentInsets`, and the reason is consistency rather
- * than preference. `Screen` is shared with the pushed screens, which have no tab bar and
- * compute their own top padding from the safe area; left on, the system added its inset ON TOP
- * of that and every tab screen's content started ~86pt too low. Opting out keeps exactly one
- * code path for top insets across both kinds of screen. The bottom is then ours too, and
- * `useTabContentBottom` reserves the measured bar (83pt at this viewport) plus the accessory.
+ * Each tab is its own stack with the platform's large-title header (`src/navigation/TabStack`),
+ * and the system's automatic content insets are on: the tab's list is the screen's first child
+ * and adjusts itself for the header above and the bar below. The one thing the system does not
+ * account for is the bottom accessory, which `useTabContentBottom` adds while a workout runs.
  */
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 // `Icon` and `Label` are the shared primitives, exported from the package root rather than
@@ -36,7 +34,7 @@ import { Icon, Label, router } from 'expo-router';
 import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
 import { useT } from '@/i18n/useT';
-import { ActiveWorkoutPill } from '@/ui/TabBar';
+import { ActiveWorkoutPill } from '@/ui/workout';
 import { formatDuration } from '@/utils/format';
 import { useWorkoutRunning, useWorkoutSession } from '@/workout/session';
 
@@ -54,28 +52,28 @@ export default function TabsLayout() {
       // This is the behaviour people now read as "a current iOS app".
       minimizeBehavior="onScrollDown"
     >
-      <NativeTabs.Trigger name="index" disableAutomaticContentInsets>
+      <NativeTabs.Trigger name="(home)">
         <Icon sf={{ default: 'house', selected: 'house.fill' }} md="home" />
         <Label>{t('tabs.home')}</Label>
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="activities" disableAutomaticContentInsets>
+      <NativeTabs.Trigger name="activities">
         {/* An ECG trace rather than a runner: this tab lists rides, walks and lifts too. */}
         <Icon sf="waveform.path.ecg" md="monitor_heart" />
         <Label>{t('tabs.activities')}</Label>
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="workout" disableAutomaticContentInsets>
+      <NativeTabs.Trigger name="workout">
         <Icon sf="figure.strengthtraining.traditional" md="fitness_center" />
         <Label>{t('tabs.workout')}</Label>
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="exercises" disableAutomaticContentInsets>
+      <NativeTabs.Trigger name="exercises">
         <Icon sf={{ default: 'square.grid.2x2', selected: 'square.grid.2x2.fill' }} md="grid_view" />
         <Label>{t('tabs.exercises')}</Label>
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="profile" disableAutomaticContentInsets>
+      <NativeTabs.Trigger name="profile">
         <Icon sf={{ default: 'person', selected: 'person.fill' }} md="person" />
         <Label>{t('tabs.profile')}</Label>
       </NativeTabs.Trigger>

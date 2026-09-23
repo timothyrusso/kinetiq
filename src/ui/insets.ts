@@ -25,17 +25,6 @@ import { spacing } from '@/theme/tokens';
 import { useWorkoutRunning } from '@/workout/session';
 
 /**
- * The tab bar's own height, excluding the safe area it sits above.
- *
- * Measured from the live tree rather than guessed: the native `TabBar` node reports
- * y=791 h=83 against an 874pt viewport, so 83 is the band it occupies INCLUDING the home
- * indicator's safe area. It is not the old hand-drawn 60: a floating Liquid Glass capsule has
- * its own metrics: and it is not composed with `insets.bottom`, because the measurement
- * already contains it.
- */
-export const TAB_BAR_HEIGHT = 83;
-
-/**
  * The navigator's own compact header, excluding the top safe area.
  *
  * Only needed by screens whose header is TRANSPARENT: with an opaque one the navigator
@@ -47,7 +36,16 @@ export const TAB_BAR_HEIGHT = 83;
  * navigation bar, 56pt the Material top app bar. Kept here so the two media screens cannot
  * drift apart, which is the rule the rest of this file exists for.
  */
-export const NATIVE_HEADER_HEIGHT = Platform.OS === 'ios' ? 44 : 56;
+const NATIVE_HEADER_HEIGHT = Platform.OS === 'ios' ? 44 : 56;
+
+/**
+ * Where the first readable content belongs under a TRANSPARENT header: the status bar plus the
+ * bar itself. Opaque headers need nothing, because the navigator lays content out below them.
+ */
+export function useTransparentHeaderInset(): number {
+  const insets = useSafeAreaInsets();
+  return insets.top + NATIVE_HEADER_HEIGHT;
+}
 
 /**
  * Vertical room the floating "workout in progress" pill needs above the bar: its own height
@@ -64,10 +62,11 @@ export const WORKOUT_PILL_SPACE = 44 + spacing.sm;
  */
 export function useTabContentBottom(extra = 0): number {
   const running = useWorkoutRunning();
-  // The measured bar band, plus the bottom accessory when a workout is running (the system does
-  // not account for the accessory), plus breathing room so the last row is not flush against
-  // the glass. No `insets.bottom` term: TAB_BAR_HEIGHT already spans the home indicator.
-  return TAB_BAR_HEIGHT + spacing.xl + (running ? WORKOUT_PILL_SPACE : 0) + extra;
+  // The bar itself is covered by the system: a tab's list uses automatic content insets, which
+  // include the tab bar and the home indicator. What is left is the bottom accessory while a
+  // workout runs (the system does not account for it) and breathing room, so the last row is
+  // not flush against the glass.
+  return spacing.xl + (running ? WORKOUT_PILL_SPACE : 0) + extra;
 }
 
 /**
