@@ -320,7 +320,10 @@ export function useExerciseResolution(id: string | null): ExerciseDetailState {
     exercise,
     from,
     fetchable: !localOnly,
+    // `id !== null` first: with no id both queries are disabled, and a disabled query with no
+    // data stays pending forever, which held the screen on its skeleton for good.
     isLoading:
+      id !== null &&
       exercise === null &&
       (stored.isPending || stored.isFetching || (remote.isPending && !localOnly)),
     isFetching: remote.isFetching,
