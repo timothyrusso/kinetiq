@@ -37,19 +37,17 @@ import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { routes } from '@/navigation/nav';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScreenHeader } from '@/ui/Screen';
 import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
-import { MetaLine } from '@/ui/display';
-import { useTransparentHeaderInset } from '@/ui/insets';
+import { MetaLine, StatTile, TagRow } from '@/ui/display';
+import { useScreenContentBottom, useTransparentHeaderInset } from '@/ui/insets';
 import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { Badge, Card, Divider, MetricGrid, Row, Stack as Column } from '@/ui/layout';
 import { SectionHeader } from '@/ui/display';
-import { MetricLabel, Txt } from '@/ui/Text';
-import { Icon, type IconName } from '@/ui/icons';
-import { ActionRow } from '@/ui/rows';
-import { ACTIVITY_ICON } from '@/ui/rows';
+import { Txt } from '@/ui/Text';
+import { Icon, ICON_SIZE, IconTile, type IconName } from '@/ui/icons';
+import { ActionRow, ACTIVITY_ICON } from '@/ui/rows';
 import { EmptyState, ErrorState, SkeletonCard } from '@/ui/states';
 import { RouteMap } from '@/ui/RouteMap';
 import { TrendChart, type TrendPoint } from '@/ui/charts/TrendChart';
@@ -63,12 +61,10 @@ import {
 import { RECORD_LABEL, formatRecordValue } from '@/queries/useExerciseHistory';
 import { useSettings } from '@/settings/hooks';
 import { useT } from '@/i18n/useT';
-import type { TKey } from '@/i18n';
 import { activityDisplay, splitRows, type SplitRow } from '@/domain/display';
 import { estimatedOneRepMax } from '@/domain/logic';
 import type {
   Activity,
-  ActivityKind,
   CardioMetrics,
   StrengthEntry,
   StrengthSet,
@@ -78,19 +74,20 @@ import { radius, spacing, screenGutter } from '@/theme/tokens';
 import type { UnitSystem } from '@/utils/format';
 import {
   compactNumber,
-  formatAgo,
   formatCalories,
   formatDistance,
   formatDuration,
   formatDurationCompact,
   formatElevation,
-  formatFullDate,
   formatPaceShort,
   formatSpeed,
-  formatTimeOfDay,
   formatWeight,
   joinMiddleDot,
+  splitMetric,
+  weightUnit,
+  weightValue,
 } from '@/utils/format';
+import { agoLabel, fullDateLabel, timeOfDayLabel } from '@/utils/localeFormat';
 import { displayRoute } from '@/services/gps';
 
 /** A chart narrower than this cannot fit its axis labels, so it is not drawn at all. */
@@ -101,12 +98,14 @@ const MIN_CHART_WIDTH = 120;
  * cheap enough to animate.
  */
 const MAX_ELEVATION_SAMPLES = 60;
+/** The route map's height: the tallest element on the screen, and the one the bar floats over. */
+const MAP_HEIGHT = 280;
 
 export default function ActivityDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useT();
   const theme = useAppTheme();
-  const insets = useSafeAreaInsets();
+  const bottom = useScreenContentBottom();
   const units = useSettings((s) => s.unitSystem);
   const showSpeed = useSettings((s) => s.showSpeedInsteadOfPace);
 
@@ -141,8 +140,15 @@ export default function ActivityDetailScreen() {
   }, [activityId, removeActivity]);
 
   const askDelete = useCallback(() => setConfirmingDelete(true), []);
+  const editNotes = useCallback(() => {
+    if (activityId !== null) router.push(routes.activityNotes(activityId));
+  }, [activityId]);
+  // The bar floats over the map, and only over the map: a session with no route has nothing
+  // full-bleed to show through it, and a transparent bar over plain text is a bar that looks
+  // missing. `displayRoute` is the same test the map uses to decide it has anything to draw.
+  const hasRoute = activity?.cardio ? displayRoute(activity.cardio.route).length >= 2 : false;
   const transparentInset = useTransparentHeaderInset();
-  const topInset = activity !== null ? transparentInset : 0;
+  const topInset = hasRoute ? transparentInset : 0;
 
   return (
     <>
@@ -152,29 +158,29 @@ export default function ActivityDetailScreen() {
       <Stack.Screen options={{ animation: 'fade_from_bottom' }} />
       <ScreenHeader
         title={activity?.title ?? t('activity.fallbackTitle')}
-        transparent={activity !== null}
+        transparent={hasRoute}
       />
       {activity ? (
         <HeaderToolbar placement="right">
-          {headerAction({ action: 'delete', onPress: askDelete, t, label: 'activity.delete' })}
+          {/* Destructive: tinted as danger, and behind the native confirm below. */}
+          {headerAction({
+            action: 'delete',
+            onPress: askDelete,
+            t,
+            label: 'activity.delete',
+            tint: theme.colors.danger,
+          })}
         </HeaderToolbar>
       ) : null}
       <ScrollView
         contentContainerStyle={[
           styles.content,
-          { paddingTop: topInset, paddingBottom: insets.bottom + spacing.huge },
+          { paddingTop: topInset + spacing.md, paddingBottom: bottom },
         ]}
         keyboardShouldPersistTaps="handled"
       >
-        {activity ? (
-          <MetaLine
-            items={[{ icon: 'calendar', label: formatFullDate(activity.startedAt) }]}
-            theme={theme}
-            style={styles.dateLine}
-          />
-        ) : null}
         {query.isPending ? (
-          <Column gap="lg" style={{ paddingTop: spacing.xl }}>
+          <Column gap="lg">
             <SkeletonCard lines={3} />
             <SkeletonCard lines={5} />
           </Column>
@@ -190,7 +196,8 @@ export default function ActivityDetailScreen() {
             units={units}
             showSpeed={showSpeed}
             theme={theme}
-            onEditNotes={() => router.push(routes.activityNotes(activity.id))}
+            hasRoute={hasRoute}
+            onEditNotes={editNotes}
           />
         ) : null}
       </ScrollView>
@@ -229,12 +236,14 @@ function ActivityBody({
   units,
   showSpeed,
   theme,
+  hasRoute,
   onEditNotes,
 }: {
   activity: Activity;
   units: UnitSystem;
   showSpeed: boolean;
   theme: Theme;
+  hasRoute: boolean;
   onEditNotes: () => void;
 }) {
   const { t } = useT();
@@ -246,42 +255,54 @@ function ActivityBody({
   // One call, one object: the headline, the subtitle and the spoken sentence are three
   // views of the same numbers, and computing them separately is how they start disagreeing
   // about rounding.
-  const display = activityDisplay(activity, units, showSpeed);
+  const display = useMemo(
+    () => activityDisplay(activity, units, showSpeed),
+    [activity, units, showSpeed],
+  );
+  const when = useMemo(
+    () => [
+      { icon: 'calendar' as const, label: fullDateLabel(activity.startedAt) },
+      { icon: 'clock' as const, label: timeOfDayLabel(activity.startedAt) },
+    ],
+    [activity.startedAt],
+  );
 
   return (
     <View onLayout={onLayout}>
+      {/* The map first, directly under the floating bar: the one full-width picture this
+          screen has is what the transparent header is for. */}
+      {hasRoute && activity.cardio ? (
+        <RouteMap
+          route={activity.cardio.route}
+          kind={activity.kind}
+          theme={theme}
+          height={MAP_HEIGHT}
+          style={styles.map}
+        />
+      ) : null}
       {/* One accessibility element for the whole hero, so VoiceOver reads "Tempo run. 8.43 km
           in 52 min" as a sentence rather than four fragments in sequence. The label comes
-          from the domain layer because that is what decides what is true about the numbers. */}
+          from the domain layer because that is what decides what is true about the numbers.
+          The kind is the tile's tone and glyph, not a word: the title already names it. */}
       <View
         accessible
         accessibilityRole="summary"
         accessibilityLabel={display.accessibilityLabel}
         style={[styles.hero, { backgroundColor: theme.colors.surface }]}
       >
-        <Row gap="sm" align="center">
-          <Badge
-            label={t(KIND_LABEL[activity.kind])}
-            tone={KIND_TONE[activity.kind]}
-            icon={
-              <Icon
-                name={ACTIVITY_ICON[activity.kind]}
-                size={13}
-                color={theme.colors.tone[activity.kind]}
-              />
-            }
+        <Row gap="md" align="center">
+          <IconTile
+            name={ACTIVITY_ICON[activity.kind]}
+            color={theme.colors.tone[activity.kind]}
+            background={theme.colors.toneSoft[activity.kind]}
           />
-          <Txt variant="micro" tone="faint">
-            {formatTimeOfDay(activity.startedAt)}
-          </Txt>
+          <MetaLine items={when} theme={theme} wrap style={styles.flex} />
         </Row>
         {/* `display`, not `numeralLg`: this number is read as part of a sentence, and the
-            mono face is for values that tick (a timer), not for history. */}
-        <Txt variant="display" weight="700" style={{ marginTop: spacing.sm }}>
+            mono face is for values that tick (a timer), not for history. The facts that used
+            to trail it as a joined line are the tiles below. */}
+        <Txt variant="display" weight="700">
           {display.headline}
-        </Txt>
-        <Txt variant="body" tone="muted" style={{ marginTop: spacing.xxs }}>
-          {display.subtitle}
         </Txt>
       </View>
 
@@ -312,30 +333,6 @@ function ActivityBody({
   );
 }
 
-/**
- * Badge copy, as catalog KEYS rather than words.
- *
- * A module-level map of English strings cannot be translated: it is built once, before any
- * component has a language. Holding the key instead means the lookup happens where `t` is,
- * and the map stays a single place to add a kind.
- */
-const KIND_LABEL = {
-  run: 'activity.kindRun',
-  ride: 'activity.kindRide',
-  lift: 'activity.kindLift',
-  walk: 'activity.kindWalk',
-  yoga: 'activity.kindYoga',
-} as const satisfies Record<ActivityKind, TKey>;
-
-/** Badge *purposes*, not colours: the theme owns the hue, this owns the meaning. */
-const KIND_TONE: Record<ActivityKind, 'accent' | 'info' | 'success' | 'warning'> = {
-  run: 'accent',
-  ride: 'info',
-  lift: 'warning',
-  walk: 'success',
-  yoga: 'success',
-};
-
 /* ---------------------------------------------------------------- cardio -- */
 
 function CardioBody({
@@ -355,7 +352,8 @@ function CardioBody({
 }) {
   const { t } = useT();
   // The same thinning the map applies, so "there is a route" is decided by the geometry the
-  // map is about to draw rather than by a second, subtly different rule.
+  // map is about to draw rather than by a second, subtly different rule. The map itself is
+  // drawn above the hero; this body only explains its absence.
   const hasRoute = displayRoute(cardio.route).length >= 2;
   const splits = useMemo(() => splitRows(cardio.splits, units), [cardio.splits, units]);
   const hasDistance = cardio.distanceMeters > 0;
@@ -392,18 +390,17 @@ function CardioBody({
     return points.length >= 3 ? points : [];
   }, [cardio.route]);
 
-  const unitWord = units === 'metric' ? 'kilometre' : 'mile';
+  // From the catalog, lowercased for the middle of a sentence: "Per kilometre", "Per chilometro".
+  const unitWord = t(units === 'metric' ? 'activity.kilometre' : 'activity.mile').toLocaleLowerCase();
 
   return (
     <>
-      <Section>
-        {hasRoute ? (
-          <RouteMap route={cardio.route} kind={activity.kind} theme={theme} height={280} />
-        ) : (
+      {hasRoute ? null : (
+        <Section>
           <Card tone="sunken">
             <Row gap="md" align="start">
-              <Icon name="route" size={26} color={theme.colors.textFaint} />
-              <Column gap="xxs" style={{ flex: 1, minWidth: 0 }}>
+              <Icon name="route" size={ICON_SIZE.inline} color={theme.colors.textFaint} />
+              <Column gap="xxs" style={styles.shrink}>
                 <Txt variant="subhead" weight="700">
                   {t('misc.noRouteToDraw')}
                 </Txt>
@@ -413,8 +410,8 @@ function CardioBody({
               </Column>
             </Row>
           </Card>
-        )}
-      </Section>
+        </Section>
+      )}
 
       <Section gap="lg">
         <SectionHeader title={t('activity.metrics')} eyebrow={t('activity.session')} />
@@ -487,7 +484,7 @@ function CardioBody({
               color={theme.colors.tertiary}
               showGrid={false}
               showDots="never"
-              format={(value) => `${Math.round(value)} m`}
+              format={(value) => formatElevation(value, units)}
             />
             <Txt variant="micro" tone="faint" style={{ paddingTop: spacing.sm }}>
               {t('activity.altitudeNote')}
@@ -500,13 +497,13 @@ function CardioBody({
         <SectionHeader
           title={t('activity.splits')}
           eyebrow={t('activity.perUnit', { unit: unitWord })}
-          {...(splits !== null ? { count: splits.length } : {})}
+          {...(splits !== null ? { counter: splits.length } : {})}
         />
         {splits === null ? (
           <Card>
             <Row gap="md" align="start">
-              <Icon name="timer" size={22} color={theme.colors.textFaint} />
-              <Column gap="xxs" style={{ flex: 1, minWidth: 0 }}>
+              <Icon name="timer" size={ICON_SIZE.inline} color={theme.colors.textFaint} />
+              <Column gap="xxs" style={styles.shrink}>
                 <Txt variant="subhead" weight="700">
                   {t('activity.noSplitsTitle')}
                 </Txt>
@@ -543,7 +540,7 @@ function SplitTable({
 
   return (
     <Card padding="sm">
-      <Row gap="md" align="center" style={styles.headRow}>
+      <Row gap="md" align="center" style={[styles.headRow, styles.band]}>
         <Txt variant="micro" tone="faint" style={styles.narrow}>
           {t(units === 'metric' ? 'activity.colKm' : 'activity.colMi')}
         </Txt>
@@ -584,6 +581,7 @@ function SplitTable({
           <View
             style={[
               styles.dataRow,
+              styles.band,
               styles.row,
               split.fastest ? { backgroundColor: theme.colors.successSoft } : null,
             ]}
@@ -649,6 +647,7 @@ function StrengthBody({
   );
   const volume = strength?.totalVolumeKg ?? 0;
   const minutes = activity.durationSeconds / 60;
+  const unit = weightUnit(units);
 
   // Volume per movement, derived here rather than stored: a session whose sets get edited
   // afterwards must not go on showing a chart that contradicts its own set tables.
@@ -678,7 +677,7 @@ function StrengthBody({
           />
           <Metric
             label={t('activity.volume')}
-            value={volume > 0 ? `${compactNumber(volume)} kg` : null}
+            value={volume > 0 ? `${compactNumber(weightValue(volume, units))} ${unit}` : null}
             note={t(volume > 0 ? 'activity.repsTimesWeight' : 'activity.bodyweightWork')}
           />
           <Metric
@@ -702,7 +701,11 @@ function StrengthBody({
           />
           <Metric
             label={t('activity.density')}
-            value={volume > 0 && minutes >= 1 ? `${Math.round(volume / minutes)} kg/min` : null}
+            value={
+              volume > 0 && minutes >= 1
+                ? `${Math.round(weightValue(volume / minutes, units))} ${unit}/min`
+                : null
+            }
             note={t(
               volume > 0 && minutes >= 1 ? 'activity.volumePerMinute' : 'activity.needsMinute',
             )}
@@ -725,7 +728,7 @@ function StrengthBody({
               height={150}
               includeZero
               showDots="always"
-              format={(value) => `${compactNumber(value)} kg`}
+              format={(value) => `${compactNumber(weightValue(value, units))} ${unit}`}
             />
           </Card>
         </Section>
@@ -738,7 +741,7 @@ function StrengthBody({
           counter={entries.length}
         />
         {entries.map((entry, index) => (
-          <ExerciseCard key={`${entry.exerciseId}-${index}`} entry={entry} units={units} />
+          <ExerciseCard key={`${entry.exerciseId}-${index}`} entry={entry} units={units} theme={theme} />
         ))}
       </Section>
 
@@ -753,8 +756,8 @@ function StrengthBody({
             <Column gap="lg">
               {records.map((record) => (
                 <Row key={`${record.exerciseId}-${record.kind}`} gap="md" align="center">
-                  <Icon name="trophy" size={20} color={theme.colors.onAccent} />
-                  <Column gap="xxs" style={{ flex: 1, minWidth: 0 }}>
+                  <Icon name="trophy" size={ICON_SIZE.inline} color={theme.colors.onAccent} />
+                  <Column gap="xxs" style={styles.shrink}>
                     <Txt variant="subhead" weight="700" numberOfLines={1}>
                       {record.exerciseName}
                     </Txt>
@@ -780,35 +783,55 @@ function StrengthBody({
   );
 }
 
-function ExerciseCard({ entry, units }: { entry: StrengthEntry; units: UnitSystem }) {
+function ExerciseCard({
+  entry,
+  units,
+  theme,
+}: {
+  entry: StrengthEntry;
+  units: UnitSystem;
+  theme: Theme;
+}) {
   const { t } = useT();
   const top = useMemo(() => heaviestCompletedSet(entry.sets), [entry.sets]);
   const done = entry.sets.filter((set) => set.completed).length;
   const planned = entry.sets.length;
+  const meta = useMemo(
+    () => [
+      {
+        icon: 'layers' as const,
+        label: `${done}/${planned} ${t('activity.setWord', { count: planned })}`,
+      },
+      ...(top
+        ? [
+            {
+              icon: 'trophy' as const,
+              label: t('activity.topSet', {
+                weight:
+                  top.weightKg === 0 ? t('activity.bodyweightShort') : formatWeight(top.weightKg, units),
+                reps: top.reps,
+              }),
+            },
+          ]
+        : []),
+    ],
+    [done, planned, t, top, units],
+  );
+  const tags = useMemo(
+    () => (entry.muscleGroup ? [{ key: 'muscle', label: entry.muscleGroup }] : []),
+    [entry.muscleGroup],
+  );
 
   return (
     <Card padding="md">
       <Column gap="md">
         <Row gap="md" align="center">
-          <Column gap="xxs" style={{ flex: 1, minWidth: 0 }}>
+          <Column gap="xs" style={styles.shrink}>
             <Txt variant="subhead" weight="700" numberOfLines={2}>
               {entry.exerciseName}
             </Txt>
-            <Txt variant="caption" tone="muted">
-              {joinMiddleDot([
-                `${done}/${planned} ${t('activity.setWord', { count: planned })}`,
-                entry.muscleGroup,
-                top
-                  ? t('activity.topSet', {
-                      weight:
-                        top.weightKg === 0
-                          ? t('activity.bodyweightShort')
-                          : formatWeight(top.weightKg, units),
-                      reps: top.reps,
-                    })
-                  : null,
-              ])}
-            </Txt>
+            <MetaLine items={meta} theme={theme} wrap />
+            <TagRow tags={tags} theme={theme} />
           </Column>
           <Badge
             label={
@@ -940,8 +963,8 @@ function ProvenanceBlock({ activity, theme }: { activity: Activity; theme: Theme
     <Section>
       <Card tone="sunken">
         <Row gap="md" align="start">
-          <Icon name={icon} size={20} color={theme.colors.textMuted} />
-          <Column gap="xxs" style={{ flex: 1, minWidth: 0 }}>
+          <Icon name={icon} size={ICON_SIZE.inline} color={theme.colors.textMuted} />
+          <Column gap="xxs" style={styles.shrink}>
             <Txt variant="label" weight="700">
               {t(
                 activity.seeded
@@ -955,7 +978,7 @@ function ProvenanceBlock({ activity, theme }: { activity: Activity; theme: Theme
               {activity.seeded
                 ? t('activity.sampleNote')
                 : activity.sourceSessionId
-                  ? t('activity.recordedAgo', { ago: formatAgo(activity.startedAt) })
+                  ? t('activity.recordedAgo', { ago: agoLabel(activity.startedAt) })
                   : t('activity.manualNote')}
             </Txt>
           </Column>
@@ -973,12 +996,12 @@ function ProvenanceBlock({ activity, theme }: { activity: Activity; theme: Theme
 function Metric({ label, value, note }: { label: string; value: string | null; note?: string }) {
   const { t } = useT();
   const missing = value === null;
+  // The unit rides beside the numeral ("5:58" and "/km"), so a two-column grid can hold a
+  // pace at tile size without truncating it.
+  const parts = missing ? { value: '-' } : splitMetric(value);
   return (
     <Column gap="xxs">
-      <MetricLabel label={label} />
-      <Txt variant="numeralSm" weight="700" tone={missing ? 'faint' : 'default'} numberOfLines={1}>
-        {missing ? '-' : value}
-      </Txt>
+      <StatTile label={label} value={parts.value} {...(parts.unit ? { unit: parts.unit } : {})} />
       {note || missing ? (
         <Txt variant="micro" tone="faint" numberOfLines={2}>
           {note ?? t('activity.notMeasured')}
@@ -1044,23 +1067,23 @@ function axisLabel(name: string): string {
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: screenGutter },
-  dateLine: { paddingTop: spacing.md },
-  hero: { marginTop: spacing.md, padding: spacing.lg, borderRadius: radius.xl },
+  map: { marginBottom: spacing.md },
+  hero: { padding: spacing.lg, gap: spacing.sm, borderRadius: radius.xl },
+  flex: { flex: 1 },
+  shrink: { flex: 1, minWidth: 0 },
   section: { paddingTop: spacing.xxxl },
   headRow: { paddingVertical: spacing.xs },
-  dataRow: {
-    paddingVertical: spacing.md,
-    // The highlight has to bleed past the card's inner padding to read as a band rather
-    // than a swatch, so the row borrows the space back as its own padding.
-    marginHorizontal: -spacing.sm,
-    paddingHorizontal: spacing.sm,
-    borderRadius: radius.sm,
-  },
+  dataRow: { paddingVertical: spacing.md },
+  /**
+   * A split row's own inset, shared with the header row so the columns line up. The fastest
+   * split's highlight fills this band; it used to borrow the card's padding back with a
+   * negative margin, which is a second, hidden source for the card's inner edge.
+   */
+  band: { paddingHorizontal: spacing.sm, borderRadius: radius.sm },
   /** A planned-but-not-done set is part of the record, so it is dimmed rather than hidden. */
   dimmed: { opacity: 0.5 },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   narrow: { width: 30 },
   wide: { width: 54 },
   cell: { flex: 1 },
-  noteBody: { paddingHorizontal: screenGutter, paddingBottom: spacing.lg },
 });
