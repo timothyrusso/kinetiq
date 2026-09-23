@@ -185,6 +185,9 @@ export const it: Copy = {
     repsValue: '{reps} rip.',
     bodyweightA11y: 'Corpo libero',
     lastTrained: 'Ultimo allenamento {ago}',
+    pickerInLibrary: '{total} esercizi nella libreria',
+    pickerIncluded_one: '{count} è già in questa scheda',
+    pickerIncluded_other: '{count} sono già in questa scheda',
   },
   // --- end group-b ---
   activity: {

@@ -183,6 +183,9 @@ export const en = {
     repsValue: '{reps} reps',
     bodyweightA11y: 'Bodyweight',
     lastTrained: 'Last trained {ago}',
+    pickerInLibrary: '{total} exercises in the library',
+    pickerIncluded_one: '{count} is already in this routine',
+    pickerIncluded_other: '{count} are already in this routine',
   },
   // --- end group-b ---
   activity: {
