@@ -825,6 +825,12 @@ export const it: Copy = {
     sessionsChartNote: 'Quanto spesso usi ogni scheda, da quando hai iniziato a tracciare.',
     doneTimes: '{count}× fatte',
   },
+  // --- group-d ---
+  systemScreens: {
+    openTab: 'Vai a una sezione',
+    unknownError: 'Errore sconosciuto',
+  },
+  // --- end group-d ---
   settingsScreen: {
     namePlaceholder: 'Atleta',
     nameHint: 'Mostrato nella scheda Profilo e nella cronologia.',

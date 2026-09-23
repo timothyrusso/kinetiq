@@ -76,5 +76,14 @@ export function useTabContentBottom(extra = 0): number {
  */
 export function useScreenContentBottom(extra = 0): number {
   const insets = useSafeAreaInsets();
-  return insets.bottom + spacing.xxxl + extra;
+  return screenContentBottom(insets.bottom, extra);
+}
+
+/**
+ * The same number as `useScreenContentBottom`, from an inset the caller already has. For the
+ * error screens, which can render above the `SafeAreaProvider` (the root layout's own error
+ * boundary replaces the layout that mounts it), where the hook would throw.
+ */
+export function screenContentBottom(bottomInset: number, extra = 0): number {
+  return bottomInset + spacing.xxxl + extra;
 }
