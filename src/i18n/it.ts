@@ -341,7 +341,7 @@ export const it: Copy = {
     bodyweight: 'Corpo libero',
     options: 'Opzioni scheda',
     start: 'Inizia questo allenamento',
-    plannedVolume: 'Volume previsto',
+    plannedVolume: 'Volume',
     estTime: 'Tempo stimato',
     trained: 'Allenamenti',
     last: 'Ultimo',

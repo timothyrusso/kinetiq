@@ -339,7 +339,7 @@ export const en = {
     bodyweight: 'Bodyweight',
     options: 'Routine options',
     start: 'Start this workout',
-    plannedVolume: 'Planned volume',
+    plannedVolume: 'Volume',
     estTime: 'Est. time',
     trained: 'Trained',
     last: 'Last',
