@@ -13,6 +13,7 @@ import { memo } from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 
 import type { Theme } from '@/theme/theme';
+import { radius } from '@/theme/tokens';
 import { Txt } from '../Text';
 
 export const EmptyChart = memo(function EmptyChart({
@@ -33,7 +34,7 @@ export const EmptyChart = memo(function EmptyChart({
           height,
           alignItems: 'center',
           justifyContent: 'center',
-          borderRadius: 12,
+          borderRadius: radius.sm,
           backgroundColor: theme.colors.placeholder,
         },
         style,
