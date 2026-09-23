@@ -51,7 +51,7 @@ import { getSessionSnapshot } from '@/workout/session';
 import { haptics } from '@/services/haptics';
 import { useT } from '@/i18n/useT';
 import { tr } from '@/i18n/tr';
-import { formatClock } from '@/utils/format';
+import { formatClock } from '@/utils/relativeTime';
 
 /** A quarter-hour grid: nobody wants 18:07, and finer steps make the stepper pointless. */
 const REMINDER_STEP_MINUTES = 15;

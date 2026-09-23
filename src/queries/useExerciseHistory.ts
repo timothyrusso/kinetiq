@@ -38,6 +38,7 @@ import type { UnitSystem } from '@/utils/format';
 import { formatWeight } from '@/utils/format';
 import { sum } from '@/utils/functional';
 import type { TKey } from '@/i18n';
+import { tr } from '@/i18n/tr';
 
 /** Per-session rollup of one exercise, newest first. */
 export type ExercisePerformance = {
@@ -116,7 +117,7 @@ export function formatRecordValue(
   value: number,
   units: UnitSystem,
 ): string {
-  return kind === 'maxReps' ? `${Math.round(value)} reps` : formatWeight(value, units);
+  return kind === 'maxReps' ? tr('details.repsValue', { reps: Math.round(value) }) : formatWeight(value, units);
 }
 
 export function useExerciseHistory(exerciseId: string | null) {

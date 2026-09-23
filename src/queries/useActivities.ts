@@ -24,7 +24,6 @@ import { tr } from '@/i18n/tr';
 export type ActivityGroup = {
   /** Local calendar day, ms at midnight. */
   key: number;
-  label: string;
   activities: Activity[];
 };
 
@@ -66,7 +65,6 @@ function buildGroups(items: readonly Activity[], groupBy: ActivityListParams['gr
     return [
       {
         key: 0,
-        label: '',
         activities: [...items],
       },
     ];
@@ -81,7 +79,7 @@ function buildGroups(items: readonly Activity[], groupBy: ActivityListParams['gr
   }
   return [...buckets.entries()]
     .sort((a, b) => b[0] - a[0])
-    .map(([key, activities]) => ({ key, label: groupLabel(key, groupBy), activities }));
+    .map(([key, activities]) => ({ key, activities }));
 }
 
 /** Rolls a day back to the Monday-start week boundary when grouping weekly. */
@@ -94,19 +92,6 @@ function bucketStart(midnightMs: number, days: number): number {
   return d.getTime();
 }
 
-function groupLabel(midnightMs: number, groupBy: ActivityListParams['groupBy']): string {
-  if (groupBy === 'none') return '';
-  if (groupBy === 'week') return `Week of ${new Date(midnightMs).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}`;
-  const today = dayKey(Date.now());
-  const diffDays = Math.round((today - midnightMs) / 86_400_000);
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Yesterday';
-  return new Date(midnightMs).toLocaleDateString(undefined, {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  });
-}
 
 function summarise(items: readonly Activity[]): Omit<ActivityListView, 'groups' | 'flat'> {
   let duration = 0;

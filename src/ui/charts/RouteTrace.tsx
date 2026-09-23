@@ -81,7 +81,7 @@ export const RouteTrace = memo(function RouteTrace({
 
   // One variable rather than two near-identical JSX branches: the only difference between a
   // pace-coloured trace and a plain one is whether a default label exists to fall back to.
-  const legend = caption ?? (paceColoured && showLegend ? 'Slower → faster' : null);
+  const legend = caption ?? (paceColoured && showLegend ? t('followups.paceLegend') : null);
 
   if (route.length < 2) {
     return (

@@ -247,16 +247,6 @@ export function formatCalories(kcal: number): string {
 
 /* ------------------------------------------------------------------- time -- */
 
-const TIME_FMT = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' });
-const WEEKDAY_FMT = new Intl.DateTimeFormat('en-US', { weekday: 'short' });
-const SHORT_DATE_FMT = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' });
-const LONG_DATE_FMT = new Intl.DateTimeFormat('en-US', {
-  weekday: 'long',
-  month: 'long',
-  day: 'numeric',
-});
-const MONTH_FMT = new Intl.DateTimeFormat('en-US', { month: 'short' });
-
 /**
  * Every helper in this section takes `Date | number` because the domain stores
  * epoch milliseconds and UI code formats ad-hoc; forcing callers to wrap `new
@@ -302,51 +292,6 @@ export function isSameDay(a: DateInput, b: DateInput): boolean {
   return startOfDay(a).getTime() === startOfDay(b).getTime();
 }
 
-export function formatTimeOfDay(date: DateInput): string {
-  return TIME_FMT.format(date);
-}
-
-export function formatClock(minutesFromMidnight: number): string {
-  const total = ((Math.round(minutesFromMidnight) % 1440) + 1440) % 1440;
-  const h24 = Math.floor(total / 60);
-  const m = total % 60;
-  return TIME_FMT.format(new Date(2024, 0, 1, h24, m));
-}
-
-/** "Today" · "Yesterday" · "Mon" · "12 Mar": relative first, then absolute. */
-export function formatRelativeDay(date: DateInput, now: DateInput = new Date()): string {
-  const d = toDate(date);
-  const diff = daysBetween(d, now);
-  if (diff === 0) return 'Today';
-  if (diff === 1) return 'Yesterday';
-  if (diff > 1 && diff < 7) return WEEKDAY_FMT.format(d);
-  if (d.getFullYear() === toDate(now).getFullYear()) return SHORT_DATE_FMT.format(d);
-  return `${SHORT_DATE_FMT.format(d)}, ${d.getFullYear()}`;
-}
-
-export function formatFullDate(date: DateInput): string {
-  return LONG_DATE_FMT.format(date);
-}
-
-export function formatShortDate(date: DateInput): string {
-  return SHORT_DATE_FMT.format(date);
-}
-
-export function formatMonth(date: DateInput): string {
-  return MONTH_FMT.format(date);
-}
-
-/** "3 days ago" · "just now": for activity cards. */
-export function formatAgo(date: DateInput, now: DateInput = new Date()): string {
-  const seconds = Math.max(0, (toDate(now).getTime() - toDate(date).getTime()) / 1000);
-  if (seconds < 3600) return 'just now';
-  const hours = seconds / 3600;
-  if (hours < 24) return `${Math.round(hours)}h ago`;
-  const days = daysBetween(date, now);
-  if (days < 7) return `${days}d ago`;
-  if (days < 31) return `${Math.floor(days / 7)}w ago`;
-  return formatShortDate(date);
-}
 
 /** Inverse of `formatDuration` for editing inputs: "4:30" -> 270 */
 export function parseDuration(input: string): number | null {

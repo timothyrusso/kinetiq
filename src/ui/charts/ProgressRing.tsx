@@ -27,6 +27,7 @@ import Animated, {
 import { fontFamily } from '@/theme/tokens';
 import type { Theme } from '@/theme/theme';
 import { arcPath, clamp01, sweepTo } from './geometry';
+import { useT } from '@/i18n/useT';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -61,6 +62,7 @@ export const ProgressRing = memo(function ProgressRing({
   animate?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
+  const { t } = useT();
   const reduced = useReducedMotion();
   const stroke = color ?? theme.colors.accent;
   const track = trackColor ?? theme.colors.hairline;
@@ -105,7 +107,7 @@ export const ProgressRing = memo(function ProgressRing({
       accessibilityLabel={
         label
           ? `${label}${sublabel ? `, ${sublabel}` : ''}`
-          : `${Math.round(target * 100)} percent complete`
+          : t('followups.ringA11y', { percent: Math.round(target * 100) })
       }
     >
       <Svg width={size} height={size} aria-hidden focusable={false} style={StyleSheet.absoluteFill}>

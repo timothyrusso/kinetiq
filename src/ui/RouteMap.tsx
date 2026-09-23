@@ -218,7 +218,7 @@ export const RouteMap = memo(function RouteMap({
           <View style={[styles.badge, { backgroundColor: theme.colors.overlay }]}>
             <Icon name={mapFailed ? 'offline' : 'mapPin'} size={11} color={theme.colors.textMuted} />
             <Txt variant="micro" tone="faint">
-              {mapFailed ? 'Offline view' : 'Map'}
+              {mapFailed ? t('followups.mapOffline') : t('followups.mapTitle')}
             </Txt>
           </View>
         ) : null}
@@ -235,11 +235,11 @@ export const RouteMap = memo(function RouteMap({
             numberOfLines={1}
             style={{ flex: 1, minWidth: 0, marginLeft: spacing.xs }}
           >
-            Slower → faster
+            {t('followups.paceLegend')}
           </Txt>
           {interactive && (MAPS_ENABLED || mapFailed) ? (
             <Button
-              label={mapUsable ? 'Route only' : mapFailed ? 'Retry map' : 'Show map'}
+              label={t(mapUsable ? 'followups.routeOnly' : mapFailed ? 'followups.retryMap' : 'followups.showMap')}
               size="sm"
               variant="quiet"
               onPress={() => {

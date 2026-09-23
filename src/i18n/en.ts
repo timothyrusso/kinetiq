@@ -1385,6 +1385,21 @@ export const en = {
     remove: 'Remove {name} from this routine',
   },
   // --- end foundation ---
+  // --- followups ---
+  followups: {
+    clockA11y: 'Time {time}',
+    paceLegend: 'Slower → faster',
+    mapOffline: 'Offline view',
+    mapTitle: 'Map',
+    routeOnly: 'Route only',
+    retryMap: 'Retry map',
+    showMap: 'Show map',
+    ringA11y: '{percent} percent complete',
+    a11yLift: '{title}. {sets}, {volume} total volume, {duration}.',
+    a11yCardio: '{title}. {distance} in {duration}.',
+    a11yPlain: '{title}. {duration}.',
+  },
+  // --- end followups ---
 } as const;
 
 /**

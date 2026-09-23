@@ -24,6 +24,7 @@ import {
   joinMiddleDot,
   type UnitSystem,
 } from '@/utils/format';
+import { tr } from '@/i18n/tr';
 
 export type ActivityDisplay = {
   /** Big right-aligned number: "8.43 km", "12.4k kg", "52 min". */
@@ -59,13 +60,18 @@ export function activityDisplay(
       headline: volume > 0 ? formatWeight(volume, units) : duration,
       subtitle: joinMiddleDot([
         duration,
-        sets > 0 ? `${sets} ${sets === 1 ? 'set' : 'sets'}` : null,
+        sets > 0 ? tr('workout.set', { count: sets }) : null,
         calories,
       ]),
       accessibilityLabel:
         volume > 0
-          ? `${activity.title}. ${sets} sets, ${formatWeight(volume, units)} total volume, ${duration}.`
-          : `${activity.title}. ${duration}.`,
+          ? tr('followups.a11yLift', {
+              title: activity.title,
+              sets: tr('workout.set', { count: sets }),
+              volume: formatWeight(volume, units),
+              duration,
+            })
+          : tr('followups.a11yPlain', { title: activity.title, duration }),
     };
   }
 
@@ -86,8 +92,12 @@ export function activityDisplay(
     headline,
     subtitle: joinMiddleDot([duration, pacePart, calories]),
     accessibilityLabel: hasDistance
-      ? `${activity.title}. ${formatDistance(distance, units)} in ${duration}.`
-      : `${activity.title}. ${duration}.`,
+      ? tr('followups.a11yCardio', {
+          title: activity.title,
+          distance: formatDistance(distance, units),
+          duration,
+        })
+      : tr('followups.a11yPlain', { title: activity.title, duration }),
   };
 }
 

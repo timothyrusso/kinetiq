@@ -1397,4 +1397,19 @@ export const it: Copy = {
     remove: 'Rimuovi {name} da questa scheda',
   },
   // --- end foundation ---
+  // --- followups ---
+  followups: {
+    clockA11y: 'Ore {time}',
+    paceLegend: 'Più lento → più veloce',
+    mapOffline: 'Vista offline',
+    mapTitle: 'Mappa',
+    routeOnly: 'Solo percorso',
+    retryMap: 'Riprova mappa',
+    showMap: 'Mostra mappa',
+    ringA11y: 'Completato al {percent} per cento',
+    a11yLift: '{title}. {sets}, volume totale {volume}, {duration}.',
+    a11yCardio: '{title}. {distance} in {duration}.',
+    a11yPlain: '{title}. {duration}.',
+  },
+  // --- end followups ---
 };
