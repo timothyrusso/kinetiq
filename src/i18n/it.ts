@@ -1332,5 +1332,10 @@ export const it: Copy = {
     hapticsHint: 'Vibra a una serie completata, a un recupero finito e a un nuovo record.',
     preciseLocation: 'Attiva Posizione esatta nelle Impostazioni di iOS se i numeri non tornano.',
   },
+  routineItemA11y: {
+    moveUp: 'Sposta {name} in alto',
+    moveDown: 'Sposta {name} in basso',
+    remove: 'Rimuovi {name} da questa scheda',
+  },
   // --- end foundation ---
 };

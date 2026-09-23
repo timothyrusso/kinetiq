@@ -114,13 +114,13 @@ export const RoutineItemRow = memo(function RoutineItemRow({
               <>
                 <RowButton
                   icon="chevronUp"
-                  label={`Move ${item.exerciseName} up`}
+                  label={t('routineItemA11y.moveUp', { name: item.exerciseName })}
                   disabled={index === 0}
                   onPress={() => position.onMove(index - 1)}
                 />
                 <RowButton
                   icon="chevronDown"
-                  label={`Move ${item.exerciseName} down`}
+                  label={t('routineItemA11y.moveDown', { name: item.exerciseName })}
                   disabled={index >= count - 1}
                   onPress={() => position.onMove(index + 1)}
                 />
@@ -129,7 +129,7 @@ export const RoutineItemRow = memo(function RoutineItemRow({
             {onRemove ? (
               <RowButton
                 icon="trash"
-                label={`Remove ${item.exerciseName} from this routine`}
+                label={t('routineItemA11y.remove', { name: item.exerciseName })}
                 tone="danger"
                 onPress={onRemove}
               />

@@ -1320,6 +1320,11 @@ export const en = {
     hapticsHint: 'Buzz on a completed set, a rest that ends, and a new record.',
     preciseLocation: 'Turn on Precise Location in iOS Settings if the numbers look wrong.',
   },
+  routineItemA11y: {
+    moveUp: 'Move {name} up',
+    moveDown: 'Move {name} down',
+    remove: 'Remove {name} from this routine',
+  },
   // --- end foundation ---
 } as const;
 

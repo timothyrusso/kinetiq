@@ -365,6 +365,7 @@ export default function RoutineDetailScreen() {
         ) : (
           <Column gap="md">
             <SectionHeader
+              style={{ paddingHorizontal: screenGutter }}
               title={t('routine.exercises')}
               eyebrow={`${rows.length} ${t('routine.rowWord', { count: rows.length })}`}
               action={{ label: t('common.add'), onPress: () => {
