@@ -454,8 +454,8 @@ export function initials(name: string): string {
   const first = parts[0]?.[0] ?? '';
   const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? '') : '';
   const out = `${first}${last}`.toUpperCase();
-  // An empty monogram renders as an empty circle; a dash says "no name set".
-  return out.length > 0 ? out : ', ';
+  // An empty monogram renders as an empty circle; a hyphen says "no name set".
+  return out.length > 0 ? out : '-';
 }
 
 /**
