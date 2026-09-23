@@ -32,6 +32,7 @@ import { fontFamily, radius, spacing } from '@/theme/tokens';
 import { Icon, ICON_SIZE } from '@/ui/icons';
 import { Row } from '@/ui/layout';
 import { Txt } from '@/ui/Text';
+import { fieldLabelModifiers } from './a11y';
 
 export type TextInputHandle = TextInputRef;
 
@@ -84,6 +85,8 @@ export const TextInput = memo(function TextInput({
   ref,
 }: TextInputProps) {
   const { t } = useT();
+  const spokenName = accessibilityLabel ?? label;
+  const labelModifiers = useMemo(() => fieldLabelModifiers(spokenName), [spokenName]);
   const theme = useAppTheme();
   const [focused, setFocused] = useState(false);
   const text = useNativeState(value);
@@ -155,6 +158,7 @@ export const TextInput = memo(function TextInput({
             cursorColor={theme.colors.accent}
             placeholderTextColor={theme.colors.textFaint}
             testID={accessibilityLabel ?? label}
+            modifiers={labelModifiers}
             textStyle={{
               fontFamily: fontFamily.regular,
               fontSize: theme.fontSize.bodyLg,
