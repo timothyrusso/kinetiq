@@ -20,13 +20,20 @@ export const StatTile = memo(function StatTile({
   unit,
   trend,
   emphasis = 'default',
+  note,
+  tabular = false,
   style,
 }: {
   value: string;
   label: string;
   unit?: string;
   trend?: Trend;
-  emphasis?: 'hero' | 'default';
+  /** `compact` is for tiles three or four abreast, where the default numeral truncates. */
+  emphasis?: 'hero' | 'default' | 'compact';
+  /** One quiet line under the value that says what it is measured against ("2.5 per week"). */
+  note?: string;
+  /** Fixed-width digits, for a value that ticks (a clock) and must not reflow as it does. */
+  tabular?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
   const theme = useAppTheme();
@@ -40,13 +47,17 @@ export const StatTile = memo(function StatTile({
     <View
       style={[styles.tile, style]}
       accessible
-      accessibilityLabel={[label, unit ? `${value} ${unit}` : value, trend?.delta]
+      accessibilityLabel={[label, unit ? `${value} ${unit}` : value, trend?.delta, note]
         .filter(Boolean)
         .join(', ')}
     >
       <MetricLabel label={label} />
       <View style={styles.valueRow}>
-        <Txt variant={emphasis === 'hero' ? 'numeralLg' : 'numeral'} numberOfLines={1}>
+        <Txt
+          variant={NUMERAL[emphasis]}
+          numberOfLines={1}
+          style={tabular ? styles.tabular : undefined}
+        >
           {value}
         </Txt>
         {unit ? (
@@ -69,12 +80,20 @@ export const StatTile = memo(function StatTile({
           </Txt>
         </View>
       ) : null}
+      {note ? (
+        <Txt variant="micro" tone="faint" numberOfLines={1}>
+          {note}
+        </Txt>
+      ) : null}
     </View>
   );
 });
+
+const NUMERAL = { hero: 'numeralLg', default: 'numeral', compact: 'numeralSm' } as const;
 
 const styles = StyleSheet.create({
   tile: { flex: 1, minWidth: 0, gap: spacing.xs },
   valueRow: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.xs },
   trend: { flexDirection: 'row', alignItems: 'center', gap: spacing.xxs },
+  tabular: { fontVariant: ['tabular-nums'] },
 });

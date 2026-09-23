@@ -569,6 +569,24 @@ export const it: Copy = {
     kindWalks: 'Camminate',
     kindYoga: 'Yoga',
   },
+  // --- group-c ---
+  workoutFlow: {
+    justNow: 'adesso',
+    hoursAgo_one: '{count} h fa',
+    hoursAgo_other: '{count} h fa',
+    daysAgo_one: '{count} g fa',
+    daysAgo_other: '{count} gg fa',
+    weeksAgo_one: '{count} sett. fa',
+    weeksAgo_other: '{count} sett. fa',
+    thisWeek: 'Questa settimana',
+    lastWeek: 'La settimana scorsa',
+    weekOf: 'Settimana del {date}',
+    elapsedA11y: 'Tempo trascorso {time}',
+    setsDone: '{done} di {planned} {word} completate',
+    repCount_one: '{count} ripetizione',
+    repCount_other: '{count} ripetizioni',
+  },
+  // --- end group-c ---
   session: {
     thisSet: 'Questa serie',
     addNotChanged:
@@ -639,7 +657,7 @@ export const it: Copy = {
   },
   progress: {
     title: 'Progressi',
-    range4: '4 settimane',
+    range4: '4 sett.',
     range12: '3 mesi',
     range26: '6 mesi',
     range52: '12 mesi',

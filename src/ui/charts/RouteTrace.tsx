@@ -30,7 +30,7 @@ import { PACE_RAMP_STOPS, paceColorsForRoute } from '@/ui/pace';
 import { withAlpha } from '@/utils/color';
 import { Txt } from '@/ui/Text';
 import { Row } from '@/ui/layout';
-import { spacing } from '@/theme/tokens';
+import { radius, spacing } from '@/theme/tokens';
 import type { ActivityKind } from '@/domain/types';
 import { useT } from '@/i18n/useT';
 
@@ -268,6 +268,6 @@ function boundsOf(coords: readonly LatLng[]) {
 /* --------------------------------------------------------------- styles -- */
 
 const styles = {
-  canvas: { borderRadius: 16, overflow: 'hidden' },
+  canvas: { borderRadius: radius.md, overflow: 'hidden' },
   empty: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.lg },
 } as const satisfies Record<string, ViewStyle>;
