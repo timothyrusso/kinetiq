@@ -174,6 +174,17 @@ export const en = {
     languageHint: 'Changes everything in the app straight away.',
   },
 
+  // --- group-b ---
+  details: {
+    agoJustNow: 'just now',
+    agoHours: '{n}h ago',
+    agoDays: '{n}d ago',
+    agoWeeks: '{n}w ago',
+    repsValue: '{reps} reps',
+    bodyweightA11y: 'Bodyweight',
+    lastTrained: 'Last trained {ago}',
+  },
+  // --- end group-b ---
   activity: {
     fallbackTitle: 'Activity',
     delete: 'Delete this activity',

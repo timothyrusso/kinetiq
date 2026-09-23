@@ -34,14 +34,13 @@
  * trained, in one indexed read.
  */
 import { useCallback, useMemo, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { routes } from '@/navigation/nav';
 import { ScreenHeader } from '@/ui/Screen';
 import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
-import { MetaLine, type MetaItem } from '@/ui/display';
+import { MetaLine, StatTile, type MetaItem } from '@/ui/display';
 import {
   HeaderToolbar,
   headerAction,
@@ -52,9 +51,10 @@ import { Button } from '@/ui/controls/Button';
 import { Card, Row, Stack as Column } from '@/ui/layout';
 import { SectionHeader } from '@/ui/display';
 import { Txt } from '@/ui/Text';
-import { Icon } from '@/ui/icons';
+import { Icon, ICON_SIZE } from '@/ui/icons';
 import { EmptyState, ErrorState, SkeletonList } from '@/ui/states';
-import { RoutineItemRow, type ItemPosition } from '@/ui/routineItems';
+import { RoutineItemRow } from '@/ui/routineItems';
+import { useScreenContentBottom } from '@/ui/insets';
 import {
   useDeleteRoutine,
   useDuplicateRoutine,
@@ -73,19 +73,15 @@ import { haptics } from '@/services/haptics';
 import { moveItem } from '@/utils/functional';
 import { orderedIdsOf, pairItems } from '@/routines/draft';
 import { estimateMinutes, plannedVolumeKg } from '@/domain/logic';
-import {
-  formatAgo,
-  trimNumber,
-  weightUnit,
-  weightValue,
-} from '@/utils/format';
+import { compactNumber, weightUnit, weightValue } from '@/utils/format';
+import { agoLabel } from '@/utils/localeFormat';
 
 type SheetKind = 'delete' | null;
 
 export default function RoutineDetailScreen() {
   const { t } = useT();
   const theme = useAppTheme();
-  const insets = useSafeAreaInsets();
+  const bottom = useScreenContentBottom();
   const params = useLocalSearchParams<{ id: string }>();
   const id = typeof params.id === 'string' && params.id.length > 0 ? params.id : null;
 
@@ -108,8 +104,8 @@ export default function RoutineDetailScreen() {
   // A stable identity for "which exercises are in here", so the picker's `isIncluded` does not
   // change on every render and re-run the hook's memo.
 
-  const volumeKg = plannedVolumeKg(items);
-  const minutes = estimateMinutes(items);
+  const volumeKg = useMemo(() => plannedVolumeKg(items), [items]);
+  const minutes = useMemo(() => estimateMinutes(items), [items]);
 
   /**
    * A workout is already running.
@@ -242,17 +238,46 @@ export default function RoutineDetailScreen() {
     }
     begin();
   }, [begin, liveSession, session?.routineName, t]);
+  // Context, as items: what is in the routine and when it last ran. The numbers the screen is
+  // about (volume, time, how often) are the stat tiles below, so nothing is said twice.
+  const lastPerformedAt = routine?.lastPerformedAt ?? null;
   const summary = useMemo<MetaItem[]>(
     () => [
       { icon: 'layers', label: `${items.length} ${t('routine.exerciseWord', { count: items.length })}` },
-      {
-        icon: 'dumbbell',
-        label: volumeKg === 0 ? t('routine.bodyweight') : formatPlanned(volumeKg, units, t),
-      },
-      { icon: 'clock', label: `~${minutes} min` },
+      ...(volumeKg === 0 && items.length > 0
+        ? [{ icon: 'dumbbell' as const, label: t('routine.bodyweight') }]
+        : []),
+      ...(lastPerformedAt === null
+        ? []
+        : [
+            {
+              icon: 'calendar' as const,
+              label: t('details.lastTrained', { ago: agoLabel(lastPerformedAt) }),
+            },
+          ]),
     ],
-    [items.length, minutes, t, units, volumeKg],
+    [items.length, lastPerformedAt, t, volumeKg],
   );
+
+  // One callback per action, shared by every row: the row passes its own id or index back.
+  const openItem = useCallback(
+    (itemId: string) => {
+      if (routine) router.push(routes.routineItem('routine', itemId, routine.id));
+    },
+    [routine],
+  );
+  const addExercise = useCallback(() => {
+    if (routine === null) return;
+    haptics.light();
+    router.push(routes.pickExercise('routine', routine.id));
+  }, [routine]);
+  const primary = useCallback(() => {
+    if (liveSession) {
+      router.push(routes.workoutSession());
+      return;
+    }
+    begin();
+  }, [begin, liveSession]);
 
   /* ------------------------------------------------------------ early states */
 
@@ -313,13 +338,9 @@ export default function RoutineDetailScreen() {
       </HeaderToolbar>
       <ScrollView
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{
-          paddingTop: spacing.xl,
-          paddingBottom: insets.bottom + spacing.huge,
-          gap: spacing.xxl,
-        }}
+        contentContainerStyle={[styles.content, { paddingBottom: bottom }]}
       >
-        <Column gap="lg" style={{ paddingHorizontal: screenGutter }}>
+        <Column gap="lg" style={styles.gutter}>
           <MetaLine items={summary} theme={theme} wrap />
           {routine.description === null || routine.description.length === 0 ? null : (
             <Txt variant="body" tone="secondary">
@@ -327,23 +348,25 @@ export default function RoutineDetailScreen() {
             </Txt>
           )}
 
-          <Row gap="xxl" wrap>
-            <Stat
-              label={t('routine.plannedVolume')}
-              value={formatPlanned(volumeKg, units, t)}
-            />
-            <Stat label={t('routine.estTime')} value={`~${minutes} min`} />
-            <Stat label={t('routine.trained')} value={`${routine.timesCompleted}×`} />
-            {routine.lastPerformedAt === null ? null : (
-              <Stat label={t('routine.last')} value={formatAgo(routine.lastPerformedAt)} />
+          <View style={styles.stats}>
+            {/* A bodyweight routine has no volume to state; the summary line says so instead
+                of a tile holding a word where a number belongs. */}
+            {volumeKg === 0 ? null : (
+              <StatTile
+                label={t('routine.plannedVolume')}
+                value={compactNumber(weightValue(volumeKg, units))}
+                unit={weightUnit(units)}
+              />
             )}
-          </Row>
+            <StatTile label={t('routine.estTime')} value={`~${minutes}`} unit="min" />
+            <StatTile label={t('routine.trained')} value={`${routine.timesCompleted}×`} />
+          </View>
 
           {failed !== null ? (
             <Card tone="sunken" padding="md">
               <Row gap="sm" align="start">
-                <Icon name="warning" size={17} color={theme.colors.warning} />
-                <Txt variant="body" style={{ flex: 1 }}>
+                <Icon name="warning" size={ICON_SIZE.inline} color={theme.colors.warning} />
+                <Txt variant="body" style={styles.flex}>
                   {failed}
                 </Txt>
               </Row>
@@ -357,53 +380,43 @@ export default function RoutineDetailScreen() {
             title={t('routine.emptyTitle')}
             message={t('routine.emptyMessage')}
             actionLabel={t('exercises.addExercise')}
-            onAction={() => {
-              haptics.light();
-              router.push(routes.pickExercise('routine', routine.id));
-            }}
+            onAction={addExercise}
           />
         ) : (
           <Column gap="md">
             <SectionHeader
-              style={{ paddingHorizontal: screenGutter }}
+              style={styles.gutter}
               title={t('routine.exercises')}
               eyebrow={`${rows.length} ${t('routine.rowWord', { count: rows.length })}`}
-              action={{ label: t('common.add'), onPress: () => {
-                    haptics.light();
-                    router.push(routes.pickExercise('routine', routine.id));
-                  } }}
+              action={{ label: t('common.add'), onPress: addExercise }}
             />
             {/* No Card: `ListRow` carries its own horizontal padding and hairline, so a
                 bordered box around it would inset the dividers short of the edges. */}
             <View>
-              {rows.map((row, index) => {
-                const open = () => router.push(routes.routineItem('routine', row.item.id, routine.id));
-                const position: ItemPosition = {
-                  index,
-                  count: rows.length,
-                  onMove: (to) => move(index, to),
-                };
-                return (
-                  <RoutineItemRow
-                    key={row.item.id}
-                    item={row.item}
-                    snapshot={row.snapshot}
-                    units={units}
-                    position={position}
-                    onPress={open}
-                    onLongPress={open}
-                    onRemove={() => dropItem(row.item.id)}
-                  />
-                );
-              })}
+              {rows.map((row, index) => (
+                <RoutineItemRow
+                  key={row.item.id}
+                  item={row.item}
+                  snapshot={row.snapshot}
+                  units={units}
+                  theme={theme}
+                  index={index}
+                  count={rows.length}
+                  onOpen={openItem}
+                  onMove={move}
+                  onRemove={dropItem}
+                />
+              ))}
             </View>
-            <Txt variant="caption" tone="faint" style={{ paddingHorizontal: screenGutter }}>
+            <Txt variant="caption" tone="faint" style={styles.gutter}>
               {t('routine.editHint')}
             </Txt>
           </Column>
         )}
 
-        <Column gap="md" style={{ paddingHorizontal: screenGutter }}>
+        {/* In content as well as in the header: the QA gates and a thumb both look for it
+            at the end of the plan, where the decision to train is made. */}
+        <View style={styles.gutter}>
           <Button
             label={t(liveSession ? 'routine.openWorkout' : 'routine.start')}
             icon={liveSession ? 'arrowUpRight' : 'play'}
@@ -411,31 +424,10 @@ export default function RoutineDetailScreen() {
             weighty
             fullWidth
             loading={starting}
-            onPress={() => {
-              if (liveSession) {
-                router.push(routes.workoutSession());
-                return;
-              }
-              begin();
-            }}
-            accessibilityHint={
-              t(liveSession ? 'routine.openHint' : 'routine.startHint')
-            }
+            onPress={primary}
+            accessibilityHint={t(liveSession ? 'routine.openHint' : 'routine.startHint')}
           />
-          {/* The count and the date are on the same line rather than stacked: two faint
-              centred captions under a primary button reads as two warnings. */}
-          {routine.timesCompleted > 0 ? (
-            <Txt variant="micro" tone="faint" style={{ textAlign: 'center' }}>
-              {t('routine.completedCount', {
-                count: routine.timesCompleted,
-                word: t('routine.timeWord', { count: routine.timesCompleted }),
-              })}
-              {routine.lastPerformedAt === null
-                ? ''
-                : t('routine.mostRecently', { ago: formatAgo(routine.lastPerformedAt) })}
-            </Txt>
-          ) : null}
-        </Column>
+        </View>
       </ScrollView>
 
       {sheet === 'delete' ? (
@@ -462,32 +454,7 @@ export default function RoutineDetailScreen() {
   );
 }
 
-/* ------------------------------------------------------------------ pieces -- */
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <Column gap="xxs">
-      <Txt variant="micro" tone="faint" uppercase tracking={0.6}>
-        {label}
-      </Txt>
-      <Txt variant="strong">{value}</Txt>
-    </Column>
-  );
-}
-
 /* ----------------------------------------------------------------- helpers -- */
-
-/** Planned volume, in the unit the user reads: or the words that replace the number. */
-function formatPlanned(
-  volumeKg: number,
-  units: 'metric' | 'imperial',
-  // Passed in rather than read from a hook: this is a plain function, and a translated
-  // string cannot come from module scope, where there is no language yet.
-  t: (key: TKey, vars?: TVars) => string,
-): string {
-  if (volumeKg === 0) return t('routine.bodyweight');
-  return `${trimNumber(weightValue(volumeKg, units), 0)} ${weightUnit(units)}`;
-}
 
 /**
  * The message for "you already have a workout running".
@@ -505,3 +472,10 @@ function reportLiveSession(
   );
   haptics.warning();
 }
+
+const styles = StyleSheet.create({
+  content: { paddingTop: spacing.xl, gap: spacing.xxl },
+  gutter: { paddingHorizontal: screenGutter },
+  stats: { flexDirection: 'row', gap: spacing.lg },
+  flex: { flex: 1 },
+});

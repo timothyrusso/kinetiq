@@ -25,13 +25,13 @@
  * is rendering, so a new row is on screen the instant the sheet closes.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { router, useNavigation } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScreenHeader } from '@/ui/Screen';
 import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
-import { MetaLine, type MetaItem } from '@/ui/display';
+import { StatTile } from '@/ui/display';
+import { useScreenContentBottom } from '@/ui/insets';
 import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { KeyboardAvoid } from '@/ui/layout';
@@ -39,7 +39,7 @@ import { TextInput } from '@/ui/controls/TextInput';
 import { Card, Row, Stack as Column } from '@/ui/layout';
 import { SectionHeader } from '@/ui/display';
 import { Txt } from '@/ui/Text';
-import { Icon } from '@/ui/icons';
+import { Icon, ICON_SIZE } from '@/ui/icons';
 import { EmptyState } from '@/ui/states';
 import { RoutineItemRow } from '@/ui/routineItems';
 import { estimateMinutes, plannedVolumeKg } from '@/domain/logic';
@@ -48,7 +48,7 @@ import { useSettings } from '@/settings';
 import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
 import { spacing, screenGutter } from '@/theme/tokens';
-import { trimNumber, weightUnit, weightValue } from '@/utils/format';
+import { compactNumber, weightUnit, weightValue } from '@/utils/format';
 import { haptics } from '@/services/haptics';
 import { pairItems } from '@/routines/draft';
 import { useT } from '@/i18n/useT';
@@ -72,7 +72,7 @@ import {
 export default function NewRoutineScreen() {
   const { t } = useT();
   const theme = useAppTheme();
-  const insets = useSafeAreaInsets();
+  const bottom = useScreenContentBottom();
   const draft = useRoutineDraft();
   const units = useSettings((s) => s.unitSystem);
   const defaultRest = useSettings((s) => s.defaultRestSeconds);
@@ -106,8 +106,11 @@ export default function NewRoutineScreen() {
     [draft.items, snapshotByExerciseId],
   );
 
-  const volumeKg = plannedVolumeKg(draft.items);
-  const minutes = estimateMinutes(draft.items);
+  const volumeKg = useMemo(() => plannedVolumeKg(draft.items), [draft.items]);
+  const minutes = useMemo(() => estimateMinutes(draft.items), [draft.items]);
+  // Read from the subscribed snapshot rather than `isDraftSavable()`, so the header action
+  // re-renders the moment the first exercise lands and not on the next unrelated change.
+  const savable = draft.items.length > 0 && draft.status !== 'saving';
 
   const save = useCallback(async () => {
     if (!isDraftSavable()) {
@@ -148,19 +151,16 @@ export default function NewRoutineScreen() {
   const done = useCallback(() => {
     void save();
   }, [save]);
-  const summary = useMemo<MetaItem[]>(
-    () =>
-      draft.items.length === 0
-        ? [{ icon: 'listAdd', label: t('newRoutine.subtitleEmpty') }]
-        : [
-            {
-              icon: 'layers',
-              label: `${draft.items.length} ${t('newRoutine.exerciseWord', { count: draft.items.length })}`,
-            },
-            { icon: 'clock', label: `~${minutes} min` },
-          ],
-    [draft.items.length, minutes, t],
-  );
+  // One callback per action, shared by every row: the row passes its own id or index back.
+  const openItem = useCallback((itemId: string) => router.push(routes.routineItem('draft', itemId)), []);
+  const dropItem = useCallback((itemId: string) => {
+    haptics.light();
+    removeDraftItem(itemId);
+  }, []);
+  const addExercise = useCallback(() => {
+    haptics.light();
+    router.push(routes.pickExercise('draft'));
+  }, []);
 
   return (
     <>
@@ -169,12 +169,15 @@ export default function NewRoutineScreen() {
         {headerAction({ action: 'cancel', onPress: cancel, t })}
       </HeaderToolbar>
       <HeaderToolbar placement="right">
+        {/* Disabled until there is something to save: an empty routine has no reason to exist,
+            and the empty state below already says what to do first. Labelled "Done", which is
+            the word the CRUD gate presses. */}
         {headerAction({
-          action: 'done',
+          action: 'save',
           onPress: done,
           t,
           label: draft.status === 'saving' ? 'newRoutine.saving' : 'newRoutine.done',
-          disabled: draft.status === 'saving',
+          disabled: !savable,
           variant: 'done',
           tint: theme.colors.accent,
         })}
@@ -182,14 +185,9 @@ export default function NewRoutineScreen() {
       <KeyboardAvoid style={{ flex: 1 }}>
         <ScrollView
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{
-            paddingTop: spacing.lg,
-            paddingBottom: insets.bottom + spacing.huge,
-            gap: spacing.xxl,
-          }}
+          contentContainerStyle={[styles.content, { paddingBottom: bottom }]}
         >
-          <Column gap="md" style={{ paddingHorizontal: screenGutter }}>
-            <MetaLine items={summary} theme={theme} wrap />
+          <Column gap="md" style={styles.gutter}>
             <TextInput
               label={t('newRoutine.nameLabel')}
               value={draft.name}
@@ -219,20 +217,15 @@ export default function NewRoutineScreen() {
               title={t('newRoutine.emptyTitle')}
               message={t('newRoutine.emptyMessage')}
               actionLabel={t('newRoutine.addExercise')}
-              onAction={() => {
-                haptics.light();
-                router.push(routes.pickExercise('draft'));
-              }}
+              onAction={addExercise}
             />
           ) : (
             <Column gap="md">
               <SectionHeader
+                style={styles.gutter}
                 title={t('newRoutine.exercises')}
                 eyebrow={`${rows.length} ${t('newRoutine.rowWord', { count: rows.length })}`}
-                action={{ label: t('common.add'), onPress: () => {
-                      haptics.light();
-                      router.push(routes.pickExercise('draft'));
-                    } }}
+                action={{ label: t('common.add'), onPress: addExercise }}
               />
               {/* No Card: `ListRow` carries its own horizontal padding and hairline, so a
                   bordered box around it would inset the dividers short of the edges. */}
@@ -243,46 +236,44 @@ export default function NewRoutineScreen() {
                     item={row.item}
                     snapshot={row.snapshot}
                     units={units}
-                    position={{
-                      index,
-                      count: rows.length,
-                      onMove: (to) => moveDraftItem(index, to),
-                    }}
-                    onPress={() => router.push(routes.routineItem('draft', row.item.id))}
-                    onLongPress={() => router.push(routes.routineItem('draft', row.item.id))}
-                    onRemove={() => {
-                      haptics.light();
-                      removeDraftItem(row.item.id);
-                    }}
+                    theme={theme}
+                    index={index}
+                    count={rows.length}
+                    onOpen={openItem}
+                    onMove={moveDraftItem}
+                    onRemove={dropItem}
                   />
                 ))}
               </View>
-              <Row gap="xxl" style={{ paddingHorizontal: screenGutter }}>
-                <MetricNote
-                  label={t('newRoutine.plannedVolume')}
-                  value={
-                    volumeKg === 0
-                      ? t('newRoutine.bodyweight')
-                      : `${trimNumber(weightValue(volumeKg, units), 0)} ${weightUnit(units)}`
-                  }
-                />
-                <MetricNote label={t('newRoutine.estTime')} value={`~${minutes} min`} />
-              </Row>
-              <Txt variant="caption" tone="faint" style={{ paddingHorizontal: screenGutter }}>
+              <View style={[styles.gutter, styles.stats]}>
+                {/* No tile for a bodyweight plan: a word in a numeral's slot truncates, and each
+                    row already says "BW" where its load would be. */}
+                {volumeKg === 0 ? null : (
+                  <StatTile
+                    label={t('newRoutine.plannedVolume')}
+                    value={compactNumber(weightValue(volumeKg, units))}
+                    unit={weightUnit(units)}
+                  />
+                )}
+                <StatTile label={t('newRoutine.estTime')} value={`~${minutes}`} unit="min" />
+              </View>
+              <Txt variant="caption" tone="faint" style={styles.gutter}>
                 {t('newRoutine.reorderNote')}
               </Txt>
             </Column>
           )}
 
           {blocked === null ? null : (
-            <Card tone="sunken" padding="md" style={{ marginHorizontal: spacing.lg }}>
-              <Row gap="sm" align="start">
-                <Icon name="warning" size={17} color={theme.colors.danger} />
-                <Txt variant="body" style={{ flex: 1 }}>
-                  {blocked}
-                </Txt>
-              </Row>
-            </Card>
+            <View style={styles.gutter}>
+              <Card tone="sunken" padding="md">
+                <Row gap="sm" align="start">
+                  <Icon name="warning" size={ICON_SIZE.inline} color={theme.colors.danger} />
+                  <Txt variant="body" style={styles.flex}>
+                    {blocked}
+                  </Txt>
+                </Row>
+              </Card>
+            </View>
           )}
         </ScrollView>
       </KeyboardAvoid>
@@ -316,15 +307,9 @@ export default function NewRoutineScreen() {
   );
 }
 
-/* ------------------------------------------------------------------ pieces -- */
-
-function MetricNote({ label, value }: { label: string; value: string }) {
-  return (
-    <Column gap="xxs">
-      <Txt variant="micro" tone="faint" uppercase tracking={0.6}>
-        {label}
-      </Txt>
-      <Txt variant="strong">{value}</Txt>
-    </Column>
-  );
-}
+const styles = StyleSheet.create({
+  content: { paddingTop: spacing.lg, gap: spacing.xxl },
+  gutter: { paddingHorizontal: screenGutter },
+  stats: { flexDirection: 'row', gap: spacing.lg },
+  flex: { flex: 1 },
+});

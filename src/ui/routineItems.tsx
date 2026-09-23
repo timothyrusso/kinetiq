@@ -22,19 +22,21 @@
  * and cannot mis-fire during a scroll. If a drag earns its keep later it goes here, in
  * one place, and this paragraph is where that decision gets reversed.
  */
-import { memo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { ExerciseThumb, ListRow } from '@/ui/rows';
-import { Icon, type IconName } from '@/ui/icons';
-import { Row } from '@/ui/layout';
+import { Icon, ICON_SIZE, type IconName } from '@/ui/icons';
 import { Txt } from '@/ui/Text';
 import { Stepper } from '@/ui/controls/Stepper';
 import { FormFooter, FormSection } from '@/ui/FormSheet';
 import { Button } from '@/ui/controls/Button';
+import { MetaLine } from '@/ui/display/MetaLine';
+import { TagRow } from '@/ui/display/TagRow';
+import { exerciseTags } from '@/ui/display/exerciseTags';
 import { haptics } from '@/services/haptics';
-import { useAppTheme } from '@/theme/theme';
-import { radius, spacing, touchTarget } from '@/theme/tokens';
+import { useAppTheme, type Theme } from '@/theme/theme';
+import { spacing, touchTarget } from '@/theme/tokens';
 import {
   formatWeight,
   repsFromRange,
@@ -48,43 +50,57 @@ import type { ExerciseSnapshot, RoutineItem } from '@/domain/types';
 import type { ItemTarget } from '@/routines/draft';
 import { useT } from '@/i18n/useT';
 import { tr } from '@/i18n/tr';
-import type { MetaItem } from '@/ui/display/types';
+import type { MetaItem, Tag } from '@/ui/display/types';
 
-/** A row's position, in the form the row needs to draw its move controls. */
-export type ItemPosition = {
-  index: number;
-  /** Rows in the list, so the first and last row can disable the impossible move. */
-  count: number;
-  /** Called with the index this row should move to; the caller clamps and writes. */
-  onMove: (to: number) => void;
-};
-
+/**
+ * One exercise in a routine: thumbnail, name, sets, reps and load as items, the primary muscle
+ * as a tag.
+ *
+ * List discipline, like `rows.tsx`: `theme` arrives as a prop, and every callback takes the
+ * item's id or index, so a screen passes the same three functions to every row instead of
+ * building a closure per row per render. That is what lets `memo` skip the rows a stepper
+ * press did not touch.
+ */
 export const RoutineItemRow = memo(function RoutineItemRow({
   item,
   snapshot,
   units,
-  position,
-  onPress,
-  onLongPress,
+  theme,
+  index,
+  count,
+  onOpen,
+  onMove,
   onRemove,
   topDivider = true,
 }: {
   item: RoutineItem;
   snapshot: ExerciseSnapshot | null;
   units: UnitSystem;
-  /** Present in an ordered list; absent means the row cannot be moved. */
-  position?: ItemPosition;
+  theme: Theme;
+  /** Where the row sits, so the first and last row can disable the impossible move. */
+  index: number;
+  count: number;
   /** Opens the editor. Absent makes the row inert, which is right for a preview. */
-  onPress?: () => void;
-  onLongPress?: () => void;
+  onOpen?: (itemId: string) => void;
+  /** Present in an ordered list; called with this row's index and the one it moves to. */
+  onMove?: (from: number, to: number) => void;
   /** Replaces the chevron with a trash control. */
-  onRemove?: () => void;
+  onRemove?: (itemId: string) => void;
   topDivider?: boolean;
 }) {
   const { t } = useT();
-  const theme = useAppTheme();
-  const index = position?.index ?? 0;
-  const count = position?.count ?? 1;
+  const meta = useMemo(() => itemMeta(item, units), [item, units]);
+  const tags = useMemo<Tag[] | undefined>(
+    () =>
+      snapshot?.primaryMuscles[0]
+        ? [{ key: 'muscle', label: snapshot.primaryMuscles[0] }]
+        : undefined,
+    [snapshot],
+  );
+  const open = useCallback(() => onOpen?.(item.id), [onOpen, item.id]);
+  const up = useCallback(() => onMove?.(index, index - 1), [onMove, index]);
+  const down = useCallback(() => onMove?.(index, index + 1), [onMove, index]);
+  const remove = useCallback(() => onRemove?.(item.id), [onRemove, item.id]);
 
   return (
     <View
@@ -93,13 +109,11 @@ export const RoutineItemRow = memo(function RoutineItemRow({
       <ListRow
         theme={theme}
         title={item.exerciseName}
-        meta={itemMeta(item, units)}
-        {...(snapshot?.primaryMuscles[0]
-          ? { tags: [{ key: 'muscle', label: snapshot.primaryMuscles[0] }] }
-          : {})}
-        {...(onPress === undefined ? {} : { onPress })}
-        {...(onLongPress === undefined ? {} : { onLongPress })}
-        {...(onPress === undefined ? {} : { accessibilityHint: t('itemEditor.editHint') })}
+        meta={meta}
+        {...(tags ? { tags } : {})}
+        {...(onOpen === undefined
+          ? {}
+          : { onPress: open, onLongPress: open, accessibilityHint: t('itemEditor.editHint') })}
         leading={
           <ExerciseThumb
             uri={snapshot === null ? null : (snapshot.thumbnailUrl ?? snapshot.imageUrl)}
@@ -109,20 +123,22 @@ export const RoutineItemRow = memo(function RoutineItemRow({
           />
         }
         trailing={
-          <Row gap="xxs">
-            {position ? (
+          <View style={styles.trailing}>
+            {onMove ? (
               <>
                 <RowButton
                   icon="chevronUp"
                   label={t('routineItemA11y.moveUp', { name: item.exerciseName })}
                   disabled={index === 0}
-                  onPress={() => position.onMove(index - 1)}
+                  theme={theme}
+                  onPress={up}
                 />
                 <RowButton
                   icon="chevronDown"
                   label={t('routineItemA11y.moveDown', { name: item.exerciseName })}
                   disabled={index >= count - 1}
-                  onPress={() => position.onMove(index + 1)}
+                  theme={theme}
+                  onPress={down}
                 />
               </>
             ) : null}
@@ -131,12 +147,13 @@ export const RoutineItemRow = memo(function RoutineItemRow({
                 icon="trash"
                 label={t('routineItemA11y.remove', { name: item.exerciseName })}
                 tone="danger"
-                onPress={onRemove}
+                theme={theme}
+                onPress={remove}
               />
-            ) : position ? null : (
-              <Icon name="chevronRight" size={17} color={theme.colors.textFaint} />
+            ) : onMove ? null : (
+              <Icon name="chevronRight" size={ICON_SIZE.inline} color={theme.colors.textFaint} />
             )}
-          </Row>
+          </View>
         }
       />
     </View>
@@ -144,7 +161,7 @@ export const RoutineItemRow = memo(function RoutineItemRow({
 });
 
 /**
- * A quiet trailing control: a 44pt target, a 19pt glyph, no disc.
+ * A quiet trailing control: a 44pt target, an inline glyph, no disc.
  *
  * `IconButton` draws a filled circle, and a row with two filled circles in it reads as a
  * toolbar rather than as one row with controls. Disabled rows keep the glyph and lose the
@@ -156,14 +173,15 @@ function RowButton({
   onPress,
   disabled = false,
   tone = 'muted',
+  theme,
 }: {
   icon: IconName;
   label: string;
   onPress: () => void;
   disabled?: boolean;
   tone?: 'muted' | 'danger';
+  theme: Theme;
 }) {
-  const theme = useAppTheme();
   const color = disabled
     ? theme.colors.textFaint
     : tone === 'danger'
@@ -186,7 +204,7 @@ function RowButton({
         { opacity: pressed && !disabled ? 0.45 : disabled ? 0.4 : 1 },
       ]}
     >
-      <Icon name={icon} size={19} color={color} />
+      <Icon name={icon} size={ICON_SIZE.inline} color={color} />
     </Pressable>
   );
 }
@@ -229,12 +247,23 @@ export const ItemEditorForm = memo(function ItemEditorForm({
   const step = weightStep(units);
   const displayWeight = weightDisplayValue(item.weightKg, units, step);
   const restingAtDefault = item.restSeconds === defaultRestSeconds;
+  // The current targets as items under the title, so the summary a row shows and the values
+  // the steppers below are changing read the same way, and update together.
+  const meta = useMemo(() => itemMeta(item, units), [item, units]);
+  const libraryTags = useMemo<Tag[]>(
+    () =>
+      snapshot === null
+        ? []
+        : [
+            ...exerciseTags(snapshot),
+            ...snapshot.equipment.map((gear) => ({ key: `e:${gear}`, label: gear })),
+          ],
+    [snapshot],
+  );
 
   return (
     <>
-      <Txt variant="caption" tone="muted">
-        {sheetSubtitle(item, snapshot)}
-      </Txt>
+      <MetaLine items={meta} theme={theme} wrap />
       <FormSection title={t('itemEditor.sets')}>
         <Stepper
           label={t('itemEditor.sets')}
@@ -256,7 +285,7 @@ export const ItemEditorForm = memo(function ItemEditorForm({
           suffix={t('itemEditor.repsSuffix')}
           onChange={(reps) => onChange({ reps: String(reps) })}
         />
-        <Txt variant="micro" tone="faint" style={{ marginTop: spacing.sm }}>
+        <Txt variant="micro" tone="faint">
           {t('itemEditor.rangesNote')}
         </Txt>
       </FormSection>
@@ -271,7 +300,7 @@ export const ItemEditorForm = memo(function ItemEditorForm({
           onChange={(next) => onChange({ weightKg: weightFromDisplayValue(next, units) })}
         />
         {item.weightKg === 0 ? (
-          <Txt variant="micro" tone="faint" style={{ marginTop: spacing.sm }}>
+          <Txt variant="micro" tone="faint">
             {t('itemEditor.bodyweightNote')}
           </Txt>
         ) : null}
@@ -288,38 +317,20 @@ export const ItemEditorForm = memo(function ItemEditorForm({
           onChange={(restSeconds) => onChange({ restSeconds })}
         />
         {item.restSeconds === 0 ? (
-          <Txt variant="micro" tone="faint" style={{ marginTop: spacing.sm }}>
+          <Txt variant="micro" tone="faint">
             {t('itemEditor.zeroRestNote')}
           </Txt>
         ) : restingAtDefault ? (
-          <Txt variant="micro" tone="faint" style={{ marginTop: spacing.sm }}>
+          <Txt variant="micro" tone="faint">
             {t('itemEditor.defaultRestNote')}
           </Txt>
         ) : null}
       </FormSection>
 
-      {snapshot !== null &&
-      (snapshot.primaryMuscles.length > 0 ||
-        snapshot.equipment.length > 0 ||
-        snapshot.instructions !== null) ? (
+      {libraryTags.length > 0 || snapshot?.instructions ? (
         <FormSection title={t('itemEditor.fromLibrary')}>
-          <Row gap="sm" wrap>
-            {snapshot.primaryMuscles.map((muscle) => (
-              <Row key={muscle} gap="xs" style={tagStyle(theme.colors)}>
-                <View style={[styles.dot, { backgroundColor: theme.colors.accent }]} />
-                <Txt variant="micro">{muscle}</Txt>
-              </Row>
-            ))}
-            {snapshot.equipment.map((gear) => (
-              <Row key={gear} gap="xs" style={tagStyle(theme.colors)}>
-                <Icon name="dumbbell" size={11} color={theme.colors.textMuted} />
-                <Txt variant="micro" tone="muted">
-                  {gear}
-                </Txt>
-              </Row>
-            ))}
-          </Row>
-          {snapshot.instructions !== null ? (
+          <TagRow tags={libraryTags} theme={theme} />
+          {snapshot?.instructions ? (
             <Txt variant="caption" tone="muted">
               {snapshot.instructions}
             </Txt>
@@ -339,46 +350,31 @@ export const ItemEditorForm = memo(function ItemEditorForm({
 /* ------------------------------------------------------------------ helpers -- */
 
 /**
- * The row's second line.
+ * Sets, reps and load, as three items.
  *
  * Weight is the only number here the unit setting changes, so it is the only one
- * formatted; reps and sets are unit-free. A missing snapshot costs the muscle name and
+ * formatted; reps and sets are unit-free. A missing snapshot costs the muscle tag and
  * nothing else: which is exactly why the exercise name is stored on the item.
  */
 function itemMeta(item: RoutineItem, units: UnitSystem): MetaItem[] {
   const load = item.weightKg === 0 ? tr('itemEditor.bodyweightShort') : formatWeight(item.weightKg, units);
   return [
-    { icon: 'layers', label: `${item.sets} × ${item.reps}` },
-    { icon: 'dumbbell', label: load },
+    { icon: 'layers', label: tr('workout.set', { count: item.sets }) },
+    { icon: 'refresh', label: tr('details.repsValue', { reps: item.reps }) },
+    {
+      icon: 'dumbbell',
+      label: load,
+      ...(item.weightKg === 0 ? { a11y: tr('details.bodyweightA11y') } : {}),
+    },
   ];
 }
 
-function sheetSubtitle(item: RoutineItem, snapshot: ExerciseSnapshot | null): string {
-  const parts = [`${item.sets} × ${item.reps}`];
-  if (snapshot?.category) parts.push(snapshot.category);
-  return parts.join(' · ');
-}
-
-type Colors = ReturnType<typeof useAppTheme>['colors'];
-
-function tagStyle(colors: Colors): ViewStyle {
-  return {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    backgroundColor: colors.surfacePressed,
-    alignItems: 'center',
-  };
-}
-
 const styles = StyleSheet.create({
+  trailing: { flexDirection: 'row', alignItems: 'center', gap: spacing.xxs },
   rowButton: {
     width: touchTarget * 0.8,
     height: touchTarget,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dot: { width: 6, height: 6, borderRadius: 3 },
 } satisfies Record<string, ViewStyle>);

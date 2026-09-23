@@ -176,6 +176,17 @@ export const it: Copy = {
     languageHint: 'Cambia subito tutta l app.',
   },
 
+  // --- group-b ---
+  details: {
+    agoJustNow: 'poco fa',
+    agoHours: '{n} h fa',
+    agoDays: '{n} g fa',
+    agoWeeks: '{n} sett. fa',
+    repsValue: '{reps} rip.',
+    bodyweightA11y: 'Corpo libero',
+    lastTrained: 'Ultimo allenamento {ago}',
+  },
+  // --- end group-b ---
   activity: {
     fallbackTitle: 'Attività',
     delete: 'Elimina questa attività',
