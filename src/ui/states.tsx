@@ -2,8 +2,8 @@
  * Loading, empty and error surfaces.
  *
  * The rule behind all of them: **a screen is never blank**. Every one of these has a
- * title that says what is missing, a line that says why it matters here, and: where
- * the user can act: the action. An error with no retry is a dead end, and a dead end
+ * title that says what is missing, a line that says why it matters here, and, where
+ * the user can act, the action. An error with no retry is a dead end, and a dead end
  * with no explanation reads as a broken app rather than a failed request.
  *
  * Skeletons are shaped like the content they stand in for. A grey box the same size as
@@ -12,7 +12,6 @@
  */
 import { memo } from 'react';
 import {
-  Pressable,
   RefreshControl,
   type RefreshControlProps,
   View,
@@ -80,7 +79,7 @@ export const Skeleton = memo(function Skeleton({
 });
 
 /** Placeholder row shaped like an activity list row. */
-export const SkeletonRow = memo(function SkeletonRow() {
+const SkeletonRow = memo(function SkeletonRow() {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md }}>
       <Skeleton height={44} width={44} radius={radius.md} />
@@ -113,14 +112,18 @@ export const SkeletonCard = memo(function SkeletonCard({
   );
 });
 
+/**
+ * Placeholder rows for a list that is loading.
+ *
+ * No gutter of its own: every caller already sits inside a container that owns the screen
+ * gutter (rule 1.3, rows never self-pad), and a second one here drew the skeleton 40pt in from
+ * the edge while the rows that replaced it sat at 20.
+ */
 export const SkeletonList = memo(function SkeletonList({ rows = 6 }: { rows?: number }) {
   const { t } = useT();
   const theme = useAppTheme();
   return (
-    <View
-      accessibilityLabel={t('misc.loading')}
-      style={{ paddingHorizontal: screenGutter, gap: spacing.xs }}
-    >
+    <View accessibilityLabel={t('misc.loading')} style={{ gap: spacing.xs }}>
       {Array.from({ length: rows }, (_, i) => (
         <View
           key={i}
@@ -221,28 +224,13 @@ function StateScaffold({
         ) : null}
       </Stack>
       {actionLabel && onAction ? (
-        <Button
-          label={actionLabel}
-          onPress={() => {
-            haptics.medium();
-            onAction();
-          }}
-          variant={tone === 'danger' ? 'secondary' : 'primary'}
-        />
+        // `Button` fires its own haptic: a second one here doubled every tap.
+        <Button label={actionLabel} onPress={onAction} variant={tone === 'danger' ? 'secondary' : 'primary'} />
       ) : null}
       {secondaryLabel && onSecondary ? (
-        <Pressable
-          onPress={() => {
-            haptics.light();
-            onSecondary();
-          }}
-          accessibilityRole="button"
-          hitSlop={8}
-        >
-          <Txt variant="label" tone="muted" style={{ textDecorationLine: 'underline' }}>
-            {secondaryLabel}
-          </Txt>
-        </Pressable>
+        // The platform's text button (HIG plain, Material text), not an underlined link: a
+        // link-styled line reads as navigation to somewhere else, and this is an action.
+        <Button label={secondaryLabel} variant="quiet" onPress={onSecondary} />
       ) : null}
     </View>
   );
@@ -299,63 +287,6 @@ export const ErrorState = memo(function ErrorState({
       onAction={onRetry}
       style={style}
       compact={compact}
-    />
-  );
-});
-
-export const OfflineState = memo(function OfflineState({
-  onRetry,
-  style,
-  compact = false,
-}: {
-  /**
-   * Optional on purpose. A retry affordance that fires into nothing is worse than no
-   * affordance, so callers that cannot retry (a tab with no query) omit it and get the
-   * explanation alone.
-   */
-  onRetry?: () => void;
-  style?: StyleProp<ViewStyle>;
-  compact?: boolean;
-}) {
-  const { t } = useT();
-  return (
-    <StateScaffold
-      icon="offline"
-      tone="warning"
-      title={t('errors.offlineTitle')}
-      message={t('misc.offlineDetail')}
-      {...(onRetry ? { actionLabel: 'Retry', onAction: onRetry } : {})}
-      style={style}
-      compact={compact}
-    />
-  );
-});
-
-/** Permission denials: what to do about it, not just that it happened. */
-export const PermissionState = memo(function PermissionState({
-  feature,
-  message,
-  actionLabel = 'Open settings',
-  onAction,
-  icon = 'lock',
-  style,
-}: {
-  feature: string;
-  message: string;
-  actionLabel?: string;
-  onAction: () => void;
-  icon?: IconName;
-  style?: StyleProp<ViewStyle>;
-}) {
-  return (
-    <StateScaffold
-      icon={icon}
-      tone="warning"
-      title={`${feature} is turned off`}
-      message={message}
-      actionLabel={actionLabel}
-      onAction={onAction}
-      style={style}
     />
   );
 });
