@@ -181,7 +181,7 @@ export default function AddExerciseScreen() {
     <>
       <ScreenHeader title={t('addExercise.addToRoutineTitle')} />
       <HeaderToolbar placement="left">
-        {headerAction({ action: 'cancel', onPress: dismiss, t, label: 'addExercise.cancel' })}
+        {headerAction({ action: 'cancel', onPress: dismiss, t })}
       </HeaderToolbar>
       {/* A text action, not a glyph: the commit here creates something, and a labelled
           action also shows its disabled state, which a dimmed glyph does not. */}
