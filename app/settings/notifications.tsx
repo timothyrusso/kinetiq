@@ -197,8 +197,10 @@ export default function SettingsNotificationsScreen() {
             kind: 'switch',
             key: 'send',
             title: t('notif.sendNotifications'),
-            subtitle: t(enabled ? 'notif.onBody' : 'notif.offBody'),
-            value: enabled,
+            subtitle: t(enabled && granted ? 'notif.onBody' : 'notif.offBody'),
+            // What actually happens, not the stored wish: with the system permission missing,
+            // a switch drawn on sat under a footer saying notifications are off.
+            value: enabled && granted,
             disabled: !granted,
             onChange: toggleMaster,
           },
