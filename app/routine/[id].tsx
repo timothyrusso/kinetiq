@@ -260,11 +260,12 @@ export default function RoutineDetailScreen() {
   );
 
   // One callback per action, shared by every row: the row passes its own id or index back.
+  const routineId = routine?.id ?? null;
   const openItem = useCallback(
     (itemId: string) => {
-      if (routine) router.push(routes.routineItem('routine', itemId, routine.id));
+      if (routineId !== null) router.push(routes.routineItem('routine', itemId, routineId));
     },
-    [routine],
+    [routineId],
   );
   const addExercise = useCallback(() => {
     if (routine === null) return;
