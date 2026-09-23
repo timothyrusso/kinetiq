@@ -188,6 +188,8 @@ export const it: Copy = {
     pickerInLibrary: '{total} esercizi nella libreria',
     pickerIncluded_one: '{count} è già in questa scheda',
     pickerIncluded_other: '{count} sono già in questa scheda',
+    lastPerformedAgo: 'Ultima volta {ago}',
+    setsOfTotal: '{done} serie su {total}',
   },
   // --- end group-b ---
   activity: {

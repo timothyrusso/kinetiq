@@ -186,6 +186,8 @@ export const en = {
     pickerInLibrary: '{total} exercises in the library',
     pickerIncluded_one: '{count} is already in this routine',
     pickerIncluded_other: '{count} are already in this routine',
+    lastPerformedAgo: 'Last performed {ago}',
+    setsOfTotal: '{done} of {total} sets',
   },
   // --- end group-b ---
   activity: {
