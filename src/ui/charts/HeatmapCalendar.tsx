@@ -12,7 +12,7 @@
  */
 import { memo, useMemo } from 'react';
 import { Pressable, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import { fontFamily, radius, spacing } from '@/theme/tokens';
+import { fontFamily, fontSize, radius, spacing } from '@/theme/tokens';
 import type { Theme } from '@/theme/theme';
 import { useT } from '@/i18n/useT';
 
@@ -101,7 +101,7 @@ export const HeatmapCalendar = memo(function HeatmapCalendar({
   if (columns.length === 0) {
     return (
       <View style={[{ paddingVertical: spacing.lg }, style]}>
-        <Text style={{ fontFamily: fontFamily.medium, fontSize: 13, color: theme.colors.textFaint }}>
+        <Text style={{ fontFamily: fontFamily.medium, fontSize: fontSize.label, color: theme.colors.textFaint }}>
           {t('misc.noHistoryYet')}
         </Text>
       </View>
@@ -144,7 +144,7 @@ export const HeatmapCalendar = memo(function HeatmapCalendar({
       </View>
 
       <View style={{ flexDirection: 'row' }}>
-        <View style={{ width: DAY_LABEL_WIDTH, gap: GAP, paddingRight: 4 }}>
+        <View style={{ width: DAY_LABEL_WIDTH, gap: GAP, paddingRight: spacing.xs }}>
           {DAY_LABELS.map((d, i) => (
             <Text
               key={`d${i}`}
@@ -200,14 +200,14 @@ export const HeatmapCalendar = memo(function HeatmapCalendar({
             minWidth: 0,
             marginRight: spacing.md,
             fontFamily: fontFamily.medium,
-            fontSize: 11.5,
+            fontSize: fontSize.micro,
             color: theme.colors.textMuted,
           }}
         >
           {footer ??
             (best > 1 ? t('misc.dayStreak', { count: best }) : t('misc.startStreak'))}
         </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}>
           <Text style={{ fontFamily: fontFamily.medium, fontSize: 10, color: theme.colors.chartAxis }}>
             {t('misc.less')}
           </Text>
