@@ -45,7 +45,7 @@ import { ScreenHeader } from '@/ui/Screen';
 import { SettingsList, type SettingsSection } from '@/ui/controls/SettingsList';
 import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
 import { getExerciseProvider } from '@/api';
-import { clearAllUserData, readSchemaVersion } from '@/persistence';
+import { clearAllUserData, readSchemaVersion, SEED_DONE_KEY, writeState } from '@/persistence';
 import { DEFAULT_SETTINGS, updateSettings, useSettings } from '@/settings';
 import { KIND_ORDER } from '@/domain/display';
 import type { ActivityKind } from '@/domain/types';
@@ -87,6 +87,8 @@ export default function SettingsAboutScreen() {
       // settings is the one step that writes back to the database, so doing it earlier would
       // have the wipe undone by its own next step.
       await clearAllUserData();
+      // The wipe emptied app_state too; without the marker the next launch reseeds.
+      await writeState(SEED_DONE_KEY, true);
       await queryClient.cancelQueries();
       queryClient.clear();
       updateSettings(DEFAULT_SETTINGS);

@@ -39,11 +39,14 @@ import { elevationGain } from '@/utils/geometry';
 import { addDays, startOfDay, startOfWeek } from '@/utils/format';
 import {
   activityRepository,
+  readState,
   recordRepository,
   routineRepository,
+  SEED_DONE_KEY,
   SETTING_KEYS,
   setSetting,
   upsertSnapshot,
+  writeState,
 } from '@/persistence';
 
 const WEEKS = 13;
@@ -555,9 +558,17 @@ function applyCompletionStats(routines: Routine[], activities: readonly Activity
 /**
  * Populates a virgin database. Idempotent: `isEmpty` means a second call is a
  * no-op, so a remount or hot reload can never double-seed.
+ *
+ * A database that is empty because the user erased it, or deleted every activity, is not
+ * virgin: `SEED_DONE_KEY` records that the seed already had its chance. An install that
+ * predates the marker gets it on its first launch with data.
  */
 export async function seedIfEmpty(): Promise<SeedResult | null> {
-  if (!(await activityRepository.isEmpty())) return null;
+  if (await readState(SEED_DONE_KEY, false)) return null;
+  if (!(await activityRepository.isEmpty())) {
+    await writeState(SEED_DONE_KEY, true);
+    return null;
+  }
 
   const rng = createRandom(0x5eed_71);
   const now = Date.now();
@@ -592,6 +603,7 @@ export async function seedIfEmpty(): Promise<SeedResult | null> {
 
   await setSetting(SETTING_KEYS.weeklyGoalWorkouts, 4);
   await setSetting(SETTING_KEYS.defaultRestSeconds, 120);
+  await writeState(SEED_DONE_KEY, true);
 
   return {
     activities: activities.length,
