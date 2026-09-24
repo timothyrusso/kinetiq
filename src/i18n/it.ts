@@ -506,7 +506,7 @@ export const it: Copy = {
     builtWith: 'Realizzata con React Native ed Expo.',
     eraseTitle: 'Cancellare tutto?',
     eraseMessage:
-      "{activities} e {routines} verranno eliminate da questo dispositivo, insieme a unità, aspetto, obiettivo e promemoria. Ti resterà un'app vuota: nulla viene ripristinato se non lo chiedi qui sotto.",
+      "{activities} e {routines} verranno eliminate da questo dispositivo, insieme a unità, aspetto, obiettivo e promemoria. Ti resterà un'app vuota e i dati di esempio non verranno ripristinati.",
     eraseConfirm: 'Cancella tutto',
     keepMyData: 'Tieni i miei dati',
     activityCount_one: '{count} attività',
