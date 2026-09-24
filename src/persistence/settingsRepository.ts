@@ -217,6 +217,12 @@ export const recordRepository = {
 
 /* ------------------------------------------------------------ app_state -- */
 
+/**
+ * Set once the first-run seed has had its one chance. Without it an emptied database looks
+ * like a fresh install, and "Erase all Kinetiq data" would be undone by the next launch.
+ */
+export const SEED_DONE_KEY = 'seed.done';
+
 /** Free-form machine state (last seen schema, dismissals, queue markers). */
 export async function readState<T>(key: string, fallback: T): Promise<T> {
   const row = await getDatabase().getFirstAsync<{ value_json: string }>(

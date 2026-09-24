@@ -20,6 +20,7 @@ export {
   readAllSettings,
   readState,
   recordRepository,
+  SEED_DONE_KEY,
   SETTING_KEYS,
   setSetting,
   writeState,
