@@ -46,6 +46,10 @@ export const Button = memo(function Button(props: ButtonProps) {
   return (
     <Host
       matchContents={fullWidth ? { vertical: true } : true}
+      // A host inside a ScrollView takes the window's safe-area insets as it moves, and draws
+      // its content offset by them until the next layout: the button visibly jumped the first
+      // time its card was scrolled.
+      ignoreSafeArea="all"
       colorScheme={theme.mode}
       style={[fullWidth ? FILL_STYLE : styles.hug, style]}
     >
