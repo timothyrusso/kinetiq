@@ -21,13 +21,13 @@
  *
  * ## Art is the header, not a section
  *
- * A full-width image at the top is the one thing here that is genuinely better full-bleed,
- * so it sits under a transparent bar exactly like an activity's map does, with scrims both
- * ends: the top one because the bar's glyphs sit over whatever background wger's diagram
- * happens to have, the bottom one so technical-drawing white doesn't end on a hard edge
- * against the page. With no art, the slot keeps roughly the same proportions and holds a
- * composition instead: the layout never changes shape between the two states, so an
- * exercise without a picture doesn't look broken.
+ * A full-width image at the top, under a transparent bar like an activity's map, but not
+ * behind it: a map loses nothing under the bar's material, a technical drawing loses the
+ * part of the movement it is drawn to show. So the drawing starts where the bar ends and is
+ * fitted whole, never cropped, and the bar floats over plain page until the user scrolls.
+ * With no art, the slot keeps roughly the same proportions and holds a composition instead:
+ * the layout never changes shape between the two states, so an exercise without a picture
+ * doesn't look broken.
  *
  * ## Chips are actions, not labels
  *
@@ -80,18 +80,20 @@ import {
   type UnitSystem,
 } from '@/utils/format';
 import { agoLabel, shortDateLabel } from '@/utils/relativeTime';
-import { withAlpha } from '@/utils/color';
 import { useT } from '@/i18n/useT';
 import type { Exercise } from '@/domain/types';
 
 /** History rows shown before the "most recent N of M" note. */
 const HISTORY_PREVIEW = 6;
 
-/** Height of the art slot, including the region the floating bar floats over. The
-    exercise screen is the only one in the app with a photographic header, and it is
-    deliberately taller than an activity's map: wger's illustrations are small technical
-    drawings, and they need the room to be legible. */
-const ART_HEIGHT = 320;
+/** Height of the art slot BELOW the floating bar. Deliberately taller than an activity's
+    map: wger's illustrations are small technical drawings, and they need the room to be
+    legible. */
+const ART_HEIGHT = 260;
+
+/** The no-art composition's height below the bar: close enough to `ART_HEIGHT` that switching
+    between an exercise with art and one without does not move the content below the fold. */
+const NO_ART_HEIGHT = 270;
 
 export default function ExerciseDetailScreen() {
   const { t } = useT();
@@ -474,7 +476,7 @@ function Hero({ exercise, topInset }: { exercise: Exercise; topInset: number }) 
         colors={[theme.colors.surfaceRaised, theme.colors.canvas]}
         // The bar floats over this slot too, so the plaque is pushed clear of it even
         // though there is no picture to protect.
-        style={[styles.noArt, { paddingTop: topInset }]}
+        style={[styles.noArt, { height: topInset + NO_ART_HEIGHT, paddingTop: topInset }]}
       >
         <Txt variant="micro" tone="faint" uppercase tracking={1}>
           {exercise.category ?? t('exerciseDetail.fallbackTitle')}
@@ -499,30 +501,15 @@ function Hero({ exercise, topInset }: { exercise: Exercise; topInset: number }) 
   }
 
   return (
-    <View style={{ height: ART_HEIGHT, backgroundColor: theme.colors.canvas }}>
+    <View style={{ height: topInset + ART_HEIGHT, paddingTop: topInset }}>
       <Image
         source={{ uri }}
-        style={StyleSheet.absoluteFill}
-        contentFit="cover"
+        style={styles.flex}
+        contentFit="contain"
         transition={220}
         recyclingKey={uri}
         accessibilityLabel={t('exerciseDetail.illustrationFor', { name: exercise.name })}
         accessibilityIgnoresInvertColors
-      />
-      {/* Scrims are `pointerEvents="none"` so neither swallows the interactive back
-          gesture. The top one exists because the bar's glyphs sit over whatever
-          background wger's diagram happens to have: an unbacked light glyph on a white
-          technical drawing is unreadable. The bottom fades to the page so the image
-          doesn't end on a hard edge against the first card. */}
-      <LinearGradient
-        pointerEvents="none"
-        colors={[withAlpha('#000000', 0.45), 'transparent']}
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 170 }}
-      />
-      <LinearGradient
-        pointerEvents="none"
-        colors={['transparent', withAlpha('#000000', 0.18)]}
-        style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 90 }}
       />
     </View>
   );
@@ -686,10 +673,7 @@ const HistoryRow = memo(function HistoryRow({
 
 const styles = StyleSheet.create({
   section: { paddingHorizontal: screenGutter },
-  /** Matches `ART_HEIGHT` closely enough that switching between an exercise with art and
-      one without does not move the content below the fold. */
   noArt: {
-    height: 270,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: screenGutter,
