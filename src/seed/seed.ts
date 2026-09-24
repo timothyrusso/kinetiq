@@ -614,7 +614,7 @@ export async function seedIfEmpty(): Promise<SeedResult | null> {
   };
 }
 
-/** Exposed so tests and the settings "reset demo data" action can reason about it. */
+/** Exposed so tests can reason about which exercises the seed owns. */
 export const SEED_EXERCISE_IDS: readonly string[] = SEED_EXERCISES.map(
   (e) => `local:${e.key}`,
 );
