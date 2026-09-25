@@ -99,7 +99,6 @@ export function rowToRoutine(
   return {
     id: row.id,
     name: row.name,
-    description: row.description,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     timesCompleted: row.times_completed,

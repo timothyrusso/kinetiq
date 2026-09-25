@@ -556,9 +556,6 @@ export const en = {
     nameLabel: 'Routine name',
     namePlaceholder: 'Push Day, Leg Day, Full Body B',
     nameA11y: 'Names the routine',
-    notesLabel: 'Notes',
-    notesPlaceholder: 'Optional: how the session should feel, what to leave at the gym',
-    notesA11y: 'Adds an optional description',
     emptyTitle: 'No exercises yet',
     addExercise: 'Add exercise',
     exercises: 'Exercises',
@@ -585,7 +582,7 @@ export const en = {
     sets: 'Sets',
     reps: 'Reps',
     repsSuffix: 'reps',
-    editHint: 'Changes the sets, reps, weight and rest',
+    editHint: 'Changes the sets, reps, weight, rest and note',
     weightIn: 'Weight ({unit})',
     weightPerSet: 'Weight per set in {unit}',
     bodyweightShort: 'BW',
@@ -593,6 +590,10 @@ export const en = {
     fromLibrary: 'From the library',
     remove: 'Remove',
     zeroRestNote: 'Zero means no rest timer starts during this exercise.',
+    note: 'Note',
+    notePlaceholder: 'A cue for mid-set: elbows tucked, pause at the chest',
+    noteHint: 'Shown on this exercise during the workout.',
+    noteCount: '{count} of {max}',
   },
 
 
@@ -744,7 +745,7 @@ export const en = {
     aiFooter:
       'Paste the instructions into any AI chat, add what you want ("a 4-day upper/lower split, 45 minutes"), copy its answer, then tap Paste from clipboard. To change existing routines, send it your routines export as well.',
     aiPrompt:
-      'You are writing gym routines for the Kinetiq app. Reply with ONLY a JSON document in exactly this shape, with no other text:\n\n{\n  "format": "kinetiq.routines",\n  "version": 1,\n  "routines": [\n    {\n      "name": "Push Day",\n      "description": "Chest, shoulders and triceps",\n      "items": [\n        { "exerciseId": "wger:73", "exerciseName": "Bench Press", "sets": 4, "reps": "8-10", "weightKg": 60, "restSeconds": 120, "notes": null }\n      ]\n    }\n  ]\n}\n\nRules:\n- exerciseName is required. Use the common English name of the exercise.\n- exerciseId is optional. If you can browse the web, find the exercise in the wger catalog (https://wger.de/api/v2/exerciseinfo/?name__search=bench%20press&language__code=en) and write "wger:" followed by its id. If you cannot, leave exerciseId out. Never guess an id.\n- sets: 1 to 20. reps: a number or a range with a plain hyphen, such as "8-12". weightKg: 0 to 450, and 0 for bodyweight or when unsure. restSeconds: 0 to 600.\n- One routine per training day, with exercises in the order they are performed.\n- If I give you an existing Kinetiq routines file, keep its exerciseId values.\n\nWhat I want:\n',
+      'You are writing gym routines for the Kinetiq app. Reply with ONLY a JSON document in exactly this shape, with no other text:\n\n{\n  "format": "kinetiq.routines",\n  "version": 1,\n  "routines": [\n    {\n      "name": "Push Day",\n      "items": [\n        { "exerciseId": "wger:73", "exerciseName": "Bench Press", "sets": 4, "reps": "8-10", "weightKg": 60, "restSeconds": 120, "notes": "Pause the bar on the chest" }\n      ]\n    }\n  ]\n}\n\nRules:\n- exerciseName is required. Use the common English name of the exercise.\n- exerciseId is optional. If you can browse the web, find the exercise in the wger catalog (https://wger.de/api/v2/exerciseinfo/?name__search=bench%20press&language__code=en) and write "wger:" followed by its id. If you cannot, leave exerciseId out. Never guess an id.\n- sets: 1 to 20. reps: a number or a range with a plain hyphen, such as "8-12". weightKg: 0 to 450, and 0 for bodyweight or when unsure. restSeconds: 0 to 600.\n- notes is optional: a short form cue for that exercise, at most 200 characters, or null.\n- One routine per training day, with exercises in the order they are performed.\n- If I give you an existing Kinetiq routines file, keep its exerciseId values.\n\nWhat I want:\n',
     previewTitle: 'Import',
     matching: 'Looking up exercises…',
     matchFailed: 'The exercises could not be looked up.',

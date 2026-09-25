@@ -171,7 +171,6 @@ export async function saveImported(
     }
     const draft: RoutineDraft = {
       name: routine.name ?? names.fallback(index + 1),
-      description: routine.description,
       items,
       snapshots,
     };

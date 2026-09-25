@@ -19,7 +19,6 @@ export type ActivityRow = {
 export type RoutineRow = {
   id: string;
   name: string;
-  description: string | null;
   created_at: number;
   updated_at: number;
   times_completed: number;

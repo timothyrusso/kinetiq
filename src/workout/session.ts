@@ -336,7 +336,9 @@ export function skipExercise(entryIndex: number): void {
   if (!session) return;
   const entries = session.entries.map((e, i) =>
     i === entryIndex
-      ? { ...e, sets: e.sets.map((s) => ({ ...s, completed: false })), notes: e.notes ?? 'Skipped' }
+      ? // The note is the routine's cue and is left alone: "skipped" is derived from the sets,
+        // which is what the workout detail's badge reads.
+        { ...e, sets: e.sets.map((s) => ({ ...s, completed: false })) }
       : e,
   );
   commit(

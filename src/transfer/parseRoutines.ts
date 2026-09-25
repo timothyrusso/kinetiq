@@ -37,7 +37,6 @@ export type ParsedItem = {
 export type ParsedRoutine = {
   /** Null when the file gave none; the preview names it. */
   name: string | null;
-  description: string | null;
   items: ParsedItem[];
 };
 
@@ -129,7 +128,7 @@ function parseItem(raw: unknown, routine: number, position: number, issues: Pars
     reps: reps ?? '8-12',
     weightKg: clamp(Math.round(weightKg * 4) / 4, ITEM_BOUNDS.weightKg.min, ITEM_BOUNDS.weightKg.max),
     restSeconds: bounded(number(raw.restSeconds), ITEM_BOUNDS.restSeconds),
-    notes: text(raw.notes),
+    notes: text(raw.notes)?.slice(0, ITEM_BOUNDS.notesLength) ?? null,
   };
 }
 
@@ -168,7 +167,8 @@ export function parseRoutines(raw: string): ParseResult {
       issues.push({ key: 'dataTransfer.issueRoutineSkipped', vars: { routine: number } });
       return;
     }
-    routines.push({ name: text(entry.name), description: text(entry.description), items });
+    // A `description` from an older file is ignored: notes live on each exercise now.
+    routines.push({ name: text(entry.name), items });
   });
 
   if (routines.length === 0) return { ok: false, issue: { key: 'dataTransfer.errorNoRoutines' } };

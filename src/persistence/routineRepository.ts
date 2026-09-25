@@ -15,7 +15,6 @@ import { localId } from '@/utils/functional';
 export type RoutineDraft = {
   id?: string;
   name: string;
-  description: string | null;
   items: RoutineItem[];
   /** Snapshots keyed by exerciseId; required for any item not already stored. */
   snapshots?: readonly ExerciseSnapshot[];
@@ -26,7 +25,7 @@ export const routineRepository = {
     const db = getDatabase();
     const [rows, items] = await Promise.all([
       db.getAllAsync<RoutineRow>(
-        `SELECT id, name, description, created_at, updated_at, times_completed,
+        `SELECT id, name, created_at, updated_at, times_completed,
                 last_performed_at, seeded
          FROM routines ORDER BY updated_at DESC`,
       ),
@@ -49,7 +48,7 @@ export const routineRepository = {
     const db = getDatabase();
     const [row, items] = await Promise.all([
       db.getFirstAsync<RoutineRow>(
-        `SELECT id, name, description, created_at, updated_at, times_completed,
+        `SELECT id, name, created_at, updated_at, times_completed,
                 last_performed_at, seeded FROM routines WHERE id = ?`,
         id,
       ),
@@ -94,16 +93,14 @@ export const routineRepository = {
       );
 
       await db.runAsync(
-        `INSERT INTO routines (id, name, description, created_at, updated_at,
+        `INSERT INTO routines (id, name, created_at, updated_at,
                                times_completed, last_performed_at, seeded)
-         VALUES (?, ?, ?, ?, ?, 0, NULL, 0)
+         VALUES (?, ?, ?, ?, 0, NULL, 0)
          ON CONFLICT(id) DO UPDATE SET
            name = excluded.name,
-           description = excluded.description,
            updated_at = excluded.updated_at`,
         id,
         draft.name.trim() || 'Untitled routine',
-        draft.description?.trim() || null,
         existing?.created_at ?? now,
         now,
       );
@@ -171,7 +168,6 @@ export const routineRepository = {
     const stored = await this.snapshotsFor(source.id);
     return this.save({
       name: name.trim() || `${source.name} copy`,
-      description: source.description,
       items,
       snapshots: [...stored.values()].filter((s) => owned.has(s.exerciseId)),
     });

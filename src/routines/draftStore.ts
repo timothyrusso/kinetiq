@@ -52,13 +52,6 @@ export type RoutineDraftState = {
   /** Set once the user has typed a name or added a row; drives the discard prompt. */
   touched: boolean;
   name: string;
-  /**
-   * The text field's own value, so empty means empty rather than null: a controlled
-   * `TextInput` cannot take null, and storing null here would mean every read writes
-   * `?? ''` at the field. `draftToPayload` converts the empty string back to null, which is
-   * what the column stores.
-   */
-  description: string;
   items: RoutineItem[];
   /**
    * Frozen library data for the exercises added from the remote search, keyed by exercise id.
@@ -73,7 +66,6 @@ const EMPTY: RoutineDraftState = {
   status: 'idle',
   touched: false,
   name: '',
-  description: '',
   items: [],
   snapshots: [],
   defaultRestSeconds: 90,
@@ -135,10 +127,6 @@ export function openDraft(input: { defaultRestSeconds: number }): void {
 
 export function setDraftName(name: string): void {
   set({ name, touched: true });
-}
-
-export function setDraftDescription(description: string): void {
-  set({ description });
 }
 
 export function setDraftRestDefault(seconds: number): void {
@@ -258,7 +246,6 @@ export function isDraftSavable(): boolean {
 /** The payload `useSaveRoutine` takes. `items`/`snapshots` are pass-through by design. */
 export function draftToPayload(): {
   name: string;
-  description: string | null;
   items: RoutineItem[];
   snapshots: ExerciseSnapshot[];
 } {
@@ -268,7 +255,6 @@ export function draftToPayload(): {
     // than typed into the field, so the user can still overwrite it and the field never
     // shows text they did not write.
     name: name.length > 0 ? name : derivedName(state.items),
-    description: state.description.trim().length > 0 ? state.description.trim() : null,
     items: state.items,
     snapshots: state.snapshots,
   };

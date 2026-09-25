@@ -121,7 +121,6 @@ function snapshotFor(key: string, capturedAt: number): ExerciseSnapshot {
 
 type PlanTemplate = {
   name: string;
-  description: string | null;
   keys: string[];
   /** Planned working sets, parallel to `keys`. */
   sets: number[];
@@ -130,19 +129,16 @@ type PlanTemplate = {
 const PLANS: readonly PlanTemplate[] = [
   {
     name: 'Push · Heavy',
-    description: 'Bench-led pressing with overhead volume behind it. Full rests on the first lift.',
     keys: ['bench-press', 'overhead-press', 'incline-dumbbell-press', 'lateral-raise', 'cable-pushdown'],
     sets: [5, 4, 3, 3, 3],
   },
   {
     name: 'Pull · Heavy',
-    description: 'Deadlifts first while fresh, then rows and vertical pulling.',
     keys: ['conventional-deadlift', 'bent-over-row', 'pull-up', 'ez-bar-curl', 'hanging-leg-raise'],
     sets: [5, 4, 4, 3, 3],
   },
   {
     name: 'Legs · Squat Focus',
-    description: 'Back squat top set plus back-off volume, single-leg work at the end.',
     keys: ['barbell-back-squat', 'romanian-deadlift', 'bulgarian-split-squat', 'leg-press', 'hanging-leg-raise'],
     sets: [5, 3, 3, 3, 3],
   },
@@ -288,7 +284,6 @@ function buildRoutines(createdAt: number): Routine[] {
   return PLANS.map((plan) => ({
     id: localId('seed'),
     name: plan.name,
-    description: plan.description,
     // The date history *starts* on, not `now - WEEKS weeks`: that subtraction
     // used `WEEKS` as a duration on a quantity that is a count of Mondays, which
     // put creation exactly one week before anything was ever trained.
@@ -414,7 +409,6 @@ export async function seedIfEmpty(): Promise<SeedResult | null> {
     await routineRepository.save({
       id: routine.id,
       name: routine.name,
-      description: routine.description,
       items: routine.items,
       snapshots: (plan?.keys ?? []).map((key) => snapshotFor(key, now)),
     });

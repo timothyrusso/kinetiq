@@ -54,6 +54,7 @@ const ROW: ViewStyle = { flexDirection: 'row', alignItems: 'center', gap: spacin
 export const ListRow = memo(function ListRow({
   title,
   description,
+  descriptionLines = 2,
   meta,
   tags,
   tagsMax,
@@ -76,6 +77,8 @@ export const ListRow = memo(function ListRow({
    * not metadata: facts about the thing go in `meta` and `tags`, never joined into a string.
    */
   description?: string;
+  /** How many lines the description may take before it truncates. */
+  descriptionLines?: number;
   meta?: readonly MetaItem[];
   tags?: readonly Tag[];
   /** Tags shown before the rest collapse into "+n". */
@@ -134,7 +137,7 @@ export const ListRow = memo(function ListRow({
               text={description}
               variant="caption"
               color={theme.colors.textMuted}
-              numberOfLines={2}
+              numberOfLines={descriptionLines}
             />
           ) : null}
           {meta && meta.length > 0 ? <MetaLine items={meta} theme={theme} wrap /> : null}

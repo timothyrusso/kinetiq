@@ -128,7 +128,6 @@ export default function ImportPreviewScreen() {
       list.push({
         key: `routine-${index}`,
         title: routine.name ?? t('dataTransfer.untitledRoutine', { number: index + 1 }),
-        footer: routine.description ?? undefined,
         rows: routine.items.map((item, i) => itemRow(item, `item-${index}-${i}`)),
       });
     });
