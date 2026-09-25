@@ -26,6 +26,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { fontFamily } from '@/theme/tokens';
 import type { Theme } from '@/theme/theme';
+import { withAlpha } from '@/utils/color';
 import { clamp01 } from './geometry';
 import { useT } from '@/i18n/useT';
 
@@ -65,7 +66,9 @@ export const ProgressRing = memo(function ProgressRing({
   const { t } = useT();
   const reduced = useReducedMotion();
   const stroke = color ?? theme.colors.accent;
-  const track = trackColor ?? theme.colors.hairline;
+  // A tint of the text colour, not `hairline`: Android's dark cards are `surfaceRaised`, the
+  // same grey as the hairline, and the empty ring vanished into them. A tint reads on any card.
+  const track = trackColor ?? withAlpha(theme.colors.text, theme.mode === 'dark' ? 0.1 : 0.07);
   const thickness = strokeWidth ?? Math.max(5, Math.round(size * 0.085));
   const target = clamp01(progress);
   const radius = (size - thickness) / 2;
