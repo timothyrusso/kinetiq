@@ -36,7 +36,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { clearAllUserData } from '@/persistence';
 import { getQueryClient } from '@/query/client';
 import { haptics } from '@/services/haptics';
-import { themeFor } from '@/theme/theme';
+import { themeFor, useAppTheme } from '@/theme/theme';
 import { spacing } from '@/theme/tokens';
 import { Button } from '@/ui/controls/Button';
 import { Row } from '@/ui/layout';
@@ -99,45 +99,38 @@ type Phase = 'starting' | 'slow' | 'ready' | 'failed';
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const systemDark = useSystemDark();
   const [phase, setPhase] = useState<Phase>(settled ? 'ready' : 'starting');
-  // Held up for one beat past `ready` so the cover has a frame to paint before the native
-  // splash is hidden underneath it. Unmounting it is what triggers the fade.
-  const [covering, setCovering] = useState(true);
   const [failure, setFailure] = useState<unknown>(null);
   const settledRef = useRef(settled !== null);
 
   const attempt = useCallback(() => {
     setFailure(null);
     setPhase('starting');
+    // On success the native splash is NOT hidden here. This callback runs before React has
+    // committed the ready tree, and hiding now showed the launch surface underneath (the dot
+    // and the wordmark) for a frame or more: a second splash. `SplashHandover` hides it once
+    // the ready tree is on screen.
     startOnce(systemDark)
       .then(() => setPhase('ready'))
       .catch((error: unknown) => {
         setFailure(error);
         setPhase('failed');
-      })
-      .finally(() => splash.hide());
+        splash.hide();
+      });
   }, [systemDark]);
 
   useEffect(() => {
-    if (settledRef.current) {
-      splash.hide();
-      return;
-    }
+    if (settledRef.current) return;
     attempt();
     // A slow start is its own visible state rather than an infinite spinner: past the
     // deadline the user gets the two controls that can fix it.
     const deadline = setTimeout(() => {
-      if (!settledRef.current) setPhase((current) => (current === 'starting' ? 'slow' : current));
+      if (settledRef.current) return;
+      setPhase((current) => (current === 'starting' ? 'slow' : current));
+      // The slow panel is drawn under the held native splash, where nobody could press it.
+      splash.hide();
     }, BOOTSTRAP_DEADLINE_MS);
     return () => clearTimeout(deadline);
   }, [attempt]);
-
-  useEffect(() => {
-    if (phase !== 'ready') return;
-    // Two frames, not zero: the cover has to be on screen before the native splash goes, or the
-    // gap between them is the flash this exists to prevent.
-    const id = setTimeout(() => setCovering(false), 120);
-    return () => clearTimeout(id);
-  }, [phase]);
 
   // The AppState subscription lives here rather than in the root layout so it attaches
   // exactly once, above the navigator, and cannot be torn down by a stack change, // the workout clock depends on seeing every background transition.
@@ -147,13 +140,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     return (
       <QueryClientProvider client={getQueryClient()}>
         {children}
-        {/* Covers the handover and fades. The native splash follows the OS appearance and this
-            app has its own theme setting, so a dark-mode app on a light-mode phone showed the
-            cream splash and then cut straight to a near-black UI. Captured frame by frame, app
-            content appeared OVER the light splash background mid-handover. The cover mounts in
-            whatever colour the OS splash was actually showing, so the first frame after the
-            native splash hides matches the last frame before it, then it fades out. */}
-        {covering ? <SplashCover onFadeStart={splash.hide} /> : null}
+        <SplashHandover systemDark={systemDark} />
       </QueryClientProvider>
     );
   }
@@ -164,6 +151,42 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   if (phase === 'failed') return <FatalScreen error={failure} onRetry={attempt} />;
 
   return <LaunchSurface dark={systemDark} slow={phase === 'slow'} onRetry={attempt} />;
+}
+
+/* -------------------------------------------------------------- handover -- */
+
+/**
+ * Hands the native splash over to the app once the ready tree is on screen.
+ *
+ * ## Only one splash, whenever it can be
+ *
+ * The native splash follows the OS appearance; the app has its own theme setting. When the two
+ * agree, the native splash's last frame and the app's first share a background, so it simply
+ * hides: one splash, straight into Home. When they disagree (a dark app on a light phone),
+ * hiding would be a cream-to-black cut, so `SplashCover` mounts in the colour the OS splash was
+ * showing and fades out over the app. That cover used to run on every launch, and with the
+ * launch-surface race it read as a second splash.
+ *
+ * `requestAnimationFrame` rather than hiding in the effect: an effect runs after commit but can
+ * run before the frame is presented, and the gap is exactly where the launch surface showed.
+ */
+function SplashHandover({ systemDark }: { systemDark: boolean }) {
+  const appDark = useAppTheme().mode === 'dark';
+  // Decided once, at launch: a theme change later is not a handover.
+  const [mismatch] = useState(appDark !== systemDark);
+  // Held for one beat so the cover has painted before the native splash goes beneath it.
+  const [covering, setCovering] = useState(mismatch);
+
+  useEffect(() => {
+    if (mismatch) {
+      const id = setTimeout(() => setCovering(false), 120);
+      return () => clearTimeout(id);
+    }
+    const frame = requestAnimationFrame(() => splash.hide());
+    return () => cancelAnimationFrame(frame);
+  }, [mismatch]);
+
+  return covering ? <SplashCover onFadeStart={splash.hide} /> : null;
 }
 
 /* -------------------------------------------------------------- launch UI -- */
