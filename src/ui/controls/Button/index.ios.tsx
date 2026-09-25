@@ -8,7 +8,14 @@ import { memo } from 'react';
 import { StyleSheet } from 'react-native';
 import type { SFSymbol } from 'sf-symbols-typescript';
 import { Button as NativeButton, Host, Text } from '@expo/ui/swift-ui';
-import { buttonStyle, controlSize, disabled as disabledMod, frame, tint } from '@expo/ui/swift-ui/modifiers';
+import {
+  buttonStyle,
+  controlSize,
+  disabled as disabledMod,
+  foregroundStyle,
+  frame,
+  tint,
+} from '@expo/ui/swift-ui/modifiers';
 
 import { haptics } from '@/services/haptics';
 import { useAppTheme } from '@/theme/theme';
@@ -63,6 +70,9 @@ export const Button = memo(function Button(props: ButtonProps) {
           buttonStyle(variant === 'primary' ? 'borderedProminent' : 'bordered'),
           controlSize(size === 'sm' ? 'small' : 'large'),
           tint(theme.colors.accent),
+          // The label on the filled button is the theme's own ink for the accent, not SwiftUI's
+          // default white: white on the dark mode's lime was barely readable.
+          ...(variant === 'primary' ? [foregroundStyle(theme.colors.onAccent)] : []),
           disabledMod(disabled),
         ]}
       >
