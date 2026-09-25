@@ -47,14 +47,11 @@ import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
 import { getExerciseProvider } from '@/api';
 import { clearAllUserData, readSchemaVersion, SEED_DONE_KEY, writeState } from '@/persistence';
 import { DEFAULT_SETTINGS, updateSettings, useSettings } from '@/settings';
-import { KIND_ORDER } from '@/domain/display';
-import type { ActivityKind } from '@/domain/types';
 import { routes } from '@/navigation/nav';
 import { useActivityList } from '@/queries/useActivities';
 import { useRoutines } from '@/queries/useRoutines';
 import { haptics } from '@/services/haptics';
 import { useT } from '@/i18n/useT';
-import type { TKey } from '@/i18n';
 
 export default function SettingsAboutScreen() {
   const { t } = useT();
@@ -77,7 +74,6 @@ export default function SettingsAboutScreen() {
   const [erasing, setErasing] = useState(false);
 
   const activities = activityList.flat;
-  const counts = useMemo(() => tally(activities), [activities]);
   const activityCount = activities.length;
 
   const erase = useCallback(async () => {
@@ -149,12 +145,7 @@ export default function SettingsAboutScreen() {
             ? [{ kind: 'info' as const, key: 'counting', title: t('about.activities'), value: t('about.counting') }]
             : activityCount === 0
               ? [{ kind: 'info' as const, key: 'none', title: t('about.nothingStored') }]
-              : KIND_ORDER.filter((kind) => (counts[kind] ?? 0) > 0).map((kind) => ({
-                  kind: 'info' as const,
-                  key: `kind-${kind}`,
-                  title: t(KIND_NAMES[kind]),
-                  value: String(counts[kind] ?? 0),
-                }))),
+              : [{ kind: 'info' as const, key: 'workouts', title: t('about.kindLift'), value: String(activityCount) }]),
           {
             kind: 'info',
             key: 'routines',
@@ -216,7 +207,7 @@ export default function SettingsAboutScreen() {
       ],
     });
     return list;
-  }, [activityCount, activityList.isLoading, appId, counts, provider, routines.length, routinesLoading, schema, t, themeMode, unitSystem, version]);
+  }, [activityCount, activityList.isLoading, appId, provider, routines.length, routinesLoading, schema, t, themeMode, unitSystem, version]);
 
   return (
     <>
@@ -252,28 +243,6 @@ function useSchemaVersion(): number | null {
   const [version] = useState<number | null>(readSchemaVersion);
   return version;
 }
-
-/**
- * Per-kind counts in one pass.
- *
- * The accumulator is built out whole rather than from an empty object, so `counts[kind]` is
- * total for every `ActivityKind` and the call sites don't each need a `?? 0` that hides a
- * future kind being missed.
- */
-function tally(activities: readonly { kind: ActivityKind }[]): Record<ActivityKind, number> {
-  const out: Record<ActivityKind, number> = { run: 0, ride: 0, lift: 0, walk: 0, yoga: 0 };
-  for (const activity of activities) out[activity.kind] += 1;
-  return out;
-}
-
-/** Catalog keys, not words: this is module scope, where there is no language yet. */
-const KIND_NAMES: Record<ActivityKind, TKey> = {
-  run: 'about.kindRuns',
-  ride: 'about.kindRides',
-  lift: 'about.kindLift',
-  walk: 'about.kindWalks',
-  yoga: 'about.kindYoga',
-};
 
 /**
  * The provider's own `name` is a machine identifier ('wger'): right for a query key, wrong

@@ -41,11 +41,7 @@ import { useT } from '@/i18n/useT';
 
 /** Activity kind → glyph. One table, so a kind can never render the wrong icon. */
 export const ACTIVITY_ICON: Record<ActivityKind, IconName> = {
-  run: 'run',
-  ride: 'bike',
   lift: 'dumbbell',
-  walk: 'walk',
-  yoga: 'yoga',
 };
 
 const ROW: ViewStyle = { flexDirection: 'row', alignItems: 'center', gap: spacing.md };

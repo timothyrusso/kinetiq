@@ -22,14 +22,6 @@
  * stops, and both are worse than a link. Six exercises answer "is the catalog alive?" and
  * the Browse button hands off to the Exercises tab, which owns search, filters and paging.
  *
- * ## Two kinds of training, one front door
- *
- * Routines *and* cardio both start here. The tab used to offer only routines and leave
- * `routes.cardio()` reachable from Profile alone, which buried a whole training mode behind a
- * settings-looking screen. The split is also honest about what the two are: a routine is a plan
- * you follow from a list, cardio is an activity you go out and do, and the entry points read
- * differently for that reason: pick a plan versus put your phone in your pocket.
- *
  * ## The session is watched by the card, not by the screen
  *
  * The live session republishes once a second while a workout runs. Read here, that tick
@@ -50,7 +42,6 @@ import {
   ScrollView,
   StyleSheet,
   View,
-  type StyleProp,
   type ViewStyle,
 } from 'react-native';
 import { useRouter, useIsFocused } from 'expo-router';
@@ -65,7 +56,6 @@ import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { ExerciseThumb, RoutineRow } from '@/ui/rows';
 import { SegmentedControl } from '@/ui/controls/SegmentedControl';
 import { MetricLabel, Txt } from '@/ui/Text';
-import { Icon } from '@/ui/icons';
 import { EmptyState, ErrorState, SkeletonCard } from '@/ui/states';
 import { ProgressRing } from '@/ui/charts/ProgressRing';
 import { useMeasuredWidth } from '@/ui/charts/useMeasuredWidth';
@@ -147,7 +137,6 @@ export default function WorkoutScreen() {
   const openRoutine = useCallback((id: string) => router.push(routes.routine(id)), [router]);
   const openNewRoutine = useCallback(() => router.push(routes.newRoutine()), [router]);
   const openSession = useCallback(() => router.push(routes.workoutSession()), [router]);
-  const openCardio = useCallback(() => router.push(routes.cardio()), [router]);
   const openExercise = useCallback((id: string) => router.push(routes.exerciseDetail(id)), [router]);
   const openLibrary = useCallback(() => router.push(routes.exercisesTab()), [router]);
   const orderSegments = useMemo(
@@ -213,11 +202,6 @@ export default function WorkoutScreen() {
         {mostRecent && !resuming ? (
           <LastTrainedCard routine={mostRecent} onOpen={openRoutine} />
         ) : null}
-
-        {/* After the "continue" affordances and before the archive of plans, because it is a
-            third way to train rather than the most likely one: nobody returns to this tab
-            mid-session looking for the recorder, but nobody finds it under Profile either. */}
-        <CardioCard onPress={openCardio} style={styles.section} />
 
         <View style={styles.section} onLayout={measureSection}>
           <SectionHeader
@@ -465,46 +449,6 @@ function StartButton({ routine, onRefused }: { routine: Routine; onRefused: () =
   );
 }
 
-/**
- * The cardio front door.
- *
- * A different shape from the routine rows on purpose: a routine is chosen, cardio is begun, so
- * this is one large target with the activity kinds named on it rather than a row with a button
- * on the right. It also carries the "why is distance sometimes estimated" line in one place,
- * better here, where it is read before a session, than on the results screen, where it is
- * read after one.
- */
-function CardioCard({ onPress, style }: { onPress: () => void; style?: StyleProp<ViewStyle> }) {
-  const theme = useAppTheme();
-  const { t } = useT();
-  return (
-    <View style={style}>
-      <SectionHeader title={t('workout.recordActivity')} eyebrow={t('workoutTab.outdoors')} />
-      <Card tone="flat" onPress={onPress} accessibilityLabel={t('workoutTab.cardioA11y')}>
-        <Row gap="lg" align="center">
-          <View
-            style={[
-              styles.badge,
-              { backgroundColor: theme.colors.accentSoft },
-            ]}
-          >
-            <Icon name="play" size={20} color={theme.colors.accent} />
-          </View>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Txt variant="subhead" weight="700">
-              {t('misc.runRideWalk')}
-            </Txt>
-            <Txt variant="caption" tone="muted" style={{ marginTop: spacing.xxs }}>
-              {t('misc.cardioDetail')}
-            </Txt>
-          </View>
-          <Icon name="chevronRight" size={18} color={theme.colors.textFaint} />
-        </Row>
-      </Card>
-    </View>
-  );
-}
-
 function LibraryPreview({
   loading,
   failed,
@@ -665,13 +609,6 @@ const styles = StyleSheet.create({
   order: { marginBottom: spacing.md },
   cardMeta: { marginTop: spacing.xs },
   lastTrained: { flex: 1, minWidth: 0, paddingVertical: spacing.xs },
-  badge: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   dot: { width: 8, height: 8, borderRadius: 4 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   tile: {

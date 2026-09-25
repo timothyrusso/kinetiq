@@ -84,16 +84,12 @@ function ThemedRoot() {
               back button on every screen. Flat, the system back button, its long-press history
               menu and the Android back gesture all work unaided.
 
-              The player and the recorder keep `gestureEnabled: false`: a swipe must not be
-              able to discard an unfinished workout or appear to cancel a recording. Their exits
-              are explicit buttons, and the destructive ones are confirmed.
+              The player keeps `gestureEnabled: false`: a swipe must not be able to discard an
+              unfinished workout. Its exits are explicit buttons, and the destructive one is
+              confirmed.
             */}
             <Stack.Screen
               name="workout/session"
-              options={{ animation: 'slide_from_bottom', gestureEnabled: false }}
-            />
-            <Stack.Screen
-              name="workout/cardio"
               options={{ animation: 'slide_from_bottom', gestureEnabled: false }}
             />
             <Stack.Screen name="routine/new" options={{ presentation: 'modal' }} />

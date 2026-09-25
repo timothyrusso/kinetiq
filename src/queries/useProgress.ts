@@ -22,7 +22,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { activityRepository, recordRepository } from '@/persistence';
-import type { Activity, ActivityKind, PersonalRecord } from '@/domain/types';
+import type { Activity, PersonalRecord } from '@/domain/types';
 import { queryKeys } from '@/query/keys';
 import { addDays, startOfDay, startOfWeek } from '@/utils/format';
 import { groupBy, sum } from '@/utils/functional';
@@ -42,12 +42,9 @@ export type WeekSummary = {
   label: string;
   workouts: number;
   durationSeconds: number;
-  distanceMeters: number;
   caloriesKcal: number;
-  /** Strength volume in kg; 0 for a cardio-only week. */
+  /** Strength volume in kg. */
   volumeKg: number;
-  /** Per-kind counts, for the distribution chart. */
-  byKind: Record<ActivityKind, number>;
 };
 
 export type TrainingSummary = {
@@ -57,7 +54,6 @@ export type TrainingSummary = {
   totals: {
     workouts: number;
     durationSeconds: number;
-    distanceMeters: number;
     caloriesKcal: number;
     volumeKg: number;
   };
@@ -128,18 +124,13 @@ export function useTrainingSummary(rangeWeeks: number) {
         const weekEnd = addDays(new Date(weekStart), 7).getTime();
         const inWeek = activities.filter((a) => a.startedAt >= weekStart && a.startedAt < weekEnd);
 
-        const byKind: Record<ActivityKind, number> = { run: 0, ride: 0, lift: 0, walk: 0, yoga: 0 };
-        for (const activity of inWeek) byKind[activity.kind] += 1;
-
         weeks.push({
           weekStart,
           label: formatWeekLabel(weekStart),
           workouts: inWeek.length,
           durationSeconds: sum(inWeek.map((a) => a.durationSeconds)),
-          distanceMeters: sum(inWeek.map((a) => a.cardio?.distanceMeters ?? 0)),
           caloriesKcal: sum(inWeek.map((a) => a.caloriesKcal)),
           volumeKg: sum(inWeek.map((a) => a.strength?.totalVolumeKg ?? 0)),
-          byKind,
         });
       }
 
@@ -165,7 +156,6 @@ export function useTrainingSummary(rangeWeeks: number) {
         totals: {
           workouts: activities.length,
           durationSeconds: sum(activities.map((a) => a.durationSeconds)),
-          distanceMeters: sum(activities.map((a) => a.cardio?.distanceMeters ?? 0)),
           caloriesKcal: sum(activities.map((a) => a.caloriesKcal)),
           volumeKg: sum(activities.map((a) => a.strength?.totalVolumeKg ?? 0)),
         },

@@ -13,7 +13,7 @@
  *
  * Each control commits the moment it changes, straight into the store, which debounces its
  * write to the database. That is safe because no control here accepts partial input: a toggle,
- * a chip, a stepper and a segmented control can only ever be in a valid position. (The profile
+ * a chip and a stepper can only ever be in a valid position. (The profile
  * form on the hub screen does have a Save, and its header says why text fields are the
  * exception.) The bounds passed to each stepper are the same ones `normaliseSettings` clamps
  * to, so the UI can never offer a value that the store would quietly rewrite.
@@ -25,12 +25,6 @@
  * choice and a preset list is not allowed to be the only legal set of answers. Selecting a
  * chip moves the stepper, and the stepper leaving a preset value deselects the chips: one
  * source of truth, two ways to reach it.
- *
- * ## Pace versus speed is a segmented control, not a switch
- *
- * Two named options. A switch would show an empty circle where a word belongs, and the whole
- * point of this setting is that which word you want is a preference about how you read numbers,
- * not a thing you want on or off.
  */
 import { useCallback, useMemo } from 'react';
 
@@ -53,7 +47,6 @@ export default function SettingsTrainingScreen() {
   const autoStartRest = useSettings((s) => s.autoStartRest);
   const hapticsEnabled = useSettings((s) => s.hapticsEnabled);
   const goal = useSettings((s) => s.weeklyGoalWorkouts);
-  const speedInsteadOfPace = useSettings((s) => s.showSpeedInsteadOfPace);
 
   const setRest = useCallback(
     (seconds: number) => update({ defaultRestSeconds: seconds }),
@@ -107,24 +100,6 @@ export default function SettingsTrainingScreen() {
         ],
       },
       {
-        key: 'cardio',
-        title: t('trainingPrefs.cardioNumbers'),
-        footer: `${t(speedInsteadOfPace ? 'states.speedExample' : 'states.paceExample')} ${t('states.sameRunEither')} ${t('misc.paceAppliesBody')}`,
-        rows: [
-          {
-            kind: 'segmented',
-            key: 'reading',
-            title: t('trainingPrefs.paceOrSpeed'),
-            options: [
-              { value: 'pace', label: t('cardio.pace') },
-              { value: 'speed', label: t('cardio.speed') },
-            ],
-            value: speedInsteadOfPace ? 'speed' : 'pace',
-            onChange: (next) => update({ showSpeedInsteadOfPace: next === 'speed' }),
-          },
-        ],
-      },
-      {
         key: 'goal',
         title: t('trainingPrefs.weeklyGoal'),
         footer: `${t('misc.goalBody')} ${t('trainingPrefs.alsoOnProfile')}`,
@@ -143,7 +118,7 @@ export default function SettingsTrainingScreen() {
         ],
       },
     ],
-    [autoStartRest, goal, hapticsEnabled, rest, setRest, speedInsteadOfPace, t, update],
+    [autoStartRest, goal, hapticsEnabled, rest, setRest, t, update],
   );
 
   return (

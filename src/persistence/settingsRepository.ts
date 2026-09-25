@@ -19,12 +19,6 @@ export const SETTING_KEYS = {
   defaultRestSeconds: 'settings.defaultRestSeconds',
   weeklyGoalWorkouts: 'settings.weeklyGoalWorkouts',
   autoStartRest: 'settings.autoStartRest',
-  // Named for what it stores. It arrived as `settings.showKmSplits`, from a
-  // split-toggle idea that was cut, and kept that row name while holding the
-  // pace-vs-speed choice: so the row deciding whether a run reads "4:30 /km"
-  // or "13.3 km/h" was named after a setting nobody can switch on, and a
-  // `SELECT` on the settings table read as a lie. Renamed in migration 4.
-  showSpeedInsteadOfPace: 'settings.showSpeedInsteadOfPace',
   profile: 'settings.profile',
   reminder: 'settings.reminder',
   seededAt: 'app.seededAt',

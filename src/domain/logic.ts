@@ -4,7 +4,6 @@
  */
 import {
   Activity,
-  ActivityKind,
   RoutineItem,
   CompletedWorkout,
   PersonalRecord,
@@ -17,31 +16,15 @@ import { daysBetween, repsFromRange, startOfDay } from '@/utils/format';
 import { sum } from '@/utils/functional';
 
 /**
- * MET-based calorie model, scaled for a 74 kg reference athlete. Deliberately
- * simple and monotonic: a fitness app's calorie number is an estimate the user
+ * MET-based calorie model for resistance training, scaled for a 74 kg reference athlete.
+ * Deliberately simple and monotonic: a fitness app's calorie number is an estimate the user
  * trends against, not a measurement.
  */
-const MET_BY_KIND: Record<ActivityKind, number> = {
-  run: 9.8,
-  ride: 7.5,
-  lift: 5.0,
-  walk: 3.5,
-  yoga: 3.0,
-};
+const LIFT_MET = 5.0;
 
-export function estimateCalories(
-  kind: ActivityKind,
-  durationSeconds: number,
-  options: { intensity?: number; distanceMeters?: number } = {},
-): number {
-  const met = MET_BY_KIND[kind] * (options.intensity ?? 1);
+export function estimateCalories(durationSeconds: number): number {
   const hours = Math.max(0, durationSeconds) / 3600;
-  const base = met * 74 * hours;
-  // Running gets a distance term: effort scales with work done, not just time.
-  if (kind === 'run' && options.distanceMeters) {
-    return Math.round(base * 0.6 + options.distanceMeters * 0.062);
-  }
-  return Math.round(base);
+  return Math.round(LIFT_MET * 74 * hours);
 }
 
 /** Epley. Conservative above ~10 reps, which is where linear models diverge. */
@@ -311,24 +294,10 @@ export function toCompletedWorkout(
     startedAt: session.startedAt,
     endedAt,
     durationSeconds,
-    caloriesKcal: estimateCalories('lift', durationSeconds),
+    caloriesKcal: estimateCalories(durationSeconds),
     entries: session.entries,
     totalVolumeKg: sessionVolumeKg(session),
     totalSets: completedSetCount(session.entries),
     notes: session.notes,
   };
-}
-
-/** Pace from raw totals, guarding the zero-distance case. */
-export function paceFromDistance(durationSeconds: number, distanceMeters: number): number {
-  if (distanceMeters <= 0 || durationSeconds <= 0) return 0;
-  return durationSeconds / (distanceMeters / 1000);
-}
-
-export function speedFromDistance(
-  durationSeconds: number,
-  distanceMeters: number,
-): number {
-  if (durationSeconds <= 0) return 0;
-  return distanceMeters / durationSeconds;
 }

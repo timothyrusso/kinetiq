@@ -8,7 +8,7 @@
  * retries, deduplication. A permission is not fetched content: one cheap native call, no
  * pagination or retry story worth modelling, and nothing useful to serve from a stale copy.
  * The interesting half of the problem is not the read, it is *invalidation*: the user can
- * revoke location or notifications by opening System Settings, changing a toggle, and coming
+ * revoke notifications by opening System Settings, changing a toggle, and coming
  * back, and nothing inside this app happened in between. So this module is the read plus the
  * re-read-on-focus trigger: which is the exact thing a cache would have had to grow anyway.
  *
@@ -46,79 +46,51 @@ import {
   requestNotificationPermission,
   type NotificationPermission,
 } from '@/services/notifications';
-import { recorder, type LocationPermissionStatus } from '@/services/location';
 import { getSettings, updateSettings } from '@/settings';
 
 export type Permissions = {
-  location: LocationPermissionStatus;
   notifications: NotificationPermission;
   /** Until the first read lands, so a screen shows a skeleton rather than a false "Denied". */
   loading: boolean;
   /** A system prompt is on screen. Lets a button disable itself instead of asking twice. */
-  requesting: 'location' | 'notifications' | null;
-  requestLocation: () => Promise<LocationPermissionStatus>;
+  requesting: boolean;
   requestNotifications: () => Promise<NotificationPermission>;
   /** Re-read without a prompt: the pull gesture on the permissions screen. */
   refresh: () => Promise<void>;
 };
 
-async function readAll(): Promise<Pick<Permissions, 'location' | 'notifications'>> {
-  // In parallel: independent native calls, and sequencing them would put the second one's
-  // latency in front of the screen for no reason.
-  const [location, notifications] = await Promise.all([
-    recorder.ensurePermission(),
-    readNotificationPermission(),
-  ]);
-  return { location, notifications };
-}
-
 export function usePermissions(): Permissions {
-  const [location, setLocation] = useState<LocationPermissionStatus>('undetermined');
   const [notifications, setNotifications] = useState<NotificationPermission>({
     granted: false,
     ios: false,
   });
   const [loading, setLoading] = useState(true);
-  const [requesting, setRequesting] = useState<Permissions['requesting']>(null);
+  const [requesting, setRequesting] = useState(false);
 
   const refresh = useCallback(async () => {
-    const next = await readAll();
-    setLocation(next.location);
-    setNotifications(next.notifications);
+    const next = await readNotificationPermission();
+    setNotifications(next);
     setLoading(false);
     // Only written when it actually moved, because `updateSettings` notifies every settings
     // subscriber: writing an unchanged boolean on every app focus would re-render the whole
     // tree for nothing. `getSettings()` is read here rather than captured so the comparison
     // is always against the current value.
-    if (next.notifications.granted !== getSettings().notificationsGranted) {
-      updateSettings({ notificationsGranted: next.notifications.granted });
+    if (next.granted !== getSettings().notificationsGranted) {
+      updateSettings({ notificationsGranted: next.granted });
     }
   }, []);
 
   useEffect(() => {
     void refresh();
-    // The user can revoke either permission outside the app entirely; focus is the only
-    // signal that they might have.
+    // The user can revoke the permission outside the app entirely; focus is the only signal
+    // that they might have.
     return focusManager.subscribe(() => void refresh());
   }, [refresh]);
 
-  const requestLocation = useCallback(async () => {
-    // Re-entrant taps on "Enable location" must not stack prompts. The recorder serialises
-    // internally, but the second call would still resolve with a stale-looking status.
-    if (requesting === 'location') return recorder.getPermission();
-    setRequesting('location');
-    try {
-      const status = await recorder.requestPermission();
-      setLocation(status);
-      return status;
-    } finally {
-      setRequesting(null);
-    }
-  }, [requesting]);
-
   const requestNotifications = useCallback(async () => {
-    if (requesting === 'notifications') return { granted: false, ios: false };
-    setRequesting('notifications');
+    // Re-entrant taps must not stack prompts.
+    if (requesting) return { granted: false, ios: false };
+    setRequesting(true);
     try {
       const result = await requestNotificationPermission();
       setNotifications(result);
@@ -128,17 +100,9 @@ export function usePermissions(): Permissions {
       updateSettings({ notificationsGranted: result.granted });
       return result;
     } finally {
-      setRequesting(null);
+      setRequesting(false);
     }
   }, [requesting]);
 
-  return {
-    location,
-    notifications,
-    loading,
-    requesting,
-    requestLocation,
-    requestNotifications,
-    refresh,
-  };
+  return { notifications, loading, requesting, requestNotifications, refresh };
 }

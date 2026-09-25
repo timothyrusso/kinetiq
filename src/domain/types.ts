@@ -7,24 +7,8 @@
  * display happens only in `src/utils/format.ts`.
  */
 
-export type ActivityKind = 'run' | 'ride' | 'lift' | 'walk' | 'yoga';
-
-export const ACTIVITY_KINDS: readonly ActivityKind[] = ['run', 'ride', 'lift', 'walk', 'yoga'];
-
-export type CardioMetrics = {
-  /** Metres. */
-  distanceMeters: number;
-  /** Seconds per kilometre, canonical. */
-  avgPaceSecPerKm: number;
-  avgHeartRate: number | null;
-  maxHeartRate: number | null;
-  elevationGainMeters: number;
-  /** m/s, only meaningful for riding where pace is unnatural to read. */
-  avgSpeedMps: number | null;
-  stridesPerMinute: number | null;
-  splits: ActivitySplit[];
-  route: RoutePoint[];
-};
+/** Kinetiq records lifting sessions only; the kind is kept so stored rows stay self-describing. */
+export type ActivityKind = 'lift';
 
 export type StrengthMetrics = {
   entries: StrengthEntry[];
@@ -33,26 +17,6 @@ export type StrengthMetrics = {
   totalSets: number;
   personalRecords: PersonalRecord[];
 };
-
-export type ActivitySplit = {
-  index: number;
-  /** Metres covered in this split (usually 1000, or the remainder). */
-  distanceMeters: number;
-  durationSeconds: number;
-  paceSecPerKm: number;
-  elevationGainMeters: number;
-  heartRate: number | null;
-};
-
-export type RoutePoint = {
-  /** Unix ms. */
-  t: number;
-  coords: [number, number];
-  elevation: number;
-  heartRate: number | null;
-};
-
-export type LatLng = [number, number];
 
 export type PersonalRecord = {
   exerciseId: string;
@@ -103,7 +67,6 @@ export type Activity = {
   seeded: boolean;
   /** Session that produced this activity, when it came from the tracker. */
   sourceSessionId: string | null;
-  cardio: CardioMetrics | null;
   strength: StrengthMetrics | null;
 };
 
@@ -253,19 +216,6 @@ export type CompletedWorkout = {
 };
 
 /* ---------------------------------------------------------------- record -- */
-
-export type ActivityDraft = {
-  id: string;
-  kind: ActivityKind;
-  startedAt: number;
-  durationSeconds: number;
-  distanceMeters: number;
-  caloriesKcal: number;
-  route: RoutePoint[];
-  status: 'recording' | 'paused' | 'review';
-  /** Why tracking is degraded, e.g. location unavailable. */
-  degradedReason: string | null;
-};
 
 export type Streak = {
   current: number;

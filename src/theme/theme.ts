@@ -170,18 +170,10 @@ const darkColors = {
   focusRing: 'rgba(198, 242, 78, 0.45)',
 
   tone: {
-    run: palette.coral,
-    ride: palette.azure,
     lift: palette.plum,
-    walk: palette.spark,
-    yoga: palette.volt,
   },
   toneSoft: {
-    run: 'rgba(255, 106, 69, 0.15)',
-    ride: 'rgba(90, 168, 255, 0.15)',
     lift: 'rgba(185, 140, 255, 0.15)',
-    walk: 'rgba(53, 232, 192, 0.15)',
-    yoga: 'rgba(198, 242, 78, 0.15)',
   },
 
   chartGrid: 'rgba(255, 255, 255, 0.055)',
@@ -241,18 +233,10 @@ const lightColors = {
   focusRing: 'rgba(94, 140, 11, 0.30)',
 
   tone: {
-    run: palette.coralDeep,
-    ride: palette.azureDeep,
     lift: '#7B4FD1',
-    walk: palette.sparkDeep,
-    yoga: '#5E8C0B',
   },
   toneSoft: {
-    run: 'rgba(214, 67, 31, 0.10)',
-    ride: 'rgba(29, 111, 209, 0.10)',
     lift: 'rgba(123, 79, 209, 0.10)',
-    walk: 'rgba(14, 156, 126, 0.10)',
-    yoga: 'rgba(94, 140, 11, 0.10)',
   },
 
   chartGrid: 'rgba(10, 14, 24, 0.07)',

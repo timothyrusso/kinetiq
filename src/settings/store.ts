@@ -48,7 +48,6 @@ async function persist(next: SettingsState): Promise<void> {
       setSetting(SETTING_KEYS.defaultRestSeconds, next.defaultRestSeconds),
       setSetting(SETTING_KEYS.autoStartRest, next.autoStartRest),
       setSetting(SETTING_KEYS.weeklyGoalWorkouts, next.weeklyGoalWorkouts),
-      setSetting(SETTING_KEYS.showSpeedInsteadOfPace, next.showSpeedInsteadOfPace),
       setSetting(SETTING_KEYS.profile, next.profile),
       setSetting(SETTING_KEYS.reminder, next.reminder),
     ]);

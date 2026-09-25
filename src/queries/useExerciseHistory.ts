@@ -125,7 +125,7 @@ export function useExerciseHistory(exerciseId: string | null) {
     queryKey: [...queryKeys.exercises.all, 'history', exerciseId ?? 'none'] as const,
     queryFn: async (): Promise<ExerciseHistory> => {
       if (exerciseId === null) return EMPTY_HISTORY;
-      const activities = await activityRepository.list({ kinds: ['lift'] });
+      const activities = await activityRepository.list();
       return summarise(exerciseId, activities);
     },
     enabled: exerciseId !== null,

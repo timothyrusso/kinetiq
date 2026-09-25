@@ -35,7 +35,6 @@ export type SettingsState = {
   defaultRestSeconds: number;
   autoStartRest: boolean;
   weeklyGoalWorkouts: number;
-  showSpeedInsteadOfPace: boolean;
   profile: Profile;
   reminder: ReminderSettings;
 };
@@ -51,7 +50,6 @@ export const DEFAULT_SETTINGS: SettingsState = {
   defaultRestSeconds: 90,
   autoStartRest: true,
   weeklyGoalWorkouts: 4,
-  showSpeedInsteadOfPace: false,
   // Empty rather than 'Athlete': the screens that show a name already fall back to a
   // translated placeholder, and a default stored in English would print "Athlete" to an
   // Italian user as though they had typed it.
@@ -131,8 +129,6 @@ export function normaliseSettings(
       14,
       DEFAULT_SETTINGS.weeklyGoalWorkouts,
     ),
-    showSpeedInsteadOfPace:
-      s.showSpeedInsteadOfPace ?? DEFAULT_SETTINGS.showSpeedInsteadOfPace,
     profile: candidateProfile,
     reminder: candidateReminder,
   };

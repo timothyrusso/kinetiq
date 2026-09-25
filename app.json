@@ -16,12 +16,6 @@
       "buildNumber": "1",
       "supportsTablet": false,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Kinetiq uses your location to map your route, distance and pace while you record a run or ride.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Kinetiq keeps mapping your route if you record an activity and leave the app.",
-        "UIBackgroundModes": [
-          "location",
-          "fetch"
-        ],
         "ITSAppUsesNonExemptEncryption": false,
         "UIUserInterfaceStyle": "Automatic"
       }
@@ -38,11 +32,6 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_BACKGROUND_LOCATION",
-        "FOREGROUND_SERVICE",
-        "FOREGROUND_SERVICE_LOCATION",
         "POST_NOTIFICATIONS",
         "VIBRATE",
         "WAKE_LOCK"
@@ -79,14 +68,6 @@
       ],
       "expo-router",
       "expo-font",
-      [
-        "expo-location",
-        {
-          "locationAlwaysAndWhenInUsePermission": "Allow Kinetiq to map your route, distance and pace.",
-          "isAndroidBackgroundLocationEnabled": true,
-          "isAndroidForegroundServiceEnabled": true
-        }
-      ],
       [
         "expo-splash-screen",
         {

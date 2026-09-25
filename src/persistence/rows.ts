@@ -10,16 +10,6 @@ export type ActivityRow = {
   notes: string | null;
   seeded: number;
   source_session_id: string | null;
-  distance_meters: number | null;
-  avg_pace: number | null;
-  avg_hr: number | null;
-  max_hr: number | null;
-  elevation_meters: number | null;
-  avg_speed_mps: number | null;
-  cadence: number | null;
-  splits_json: string | null;
-  route_json: string | null;
-  route_simplified_json: string | null;
   entries_json: string | null;
   volume_kg: number | null;
   total_sets: number | null;

@@ -25,7 +25,6 @@ const SF: Partial<Record<IconName, SFSymbol>> = {
   pause: 'pause.fill',
   stop: 'stop.fill',
   trash: 'trash',
-  mapPin: 'mappin',
   bell: 'bell',
   search: 'magnifyingglass',
   refresh: 'arrow.clockwise',

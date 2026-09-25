@@ -4,11 +4,8 @@
  */
 import type {
   Activity,
-  ActivityKind,
-  ActivitySplit,
   ExerciseSnapshot,
   Routine,
-  RoutePoint,
   StrengthEntry,
   WorkoutSession,
   WorkoutSessionStatus,
@@ -21,7 +18,6 @@ import type {
   RoutineRow,
   SessionRow,
 } from './rows';
-import { simplifyRoute } from '@/utils/geometry';
 
 export function parseJsonArray<T>(raw: string | null | undefined): T[] {
   if (!raw) return [];
@@ -47,35 +43,14 @@ export function stringify(value: unknown): string {
   }
 }
 
-/**
- * Routes are stored twice: full samples feed the elevation/pace charts, the
- * decimated copy feeds map polylines. Parsing the small one for a thumbnail is
- * the difference between a smooth list and a janky one.
- */
-export function encodeRoute(route: readonly RoutePoint[]): { full: string; simplified: string } {
-  return {
-    full: stringify(route),
-    simplified: stringify(simplifyRoute(route.map((p) => p.coords))),
-  };
-}
-
-const ACTIVITY_KIND_VALUES: readonly ActivityKind[] = ['run', 'ride', 'lift', 'walk', 'yoga'];
-
-function toKind(value: string): ActivityKind {
-  return (ACTIVITY_KIND_VALUES as readonly string[]).includes(value)
-    ? (value as ActivityKind)
-    : 'walk';
-}
-
-/** Cardio and strength are mutually exclusive; presence of the columns decides. */
+/** `volume_kg` is written for every recorded session, so its absence marks a damaged row. */
 export function rowToActivity(row: ActivityRow): Activity {
   const entries = parseJsonArray<StrengthEntry>(row.entries_json);
-  const hasCardio = row.distance_meters !== null;
   const hasStrength = row.volume_kg !== null;
 
   return {
     id: row.id,
-    kind: toKind(row.kind),
+    kind: 'lift',
     title: row.title,
     startedAt: row.started_at,
     durationSeconds: row.duration_seconds,
@@ -83,19 +58,6 @@ export function rowToActivity(row: ActivityRow): Activity {
     notes: row.notes,
     seeded: row.seeded === 1,
     sourceSessionId: row.source_session_id,
-    cardio: hasCardio
-      ? {
-          distanceMeters: row.distance_meters ?? 0,
-          avgPaceSecPerKm: row.avg_pace ?? 0,
-          avgHeartRate: row.avg_hr,
-          maxHeartRate: row.max_hr,
-          elevationGainMeters: row.elevation_meters ?? 0,
-          avgSpeedMps: row.avg_speed_mps,
-          stridesPerMinute: row.cadence,
-          splits: parseJsonArray<ActivitySplit>(row.splits_json),
-          route: parseRoute(row.route_json),
-        }
-      : null,
     strength: hasStrength
       ? {
           entries,
@@ -199,18 +161,4 @@ export function rowToSession(row: SessionRow): WorkoutSession {
     notes: row.notes,
     updatedAt: row.updated_at,
   };
-}
-
-/**
- * A stored route, as `RoutePoint`s whichever column it came from.
- *
- * Detail reads `route_json` (full samples); lists read `route_simplified_json` under the same
- * alias, which holds bare `[lat, lng]` pairs. Parsed as `RoutePoint[]` unchanged, a list row
- * handed `[lat, lng]` to code reading `.coords`, and the first list to draw a route thumbnail
- * crashed. Pairs become points with no timing: enough to draw the shape, never a pace.
- */
-function parseRoute(json: string | null): RoutePoint[] {
-  return parseJsonArray<RoutePoint | [number, number]>(json).map((p) =>
-    Array.isArray(p) ? { t: 0, coords: [p[0], p[1]], elevation: 0, heartRate: null } : p,
-  );
 }
