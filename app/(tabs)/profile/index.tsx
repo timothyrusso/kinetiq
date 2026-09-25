@@ -216,24 +216,21 @@ export default function ProfileScreen() {
           <SectionHeader title={t('profile.preferences')} style={styles.section} />
           <Card padding="md">
             <Stack gap="lg">
-              <Preference label={t('profile.units')} hint={t('profileScreen.unitsHint')}>
+              <Preference label={t('profile.units')}>
                 <SegmentedControl
                   segments={unitSegments}
                   value={unitSystem}
                   onChange={(next) => update({ unitSystem: next })}
                 />
               </Preference>
-              <Preference
-                label={t('profile.appearance')}
-                hint={t('profileScreen.appearanceHint')}
-              >
+              <Preference label={t('profile.appearance')}>
                 <SegmentedControl
                   segments={themeSegments}
                   value={themeMode}
                   onChange={(next) => update({ themeMode: next })}
                 />
               </Preference>
-              <Preference label={t('profile.language')} hint={t('settings.languageHint')}>
+              <Preference label={t('profile.language')}>
                 <SegmentedControl
                   segments={languageSegments}
                   value={language}
@@ -250,7 +247,6 @@ export default function ProfileScreen() {
           <Card padding="xxs">
             <NavRow
               title={t('profileScreen.trainingPrefs')}
-              description={t('profileScreen.trainingPrefsSubtitle')}
               theme={theme}
               icon="target"
               topDivider={false}
@@ -258,14 +254,12 @@ export default function ProfileScreen() {
             />
             <NavRow
               title={t('profileScreen.notifications')}
-              description={t('profileScreen.notificationsSubtitle')}
               theme={theme}
               icon="bell"
               onPress={() => router.push(routes.settingsNotifications())}
             />
             <NavRow
               title={t('profileScreen.aboutTitle')}
-              description={t('profileScreen.aboutSubtitle')}
               theme={theme}
               icon="info"
               onPress={() => router.push(routes.settingsAbout())}
@@ -286,26 +280,11 @@ export default function ProfileScreen() {
 
 /* ------------------------------------------------------------------ pieces -- */
 
-/**
- * A label, its explanation, and the control beneath both.
- *
- * The hint is not decoration: it says what the control changes before the user turns it.
- */
-function Preference({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint: string;
-  children: React.ReactNode;
-}) {
+/** A label and the control beneath it. */
+function Preference({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <View style={{ gap: spacing.sm }}>
       <Txt variant="strong">{label}</Txt>
-      <Txt variant="caption" tone="muted">
-        {hint}
-      </Txt>
       {children}
     </View>
   );

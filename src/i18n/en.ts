@@ -64,7 +64,6 @@ export const en = {
 
   accent: {
     title: 'Accent colour',
-    hint: 'Colours buttons, the selected tab and the charts. Wallpaper follows your Android theme.',
     kinetiq: 'Kinetiq lime',
     system: 'Wallpaper colours',
     ocean: 'Ocean blue',
@@ -108,7 +107,6 @@ export const en = {
     dark: 'Dark',
     english: 'English',
     italian: 'Italiano',
-    languageHint: 'Changes everything in the app straight away.',
   },
 
   // --- group-b ---
@@ -429,15 +427,10 @@ export const en = {
     dayWord_one: 'day',
     dayWord_other: 'days',
     bestStreak: 'Best streak {count} {word}',
-    unitsHint: 'Affects every weight in the app: kilograms or pounds.',
-    appearanceHint: 'Dark mode is a designed palette, not inverted colours.',
     app: 'App',
     trainingPrefs: 'Training preferences',
-    trainingPrefsSubtitle: 'Default rest, auto-start, haptics, weekly goal',
     notifications: 'Notifications',
-    notificationsSubtitle: 'Rest timer, reminders, permission',
     aboutTitle: 'About Kinetiq',
-    aboutSubtitle: 'Version, data, the exercise catalog',
     privacyNote: 'Routines, history and settings live on this device. Only exercise search leaves it.',
     headlineNothing: 'Nothing logged this week',
     headlineGoalMet: 'Goal met',
