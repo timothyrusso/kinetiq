@@ -41,6 +41,7 @@ async function persist(next: SettingsState): Promise<void> {
     await Promise.all([
       setSetting(SETTING_KEYS.unitSystem, next.unitSystem),
       setSetting(SETTING_KEYS.themeMode, next.themeMode),
+      setSetting(SETTING_KEYS.accentColor, next.accentColor),
       setSetting(SETTING_KEYS.language, next.language),
       setSetting(SETTING_KEYS.haptics, next.hapticsEnabled),
       setSetting(SETTING_KEYS.notifications, next.notificationsEnabled),

@@ -1,13 +1,14 @@
 /**
  * Semantic theme. Components consume `theme.*` only: never raw palette ramps, * so light and dark can diverge freely.
  *
- * Dark is a deep blue-black "training at night" surface with volt accent.
+ * Dark is a true-black "training at night" surface with neutral grey lifts and a volt accent.
  * Light is warm paper with a *deeper* volt accent for contrast: the bright lime
  * that pops on ink is illegible on paper, so the accent itself shifts hue.
  */
 import { useMemo } from 'react';
 import { useColorScheme, useWindowDimensions } from 'react-native';
 import { useThemeMode } from '@/settings';
+import { useAccentColors } from './accent';
 import type { ActivityKind } from '@/domain/types';
 import {
   palette,
@@ -132,13 +133,13 @@ const darkColors = {
   surface: palette.ink700,
   surfaceRaised: palette.ink600,
   surfacePressed: palette.ink500,
-  overlay: 'rgba(11, 15, 24, 0.82)',
+  overlay: 'rgba(0, 0, 0, 0.82)',
   overlayBorder: 'rgba(255, 255, 255, 0.09)',
 
-  text: '#F4F7FB',
-  textMuted: '#98A3B8',
-  textFaint: '#657288',
-  textInverse: '#0A0E18',
+  text: '#F5F5F7',
+  textMuted: '#A1A1A6',
+  textFaint: '#6E6E73',
+  textInverse: '#000000',
 
   accent: palette.volt,
   accentSoft: 'rgba(198, 242, 78, 0.14)',
@@ -166,7 +167,7 @@ const darkColors = {
   borderStrong: palette.ink400,
   hairline: palette.inkHairline,
   placeholder: palette.ink600,
-  scrim: 'rgba(3, 5, 10, 0.72)',
+  scrim: 'rgba(0, 0, 0, 0.72)',
   focusRing: 'rgba(198, 242, 78, 0.45)',
 
   tone: {
@@ -177,7 +178,7 @@ const darkColors = {
   },
 
   chartGrid: 'rgba(255, 255, 255, 0.055)',
-  chartAxis: '#6C7A91',
+  chartAxis: '#6E6E73',
   series: [palette.volt, palette.spark, palette.azure, palette.coral] as [
     string,
     string,
@@ -313,7 +314,7 @@ function buildTheme(mode: ThemeMode, scale = 1): Theme {
       surface: isDark
         ? ['rgba(255,255,255,0.05)', 'rgba(255,255,255,0)']
         : ['rgba(10,14,24,0.035)', 'rgba(10,14,24,0)'],
-      fade: isDark ? ['rgba(7,9,15,0)', 'rgba(7,9,15,1)'] : ['rgba(251,251,248,0)', 'rgba(251,251,248,1)'],
+      fade: isDark ? ['rgba(0,0,0,0)', 'rgba(0,0,0,1)'] : ['rgba(251,251,248,0)', 'rgba(251,251,248,1)'],
     },
     shadows,
     spacing,
@@ -353,7 +354,21 @@ export function useAppTheme(): Theme {
   const systemDark = useColorScheme() === 'dark';
   const [, resolved] = useThemeMode(systemDark);
   const { width, height } = useWindowDimensions();
-  return useThemeFor(resolved, Math.max(width, height));
+  const base = useThemeFor(resolved, Math.max(width, height));
+  // Android's accent preference, or `null` for the brand accent (always null on iOS).
+  const accent = useAccentColors(resolved);
+  return useMemo(() => {
+    if (accent === null) return base;
+    return {
+      ...base,
+      colors: { ...base.colors, ...accent },
+      gradients: { ...base.gradients, accent: [accent.accent, accent.accentStrong] },
+      shadows: {
+        ...base.shadows,
+        accent: base.shadows.accent ? { ...base.shadows.accent, shadowColor: accent.accent } : null,
+      },
+    };
+  }, [accent, base]);
 }
 
 /** Status-bar style that keeps contrast against the theme canvas. */

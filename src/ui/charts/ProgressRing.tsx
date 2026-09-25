@@ -139,6 +139,11 @@ export const ProgressRing = memo(function ProgressRing({
                   // Scales with the ring so a 56pt ring and a 140pt ring are both
                   // "the number in the middle" rather than needing per-call sizes.
                   fontSize: size * (compact ? 0.28 : 0.24),
+                  // A fixed line box and no Android font padding, so the numeral's optical centre
+                  // is the ring's centre on both platforms rather than a few points below it.
+                  lineHeight: size * (compact ? 0.28 : 0.24) * 1.15,
+                  includeFontPadding: false,
+                  textAlign: 'center',
                   color: theme.colors.text,
                 },
               ]}

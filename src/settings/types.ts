@@ -23,9 +23,19 @@ const DEFAULT_REMINDER: ReminderSettings = {
  * Everything the user can change. Kept flat and small on purpose: it is read by
  * render code, so a nested shape would mean a new subscription per section.
  */
+/**
+ * Accent colours offered on Android. `system` is Material You (the wallpaper palette, Android
+ * 12+); the named ones are seed colours the Material 3 generator turns into a full light and dark
+ * palette, so each keeps its contrast in both modes.
+ */
+export const ACCENT_CHOICES = ['kinetiq', 'system', 'ocean', 'sunset', 'berry', 'ruby'] as const;
+export type AccentChoice = (typeof ACCENT_CHOICES)[number];
+
 export type SettingsState = {
   unitSystem: UnitSystem;
   themeMode: ThemeMode;
+  /** Android only: the accent colour. `kinetiq` is the brand lime; `system` follows the wallpaper. */
+  accentColor: AccentChoice;
   /** 'system' follows the device's preferred languages; the others force one. */
   language: Language;
   hapticsEnabled: boolean;
@@ -42,6 +52,7 @@ export type SettingsState = {
 export const DEFAULT_SETTINGS: SettingsState = {
   unitSystem: 'metric',
   themeMode: 'system',
+  accentColor: 'kinetiq',
   // `system` so a device set to Italian is in Italian on first launch, without being asked.
   language: 'system',
   hapticsEnabled: true,
@@ -112,6 +123,9 @@ export function normaliseSettings(
     unitSystem: s.unitSystem === 'imperial' ? 'imperial' : 'metric',
     themeMode:
       s.themeMode === 'light' || s.themeMode === 'dark' ? s.themeMode : 'system',
+    accentColor: (ACCENT_CHOICES as readonly string[]).includes(s.accentColor ?? '')
+      ? (s.accentColor as AccentChoice)
+      : DEFAULT_SETTINGS.accentColor,
     // Validated the same way as the others: a persisted value from an older build, or a hand
     // edited database, must not put an unknown language code into the catalog lookup.
     language: s.language === 'en' || s.language === 'it' ? s.language : 'system',

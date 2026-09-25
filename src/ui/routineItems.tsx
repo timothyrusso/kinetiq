@@ -34,9 +34,11 @@ import { Button } from '@/ui/controls/Button';
 import { MetaLine } from '@/ui/display/MetaLine';
 import { TagRow } from '@/ui/display/TagRow';
 import { exerciseTags } from '@/ui/display/exerciseTags';
+import { Image } from 'expo-image';
+import { useExerciseResolution } from '@/queries/useExercises';
 import { haptics } from '@/services/haptics';
 import { useAppTheme, type Theme } from '@/theme/theme';
-import { spacing, touchTarget } from '@/theme/tokens';
+import { palette, spacing, touchTarget } from '@/theme/tokens';
 import {
   formatWeight,
   repsFromRange,
@@ -327,16 +329,10 @@ export const ItemEditorForm = memo(function ItemEditorForm({
         ) : null}
       </FormSection>
 
-      {libraryTags.length > 0 || snapshot?.instructions ? (
-        <FormSection title={t('itemEditor.fromLibrary')}>
-          <TagRow tags={libraryTags} theme={theme} />
-          {snapshot?.instructions ? (
-            <Txt variant="caption" tone="muted">
-              {snapshot.instructions}
-            </Txt>
-          ) : null}
-        </FormSection>
-      ) : null}
+      <FormSection title={t('itemEditor.fromLibrary')}>
+        {libraryTags.length > 0 ? <TagRow tags={libraryTags} theme={theme} /> : null}
+        <ExerciseAbout exerciseId={item.exerciseId} />
+      </FormSection>
 
       {onRemove === undefined ? null : (
         <FormFooter>
@@ -378,3 +374,54 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 } satisfies Record<string, ViewStyle>);
+
+/**
+ * What the library says about the exercise: its picture and its description, under the
+ * targets so adjusting sets and reps never has to scroll past them.
+ *
+ * Read through `useExerciseResolution`, not the snapshot alone: a snapshot captured from a
+ * search row often has no description and only a thumbnail, and the resolution fills both in
+ * from wger (or from the stored copy offline). A missing description is said, not hidden.
+ */
+function ExerciseAbout({ exerciseId }: { exerciseId: string }) {
+  const { t } = useT();
+  const detail = useExerciseResolution(exerciseId);
+  const exercise = detail.exercise;
+  const image = exercise?.imageUrl ?? exercise?.thumbnailUrl ?? null;
+  const instructions = exercise?.instructions?.trim() || null;
+
+  if (detail.isLoading) {
+    return (
+      <Txt variant="caption" tone="faint">
+        {t('itemEditor.loadingDetails')}
+      </Txt>
+    );
+  }
+  return (
+    <View style={aboutStyles.about}>
+      {image !== null ? (
+        <View style={[aboutStyles.art, { backgroundColor: palette.white }]}>
+          <Image
+            source={{ uri: image }}
+            recyclingKey={image}
+            contentFit="contain"
+            style={aboutStyles.image}
+            accessibilityLabel={t('itemEditor.imageA11y', { name: exercise?.name ?? '' })}
+          />
+        </View>
+      ) : null}
+      <Txt variant="caption" tone={instructions ? 'muted' : 'faint'}>
+        {instructions ??
+          t(detail.fetchable ? 'exerciseDetail.noDescription' : 'exerciseDetail.unknownBuiltIn')}
+      </Txt>
+    </View>
+  );
+}
+
+const aboutStyles = StyleSheet.create({
+  about: { gap: spacing.md },
+  // Technical drawings on a white card in both themes: most wger art is black line work on a
+  // transparent background, which vanishes on the dark canvas.
+  art: { borderRadius: spacing.md, overflow: 'hidden', padding: spacing.sm },
+  image: { width: '100%', aspectRatio: 4 / 3 },
+});

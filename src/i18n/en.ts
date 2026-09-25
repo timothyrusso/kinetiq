@@ -32,32 +32,18 @@ export const en = {
     add: 'Add',
     retry: 'Try again',
     back: 'Go back',
-    noValue: '-',
     system: 'System',
   },
 
   // --- group-a ---
-  tabsHome: {
-    minutesUnit: 'min',
-    nowBar: 'Now',
-  },
   tabsProfile: {
     height: '{height} cm',
     age_one: '{count} year old',
     age_other: '{count} years old',
-    tonnes: 't',
-    hours: 'h',
-    lastFourWeeks: 'Last 4 weeks',
   },
   // --- end group-a ---
 
   home: {
-    thisWeek: 'This week',
-    trainingLoad: 'Training load',
-    minutesPerWeek: 'Minutes per week · last {count} weeks',
-    weeklyAverage: 'Weekly average',
-    loadA11y: 'Minutes trained per week: {weeks}',
-    loadA11yWeek: '{week}, {value} minutes',
     startWorkout: 'Start a workout',
     historyError: 'Your workouts could not be loaded',
     emptyTitle: 'No workouts yet',
@@ -65,6 +51,27 @@ export const en = {
       'Start a workout from the Workout tab. Every session you finish lands here, newest first.',
   },
 
+
+  heatmap: {
+    title: 'Training days',
+    eyebrow: 'Minutes per day · last {count} weeks',
+    workouts_one: '{count} workout in {weeks} weeks',
+    workouts_other: '{count} workouts in {weeks} weeks',
+    a11y: 'Training days: you trained on {days} days in the last {weeks} weeks, {workouts}',
+    less: 'Less',
+    more: 'More',
+  },
+
+  accent: {
+    title: 'Accent colour',
+    hint: 'Colours buttons, the selected tab and the charts. Wallpaper follows your Android theme.',
+    kinetiq: 'Kinetiq lime',
+    system: 'Wallpaper colours',
+    ocean: 'Ocean blue',
+    sunset: 'Sunset orange',
+    berry: 'Berry purple',
+    ruby: 'Ruby red',
+  },
 
   workout: {
     title: 'Workout',
@@ -422,9 +429,6 @@ export const en = {
     dayWord_one: 'day',
     dayWord_other: 'days',
     bestStreak: 'Best streak {count} {word}',
-    sessions: 'Sessions',
-    time: 'Time',
-    volume: 'Volume',
     unitsHint: 'Affects every weight in the app: kilograms or pounds.',
     appearanceHint: 'Dark mode is a designed palette, not inverted colours.',
     app: 'App',
@@ -597,6 +601,8 @@ export const en = {
   },
 
   itemEditor: {
+    loadingDetails: 'Loading the exercise details…',
+    imageA11y: 'How to do {name}',
     sets: 'Sets',
     reps: 'Reps',
     repsSuffix: 'reps',

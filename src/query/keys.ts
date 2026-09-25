@@ -27,6 +27,7 @@ export const queryKeys = {
     /** Keyed by the requested window in weeks; the start date is derived from it
      * inside the query, so it would be redundant (and stale-prone) in the key. */
     summary: (rangeWeeks: number) => ['progress', 'summary', { rangeWeeks }] as const,
+    heatmap: (weeks: number) => ['progress', 'heatmap', { weeks }] as const,
   },
 
   routines: {

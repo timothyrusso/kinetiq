@@ -17,6 +17,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { activityRepository } from '@/persistence';
 import type { Activity } from '@/domain/types';
+import type { HeatmapDay } from '@/ui/charts/HeatmapCalendar';
 import { queryKeys } from '@/query/keys';
 import { addDays, startOfDay, startOfWeek } from '@/utils/format';
 import { sum } from '@/utils/functional';
@@ -157,4 +158,49 @@ function clamp01(value: number): number {
 function formatWeekLabel(weekStart: number): string {
   const date = new Date(weekStart);
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+export type TrainingHeatmap = {
+  /** Oldest first, from a Monday, `weeks * 7` long. Days after today are `dayStart: null`. */
+  days: HeatmapDay[];
+  workouts: number;
+};
+
+/**
+ * Minutes trained per day for the heatmap, the last `weeks` weeks ending with this one.
+ *
+ * Built here rather than on screen: a few hundred rows bucketed by local midnight is exactly
+ * the grouping CLAUDE.md keeps out of render. Days later than today are `null` so the grid can
+ * draw "not yet" differently from "rested".
+ */
+export function useTrainingHeatmap(weeks: number) {
+  return useQuery({
+    queryKey: queryKeys.progress.heatmap(weeks),
+    staleTime: PROGRESS_STALE_TIME_MS,
+    queryFn: async (): Promise<TrainingHeatmap> => {
+      const now = new Date();
+      const today = startOfDay(now).getTime();
+      const gridStart = startOfWeek(addDays(now, -7 * (weeks - 1))).getTime();
+      const activities = await activityRepository.list({ from: gridStart, order: 'asc' });
+
+      const minutes = new Map<number, number>();
+      for (const activity of activities) {
+        const day = startOfDay(activity.startedAt).getTime();
+        minutes.set(day, (minutes.get(day) ?? 0) + activity.durationSeconds / 60);
+      }
+
+      const days: HeatmapDay[] = [];
+      for (let i = 0; i < weeks * 7; i += 1) {
+        // `addDays` rather than `+ i * 86_400_000`: a DST change inside the window would
+        // otherwise shift every later square by an hour and off its midnight key.
+        const dayStart = startOfDay(addDays(new Date(gridStart), i)).getTime();
+        days.push(
+          dayStart > today
+            ? { dayStart: null, value: 0 }
+            : { dayStart, value: Math.round(minutes.get(dayStart) ?? 0) },
+        );
+      }
+      return { days, workouts: activities.length };
+    },
+  });
 }

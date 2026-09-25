@@ -34,32 +34,18 @@ export const it: Copy = {
     add: 'Aggiungi',
     retry: 'Riprova',
     back: 'Indietro',
-    noValue: '-',
     system: 'Sistema',
   },
 
   // --- group-a ---
-  tabsHome: {
-    minutesUnit: 'min',
-    nowBar: 'Ora',
-  },
   tabsProfile: {
     height: '{height} cm',
     age_one: '{count} anno',
     age_other: '{count} anni',
-    tonnes: 't',
-    hours: 'h',
-    lastFourWeeks: 'Ultime 4 settimane',
   },
   // --- end group-a ---
 
   home: {
-    thisWeek: 'Questa settimana',
-    trainingLoad: 'Carico di lavoro',
-    minutesPerWeek: 'Minuti a settimana · ultime {count} settimane',
-    weeklyAverage: 'Media settimanale',
-    loadA11y: 'Minuti di allenamento a settimana: {weeks}',
-    loadA11yWeek: '{week}, {value} minuti',
     startWorkout: 'Inizia un allenamento',
     historyError: 'Impossibile caricare i tuoi allenamenti',
     emptyTitle: 'Nessun allenamento',
@@ -67,6 +53,27 @@ export const it: Copy = {
       'Inizia un allenamento dalla scheda Allenamento. Ogni sessione che completi arriva qui, dalla più recente.',
   },
 
+
+  heatmap: {
+    title: 'Giorni di allenamento',
+    eyebrow: 'Minuti al giorno · ultime {count} settimane',
+    workouts_one: '{count} allenamento in {weeks} settimane',
+    workouts_other: '{count} allenamenti in {weeks} settimane',
+    a11y: 'Giorni di allenamento: ti sei allenato in {days} giorni nelle ultime {weeks} settimane, {workouts}',
+    less: 'Meno',
+    more: 'Più',
+  },
+
+  accent: {
+    title: 'Colore principale',
+    hint: 'Colora i pulsanti, la scheda selezionata e i grafici. Sfondo segue il tema di Android.',
+    kinetiq: 'Lime Kinetiq',
+    system: 'Colori dello sfondo',
+    ocean: 'Blu oceano',
+    sunset: 'Arancione tramonto',
+    berry: 'Viola mirtillo',
+    ruby: 'Rosso rubino',
+  },
 
   workout: {
     title: 'Allenamento',
@@ -425,9 +432,6 @@ export const it: Copy = {
     dayWord_one: 'giorno',
     dayWord_other: 'giorni',
     bestStreak: 'Record di fila {count} {word}',
-    sessions: 'Sessioni',
-    time: 'Tempo',
-    volume: 'Volume',
     unitsHint: "Vale per ogni peso nell'app: chilogrammi o libbre.",
     appearanceHint: 'La modalità scura è una palette progettata, non colori invertiti.',
     app: 'App',
@@ -601,6 +605,8 @@ export const it: Copy = {
   },
 
   itemEditor: {
+    loadingDetails: 'Caricamento dei dettagli dell’esercizio…',
+    imageA11y: 'Come si esegue {name}',
     sets: 'Serie',
     reps: 'Ripetizioni',
     repsSuffix: 'rip',
