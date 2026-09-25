@@ -345,59 +345,6 @@ export const ExerciseThumb = memo(function ExerciseThumb({
 });
 
 /**
- * Monogram avatar for Profile. No photo: there is no camera flow in scope, and a
- * stock face would be the one element in the app that is obviously not the user.
- */
-export const Avatar = memo(function Avatar({
-  name,
-  theme,
-  size = 40,
-  style,
-}: {
-  name: string;
-  theme: Theme;
-  size?: number;
-  style?: StyleProp<ViewStyle>;
-}) {
-  return (
-    <View
-      style={[
-        {
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: theme.colors.secondarySoft,
-          borderWidth: StyleSheet.hairlineWidth,
-          borderColor: theme.colors.border,
-        },
-        style,
-      ]}
-      role="img"
-      accessibilityLabel={name}
-    >
-      <CellText
-        text={initials(name)}
-        variant="subhead"
-        weight="700"
-        color={theme.colors.text}
-      />
-    </View>
-  );
-});
-
-/** Two-letter monogram. "Adrian Russo" → "AR", "athlete" → "A". */
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  const first = parts[0]?.[0] ?? '';
-  const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? '') : '';
-  const out = `${first}${last}`.toUpperCase();
-  // An empty monogram renders as an empty circle; a hyphen says "no name set".
-  return out.length > 0 ? out : '-';
-}
-
-/**
  * A catalog row from the remote exercise provider.
  *
  * `subtitle` arrives pre-formatted for the same reason `ActivityRow`'s does: which of
@@ -562,3 +509,13 @@ export const ActionRow = memo(function ActionRow({
     </AnimatedPressable>
   );
 });
+
+/** Two-letter monogram. "Adrian Russo" → "AR", "athlete" → "A". */
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const first = parts[0]?.[0] ?? '';
+  const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? '') : '';
+  const out = `${first}${last}`.toUpperCase();
+  // An empty monogram renders as an empty circle; a hyphen says "no name set".
+  return out.length > 0 ? out : '-';
+}
