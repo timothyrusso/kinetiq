@@ -730,7 +730,7 @@ export const en = {
     exportSets: 'Every set, as a table (CSV)',
     exportRoutines: 'Routines (JSON)',
     exportFooter:
-      'Files open in the share sheet: save them to Files, AirDrop them, or send them to an AI chat. Weights are always in kilograms. Demo workouts are left out.',
+      'Files open in the share sheet: save them, send them to another device, or share them with an AI chat. Weights are always in kilograms. Demo workouts are left out.',
     exportFailed: 'The export could not be created. Try again.',
     importTitle: 'Import routines',
     pasteClipboard: 'Paste from clipboard',

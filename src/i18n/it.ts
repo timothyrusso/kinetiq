@@ -734,7 +734,7 @@ export const it: Copy = {
     exportSets: 'Tutte le serie, in tabella (CSV)',
     exportRoutines: 'Schede (JSON)',
     exportFooter:
-      "I file si aprono nel menu di condivisione: salvali in File, inviali con AirDrop o a una chat con un'IA. I pesi sono sempre in chilogrammi. Gli allenamenti demo sono esclusi.",
+      "I file si aprono nel menu di condivisione: salvali, inviali a un altro dispositivo o condividili con una chat con un'IA. I pesi sono sempre in chilogrammi. Gli allenamenti demo sono esclusi.",
     exportFailed: "Non è stato possibile creare l'esportazione. Riprova.",
     importTitle: 'Importa schede',
     pasteClipboard: 'Incolla dagli appunti',
