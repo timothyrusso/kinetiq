@@ -34,8 +34,7 @@ const STALE_TIME_MS = 2 * 60_000;
  * `retryAfterSeconds` tells us how long to wait, while an offline error must not
  * be retried at all: the connection is gone, and hammering it drains battery and
  * makes a dead network look like a slow one. Offline recovery is the `online`
- * manager's job: it resumes paused mutations and refetches pending queries the
- * moment the interface comes back.
+ * manager's job: it resumes paused retries the moment the interface comes back.
  */
 const RETRY_BUDGET: Record<ApiError['kind'], number> = {
   'rate-limit': 3,
@@ -91,6 +90,13 @@ function createQueryClient(): QueryClient {
         refetchOnReconnect: false,
         refetchOnMount: false,
         refetchOnWindowFocus: false,
+        // `offlineFirst`, not the library's default `online`. Most queries here read SQLite,
+        // and `online` pauses every query while the OS reports no connection: in airplane
+        // mode Home sat on skeletons forever, and the exercise picker said "Start typing"
+        // over a request that never ran. `offlineFirst` always runs the first attempt, so a
+        // local read succeeds and a remote one fails fast with the offline error the screens
+        // already know how to show; only retries wait for the network.
+        networkMode: 'offlineFirst',
         retry: shouldRetry,
         retryDelay,
         // An error that survives retries stays on screen as an error state; a
@@ -99,8 +105,9 @@ function createQueryClient(): QueryClient {
         throwOnError: false,
       },
       // Mutations here are local-disk writes; a retry would replay a partial
-      // transaction with no way to dedupe it.
-      mutations: { retry: false },
+      // transaction with no way to dedupe it. `always`, because a write to disk does not
+      // need a network, and under the default it would be parked until one came back.
+      mutations: { retry: false, networkMode: 'always' },
     },
   });
 }

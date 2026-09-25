@@ -46,6 +46,7 @@ export const en = {
     age_one: '{count} year old',
     age_other: '{count} years old',
     tonnes: 't',
+    hours: 'h',
     lastFourWeeks: 'Last 4 weeks',
   },
   // --- end group-a ---
@@ -424,7 +425,7 @@ export const en = {
     sessions: 'Sessions',
     time: 'Time',
     volume: 'Volume',
-    unitsHint: 'Affects every distance, weight and pace in the app.',
+    unitsHint: 'Affects every weight in the app: kilograms or pounds.',
     appearanceHint: 'Dark mode is a designed palette, not inverted colours.',
     app: 'App',
     trainingPrefs: 'Training preferences',

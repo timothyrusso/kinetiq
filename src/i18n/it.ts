@@ -48,6 +48,7 @@ export const it: Copy = {
     age_one: '{count} anno',
     age_other: '{count} anni',
     tonnes: 't',
+    hours: 'h',
     lastFourWeeks: 'Ultime 4 settimane',
   },
   // --- end group-a ---
@@ -427,7 +428,7 @@ export const it: Copy = {
     sessions: 'Sessioni',
     time: 'Tempo',
     volume: 'Volume',
-    unitsHint: "Vale per ogni distanza, peso e ritmo nell'app.",
+    unitsHint: "Vale per ogni peso nell'app: chilogrammi o libbre.",
     appearanceHint: 'La modalità scura è una palette progettata, non colori invertiti.',
     app: 'App',
     trainingPrefs: 'Preferenze di allenamento',
