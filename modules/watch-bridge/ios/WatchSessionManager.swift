@@ -58,8 +58,9 @@ final class WatchSessionManager: NSObject, WCSessionDelegate {
           self.reply(to: requestId, id: previous.id)
           return
         }
+        // The fresh document, under the old id: it repairs a stored copy that went bad.
         self.store.writeLatestSnapshot(
-          .init(id: previous.id, payload: previous.payload, contentKey: contentKey, delivered: false)
+          .init(id: previous.id, payload: payload, contentKey: contentKey, delivered: false)
         )
       } else {
         self.store.writeLatestSnapshot(
