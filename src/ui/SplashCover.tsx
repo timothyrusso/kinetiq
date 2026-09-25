@@ -44,7 +44,10 @@ export const SplashCover = memo(function SplashCover({
   const skin = osScheme === 'dark' ? NATIVE_SPLASH.dark : NATIVE_SPLASH.light;
 
   useEffect(() => {
-    onFadeStart?.();
+    // After this view's first frame is presented, not merely committed: hiding the native
+    // splash earlier shows whatever is under this cover for a frame.
+    const frame = requestAnimationFrame(() => onFadeStart?.());
+    return () => cancelAnimationFrame(frame);
   }, [onFadeStart]);
 
   return (
