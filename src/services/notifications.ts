@@ -154,18 +154,6 @@ export async function notifyRestComplete(
 }
 
 /**
- * A PR deserves the one celebratory notification the app sends. Immediate (a `null`
- * trigger posts now), so there is nothing to retract and the identifier is of no use, * returned anyway, because `post` returns it and a second signature would be a second
- * thing to keep honest.
- */
-export async function notifyPersonalRecord(
-  exerciseName: string,
-  detail: string,
-): Promise<string | null> {
-  return post({ title: tr('push.newRecord', { name: exerciseName }), body: detail }, null);
-}
-
-/**
  * A single immediate alert with honest "this is a test" copy, for the settings screen that
  * offers to prove delivery works.
  *
@@ -215,7 +203,7 @@ export async function cancelScheduledNotification(identifier: string | null): Pr
  * rather than firing at 3 a.m. because they flew east. That is the behaviour a
  * training reminder wants.
  */
-export function nextReminderDate(reminder: ReminderSettings, now = new Date()): Date | null {
+function nextReminderDate(reminder: ReminderSettings, now = new Date()): Date | null {
   if (!reminder.enabled || reminder.days.length === 0) return null;
   const hour = Math.floor(reminder.minuteOfDay / 60);
   const minute = reminder.minuteOfDay % 60;

@@ -130,7 +130,6 @@ export default function WorkoutScreen() {
     [routines.count, t],
   );
 
-
   return (
     <>
       <ScreenHeader title={t('workout.title')} largeTitle />
@@ -321,8 +320,8 @@ function StartEmptyWorkout({ onStarted }: { onStarted: () => void }) {
  * elsewhere) redraws only the rows whose routine changed. `t` is a prop rather than a `tr()`
  * call so a language change reaches a row its memo would otherwise skip.
  *
- * The exercise count stays first: the row's spoken label is "<name>. <items joined>", and the
- * offline gate finds routine rows by the "N exercises ·" at its start.
+ * The exercise count stays first: the row's spoken label is "<name>. <items joined>", so the
+ * count is the first fact VoiceOver reads after the name.
  */
 const RoutineItem = memo(function RoutineItem({
   routine,

@@ -12,7 +12,6 @@
  * a working connection, while guessing "online" costs one failed request.
  */
 import { addNetworkStateListener, getNetworkStateAsync } from 'expo-network';
-import { useSyncExternalStore } from 'react';
 
 export type NetworkStatus = {
   online: boolean;
@@ -22,7 +21,6 @@ export type NetworkStatus = {
 
 const listeners = new Set<() => void>();
 let status: NetworkStatus = { online: true, known: false };
-let started = false;
 let stop: (() => void) | null = null;
 
 function publish(next: NetworkStatus): void {
@@ -33,7 +31,6 @@ function publish(next: NetworkStatus): void {
 
 export function startNetworkStatus(): () => void {
   if (stop) return stop;
-  started = true;
 
   const subscription = addNetworkStateListener((state) => {
     publish({ online: state.isInternetReachable !== false, known: true });
@@ -50,22 +47,13 @@ export function startNetworkStatus(): () => void {
   stop = () => {
     subscription.remove();
     stop = null;
-    started = false;
     status = { online: true, known: false };
   };
   return stop;
 }
 
-export function isNetworkStarted(): boolean {
-  return started;
-}
-
 export function getNetworkStatus(): NetworkStatus {
   return status;
-}
-
-export function isOnlineNow(): boolean {
-  return status.online;
 }
 
 export function subscribeNetworkStatus(listener: () => void): () => void {
@@ -73,16 +61,4 @@ export function subscribeNetworkStatus(listener: () => void): () => void {
   return () => {
     listeners.delete(listener);
   };
-}
-
-export function useNetworkStatus(): NetworkStatus {
-  return useSyncExternalStore(subscribeNetworkStatus, getNetworkStatus, getNetworkStatus);
-}
-
-export function useIsOnline(): boolean {
-  return useSyncExternalStore(
-    subscribeNetworkStatus,
-    () => status.online,
-    () => status.online,
-  );
 }

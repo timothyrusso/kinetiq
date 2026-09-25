@@ -44,10 +44,6 @@ export interface ExerciseProvider {
 /** Cursor used for the first page. Providers encode it however they like. */
 export const FIRST_PAGE: string | null = null;
 
-export function emptyFilter(query = ''): ExerciseFilter {
-  return { query, categoryId: null, equipmentId: null, muscleId: null };
-}
-
 export function emptyTaxonomy(): ExerciseTaxonomy {
   return { categories: [], equipment: [], muscles: [] };
 }

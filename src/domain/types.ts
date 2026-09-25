@@ -10,7 +10,7 @@
 /** Kinetiq records lifting sessions only; the kind is kept so stored rows stay self-describing. */
 export type ActivityKind = 'lift';
 
-export type StrengthMetrics = {
+type StrengthMetrics = {
   entries: StrengthEntry[];
   /** Sum of sets x reps x weight, kg. */
   totalVolumeKg: number;
@@ -93,7 +93,7 @@ export type Exercise = {
   externalId: number | null;
 };
 
-export type ExerciseSource = 'remote' | 'local';
+type ExerciseSource = 'remote' | 'local';
 
 /**
  * Frozen copy of an exercise stored alongside a routine/session. This is what
@@ -213,13 +213,4 @@ export type CompletedWorkout = {
   totalVolumeKg: number;
   totalSets: number;
   notes: string | null;
-};
-
-/* ---------------------------------------------------------------- record -- */
-
-export type Streak = {
-  current: number;
-  longest: number;
-  /** Day keys (YYYY-MM-DD) that count toward the streak. */
-  activeDays: string[];
 };

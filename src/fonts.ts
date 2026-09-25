@@ -29,7 +29,7 @@ import { JetBrainsMono_500Medium } from '@expo-google-fonts/jetbrains-mono/500Me
 import { JetBrainsMono_600SemiBold } from '@expo-google-fonts/jetbrains-mono/600SemiBold';
 import { loadAsync } from 'expo-font';
 
-export const APP_FONTS = {
+const APP_FONTS = {
   Inter_400Regular,
   Inter_500Medium,
   Inter_600SemiBold,

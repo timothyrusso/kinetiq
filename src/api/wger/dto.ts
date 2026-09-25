@@ -48,7 +48,7 @@ export type WgerImage = {
   is_ai_generated?: boolean;
 };
 
-export type WgerVideo = {
+type WgerVideo = {
   id: number;
   exercise: number;
   video: string;
@@ -62,7 +62,7 @@ export type WgerVideo = {
 };
 
 /** Author notes are objects, not strings, `{id, translation, comment}`. */
-export type WgerNote = { id: number; translation?: number; comment?: string | null };
+type WgerNote = { id: number; translation?: number; comment?: string | null };
 
 export type WgerTranslation = {
   id: number;

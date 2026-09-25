@@ -16,23 +16,9 @@
  *    where we must branch in JS: skipping a stagger, jumping to the end state.
  *    The information an animation carried still arrives; it arrives immediately.
  */
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Pressable, type ViewStyle } from 'react-native';
-import {
-  clamp,
-  createAnimatedComponent,
-  type AnimatedStyle,
-  Easing,
-  ReduceMotion,
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withDelay,
-  withRepeat,
-  withSpring,
-  withTiming,
-  type SharedValue,
-} from 'react-native-reanimated';
+import { createAnimatedComponent, type AnimatedStyle, Easing, ReduceMotion, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSpring, withTiming } from 'react-native-reanimated';
 import { motion } from '@/theme/tokens';
 
 // `clamp` comes from Reanimated, not `utils/functional`, and the difference is not style: every
@@ -48,23 +34,15 @@ import { motion } from '@/theme/tokens';
 // ---------------------------------------------------------------------------
 
 /** Press feedback: fast enough to read as instant, damped so it never wobbles. */
-export const pressSpring = {
+const pressSpring = {
   damping: 26,
   stiffness: 320,
   mass: 0.85,
   reduceMotion: ReduceMotion.System,
 } as const;
 
-/** Overshoot for a confirmation that should feel like it lands with weight. */
-export const popSpring = {
-  damping: 14,
-  stiffness: 200,
-  mass: 1,
-  reduceMotion: ReduceMotion.System,
-} as const;
-
-export const easeOut = Easing.out(Easing.cubic);
-export const easeInOut = Easing.inOut(Easing.quad);
+const easeOut = Easing.out(Easing.cubic);
+const easeInOut = Easing.inOut(Easing.quad);
 
 /**
  * Press feedback: a slight scale-down while held. Every tappable surface uses
@@ -83,26 +61,6 @@ export function usePressScale(min = 0.976) {
     pressed.value = withSpring(0, pressSpring);
   }, [pressed]);
   return { style, onPressIn, onPressOut, pressed };
-}
-
-// ---------------------------------------------------------------------------
-// Indeterminate and ambient
-// ---------------------------------------------------------------------------
-
-/** Continuous rotation for an indeterminate spinner. */
-export function useSpin(duration = 850): ReturnType<typeof useAnimatedStyle> {
-  const angle = useSharedValue(0);
-  useEffect(() => {
-    angle.value = withRepeat(
-      withTiming(Math.PI * 2, { duration, easing: Easing.linear }),
-      -1,
-      false,
-    );
-    return () => {
-      angle.value = 0;
-    };
-  }, [angle, duration]);
-  return useAnimatedStyle(() => ({ transform: [{ rotate: `${angle.value}rad` }] }));
 }
 
 /** Breathing opacity: the dot on a live-recording pill. */
@@ -155,124 +113,4 @@ export function useShimmer(width: number, period = 1250) {
     transform: [{ translateX: -width + travel.value * width * 2 }],
   }));
   return style;
-}
-
-// ---------------------------------------------------------------------------
-// Entrances and content transitions
-// ---------------------------------------------------------------------------
-
-/**
- * Staggered entrance for the cards in a screen.
- *
- * `index` is clamped by `maxSteps`: on a 200-row list, a card below the fold
- * must not begin its animation after the user has already scrolled past it, so
- * steps beyond the eighth all start together. That keeps the stagger where it
- * reads as craft and stops it reading as lag.
- */
-export function useEntrance(
-  index: number,
-  options: { stepMs?: number; distance?: number; maxSteps?: number; enabled?: boolean } = {},
-): ReturnType<typeof useAnimatedStyle> {
-  const { stepMs = 40, distance = 14, maxSteps = 7, enabled = true } = options;
-  const reduced = useReducedMotion();
-  const entered = useSharedValue(!enabled || reduced ? 1 : 0);
-  useEffect(() => {
-    if (!enabled || reduced) {
-      entered.value = 1;
-      return;
-    }
-    entered.value = withDelay(
-      Math.min(index, maxSteps) * stepMs,
-      withTiming(1, { duration: motion.base, easing: easeOut }),
-    );
-  }, [enabled, entered, index, maxSteps, reduced, stepMs]);
-  return useAnimatedStyle(() => ({
-    opacity: entered.value,
-    transform: [{ translateY: (1 - entered.value) * distance }],
-  }));
-}
-
-/**
- * Expands to a *measured* height. The caller measures with `onLayout` and hands
- * the number over, so the animation matches the content instead of a constant
- * that drifts the moment a translation makes the copy longer.
- */
-export function useMeasuredExpand(measured: number, open: boolean) {
-  const reduced = useReducedMotion();
-  const height = useSharedValue(open ? measured : 0);
-  useEffect(() => {
-    const target = open ? measured : 0;
-    height.value = reduced
-      ? target
-      : withTiming(target, { duration: motion.base, easing: easeOut });
-  }, [height, measured, open, reduced]);
-  return useAnimatedStyle(() => ({
-    height: height.value,
-    opacity: clamp(height.value / Math.max(1, measured), 0.2, 1),
-  }));
-}
-
-/** Cross-fades between two states of the same slot, e.g. a chart's empty vs filled. */
-export function useSwap(key: string | number, duration = motion.base) {
-  const reduced = useReducedMotion();
-  const progress = useSharedValue(reduced ? 1 : 0);
-  useEffect(() => {
-    progress.value = reduced ? 1 : 0;
-    progress.value = withTiming(1, { duration, easing: easeOut });
-  }, [duration, key, progress, reduced]);
-  return useAnimatedStyle(() => ({
-    opacity: progress.value,
-    transform: [{ translateY: (1 - progress.value) * 6 }],
-  }));
-}
-
-// ---------------------------------------------------------------------------
-// Numeric
-// ---------------------------------------------------------------------------
-
-/**
- * Eases a number toward a target so a value the user reads: volume, a rep
- * count, the big distance readout mid-run: rolls instead of snapping.
- * Re-targeting mid-roll continues from wherever it is, which is what makes fast
- * edits feel physical rather than glitchy. Render it with `<Animated.Text>`.
- */
-export function useRollingValue(initial = 0) {
-  const value = useSharedValue(initial);
-  const set = useCallback(
-    (next: number) => {
-      value.value = withTiming(next, { duration: motion.slow, easing: easeOut });
-    },
-    [value],
-  );
-  const snap = useCallback(
-    (next: number) => {
-      value.value = next;
-    },
-    [value],
-  );
-  return { value, set, snap };
-}
-
-/** Eased progress ring/Bar target: the primitive behind every chart. */
-export function useEasedTarget(target: number, duration = motion.deliberate): SharedValue<number> {
-  const reduced = useReducedMotion();
-  const value = useSharedValue(reduced ? target : 0);
-  useEffect(() => {
-    value.value = reduced ? target : withTiming(target, { duration, easing: easeOut });
-  }, [duration, reduced, target, value]);
-  return value;
-}
-
-/**
- * Maps a shared value through a pure function into a style, with the mapping
- * memoised so a list row does not rebuild its worklet closure on each render.
- * The identity of `map` is the dependency that matters, so callers should pass a
- * `useCallback`-stable function when the list is long.
- */
-export function useMappedStyle<T extends object>(
-  source: SharedValue<number>,
-  map: (t: number) => T,
-): ReturnType<typeof useAnimatedStyle> {
-  const stable = useMemo(() => map, [map]);
-  return useAnimatedStyle(() => stable(source.value) as ViewStyle);
 }

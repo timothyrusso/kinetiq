@@ -37,14 +37,14 @@ import { useSyncExternalStore } from 'react';
 
 import type { Exercise, ExerciseSnapshot, RoutineItem } from '@/domain/types';
 import { snapshotOf } from '@/persistence';
-import { clamp, localId, moveItem } from '@/utils/functional';
+import { clamp, moveItem } from '@/utils/functional';
 import {
   defaultItemTarget,
   toDraftItem,
   type ItemTarget,
 } from '@/routines/draft';
 
-export type DraftStatus = 'idle' | 'ready' | 'saving' | 'saved';
+type DraftStatus = 'idle' | 'ready' | 'saving' | 'saved';
 
 export type RoutineDraftState = {
   /** Null until the first exercise is added or the name is typed: the empty state. */
@@ -111,11 +111,6 @@ function subscribe(listener: () => void): () => void {
  */
 export function useRoutineDraft(): RoutineDraftState {
   return useSyncExternalStore(subscribe, () => state, () => EMPTY);
-}
-
-/** Non-hook read for non-component code (the `beforeRemove` guard needs it outside render). */
-export function getRoutineDraft(): RoutineDraftState {
-  return state;
 }
 
 /* ------------------------------------------------------------------ actions -- */
@@ -212,17 +207,6 @@ export function removeDraftItem(itemId: string): void {
   });
 }
 
-/** Duplicate a row directly below itself: the fastest way to build a superset progression. */
-export function duplicateDraftItem(itemId: string): void {
-  const index = state.items.findIndex((item) => item.id === itemId);
-  const source = state.items[index];
-  if (source === undefined) return;
-  const copy = { ...source, id: localId('rit') };
-  const next = [...state.items];
-  next.splice(index + 1, 0, copy);
-  set({ items: next });
-}
-
 export function clearDraft(): void {
   set(EMPTY);
 }
@@ -293,7 +277,7 @@ export function draftToPayload(): {
  * The first exercise plus the row count reads as a real routine list's auto-title and stays
  * unique enough to tell apart in a list of five.
  */
-export function derivedName(items: readonly RoutineItem[]): string {
+function derivedName(items: readonly RoutineItem[]): string {
   const first = items[0]?.exerciseName ?? 'New routine';
   return items.length > 1 ? `${first} + ${items.length - 1} more` : first;
 }

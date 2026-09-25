@@ -678,7 +678,6 @@ export const en = {
       'Your saved workouts and routines were not changed. Restarting the app will usually fix this.',
     routeErrorBody:
       'Your workouts, routines and settings were not affected. You can try the screen again, or go back and carry on elsewhere in the app.',
-    opensWorkout: 'Opens the full workout',
     opensRoutine: 'Opens the routine',
     opensExercise: 'Opens the exercise details',
     notSaving: 'Not saving to this device',
@@ -691,24 +690,12 @@ export const en = {
     restComplete: 'Rest complete',
     restNext: '{name} is done. Next up: {next}.',
     restLast: '{name} is done: you are finished here.',
-    newRecord: 'New record, {name}',
     testTitle: 'Notifications are working',
     testBody: 'This is the same channel your rest-timer alerts use.',
     reminderTitle: 'Time to train',
     reminderBody: 'Your session is waiting. Even a short one keeps the streak alive.',
   },
 
-  diag: {
-    schema: 'Schema',
-    migrationFailed: 'Migration failed at v{version}',
-    migrated: 'v{from} to v{to}',
-    firstRun: 'First run',
-    seeded: '{activities} workouts, {routines} routines seeded',
-    existing: 'Existing database',
-    sessionRestore: 'Session restore',
-    restored: 'Restored a paused workout',
-    nothingToRestore: 'Nothing to restore',
-  },
   states: {
     offlineTitle: 'You are offline',
     timeoutTitle: 'The server took too long',
@@ -716,8 +703,6 @@ export const en = {
     offlineMessage:
       'Anything you have saved is still here. Remote exercises and new images will come back as soon as you reconnect.',
     genericMessage: 'This one did not respond. Trying again usually works.',
-    nothingLogged: 'Nothing logged yet',
-    noExercisesYet: 'No exercises yet',
     activityGone: 'That workout is no longer stored.',
     autoStartOn: 'Counting down the moment you complete a set.',
     autoStartOff: 'You tap to begin resting, so a phone call between sets costs you nothing.',
@@ -735,17 +720,12 @@ export const en = {
   },
   // --- foundation ---
   headerActions: {
-    settings: 'Settings',
-    filter: 'Filters',
     add: 'Add',
     more: 'More options',
     play: 'Start',
     delete: 'Delete',
     save: 'Save',
     done: 'Done',
-    edit: 'Edit',
-    share: 'Share',
-    search: 'Search',
     cancel: 'Cancel',
   },
   textInput: {

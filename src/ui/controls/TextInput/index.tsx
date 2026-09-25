@@ -34,7 +34,7 @@ import { Row } from '@/ui/layout';
 import { Txt } from '@/ui/Text';
 import { fieldLabelModifiers } from './a11y';
 
-export type TextInputHandle = TextInputRef;
+type TextInputHandle = TextInputRef;
 
 export type TextInputProps = {
   label: string;

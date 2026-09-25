@@ -13,7 +13,7 @@ export type ReminderSettings = {
   days: number[];
 };
 
-export const DEFAULT_REMINDER: ReminderSettings = {
+const DEFAULT_REMINDER: ReminderSettings = {
   enabled: false,
   minuteOfDay: 18 * 60,
   days: [1, 3, 5],
@@ -56,9 +56,6 @@ export const DEFAULT_SETTINGS: SettingsState = {
   profile: { name: '', heightCm: 178, birthYear: 1994 },
   reminder: DEFAULT_REMINDER,
 };
-
-export const REST_PRESETS = [45, 60, 90, 120, 180] as const;
-export const GOAL_PRESETS = [3, 4, 5, 6] as const;
 
 function sameProfile(a: Profile | undefined, b: Profile): a is Profile {
   return (

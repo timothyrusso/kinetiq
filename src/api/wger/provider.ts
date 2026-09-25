@@ -57,7 +57,7 @@ const TAXONOMY_LIMIT = 100;
  * dropped: it is the fallback every screen renders when a row has no
  * translation in the user's language.
  */
-export function languageIdsFor(code: string | undefined, codes: Map<number, string>): number[] {
+function languageIdsFor(code: string | undefined, codes: Map<number, string>): number[] {
   const wanted = (code ?? '').slice(0, 2).toLowerCase();
   const ids: number[] = [];
   if (wanted && wanted !== 'en') {

@@ -30,11 +30,6 @@ export function trimNumber(value: number, maxFractionDigits = 2): string {
   });
 }
 
-export function fixed(value: number, digits = 1): string {
-  if (!Number.isFinite(value)) return '-';
-  return value.toFixed(digits);
-}
-
 /** 1234 -> "1,234" · 1234567 -> "1.23M" */
 export function compactNumber(value: number): string {
   if (!Number.isFinite(value)) return '-';
@@ -42,12 +37,6 @@ export function compactNumber(value: number): string {
   if (abs >= 1_000_000) return `${trimNumber(value / 1_000_000, 1)}M`;
   if (abs >= 10_000) return `${trimNumber(value / 1000, 1)}k`;
   return Math.round(value).toLocaleString('en-US');
-}
-
-/** Signed for deltas: 12 -> "+12", -3 -> "−3" (typographic minus). */
-export function signed(value: number, formatter: (n: number) => string = (n) => `${Math.round(n)}`): string {
-  if (Math.abs(value) < 0.05) return '0';
-  return value > 0 ? `+${formatter(value)}` : `−${formatter(Math.abs(value))}`;
 }
 
 /* --------------------------------------------------------------- duration -- */
@@ -97,7 +86,7 @@ export function formatWeight(kg: number, system: UnitSystem): string {
     : `${Math.round(kg * LB_PER_KG)} lb`;
 }
 
-export function toKilograms(value: number, system: UnitSystem): number {
+function toKilograms(value: number, system: UnitSystem): number {
   return system === 'metric' ? value : value / LB_PER_KG;
 }
 
@@ -187,40 +176,11 @@ export function addDays(date: DateInput, days: number): Date {
   return d;
 }
 
-export function daysBetween(a: DateInput, b: DateInput): number {
-  const ms = startOfDay(b).getTime() - startOfDay(a).getTime();
-  return Math.round(ms / 86_400_000);
-}
-
 /** Monday-anchored start of the ISO week containing `date`. */
 export function startOfWeek(date: DateInput): Date {
   const d = startOfDay(date);
   const dow = (d.getDay() + 6) % 7; // Mon=0 … Sun=6
   return addDays(d, -dow);
-}
-
-export function startOfMonth(date: DateInput): Date {
-  const d = startOfDay(date);
-  d.setDate(1);
-  return d;
-}
-
-export function isSameDay(a: DateInput, b: DateInput): boolean {
-  return startOfDay(a).getTime() === startOfDay(b).getTime();
-}
-
-
-/** Inverse of `formatDuration` for editing inputs: "4:30" -> 270 */
-export function parseDuration(input: string): number | null {
-  const trimmed = input.trim();
-  if (!trimmed) return null;
-  const parts = trimmed.split(':').map((p) => p.trim());
-  if (parts.some((p) => p === '' || !/^\d+$/.test(p))) return null;
-  const nums = parts.map(Number);
-  if (nums.length === 1) return nums[0]! * 60;
-  if (nums.length === 2) return nums[0]! * 60 + nums[1]!;
-  if (nums.length === 3) return nums[0]! * 3600 + nums[1]! * 60 + nums[2]!;
-  return null;
 }
 
 /** Parses a numeric field, rejecting garbage rather than coerced NaN. */
@@ -234,29 +194,6 @@ export function parseNumber(input: string): number | null {
 /** "Bench Press" + "overhead" -> "Bench Press · Overhead" (skips empties). */
 export function joinMiddleDot(parts: Array<string | null | undefined>): string {
   return parts.filter((p): p is string => Boolean(p && p.trim())).join('  ·  ');
-}
-
-/**
- * `"2 exercises"`, `"1 exercise"`: the number included.
- *
- * Two near-identical jobs used to hide behind one name called `pluralize`, and half the
- * call sites assumed the other half's contract: a template would write
- * `${total} ${pluralize(total, 'exercise')}` and render "904 904 exercises", while
- * `Rest timer · ${pluralize(days, 'day')} a week` needed the number the helper supplies.
- * Every reader checked the helper and still got it wrong, because the name describes the
- * grammar and not the return value. The names now say what comes out.
- */
-export function countNoun(count: number, singular: string, plural = `${singular}s`): string {
-  return `${count} ${count === 1 ? singular : plural}`;
-}
-
-/**
- * `"exercises"`, `"exercise"`: the number *not* included, for when the template already
- * prints it, which is most of the time: the count is usually a separate, styled, or
- * localised piece (`4,562 kg`, `4,562 <Txt>sets</Txt>`).
- */
-export function pluralWord(count: number, singular: string, plural = `${singular}s`): string {
-  return count === 1 ? singular : plural;
 }
 
 /** "12:45" style split for large metric displays, keeping units visually small. */

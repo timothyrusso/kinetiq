@@ -79,7 +79,7 @@ export function fontFamilyOf(variant: TxtVariant): string {
 }
 
 /** Semantic colours, so a screen says *why* something is muted, not which hex. */
-export type TxtTone =
+type TxtTone =
   | 'default'
   | 'muted'
   | 'faint'
@@ -165,43 +165,6 @@ export const Txt = memo(function Txt({
 
   return <RNText {...rest} style={combined} />;
 });
-
-/**
- * One string built from differently-styled runs, "12 **sets** · 4,820 kg".
- *
- * Composing these as sibling `Txt` in a `Row` breaks text layout (they cannot
- * wrap together), so nested `Text` is the only correct RN answer. `t` is the
- * plain-string child helper so the common case stays a one-liner.
- */
-export function TxtRun({
-  variant = 'body',
-  tone = 'default',
-  style,
-  children,
-}: {
-  variant?: TxtVariant;
-  tone?: TxtTone;
-  style?: StyleProp<TextStyle>;
-  children: React.ReactNode;
-}) {
-  const theme = useAppTheme();
-  const spec = VARIANTS[variant];
-  return (
-    <RNText
-      style={[
-        {
-          fontFamily: spec.family,
-          fontSize: spec.size,
-          lineHeight: Math.round(spec.size * spec.line),
-          color: toneColor(theme, tone),
-        },
-        style,
-      ]}
-    >
-      {children}
-    </RNText>
-  );
-}
 
 /** A label pair: the small caption above a value. The atom of every metric. */
 export function MetricLabel({

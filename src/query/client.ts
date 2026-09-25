@@ -16,7 +16,6 @@
  */
 import { MutationCache, QueryClient, focusManager, onlineManager } from '@tanstack/react-query';
 import { isApiError, type ApiError } from '@/api';
-import { attachQueryLogger } from './devLog';
 import { setupQueryAdapters, type QueryAdapters } from './adapters';
 
 /**
@@ -38,7 +37,7 @@ const STALE_TIME_MS = 2 * 60_000;
  * manager's job: it resumes paused mutations and refetches pending queries the
  * moment the interface comes back.
  */
-export const RETRY_BUDGET: Record<ApiError['kind'], number> = {
+const RETRY_BUDGET: Record<ApiError['kind'], number> = {
   'rate-limit': 3,
   timeout: 2,
   server: 2,
@@ -50,12 +49,12 @@ export const RETRY_BUDGET: Record<ApiError['kind'], number> = {
   unknown: 1,
 };
 
-export function shouldRetry(failureCount: number, error: Error): boolean {
+function shouldRetry(failureCount: number, error: Error): boolean {
   const kind = isApiError(error) ? error.kind : 'unknown';
   return failureCount < (RETRY_BUDGET[kind] ?? 0);
 }
 
-export function retryDelay(attemptIndex: number, error: Error): number {
+function retryDelay(attemptIndex: number, error: Error): number {
   if (isApiError(error) && error.retryAfterSeconds !== null) {
     // Honour the server's own backoff, with a floor so a `Retry-After: 0` cannot
     // turn into a hot loop.
@@ -64,7 +63,7 @@ export function retryDelay(attemptIndex: number, error: Error): number {
   return Math.min(20_000, 300 * 2 ** attemptIndex);
 }
 
-export function createQueryClient(): QueryClient {
+function createQueryClient(): QueryClient {
   return new QueryClient({
     // Every mutation in the app reports here. The default is that a rejected
     // mutation surfaces only through the `isError` flag on whichever hook called
@@ -120,24 +119,14 @@ export function getQueryClient(): QueryClient {
 }
 
 /**
- * Wires the focus/online managers. Returns a disposer; must be called after the
- * client exists, and before any query is subscribed.
+ * Wires the focus/online managers. Returns a disposer; must be called before any query is
+ * subscribed.
  */
 export function installQueryAdapters(): () => void {
-  const instance = getQueryClient();
   if (adapters) adapters.dispose();
   adapters = setupQueryAdapters(focusManager, onlineManager);
-  const stopLogging = __DEV__ ? attachQueryLogger(instance) : () => {};
   return () => {
     adapters?.dispose();
     adapters = null;
-    stopLogging();
   };
-}
-
-/** Test seam: a fresh client per case, with no native subscriptions left behind. */
-export function resetQueryClientForTests(next?: QueryClient): void {
-  adapters?.dispose();
-  adapters = null;
-  client = next ?? null;
 }

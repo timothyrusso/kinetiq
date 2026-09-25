@@ -231,7 +231,7 @@ export function useExerciseTaxonomy(active = true) {
  * copy can be true about its own provenance. Nothing here fills a gap in: a snapshot has
  * no video, so the media section is absent rather than a dead link.
  */
-export type ExerciseDetailSource = 'stored' | 'cache' | 'remote' | 'none';
+type ExerciseDetailSource = 'stored' | 'cache' | 'remote' | 'none';
 
 export type ExerciseDetailState = {
   /** The best row we have. Null means we know nothing about this id. */
@@ -368,14 +368,5 @@ export function useExerciseVariations(exercise: Exercise | null) {
     queryFn: ({ signal }) => provider.variations(externalId ?? 0, signal),
     enabled: exercise !== null && externalId !== null,
     staleTime: 60 * 60_000,
-  });
-}
-
-/** Warms taxonomy before the filter sheet that needs it opens; safe to repeat. */
-export function prefetchExerciseTaxonomy(client: QueryClient): void {
-  void client.prefetchQuery({
-    queryKey: queryKeys.exercises.taxonomy(),
-    queryFn: ({ signal }) => getExerciseProvider().taxonomy(signal),
-    staleTime: TAXONOMY_STALE_MS,
   });
 }

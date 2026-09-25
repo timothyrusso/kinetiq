@@ -37,7 +37,7 @@
  * handler, the reminder schedule, interrupted-recording recovery: catch in place,
  * so one absent native module never becomes a fatal startup error.
  */
-import { ActivityIndicator, AppState, StyleSheet, View } from 'react-native';
+import { AppState, StyleSheet } from 'react-native';
 import type { AppStateStatus } from 'react-native';
 import { useColorScheme } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
@@ -62,11 +62,10 @@ import { getSettings, hydrateSettings } from '@/settings';
 import { normaliseSettings, type SettingsState } from '@/settings/types';
 import { themeFor } from '@/theme/theme';
 import { spacing } from '@/theme/tokens';
-import { Txt } from '@/ui/Text';
 import { handleAppState, hydrateWorkoutSession, pauseSession } from '@/workout/session';
 import { prefetchHeaderIcons } from '@/navigation/HeaderAction';
 
-export type SeedSummary = {
+type SeedSummary = {
   activities: number;
   routines: number;
   exercises: number;
@@ -153,7 +152,7 @@ export function createSplashController(): { preventAutoHide: () => void; hide: (
  * (`expo-navigation-bar`) is not worth a native dependency for a control the OS
  * already gets right in both themes.
  */
-export function applyNativeChrome(resolved: 'light' | 'dark'): void {
+function applyNativeChrome(resolved: 'light' | 'dark'): void {
   try {
     void NavigationBar.setBackgroundColorAsync(themeFor(resolved).brandBackground);
     StatusBar.setStyle(resolved === 'dark' ? 'light' : 'dark', true);
@@ -170,7 +169,7 @@ export function applyNativeChrome(resolved: 'light' | 'dark'): void {
  * than by `Map` iteration order, which a partial result would otherwise silently
  * misalign.
  */
-export async function readSettingsSnapshot(): Promise<SettingsState> {
+async function readSettingsSnapshot(): Promise<SettingsState> {
   // Typed as the wide key union rather than the literal tuple so the positional
   // lookup below is a `SettingKey` read and not `SettingKey | ''`.
   const keys: SettingKey[] = [...SETTINGS_KEYS];
@@ -316,27 +315,6 @@ export function installAppLifecycle(): () => void {
   });
 
   return () => subscription.remove();
-}
-
-/**
- * The launch screen: the last thing drawn before the app is, in both directions.
- *
- * Not a spinner on a blank page: the wordmark sits on the *exact* canvas colour the
- * app will use in this theme, which is what makes the splash cross-fade read as one
- * continuous surface rather than a handoff. The indicator is the native one on
- * purpose: a custom mark would need fonts, and the fonts are the thing still
- * loading.
- */
-export function LaunchScreen({ dark }: { dark: boolean }) {
-  const theme = themeFor(dark ? 'dark' : 'light');
-  return (
-    <View style={[styles.launch, { backgroundColor: theme.brandBackground }]}>
-      <ActivityIndicator size="large" color={theme.colors.accent} />
-      <Txt variant="label" tone="muted" tracking={1.4} uppercase>
-        Kinetiq
-      </Txt>
-    </View>
-  );
 }
 
 /**

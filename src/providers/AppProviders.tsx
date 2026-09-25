@@ -36,11 +36,10 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { clearAllUserData } from '@/persistence';
 import { getQueryClient } from '@/query/client';
 import { haptics } from '@/services/haptics';
-import { themeFor, useAppTheme } from '@/theme/theme';
+import { themeFor } from '@/theme/theme';
 import { spacing } from '@/theme/tokens';
 import { Button } from '@/ui/controls/Button';
-import { Txt } from '@/ui/Text';
-import { Card, Divider, Row } from '@/ui/layout';
+import { Row } from '@/ui/layout';
 
 import {
   BOOTSTRAP_DEADLINE_MS,
@@ -60,10 +59,6 @@ import { useT } from '@/i18n/useT';
  */
 let settled: BootstrapOutcome | null = null;
 let inFlight: Promise<BootstrapOutcome> | null = null;
-
-export function getBootstrapOutcome(): BootstrapOutcome | null {
-  return settled;
-}
 
 /**
  * Idempotent by design. React runs effects twice in the development build, and a
@@ -369,58 +364,3 @@ const styles = StyleSheet.create({
   textMono: { fontFamily: 'monospace', fontSize: 12, lineHeight: 18 },
   diagRow: { paddingVertical: spacing.sm },
 });
-
-/* ------------------------------------------------------------- diagnostics -- */
-
-/**
- * Dev/settings readout of what bootstrap actually did: schema version moved, whether
- * this was a first run, whether a workout was restored.
- *
- * It exists because "the app lost my workout" is unanswerable without it. Everything
- * here is a fact bootstrap observed, not a guess the UI reconstructed.
- */
-export function BootstrapDiagnostics() {
-  const { t } = useT();
-  const theme = useAppTheme();
-  const outcome = getBootstrapOutcome();
-  if (!outcome) return null;
-
-  const { database, seeded, resumedWorkout, migrationFailed } = outcome;
-  const rows: ReadonlyArray<{ label: string; value: string; danger?: boolean }> = [
-    {
-      label: t('diag.schema'),
-      value: migrationFailed
-        ? t('diag.migrationFailed', { version: database.fromVersion })
-        : t('diag.migrated', { from: database.fromVersion, to: database.toVersion }),
-      danger: migrationFailed,
-    },
-    {
-      label: t('diag.firstRun'),
-      value: seeded
-        ? t('diag.seeded', { activities: seeded.activities, routines: seeded.routines })
-        : t('diag.existing'),
-    },
-    {
-      label: t('diag.sessionRestore'),
-      value: t(resumedWorkout ? 'diag.restored' : 'diag.nothingToRestore'),
-    },
-  ];
-
-  return (
-    <Card padding="md">
-      {rows.map((row, index) => (
-        <View key={row.label}>
-          {index > 0 ? <Divider /> : null}
-          <Row gap="md" justify="between" style={styles.diagRow}>
-            <Txt variant="caption" tone="muted">
-              {row.label}
-            </Txt>
-            <Txt variant="caption" color={row.danger ? theme.colors.danger : theme.colors.textFaint} align="right">
-              {row.value}
-            </Txt>
-          </Row>
-        </View>
-      ))}
-    </Card>
-  );
-}

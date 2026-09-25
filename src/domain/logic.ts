@@ -2,17 +2,8 @@
  * Domain rules that the UI must never re-implement: energy expenditure,
  * estimated one-rep max, streaks and derived totals.
  */
-import {
-  Activity,
-  RoutineItem,
-  CompletedWorkout,
-  PersonalRecord,
-  StrengthEntry,
-  StrengthSet,
-  Streak,
-  WorkoutSession,
-} from './types';
-import { daysBetween, repsFromRange, startOfDay } from '@/utils/format';
+import { Activity, RoutineItem, CompletedWorkout, PersonalRecord, StrengthEntry, StrengthSet, WorkoutSession } from './types';
+import { repsFromRange } from '@/utils/format';
 import { sum } from '@/utils/functional';
 
 /**
@@ -65,11 +56,6 @@ export function plannedVolumeKg(items: readonly RoutineItem[]): number {
   return items.reduce((total, item) => total + item.sets * Math.max(0, item.weightKg), 0);
 }
 
-/** Total programmed reps, each row's rep target read by `repsFromRange`. */
-export function plannedReps(items: readonly RoutineItem[]): number {
-  return items.reduce((total, item) => total + item.sets * repsFromRange(item.reps), 0);
-}
-
 /**
  * The "about 55 min" figure on a routine header.
  *
@@ -96,25 +82,8 @@ export function completedSetCount(entries: readonly StrengthEntry[]): number {
   return entries.reduce((acc, e) => acc + e.sets.filter((s) => s.completed).length, 0);
 }
 
-export function plannedSetCount(entries: readonly StrengthEntry[]): number {
+function plannedSetCount(entries: readonly StrengthEntry[]): number {
   return entries.reduce((acc, e) => acc + e.sets.length, 0);
-}
-
-export function bestSet(entries: readonly StrengthEntry[]): {
-  exerciseName: string;
-  weightKg: number;
-  reps: number;
-} | null {
-  let best: { exerciseName: string; weightKg: number; reps: number } | null = null;
-  for (const entry of entries) {
-    for (const set of entry.sets) {
-      if (!set.completed || set.weightKg <= 0) continue;
-      if (!best || set.weightKg > best.weightKg) {
-        best = { exerciseName: entry.exerciseName, weightKg: set.weightKg, reps: set.reps };
-      }
-    }
-  }
-  return best;
 }
 
 /**
@@ -187,63 +156,6 @@ export function detectPersonalRecords(
   return records;
 }
 
-export function dayKey(date: Date | number): string {
-  const d = typeof date === 'number' ? new Date(date) : date;
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
-/**
- * Consecutive-day streak counting from the most recent activity. A day that has
- * not happened yet does not break the streak, "today" is only broken once it is
- * over, which matches how every streak product behaves.
- */
-export function computeStreak(
-  activities: readonly Pick<Activity, 'startedAt'>[],
-  now: Date = new Date(),
-): Streak {
-  if (activities.length === 0) return { current: 0, longest: 0, activeDays: [] };
-
-  const days = new Set(activities.map((a) => dayKey(a.startedAt)));
-  const sorted = [...activities]
-    .map((a) => new Date(a.startedAt))
-    .sort((a, b) => a.getTime() - b.getTime());
-
-  // Longest run of consecutive calendar days anywhere in history.
-  let longest = 0;
-  let run = 0;
-  let previous: Date | null = null;
-  for (const date of sorted) {
-    const day = startOfDay(date);
-    if (previous && daysBetween(previous, day) === 1) run += 1;
-    else run = 1;
-    longest = Math.max(longest, run);
-    previous = day;
-  }
-
-  // Current streak: walk backwards from the last day that counts. Today counts
-  // if trained; otherwise yesterday starts the run, since today is still open.
-  const today = startOfDay(now);
-  let probe: Date | null = days.has(dayKey(today)) ? today : dayBefore(today);
-  if (probe && !days.has(dayKey(probe))) probe = null;
-
-  let current = 0;
-  while (probe && days.has(dayKey(probe))) {
-    current += 1;
-    probe = dayBefore(probe);
-  }
-
-  return { current, longest: Math.max(longest, current), activeDays: [...days].sort() };
-}
-
-function dayBefore(date: Date): Date {
-  const d = startOfDay(date);
-  d.setDate(d.getDate() - 1);
-  return d;
-}
-
 /**
  * Rest remaining in **whole** seconds, computed from a wall-clock deadline so that
  * backgrounding the app cannot make the timer run slow or fast.
@@ -277,7 +189,7 @@ export function sessionProgress(session: WorkoutSession): {
   };
 }
 
-export function sessionVolumeKg(session: WorkoutSession): number {
+function sessionVolumeKg(session: WorkoutSession): number {
   return totalVolumeKg(session.entries);
 }
 

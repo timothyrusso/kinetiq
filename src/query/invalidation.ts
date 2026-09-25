@@ -38,16 +38,3 @@ export function invalidateAfterWorkout(client: QueryClient, routineId: string | 
 export function invalidateRoutines(client: QueryClient): void {
   void client.invalidateQueries({ queryKey: queryKeys.routines.all });
 }
-
-/**
- * A units change alters how stored numbers are *displayed*, and several queries
- * compute aggregates (weekly volume, pace) in canonical units that some views
- * rescale at build time rather than render time. Rather than audit which of them
- * baked a converted number into cache data, invalidate everything derived: the
- * exercise cache is remote and unaffected, so it stays put.
- */
-export function invalidateAfterUnitsChange(client: QueryClient): void {
-  void client.invalidateQueries({ queryKey: queryKeys.activities.all });
-  void client.invalidateQueries({ queryKey: queryKeys.progress.all });
-  void client.invalidateQueries({ queryKey: queryKeys.session.all });
-}

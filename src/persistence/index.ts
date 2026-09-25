@@ -4,19 +4,16 @@
  * to move around.
  */
 export { activityRepository } from './activityRepository';
-export type { ActivityListQuery } from './activityRepository';
 export {
   routineRepository,
   snapshotById,
   snapshotOf,
-  snapshotsOf,
   upsertSnapshot,
 } from './routineRepository';
 export type { RoutineDraft } from './routineRepository';
 export { sessionRepository } from './sessionRepository';
 export type { SessionPatch } from './sessionRepository';
 export {
-  getSetting,
   readAllSettings,
   readState,
   recordRepository,
@@ -28,9 +25,6 @@ export {
 export type { SettingKey } from './settingsRepository';
 export {
   clearAllUserData,
-  getDatabase,
-  isDatabaseOpen,
   openDatabase,
-  readSchemaVersion,
 } from './database';
 export type { DatabaseOpenResult } from './database';

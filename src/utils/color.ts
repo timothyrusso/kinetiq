@@ -18,10 +18,10 @@
  * colours with a seam.
  */
 
-export type Rgb = readonly [number, number, number];
+type Rgb = readonly [number, number, number];
 
 /** Parses `#rgb` or `#rrggbb`. Returns `null` rather than throwing: a malformed colour should degrade, not crash a screen. */
-export function parseHex(hex: string): Rgb | null {
+function parseHex(hex: string): Rgb | null {
   const value = hex.trim().replace(/^#/, '');
   const full =
     value.length === 3
@@ -38,7 +38,7 @@ export function parseHex(hex: string): Rgb | null {
   ];
 }
 
-export function toHex(rgb: Rgb): string {
+function toHex(rgb: Rgb): string {
   return `#${rgb
     .map((channel) => Math.round(clamp(channel, 0, 255)).toString(16).padStart(2, '0'))
     .join('')}`;
@@ -52,51 +52,6 @@ export function toHex(rgb: Rgb): string {
  */
 function clamp(value: number, min: number, max: number): number {
   return value < min ? min : value > max ? max : value;
-}
-
-function toLinear(channel8: number): number {
-  const s = channel8 / 255;
-  return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-}
-
-function toSrgb(linear: number): number {
-  const s = linear <= 0.0031308 ? linear * 12.92 : 1.055 * linear ** (1 / 2.4) - 0.055;
-  return s * 255;
-}
-
-/**
- * Blend two colours in linear light.
- *
- * Falls back to picking the nearer input when either will not parse: a caller passing an
- * `rgba()` string gets a hard step instead of a blend, which is a better outcome than a screen
- * that refuses to draw its route line.
- */
-export function mix(a: string, b: string, t: number): string {
-  const from = parseHex(a);
-  const to = parseHex(b);
-  if (from === null || to === null) return t < 0.5 ? a : b;
-  const k = clamp(t, 0, 1);
-  const blended: Rgb = [
-    toSrgb(toLinear(from[0]) * (1 - k) + toLinear(to[0]) * k),
-    toSrgb(toLinear(from[1]) * (1 - k) + toLinear(to[1]) * k),
-    toSrgb(toLinear(from[2]) * (1 - k) + toLinear(to[2]) * k),
-  ];
-  return toHex(blended);
-}
-
-/**
- * Sample a colour ramp at `t` (0…1) across an ordered list of stops.
- *
- * Single-stop ramps return that stop; an empty ramp returns the fallback, because a ramp with
- * no stops is a configuration mistake and the caller is better off with a visible line in the
- * brand colour than with `undefined` reaching a native prop.
- */
-export function ramp(stops: readonly string[], t: number, fallback: string): string {
-  if (stops.length === 0) return fallback;
-  if (stops.length === 1) return stops[0] ?? fallback;
-  const k = clamp(t, 0, 1) * (stops.length - 1);
-  const index = Math.min(stops.length - 2, Math.floor(k));
-  return mix(stops[index] ?? fallback, stops[index + 1] ?? fallback, k - index);
 }
 
 /**

@@ -10,16 +10,9 @@ import type {
   WorkoutSession,
   WorkoutSessionStatus,
 } from '@/domain/types';
-import type {
-  ActivityRow,
-  ExerciseRow,
-  RecordRow,
-  RoutineItemRow,
-  RoutineRow,
-  SessionRow,
-} from './rows';
+import type { ActivityRow, ExerciseRow, RoutineItemRow, RoutineRow, SessionRow } from './rows';
 
-export function parseJsonArray<T>(raw: string | null | undefined): T[] {
+function parseJsonArray<T>(raw: string | null | undefined): T[] {
   if (!raw) return [];
   try {
     const parsed: unknown = JSON.parse(raw);
@@ -29,7 +22,7 @@ export function parseJsonArray<T>(raw: string | null | undefined): T[] {
   }
 }
 
-export function parseStringArray(raw: string | null | undefined): string[] {
+function parseStringArray(raw: string | null | undefined): string[] {
   const parsed = parseJsonArray<unknown>(raw);
   return parsed.filter((v): v is string => typeof v === 'string');
 }
@@ -85,16 +78,6 @@ export function rowToExerciseSnapshot(row: ExerciseRow): ExerciseSnapshot {
     thumbnailUrl: row.thumbnail_url ?? row.image_url,
     externalId: row.external_id,
     capturedAt: row.captured_at,
-  };
-}
-
-export function rowToRecord(row: RecordRow) {
-  return {
-    exerciseId: row.exercise_id,
-    exerciseName: row.exercise_name,
-    kind: row.kind,
-    value: row.value,
-    achievedAt: row.achieved_at,
   };
 }
 

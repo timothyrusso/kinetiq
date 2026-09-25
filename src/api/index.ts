@@ -41,13 +41,5 @@ export function getExerciseProvider(): ExerciseProvider {
   return provider;
 }
 
-/** Test hook: swap in a stub provider for deterministic UI tests. */
-export function setExerciseProviderForTests(next: ExerciseProvider | null): void {
-  provider = next;
-}
-
-export { mapExerciseInfo, htmlToPlainText } from './wger/mappers';
 export type { ExerciseProvider } from './types';
-export { emptyFilter, emptyTaxonomy, FIRST_PAGE } from './types';
 export { ApiError, isApiError, isOfflineError } from './http';
-export type { ApiErrorKind } from './http';

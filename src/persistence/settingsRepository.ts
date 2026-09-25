@@ -6,7 +6,7 @@
  * schema migration only has to know about the keys it cares about.
  */
 import { getDatabase } from './database';
-import { parseJsonArray, stringify } from './codec';
+import { stringify } from './codec';
 import type { RecordRow, SettingsRow } from './rows';
 import type { PersonalRecord, PersonalRecordKind } from '@/domain/types';
 
@@ -25,25 +25,6 @@ export const SETTING_KEYS = {
 } as const;
 
 export type SettingKey = (typeof SETTING_KEYS)[keyof typeof SETTING_KEYS];
-
-/**
- * Reads a setting, falling back when absent *or* unparseable. A value written by
- * a future version of the app, or a half-written row from a crash, must not take
- * the UI down: the default is always a valid answer.
- */
-export async function getSetting<T>(key: SettingKey, fallback: T): Promise<T> {
-  const row = await getDatabase().getFirstAsync<SettingsRow>(
-    'SELECT key, value_json, updated_at FROM settings WHERE key = ?',
-    key,
-  );
-  if (!row) return fallback;
-  try {
-    const parsed = JSON.parse(row.value_json) as T;
-    return parsed === null || parsed === undefined ? fallback : parsed;
-  } catch {
-    return fallback;
-  }
-}
 
 export async function setSetting<T>(key: SettingKey, value: T): Promise<void> {
   await getDatabase().runAsync(
@@ -238,9 +219,4 @@ export async function writeState<T>(key: string, value: T): Promise<void> {
     key,
     stringify(value),
   );
-}
-
-/** Exposed for the cache-pruning path; not used by screens. */
-export async function readJsonArray(key: string): Promise<unknown[]> {
-  return parseJsonArray(await readState<string>(key, '[]'));
 }

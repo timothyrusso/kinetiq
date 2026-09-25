@@ -683,7 +683,6 @@ export const it: Copy = {
       "I tuoi allenamenti e le tue schede salvate non sono stati toccati. Riavviare l'app di solito risolve.",
     routeErrorBody:
       "Allenamenti, schede e impostazioni non sono stati toccati. Puoi riprovare con la schermata, oppure tornare indietro e continuare altrove nell'app.",
-    opensWorkout: "Apre l'allenamento completo",
     opensRoutine: 'Apre la scheda',
     opensExercise: "Apre i dettagli dell'esercizio",
     notSaving: 'Non sto salvando su questo dispositivo',
@@ -696,24 +695,12 @@ export const it: Copy = {
     restComplete: 'Recupero finito',
     restNext: '{name} è fatto. Prossimo: {next}.',
     restLast: '{name} è fatto: qui hai finito.',
-    newRecord: 'Nuovo record, {name}',
     testTitle: 'Le notifiche funzionano',
     testBody: 'È lo stesso canale che usano gli avvisi del timer di recupero.',
     reminderTitle: 'È ora di allenarsi',
     reminderBody: 'La tua sessione ti aspetta. Anche una breve tiene vivi i giorni di fila.',
   },
 
-  diag: {
-    schema: 'Schema',
-    migrationFailed: 'Migrazione fallita alla v{version}',
-    migrated: 'da v{from} a v{to}',
-    firstRun: 'Primo avvio',
-    seeded: '{activities} allenamenti, {routines} schede create',
-    existing: 'Database esistente',
-    sessionRestore: 'Ripristino sessione',
-    restored: 'Ripristinato un allenamento in pausa',
-    nothingToRestore: 'Nulla da ripristinare',
-  },
   states: {
     offlineTitle: 'Sei offline',
     timeoutTitle: 'Il server ci ha messo troppo',
@@ -721,8 +708,6 @@ export const it: Copy = {
     offlineMessage:
       'Tutto quello che hai salvato è ancora qui. Gli esercizi remoti e le immagini nuove tornano appena ti ricolleghi.',
     genericMessage: 'Questo non ha risposto. Riprovare di solito funziona.',
-    nothingLogged: 'Ancora nulla di registrato',
-    noExercisesYet: 'Ancora nessun esercizio',
     activityGone: 'Questo allenamento non è più salvato.',
     autoStartOn: 'Parte il conto alla rovescia nel momento in cui completi una serie.',
     autoStartOff: 'Il recupero lo avvii tu, così una telefonata tra le serie non ti costa nulla.',
@@ -740,17 +725,12 @@ export const it: Copy = {
   },
   // --- foundation ---
   headerActions: {
-    settings: 'Impostazioni',
-    filter: 'Filtri',
     add: 'Aggiungi',
     more: 'Altre opzioni',
     play: 'Avvia',
     delete: 'Elimina',
     save: 'Salva',
     done: 'Fine',
-    edit: 'Modifica',
-    share: 'Condividi',
-    search: 'Cerca',
     cancel: 'Annulla',
   },
   textInput: {

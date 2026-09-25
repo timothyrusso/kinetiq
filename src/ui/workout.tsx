@@ -56,7 +56,7 @@ import { MetaLine, type MetaItem } from './display';
  * making anyone count: the single most common glance mid-set. It is an outline, not a
  * filled row, because a filled row would compete with the filled *done* state.
  */
-export const SetRow = memo(function SetRow({
+const SetRow = memo(function SetRow({
   entryIndex,
   setIndex,
   set,

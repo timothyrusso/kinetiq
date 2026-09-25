@@ -170,8 +170,7 @@ export default function NewRoutineScreen() {
       </HeaderToolbar>
       <HeaderToolbar placement="right">
         {/* Disabled until there is something to save: an empty routine has no reason to exist,
-            and the empty state below already says what to do first. Labelled "Done", which is
-            the word the CRUD gate presses. */}
+            and the empty state below already says what to do first. */}
         {headerAction({
           action: 'save',
           onPress: done,

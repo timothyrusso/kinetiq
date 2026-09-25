@@ -34,7 +34,7 @@ import { useT } from '@/i18n/useT';
  * Shimmering placeholder block. `width` may be a percentage string for fluid rows;
  * the shimmer then travels the measured track width passed to `useShimmer`.
  */
-export const Skeleton = memo(function Skeleton({
+const Skeleton = memo(function Skeleton({
   height = 16,
   width = '100%',
   radius: r = radius.sm,
