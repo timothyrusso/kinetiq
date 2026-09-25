@@ -1,0 +1,14 @@
+{
+  "itemBounds": {
+    "sets": { "min": 1, "max": 20 },
+    "weightKg": { "min": 0, "max": 450 },
+    "restSeconds": { "min": 0, "max": 600 },
+    "repsLength": 20,
+    "notesLength": 200
+  },
+  "importLimits": {
+    "routines": 50,
+    "itemsPerRoutine": 50,
+    "bytes": 1000000
+  }
+}

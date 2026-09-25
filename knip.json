@@ -4,12 +4,15 @@
     "app/**/*.{ts,tsx}",
     "scripts/*.{js,ts}",
     "src/**/*.android.{ts,tsx}",
-    "targets/**/expo-target.config.js"
+    "targets/**/expo-target.config.js",
+    "modules/*/index.ts",
+    "modules/**/*.android.ts"
   ],
   "project": [
     "app/**/*.{ts,tsx}",
     "src/**/*.{ts,tsx}",
-    "scripts/**/*.{js,ts}"
+    "scripts/**/*.{js,ts}",
+    "modules/**/*.ts"
   ],
   "paths": {
     "@/ui/controls/*": [

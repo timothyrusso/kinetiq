@@ -38,3 +38,13 @@ export function invalidateAfterWorkout(client: QueryClient, routineId: string | 
 export function invalidateRoutines(client: QueryClient): void {
   void client.invalidateQueries({ queryKey: queryKeys.routines.all });
 }
+
+/**
+ * Workouts that arrived from the Apple Watch. The same set as a finished phone workout, for
+ * every routine at once: the drain reports ids, not routines, and "previous performance" is
+ * cheap to re-read.
+ */
+export function invalidateAfterWatchWorkouts(client: QueryClient): void {
+  invalidateAfterWorkout(client, null);
+  void client.invalidateQueries({ queryKey: queryKeys.session.all });
+}
