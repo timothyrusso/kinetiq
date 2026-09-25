@@ -245,10 +245,10 @@ export const ExerciseBlock = memo(function ExerciseBlock({
         {
           backgroundColor: theme.colors.surface,
           borderRadius: theme.surfaceSkin.radius,
-          borderColor: isCurrent ? theme.colors.accent : theme.colors.border,
-          // A focused block lifts with a border weight rather than a shadow: shadows are
-          // invisible on the dark canvas, and this has to read in both appearances.
-          borderWidth: isCurrent ? 1.5 : StyleSheet.hairlineWidth,
+          // The current exercise is marked by the dot before its name, not by the card: an
+          // accent frame round a whole block read as a selection or an error state.
+          borderColor: theme.colors.border,
+          borderWidth: StyleSheet.hairlineWidth,
         },
       ]}
     >
@@ -422,6 +422,7 @@ export function SetEditorForm({
           min={0}
           max={units === 'imperial' ? 1000 : 450}
           step={step}
+          decimal
           onChange={(next) => {
             // Converted on the way out only. Landing on 0 is a deliberate
             // "bodyweight": the engine stores 0 and the row renders it as BW.

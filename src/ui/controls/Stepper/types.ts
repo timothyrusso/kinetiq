@@ -14,6 +14,11 @@ export type StepperProps = {
   label: string;
   /** The smaller size used inside a list row or a set editor line. */
   compact?: boolean;
+  /**
+   * Whether a typed value may have decimals. Implied by a fractional `step`; set it where the
+   * step is whole but the quantity is not (1 kg steps, 62.5 kg on the bar).
+   */
+  decimal?: boolean;
 };
 
 export function formatStepperValue(value: number): string {

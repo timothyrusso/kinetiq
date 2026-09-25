@@ -304,6 +304,7 @@ export const ItemEditorForm = memo(function ItemEditorForm({
           min={0}
           max={units === 'imperial' ? 1000 : 450}
           step={step}
+          decimal
           onChange={(next) => onChange({ weightKg: weightFromDisplayValue(next, units) })}
         />
       </FormSection>

@@ -208,7 +208,8 @@ function ActivityBody({
       {/* One accessibility element for the whole hero, so VoiceOver reads "Push. 12.4k kg
           in 52 min" as a sentence rather than four fragments in sequence. The label comes
           from the domain layer because that is what decides what is true about the numbers.
-          The kind is the tile's tone and glyph, not a word: the title already names it. */}
+          The kind is the tile's glyph, not a word: the title already names it. The tile is
+          the accent, like every other workout icon. */}
       <View
         accessible
         accessibilityRole="summary"
@@ -218,8 +219,8 @@ function ActivityBody({
         <Row gap="md" align="center">
           <IconTile
             name={ACTIVITY_ICON[activity.kind]}
-            color={theme.colors.tone[activity.kind]}
-            background={theme.colors.toneSoft[activity.kind]}
+            color={theme.colors.accent}
+            background={theme.colors.accentSoft}
           />
           <MetaLine items={when} theme={theme} wrap style={styles.flex} />
         </Row>

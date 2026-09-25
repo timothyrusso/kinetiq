@@ -55,8 +55,8 @@ export const ActivityCard = memo(function ActivityCard({
       <View style={styles.head}>
         <IconTile
           name={ACTIVITY_ICON[activity.kind]}
-          color={theme.colors.tone[activity.kind]}
-          background={theme.colors.toneSoft[activity.kind]}
+          color={theme.colors.accent}
+          background={theme.colors.accentSoft}
         />
         <View style={styles.titles}>
           <CellText

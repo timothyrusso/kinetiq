@@ -7,7 +7,6 @@
  * the replacement: every piece of metadata is an item, and the display primitives decide how
  * items look.
  */
-import type { ActivityKind } from '@/domain/types';
 import type { IconName } from '@/ui/icons';
 
 /** One fact beside an icon: "52 min" with a clock. */
@@ -25,8 +24,8 @@ export type MetaItem = {
   mono?: boolean;
 };
 
-/** A colour family for a tag. Activity kinds are tones, so a run tag is the run colour. */
-export type Tone = 'neutral' | 'accent' | ActivityKind;
+/** A colour family for a tag. */
+export type Tone = 'neutral' | 'accent';
 
 /** One chip of taxonomy: a muscle, a piece of equipment, an activity kind. */
 export type Tag = {

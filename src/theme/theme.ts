@@ -9,7 +9,6 @@ import { useMemo } from 'react';
 import { useColorScheme, useWindowDimensions } from 'react-native';
 import { useThemeMode } from '@/settings';
 import { useAccentColors } from './accent';
-import type { ActivityKind } from '@/domain/types';
 import {
   palette,
   platformSurface,
@@ -90,10 +89,6 @@ export type Theme = {
     /** Ring/tint on focused inputs. */
     focusRing: string;
 
-    /** Activity tones, resolved for this mode. */
-    tone: Record<ActivityKind, string>;
-    toneSoft: Record<ActivityKind, string>;
-
     /** Chart primitives. */
     chartGrid: string;
     chartAxis: string;
@@ -170,12 +165,6 @@ const darkColors = {
   scrim: 'rgba(0, 0, 0, 0.72)',
   focusRing: 'rgba(198, 242, 78, 0.45)',
 
-  tone: {
-    lift: palette.plum,
-  },
-  toneSoft: {
-    lift: 'rgba(185, 140, 255, 0.15)',
-  },
 
   chartGrid: 'rgba(255, 255, 255, 0.055)',
   chartAxis: '#6E6E73',
@@ -233,12 +222,6 @@ const lightColors = {
   scrim: 'rgba(10, 14, 24, 0.36)',
   focusRing: 'rgba(94, 140, 11, 0.30)',
 
-  tone: {
-    lift: '#7B4FD1',
-  },
-  toneSoft: {
-    lift: 'rgba(123, 79, 209, 0.10)',
-  },
 
   chartGrid: 'rgba(10, 14, 24, 0.07)',
   chartAxis: palette.slate400,
