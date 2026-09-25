@@ -264,18 +264,6 @@ export default function ProfileScreen() {
           </Card>
 
           {/* ---- Everything else --------------------------------------------- */}
-          <SectionHeader title={t('profileScreen.training')} style={styles.section} />
-          <Card padding="xxs">
-            <NavRow
-              title={t('profileScreen.allActivities')}
-              description={t('profileScreen.allActivitiesSubtitle')}
-              theme={theme}
-              icon="activities"
-              topDivider={false}
-              onPress={() => router.push(routes.workoutHistory())}
-            />
-          </Card>
-
           <SectionHeader title={t('profileScreen.app')} style={styles.section} />
           <Card padding="xxs">
             <NavRow

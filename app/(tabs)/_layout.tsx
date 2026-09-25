@@ -5,7 +5,7 @@
  * so the bar is the platform's own rather than a drawn imitation of it. On iOS 26 that means
  * genuine Liquid Glass: the system material, its scroll-edge behaviour, the minimise-on-scroll
  * gesture and the tab-bar accessory slot: none of which can be reproduced by putting a glass
- * view behind five `Pressable`s, which is what this file used to do.
+ * view behind a row of `Pressable`s, which is what this file used to do.
  *
  * ## What the custom bar was buying, and where each piece went
  *
@@ -60,20 +60,9 @@ export default function TabsLayout() {
         <Label>{t('tabs.home')}</Label>
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="activities">
-        {/* An ECG trace rather than a runner: this tab lists rides, walks and lifts too. */}
-        <Icon sf="waveform.path.ecg" md="monitor_heart" />
-        <Label>{t('tabs.activities')}</Label>
-      </NativeTabs.Trigger>
-
       <NativeTabs.Trigger name="workout">
         <Icon sf="figure.strengthtraining.traditional" md="fitness_center" />
         <Label>{t('tabs.workout')}</Label>
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="exercises">
-        <Icon sf={{ default: 'square.grid.2x2', selected: 'square.grid.2x2.fill' }} md="grid_view" />
-        <Label>{t('tabs.exercises')}</Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="profile">

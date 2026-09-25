@@ -286,9 +286,10 @@ export default function WorkoutSessionScreen() {
         return;
       }
       haptics.success();
-      // The finished workout lives in history now, so that is where this screen goes. A PR
-      // is then presented over it as a sheet, not a toast: it is worth stopping for.
-      router.replace(routes.workoutHistory());
+      // The finished workout lives in the history on Home now, so that is where this screen
+      // goes: `dismissTo` pops the player rather than stacking a second Home on top of it. A
+      // PR is then presented over Home as a sheet, not a toast: it is worth stopping for.
+      router.dismissTo(routes.home());
       if (result.personalRecords.length > 0) {
         router.push(routes.sessionRecords(result.personalRecords));
       }

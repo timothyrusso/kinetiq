@@ -32,7 +32,7 @@ import {
 } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { getExerciseProvider } from '@/api';
-import { FIRST_PAGE, emptyFilter, emptyTaxonomy } from '@/api/types';
+import { FIRST_PAGE, emptyTaxonomy } from '@/api/types';
 import type { Exercise, ExerciseFilter, ExerciseSnapshot } from '@/domain/types';
 import { externalIdOf, isLocalExerciseId } from '@/domain/exerciseId';
 import { snapshotById } from '@/persistence';
@@ -379,6 +379,3 @@ export function prefetchExerciseTaxonomy(client: QueryClient): void {
     staleTime: TAXONOMY_STALE_MS,
   });
 }
-
-/** The filter an unfiltered browse uses; also the reset target. */
-export const BROWSE_FILTER: ExerciseFilter = emptyFilter();

@@ -20,7 +20,7 @@ import type { Href } from 'expo-router';
 import type { PersonalRecord } from '@/domain/types';
 import type { TKey } from '@/i18n';
 
-export type TabKey = '(home)' | 'activities' | 'workout' | 'exercises' | 'profile';
+export type TabKey = '(home)' | 'workout' | 'profile';
 
 /**
  * Tab routes in bar order. `(home)` rather than `home` because Home is the group
@@ -28,31 +28,19 @@ export type TabKey = '(home)' | 'activities' | 'workout' | 'exercises' | 'profil
  * stack of its own. A mismatch here is the kind of typo that compiles under a cast, which
  * is precisely why the cast has one home.
  */
-export const TAB_ROUTES: readonly [TabKey, TabKey, TabKey, TabKey, TabKey] = [
-  '(home)',
-  'activities',
-  'workout',
-  'exercises',
-  'profile',
-] as const;
+export const TAB_ROUTES: readonly [TabKey, TabKey, TabKey] = ['(home)', 'workout', 'profile'] as const;
 
 const TAB_HREFS: Record<TabKey, Href> = {
   '(home)': '/(tabs)' as Href,
-  activities: '/activities' as Href,
   workout: '/workout' as Href,
-  exercises: '/exercises' as Href,
   profile: '/profile' as Href,
 };
 
 /**
- * What each tab is called in the bar.
+ * Tab names as catalog KEYS.
  *
  * Lives here rather than beside the bar's own list because the not-found screen offers the
- * same five destinations as text and must not maintain a second spelling of them. `(home)` is
- * "Home": the group segment is a routing fact, the label is a product one.
- */
-/**
- * Tab names as catalog KEYS.
+ * same destinations as text and must not maintain a second spelling of them.
  *
  * Module scope has no language, so a map of English words here is a map that stays English.
  * The tab bar itself reads `tabs.*` through `useT`; this table exists for the places that
@@ -60,9 +48,7 @@ const TAB_HREFS: Record<TabKey, Href> = {
  */
 export const TAB_LABELS: Record<TabKey, TKey> = {
   '(home)': 'tabs.home',
-  activities: 'tabs.activities',
   workout: 'tabs.workout',
-  exercises: 'tabs.exercises',
   profile: 'tabs.profile',
 };
 
@@ -128,17 +114,9 @@ export const routes = {
    * `app/workout.tsx` would fight it for the same URL. Anything asking to "go start a
    * workout" means the tab, which is where the routines and the resume card live.
    */
-  workoutTab: () => tabHref(2) as Href,
-  /**
-   * The Exercises *tab*, not a detail screen.
-   *
-   * `tabHref` rather than `'/exercises'` because the literal happens to work either way and
-   * that is the problem: it resolves through the group and the bar stops highlighting
-   * properly, which reads as a rendering glitch three screens later.
-   */
-  exercisesTab: () => tabHref(3) as Href,
+  workoutTab: () => tabHref(tabIndexOf('workout')) as Href,
+  home: () => tabHref(tabIndexOf('(home)')) as Href,
   workoutSession: () => '/workout/session' as Href,
-  workoutHistory: () => '/workout/history' as Href,
   settings: () => '/settings' as Href,
   settingsTraining: () => '/settings/training' as Href,
   settingsNotifications: () => '/settings/notifications' as Href,
@@ -159,24 +137,6 @@ export const routes = {
     }) as Href,
   renameRoutine: (id: string) => ({ pathname: '/routine/rename', params: { id } }) as Href,
   activityNotes: (id: string) => ({ pathname: '/activity/notes', params: { id } }) as Href,
-  /**
-   * The library pushed over a detail screen, so back returns there (see `exerciseLibrary.tsx`).
-   * Its starting filter travels in the params: the pushed list owns its own filter store.
-   */
-  exerciseBrowse: (start: { query?: string; muscleId?: number; equipmentId?: number }) =>
-    ({
-      pathname: '/exercise/browse',
-      params: {
-        ...(start.query !== undefined ? { query: start.query } : {}),
-        ...(start.muscleId !== undefined ? { muscleId: String(start.muscleId) } : {}),
-        ...(start.equipmentId !== undefined ? { equipmentId: String(start.equipmentId) } : {}),
-      },
-    }) as Href,
-  /** The filter sheet, for the tab's list, or for a pushed list's store by its key. */
-  exerciseFilters: (storeKey?: string) =>
-    (storeKey === undefined
-      ? '/exercise/filters'
-      : { pathname: '/exercise/filters', params: { storeKey } }) as Href,
   sessionNotes: () => '/workout/notes' as Href,
   sessionSet: (entryIndex: number, setIndex: number) =>
     ({ pathname: '/workout/set', params: { entry: String(entryIndex), set: String(setIndex) } }) as Href,
