@@ -250,11 +250,11 @@ function buildHistory(rng: () => number): Activity[] {
   /** Week 6 is a travel week: almost nothing logged. */
   const TRAVEL_WEEK = 6;
 
+  const now = Date.now();
   const push = (activity: Activity) => {
-    // `< today + 1 day`, not `< today`: an evening session scheduled on today's
-    // own date is still in the window, and dropping it would thin out the very
-    // week the app is being opened in. Nothing later than today can get through.
-    if (activity.startedAt <= today.getTime() + 86_400_000) activities.push(activity);
+    // Nothing later than now. Home lists workouts newest first, and a seeded 19:00 session
+    // dated later today sat above the workout the user had just finished.
+    if (activity.startedAt <= now) activities.push(activity);
   };
 
   for (let week = 0; week < WEEKS; week += 1) {
