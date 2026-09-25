@@ -2,6 +2,7 @@ import SwiftUI
 
 /// One routine's exercises, and the button that starts it.
 struct RoutineDetailView: View {
+    @EnvironmentObject private var session: WorkoutSession
     let routine: Routine
     let unitSystem: UnitSystem
 
@@ -9,10 +10,11 @@ struct RoutineDetailView: View {
         List {
             Section {
                 Button {
+                    session.start(routine, unitSystem: unitSystem)
                 } label: {
                     Label("routine.start", systemImage: "play.fill")
                 }
-                .disabled(true)
+                .disabled(routine.items.isEmpty)
             }
             Section {
                 ForEach(routine.items) { item in
