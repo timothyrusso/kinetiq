@@ -54,6 +54,11 @@ export const queryKeys = {
     variations: (id: string) => ['exercises', 'variations', id] as const,
   },
 
+  transfer: {
+    /** One staged import's exercise matches; the id changes with every paste or file. */
+    resolve: (importId: string) => ['transfer', 'resolve', importId] as const,
+  },
+
   settings: {
     /**
      * Settings live in the external store, not the cache: they are read by
