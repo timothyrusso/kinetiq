@@ -56,3 +56,6 @@ yarn-error.*
 
 # device QA captures
 *.screenshot.png
+
+# local xcodebuild output (simulator and device builds)
+/build
