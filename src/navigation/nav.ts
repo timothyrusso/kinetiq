@@ -98,6 +98,8 @@ export const routes = {
   settingsTraining: () => '/settings/training' as Href,
   settingsNotifications: () => '/settings/notifications' as Href,
   settingsAbout: () => '/settings/about' as Href,
+  settingsData: () => '/settings/data' as Href,
+  importPreview: () => '/settings/import' as Href,
   editProfile: () => '/edit-profile' as Href,
 
   /**

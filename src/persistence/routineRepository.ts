@@ -405,3 +405,16 @@ export async function snapshotById(exerciseId: string): Promise<ExerciseSnapshot
   );
   return row === null ? null : rowToExerciseSnapshot(row);
 }
+
+/**
+ * A stored exercise with exactly this name, ignoring case. Used by the routine importer, whose
+ * input is often just a name: an exercise the user already has is a better match than any
+ * search result, and it needs no network.
+ */
+export async function snapshotByName(name: string): Promise<ExerciseSnapshot | null> {
+  const row = await getDatabase().getFirstAsync<ExerciseRow>(
+    'SELECT * FROM exercises WHERE name = ? COLLATE NOCASE ORDER BY captured_at DESC LIMIT 1',
+    name.trim(),
+  );
+  return row === null ? null : rowToExerciseSnapshot(row);
+}

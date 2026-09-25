@@ -255,6 +255,12 @@ export default function ProfileScreen() {
               onPress={() => router.push(routes.settingsNotifications())}
             />
             <NavRow
+              title={t('profileScreen.yourData')}
+              theme={theme}
+              icon="download"
+              onPress={() => router.push(routes.settingsData())}
+            />
+            <NavRow
               title={t('profileScreen.aboutTitle')}
               theme={theme}
               icon="info"
