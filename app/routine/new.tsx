@@ -110,14 +110,29 @@ export default function NewRoutineScreen() {
   const minutes = useMemo(() => estimateMinutes(draft.items), [draft.items]);
   // Read from the subscribed snapshot rather than `isDraftSavable()`, so the header action
   // re-renders the moment the first exercise lands and not on the next unrelated change.
-  const savable = draft.items.length > 0 && draft.status !== 'saving';
+  // `saved` counts as busy too. The header must not change between the save and the screen's
+  // removal: flipping Done back on in that frame reached a header that Android had already
+  // detached, and react-native-screens crashed ("ScreenStackFragment added into a non-stack
+  // container").
+  const busy = draft.status === 'saving' || draft.status === 'saved';
+  const savable = draft.items.length > 0 && !busy;
 
   const [savedId, setSavedId] = useState<string | null>(null);
   useEffect(() => {
-    // `replace`, not `push`: this screen has now become the routine it describes. Leaving the
-    // builder underneath it means "back" returns to a form whose entire contents have been
-    // saved, which the user would then be invited to save again.
-    if (savedId !== null) router.replace(routes.routine(savedId));
+    if (savedId === null) return;
+    // The builder closes and the routine opens in its place, so "back" never returns to a form
+    // whose contents are already saved.
+    //
+    // One frame later, not in this effect's tick. The save's commit also releases the leave
+    // guard below, which is a prop change on this screen's native header; navigating in the
+    // same tick made Android apply that change to a header it was already detaching, and
+    // react-native-screens crashed ("ScreenStackFragment added into a non-stack container").
+    // Not `replace` either: this screen is a modal and the routine is a card.
+    const frame = requestAnimationFrame(() => {
+      router.dismiss();
+      router.push(routes.routine(savedId));
+    });
+    return () => cancelAnimationFrame(frame);
   }, [savedId]);
 
   const save = useCallback(async () => {
@@ -184,7 +199,7 @@ export default function NewRoutineScreen() {
           action: 'save',
           onPress: done,
           t,
-          label: draft.status === 'saving' ? 'newRoutine.saving' : 'newRoutine.done',
+          label: busy ? 'newRoutine.saving' : 'newRoutine.done',
           disabled: !savable,
           variant: 'done',
           tint: theme.colors.accent,
