@@ -6,8 +6,8 @@ import { labelsHidden } from '@expo/ui/swift-ui/modifiers';
 import { haptics } from '@/services/haptics';
 import { useAppTheme } from '@/theme/theme';
 import { spacing } from '@/theme/tokens';
-import { Txt } from '@/ui/Text';
-import { formatStepperValue, stepClamp, type StepperProps } from './types';
+import { StepperValue } from './StepperValue';
+import { stepClamp, type StepperProps } from './types';
 
 export type { StepperProps } from './types';
 
@@ -16,7 +16,7 @@ export type { StepperProps } from './types';
  *
  * The system control is the pair of − and + buttons with the platform's own hold-to-repeat; it
  * draws no number, so the value sits to its left as the thing being read, the way Settings
- * lays out a stepper row.
+ * lays out a stepper row. Tapping the value types it: see `StepperValue`.
  */
 export const Stepper = memo(function Stepper({
   value,
@@ -27,19 +27,23 @@ export const Stepper = memo(function Stepper({
   suffix,
   label,
   compact = false,
+  decimal = false,
 }: StepperProps) {
   const theme = useAppTheme();
   return (
     <View style={styles.row}>
       <View accessibilityLiveRegion="polite" style={styles.value}>
-        <Txt variant={compact ? 'numeralSm' : 'numeral'}>
-          {formatStepperValue(value)}
-          {suffix ? (
-            <Txt variant="caption" tone="faint">
-              {` ${suffix}`}
-            </Txt>
-          ) : null}
-        </Txt>
+        <StepperValue
+          value={value}
+          onChange={onChange}
+          min={min}
+          max={max}
+          suffix={suffix}
+          label={label}
+          compact={compact}
+          decimal={decimal || !Number.isInteger(step)}
+          align="left"
+        />
       </View>
       <Host matchContents colorScheme={theme.mode} seedColor={theme.colors.accent}>
         <NativeStepper

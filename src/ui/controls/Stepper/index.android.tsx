@@ -5,14 +5,15 @@ import { haptics } from '@/services/haptics';
 import { useAppTheme } from '@/theme/theme';
 import { radius, spacing, touchTarget } from '@/theme/tokens';
 import { Icon, ICON_SIZE, type IconName } from '@/ui/icons';
-import { Txt } from '@/ui/Text';
+import { StepperValue } from './StepperValue';
 import { formatStepperValue, stepClamp, type StepperProps } from './types';
 
 export type { StepperProps } from './types';
 
 /**
  * Material has no stepper, so this is the Material idiom for one: two outlined icon buttons
- * with the value centred between them, and hold-to-repeat.
+ * with the value centred between them, and hold-to-repeat. Tapping the value types it: see
+ * `StepperValue`.
  *
  * The repeat tick reads the latest value from a ref, not from the closure: the classic stepper
  * bug is a hold that keeps adding to whatever number was under the finger when it started.
@@ -26,6 +27,7 @@ export const Stepper = memo(function Stepper({
   suffix,
   label,
   compact = false,
+  decimal = false,
 }: StepperProps) {
   const theme = useAppTheme();
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -90,14 +92,17 @@ export const Stepper = memo(function Stepper({
     <View style={styles.row}>
       {button(-step, 'minus')}
       <View accessibilityLiveRegion="polite" style={[styles.value, { minWidth: compact ? 46 : 60 }]}>
-        <Txt variant={compact ? 'numeralSm' : 'numeral'}>
-          {formatStepperValue(value)}
-          {suffix ? (
-            <Txt variant="caption" tone="faint">
-              {` ${suffix}`}
-            </Txt>
-          ) : null}
-        </Txt>
+        <StepperValue
+          value={value}
+          onChange={onChange}
+          min={min}
+          max={max}
+          suffix={suffix}
+          label={label}
+          compact={compact}
+          decimal={decimal || !Number.isInteger(step)}
+          align="center"
+        />
       </View>
       {button(step, 'plus')}
     </View>

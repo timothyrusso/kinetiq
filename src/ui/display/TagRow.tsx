@@ -69,8 +69,7 @@ function TagChip({ tag, theme }: { tag: Tag; theme: Theme }) {
 
 function tonePalette(theme: Theme, tone: Tone): { background: string; text: string } {
   if (tone === 'neutral') return { background: theme.colors.placeholder, text: theme.colors.textMuted };
-  if (tone === 'accent') return { background: theme.colors.accentSoft, text: theme.colors.accent };
-  return { background: theme.colors.toneSoft[tone], text: theme.colors.tone[tone] };
+  return { background: theme.colors.accentSoft, text: theme.colors.accent };
 }
 
 const styles = StyleSheet.create({

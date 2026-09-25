@@ -422,6 +422,7 @@ export function SetEditorForm({
           min={0}
           max={units === 'imperial' ? 1000 : 450}
           step={step}
+          decimal
           onChange={(next) => {
             // Converted on the way out only. Landing on 0 is a deliberate
             // "bodyweight": the engine stores 0 and the row renders it as BW.
