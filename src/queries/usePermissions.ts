@@ -55,7 +55,7 @@ export type Permissions = {
   /** A system prompt is on screen. Lets a button disable itself instead of asking twice. */
   requesting: boolean;
   requestNotifications: () => Promise<NotificationPermission>;
-  /** Re-read without a prompt: the pull gesture on the permissions screen. */
+  /** Re-read without a prompt. */
   refresh: () => Promise<void>;
 };
 

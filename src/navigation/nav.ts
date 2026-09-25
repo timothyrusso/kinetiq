@@ -117,11 +117,10 @@ export const routes = {
   workoutTab: () => tabHref(tabIndexOf('workout')) as Href,
   home: () => tabHref(tabIndexOf('(home)')) as Href,
   workoutSession: () => '/workout/session' as Href,
-  settings: () => '/settings' as Href,
   settingsTraining: () => '/settings/training' as Href,
   settingsNotifications: () => '/settings/notifications' as Href,
   settingsAbout: () => '/settings/about' as Href,
-  permissions: () => '/permissions' as Href,
+  editProfile: () => '/edit-profile' as Href,
   dev: () => '/dev' as Href,
 
   /**

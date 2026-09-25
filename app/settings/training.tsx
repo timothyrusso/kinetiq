@@ -4,18 +4,17 @@
  *
  * ## Why these are not on the Profile tab
  *
- * The tab carries the settings you consult: units, appearance, the weekly goal. Those are all
- * one control and all readable at a glance. These are a group you visit once and forget, and
- * adding five rows to the tab would push the history entry and the workout preferences: the
- * things actually used daily: below the fold.
+ * The tab carries the settings you consult: units, appearance, language. Those are all one
+ * control and all readable at a glance. These are a group you visit once and forget. The
+ * weekly goal lives here and only here, so there is one control for the number the Profile
+ * ring measures against.
  *
  * ## No Save button, anywhere in this group
  *
  * Each control commits the moment it changes, straight into the store, which debounces its
  * write to the database. That is safe because no control here accepts partial input: a toggle,
  * a chip and a stepper can only ever be in a valid position. (The profile
- * form on the hub screen does have a Save, and its header says why text fields are the
- * exception.) The bounds passed to each stepper are the same ones `normaliseSettings` clamps
+ * editor does have a Save, and its header says why text fields are the exception.) The bounds passed to each stepper are the same ones `normaliseSettings` clamps
  * to, so the UI can never offer a value that the store would quietly rewrite.
  *
  * ## Presets *and* a stepper for the same number
@@ -102,7 +101,7 @@ export default function SettingsTrainingScreen() {
       {
         key: 'goal',
         title: t('trainingPrefs.weeklyGoal'),
-        footer: `${t('misc.goalBody')} ${t('trainingPrefs.alsoOnProfile')}`,
+        footer: t('misc.goalBody'),
         rows: [
           {
             kind: 'stepper',

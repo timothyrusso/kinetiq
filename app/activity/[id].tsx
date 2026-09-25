@@ -21,7 +21,7 @@
  * "tap to edit" row that opens a sheet keeps a reading surface a reading surface.
  */
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { routes } from '@/navigation/nav';
 
@@ -260,6 +260,9 @@ function StrengthBody({
   theme: Theme;
 }) {
   const { t } = useT();
+  const openExercise = useCallback((exerciseId: string) => {
+    router.push(routes.exerciseDetail(exerciseId));
+  }, []);
   const strength = activity.strength;
   const entries = strength?.entries ?? [];
   const records = strength?.personalRecords ?? [];
@@ -326,7 +329,13 @@ function StrengthBody({
           counter={entries.length}
         />
         {entries.map((entry, index) => (
-          <ExerciseCard key={`${entry.exerciseId}-${index}`} entry={entry} units={units} theme={theme} />
+          <ExerciseCard
+            key={`${entry.exerciseId}-${index}`}
+            entry={entry}
+            units={units}
+            theme={theme}
+            onOpen={openExercise}
+          />
         ))}
       </Section>
 
@@ -368,14 +377,21 @@ function StrengthBody({
   );
 }
 
+/**
+ * One exercise's sets. The header is the way into the exercise's own page (its history, its
+ * heaviest-weight line, its records): the library is only reached to pick an exercise, so a
+ * logged session is where "how is my squat going" starts.
+ */
 function ExerciseCard({
   entry,
   units,
   theme,
+  onOpen,
 }: {
   entry: StrengthEntry;
   units: UnitSystem;
   theme: Theme;
+  onOpen: (exerciseId: string) => void;
 }) {
   const { t } = useT();
   const top = useMemo(() => heaviestCompletedSet(entry.sets), [entry.sets]);
@@ -411,13 +427,23 @@ function ExerciseCard({
     <Card padding="md">
       <Column gap="md">
         <Row gap="md" align="center">
-          <Column gap="xs" style={styles.shrink}>
-            <Txt variant="subhead" weight="700" numberOfLines={2}>
-              {entry.exerciseName}
-            </Txt>
-            <MetaLine items={meta} theme={theme} wrap />
-            <TagRow tags={tags} theme={theme} />
-          </Column>
+          <Pressable
+            onPress={() => onOpen(entry.exerciseId)}
+            accessibilityRole="button"
+            accessibilityHint={t('activity.openExerciseHint')}
+            style={({ pressed }) => [styles.shrink, pressed ? styles.pressed : null]}
+          >
+            <Column gap="xs">
+              <Row gap="xs" align="center">
+                <Txt variant="subhead" weight="700" numberOfLines={2} style={styles.shrink}>
+                  {entry.exerciseName}
+                </Txt>
+                <Icon name="chevronRight" size={ICON_SIZE.inline} color={theme.colors.textFaint} />
+              </Row>
+              <MetaLine items={meta} theme={theme} wrap />
+              <TagRow tags={tags} theme={theme} />
+            </Column>
+          </Pressable>
           <Badge
             label={
               done === 0
@@ -611,6 +637,7 @@ const styles = StyleSheet.create({
   dataRow: { paddingVertical: spacing.md },
   /** A planned-but-not-done set is part of the record, so it is dimmed rather than hidden. */
   dimmed: { opacity: 0.5 },
+  pressed: { opacity: 0.6 },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   narrow: { width: 30 },
   wide: { width: 54 },
