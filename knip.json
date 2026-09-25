@@ -3,7 +3,8 @@
   "entry": [
     "app/**/*.{ts,tsx}",
     "scripts/*.{js,ts}",
-    "src/**/*.android.{ts,tsx}"
+    "src/**/*.android.{ts,tsx}",
+    "targets/**/expo-target.config.js"
   ],
   "project": [
     "app/**/*.{ts,tsx}",
@@ -20,7 +21,9 @@
     ]
   },
   "ignoreBinaries": [
-    "rsvg-convert"
+    "rsvg-convert",
+    "swiftlint",
+    "swift"
   ],
   "ignoreDependencies": [
     "expo-updates"

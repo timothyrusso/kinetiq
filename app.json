@@ -13,6 +13,7 @@
     "icon": "./assets/icon.png",
     "ios": {
       "bundleIdentifier": "app.kinetiq.mobile",
+      "appleTeamId": "BD56R4V948",
       "buildNumber": "1",
       "supportsTablet": false,
       "infoPlist": {
@@ -89,7 +90,8 @@
           }
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      "@bacons/apple-targets"
     ],
     "experiments": {
       "typedRoutes": true,
