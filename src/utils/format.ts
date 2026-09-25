@@ -1,6 +1,6 @@
 /**
  * Formatting primitives. All domain values are stored canonically in metric
- * (metres, kilograms, seconds-per-kilometre); conversion happens only here, at
+ * (kilograms, seconds); conversion happens only here, at
  * the moment a value is shown.
  *
  * The parsers live here alongside the formatters (`parseDuration`, `parseNumber`,
@@ -17,8 +17,6 @@
 
 export type UnitSystem = 'metric' | 'imperial';
 
-const KM = 1000;
-const MILE_IN_METERS = 1609.344;
 const LB_PER_KG = 2.2046226218;
 
 /* ---------------------------------------------------------------- numbers -- */
@@ -79,87 +77,6 @@ export function formatDurationCompact(totalSeconds: number): string {
 export function formatTimer(totalSeconds: number): string {
   const s = Math.max(0, Math.ceil(totalSeconds));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-}
-
-/* ----------------------------------------------------------------- effort -- */
-
-export function distanceValue(meters: number, system: UnitSystem): number {
-  return system === 'metric' ? meters / KM : meters / MILE_IN_METERS;
-}
-
-export function distanceUnit(system: UnitSystem): string {
-  return system === 'metric' ? 'km' : 'mi';
-}
-
-/** 5421 m -> "5.42 km" / "3.37 mi" */
-/**
- * A distance with its unit: "5.20 km", "420 m", "3.2 mi", "180 ft".
- *
- * ALWAYS carries the unit, because the unit is not a constant: a short effort reads as
- * metres and a long one as kilometres, so a caller cannot append the right one from the
- * system alone. This used to return a bare number for long distances while still returning
- * "420 m" for short ones, and both halves of that were wrong in their own way: the activity
- * list rendered a naked "0.18", its screen-reader label said "Morning run. 0.18 in 1m", and
- * `formatDistanceWithUnit`: which appended the unit itself: produced "420 m km" for
- * anything under 100 metres.
- *
- * Where the unit is already on screen (a table column headed KM), use `distanceValue`,
- * which returns the bare number in the system's primary unit.
- */
-export function formatDistance(meters: number, system: UnitSystem, digits = 2): string {
-  const perUnit = system === 'metric' ? KM : MILE_IN_METERS;
-  if (meters < perUnit * 0.1) {
-    // Short efforts read better in metres/feet than as "0.03 km".
-    if (system === 'metric') return `${Math.round(meters)} m`;
-    return `${Math.round(meters * 3.280839895)} ft`;
-  }
-  return `${(meters / perUnit).toFixed(digits)} ${distanceUnit(system)}`;
-}
-
-
-/** Canonical pace is seconds per kilometre. */
-export function paceValue(secondsPerKm: number, system: UnitSystem): number {
-  return system === 'metric' ? secondsPerKm : secondsPerKm * (MILE_IN_METERS / KM);
-}
-
-/** 312 s/km -> "5:12 /km" · imperial converts to s/mi. */
-export function formatPace(secondsPerKm: number, system: UnitSystem): string {
-  if (!Number.isFinite(secondsPerKm) || secondsPerKm <= 0) return '-';
-  return `${formatDuration(paceValue(secondsPerKm, system))} /${distanceUnit(system)}`;
-}
-
-export function formatPaceShort(secondsPerKm: number, system: UnitSystem): string {
-  if (!Number.isFinite(secondsPerKm) || secondsPerKm <= 0) return '-';
-  return formatDuration(paceValue(secondsPerKm, system));
-}
-
-/** m/s -> "11.6 km/h" / "7.2 mph" */
-export function formatSpeed(metersPerSecond: number, system: UnitSystem, digits = 1): string {
-  if (!Number.isFinite(metersPerSecond) || metersPerSecond <= 0) return '-';
-  const kmh = metersPerSecond * 3.6;
-  return system === 'metric'
-    ? `${kmh.toFixed(digits)} km/h`
-    : `${(kmh / 1.609344).toFixed(digits)} mph`;
-}
-
-export function speedUnit(system: UnitSystem): string {
-  return system === 'metric' ? 'km/h' : 'mph';
-}
-
-export function speedValue(metersPerSecond: number, system: UnitSystem): number {
-  const kmh = metersPerSecond * 3.6;
-  return system === 'metric' ? kmh : kmh / 1.609344;
-}
-
-export function formatElevation(meters: number, system: UnitSystem): string {
-  if (!Number.isFinite(meters) || meters <= 0) return '0';
-  return system === 'metric'
-    ? `${Math.round(meters)}`
-    : `${Math.round(meters * 3.280839895)}`;
-}
-
-export function elevationUnit(system: UnitSystem): string {
-  return system === 'metric' ? 'm' : 'ft';
 }
 
 /* ------------------------------------------------------------------ mass -- */

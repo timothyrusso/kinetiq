@@ -55,7 +55,6 @@ import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
 import { spacing, screenGutter } from '@/theme/tokens';
 import {
-  formatDistance,
   formatDurationCompact,
 } from '@/utils/format';
 import type { UnitSystem } from '@/utils/format';
@@ -210,18 +209,11 @@ export default function ProfileScreen() {
 
           <SectionHeader title={t('tabsProfile.lastFourWeeks')} style={styles.section} />
           <Card>
-            <MetricGrid columns={2}>
+            <MetricGrid columns={3}>
               <StatTile label={t('profileScreen.sessions')} value={formatNumber(totals?.workouts)} />
               <StatTile
                 label={t('profileScreen.time')}
                 value={totals === undefined ? t('common.noValue') : formatDurationCompact(totals.durationSeconds)}
-              />
-              <StatTile
-                label={t('profileScreen.distance')}
-                {...valueAndUnit(
-                  totals === undefined ? null : formatDistance(totals.distanceMeters, unitSystem, 1),
-                  t('common.noValue'),
-                )}
               />
               <StatTile
                 label={t('profileScreen.volume')}
@@ -275,26 +267,12 @@ export default function ProfileScreen() {
           <SectionHeader title={t('profileScreen.training')} style={styles.section} />
           <Card padding="xxs">
             <NavRow
-              title={t('profileScreen.progressTitle')}
-              description={t('profileScreen.progressSubtitle')}
-              theme={theme}
-              icon="trendUp"
-              topDivider={false}
-              onPress={() => router.push(routes.progress())}
-            />
-            <NavRow
               title={t('profileScreen.allActivities')}
               description={t('profileScreen.allActivitiesSubtitle')}
               theme={theme}
               icon="activities"
+              topDivider={false}
               onPress={() => router.push(routes.workoutHistory())}
-            />
-            <NavRow
-              title={t('profileScreen.startCardio')}
-              description={t('profileScreen.startCardioSubtitle')}
-              theme={theme}
-              icon="route"
-              onPress={() => router.push(routes.cardio())}
             />
           </Card>
 
@@ -400,18 +378,6 @@ function trainingSince(
 
 function formatNumber(value: number | undefined): string {
   return value === undefined ? '-' : String(value);
-}
-
-/**
- * "104.4 km" as a tile's value and unit.
- *
- * A formatted distance carries its unit after the last space. Split, the unit is drawn small
- * beside the numeral, so a half-width tile fits the number instead of truncating "km".
- */
-function valueAndUnit(formatted: string | null, missing: string): { value: string; unit?: string } {
-  if (formatted === null) return { value: missing };
-  const at = formatted.lastIndexOf(' ');
-  return at < 0 ? { value: formatted } : { value: formatted.slice(0, at), unit: formatted.slice(at + 1) };
 }
 
 const styles = StyleSheet.create({

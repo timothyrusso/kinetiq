@@ -33,10 +33,7 @@ import { radius } from '@/theme/tokens';
 /**
  * This app's icon vocabulary, mapped to Ionicons glyph names.
  *
- * Every value is checked against the real glyph map, not guessed. Two pairs are worth a note:
- * `run` uses `walk` and `walk` uses `footsteps`, because Ionicons has no running figure and
- * those two read correctly side by side in an activity list; `yoga` uses `body`, which is the
- * closest the set offers.
+ * Every value is checked against the real glyph map, not guessed.
  */
 const GLYPHS = {
   // Navigation
@@ -82,24 +79,15 @@ const GLYPHS = {
   clock: 'time',
   timer: 'timer',
   flame: 'flame',
-  route: 'navigate',
-  mapPin: 'location',
   bolt: 'flash',
   target: 'disc',
   calendar: 'calendar',
   trendUp: 'trending-up',
   trophy: 'trophy',
-  heart: 'heart',
-  scale: 'speedometer',
   ruler: 'resize',
 
-  // Activity kinds
-  run: 'walk',
-  walk: 'footsteps',
-  bike: 'bicycle',
-  yoga: 'body',
+  // Training
   dumbbell: 'barbell',
-  mountain: 'triangle',
   skip: 'play-skip-forward',
   star: 'star',
 

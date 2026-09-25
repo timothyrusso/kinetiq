@@ -298,7 +298,7 @@ export function usePreviousPerformance(routineId: string | null, exerciseIds: re
       // A deliberately generous window: someone who trains a routine fortnightly
       // would get "no previous data" from a 4-week scan, and "no previous data" is
       // the answer only when there genuinely is none.
-      const history = await activityRepository.list({ kinds: ['lift'], order: 'desc', limit: 24 });
+      const history = await activityRepository.list({ order: 'desc', limit: 24 });
       const byExercise = new Map<string, PreviousLift>();
 
       // `history` is newest-first, so the first hit per exercise *is* the last time.

@@ -6,8 +6,7 @@
  * Four questions, answered top to bottom in the order people ask them: *did I train*
  * (the hero's three tiles: today's minutes, the streak, the weekly goal), *how much this
  * week* (the metric card), *what did I do* (recent sessions, as cards), *is it working*
- * (the six-week load chart, then the mix). The donut is last and smallest on purpose: it
- * is interesting once a month and noise the rest of the time.
+ * (the six-week load chart).
  *
  * ## Why the FlashList owns the scroll
  *
@@ -47,13 +46,11 @@ import { LiveClock } from '@/ui/LiveClock';
 import { Card, Divider, MetricGrid, Row, Stack } from '@/ui/layout';
 import { Txt } from '@/ui/Text';
 import { BarChart, type BarPoint } from '@/ui/charts/BarChart';
-import { ActivityDistribution, type DistributionSlice } from '@/ui/charts/ActivityDistribution';
 import { useMeasuredWidth } from '@/ui/charts/useMeasuredWidth';
 import { EmptyState, ErrorState, SkeletonCard, SkeletonList, ThemedRefreshControl } from '@/ui/states';
 import { useRecentActivities } from '@/queries/useActivities';
 import { useTrainingSummary, type TrainingSummary } from '@/queries/useProgress';
 import { useSettings } from '@/settings/hooks';
-import { KIND_ORDER } from '@/domain/display';
 import { computeStreak } from '@/domain/logic';
 import type { Activity } from '@/domain/types';
 import { routes, tabHref } from '@/navigation/nav';
@@ -61,13 +58,7 @@ import { useAppTheme } from '@/theme/theme';
 import { spacing, screenGutter } from '@/theme/tokens';
 import { useT } from '@/i18n/useT';
 import type { TKey, TVars } from '@/i18n';
-import {
-  compactNumber,
-  formatDurationCompact,
-  formatDistance,
-  startOfDay,
-  type UnitSystem,
-} from '@/utils/format';
+import { compactNumber, formatDurationCompact, startOfDay } from '@/utils/format';
 
 /** Rows actually shown. The fetched set is longer: see the header note on streaks. */
 const RECENT_VISIBLE = 7;
@@ -92,7 +83,6 @@ export default function HomeScreen() {
   const onSummaryLayout = useCallback((e: LayoutChangeEvent) => chartLayoutRef.current(e), []);
 
   const units = useSettings((s) => s.unitSystem);
-  const showSpeed = useSettings((s) => s.showSpeedInsteadOfPace);
   const goal = useSettings((s) => s.weeklyGoalWorkouts);
   const profileName = useSettings((s) => s.profile.name);
 
@@ -133,13 +123,12 @@ export default function HomeScreen() {
           activity={item}
           theme={theme}
           units={units}
-          showSpeedInsteadOfPace={showSpeed}
-          thumbnail={item.kind === 'lift' ? 'chart' : 'map'}
+          thumbnail="chart"
           onPress={openActivity}
         />
       </View>
     ),
-    [openActivity, showSpeed, theme, units],
+    [openActivity, theme, units],
   );
 
   const keyExtractor = useCallback((item: Activity) => item.id, []);
@@ -197,7 +186,7 @@ export default function HomeScreen() {
           ) : summaryQuery.isError ? (
             <ErrorState error={summaryQuery.error} onRetry={retrySummary} compact />
           ) : summary ? (
-            <HomeSummary summary={summary} units={units} chartWidth={chartWidth} t={t} />
+            <HomeSummary summary={summary} chartWidth={chartWidth} t={t} />
           ) : null}
         </View>
 
@@ -289,7 +278,7 @@ export default function HomeScreen() {
 /* ------------------------------------------------------------------ summary -- */
 
 /**
- * The weekly block: the week's time against the last, four metrics, six-week load, kind mix.
+ * The weekly block: the week's time against the last, three metrics, six-week load.
  *
  * `chartWidth` arrives from an `onLayout` on the container, which is why the first pass
  * renders a spacer instead of the chart: `BarChart` computes path geometry in JS and
@@ -299,12 +288,10 @@ export default function HomeScreen() {
  */
 const HomeSummary = memo(function HomeSummary({
   summary,
-  units,
   chartWidth,
   t,
 }: {
   summary: TrainingSummary;
-  units: UnitSystem;
   chartWidth: number;
   t: Translate;
 }) {
@@ -326,24 +313,7 @@ const HomeSummary = memo(function HomeSummary({
     [summary.weeks, t],
   );
 
-  const slices: DistributionSlice[] = useMemo(() => {
-    const byKind = new Map<Activity['kind'], number>();
-    for (const w of summary.weeks) {
-      for (const [kind, count] of Object.entries(w.byKind) as Array<[Activity['kind'], number]>) {
-        byKind.set(kind, (byKind.get(kind) ?? 0) + count);
-      }
-    }
-    // Sessions, not minutes: `byKind` is a count the summary already computed. Turning it
-    // into minutes would need the rows, and the rows are a different query: a donut that
-    // disagrees with the list under it is worse than a donut measuring something simpler.
-    return KIND_ORDER.filter((kind) => (byKind.get(kind) ?? 0) > 0).map((kind) => ({
-      kind,
-      value: byKind.get(kind) ?? 0,
-    }));
-  }, [summary.weeks]);
-
   const formatMinutes = useCallback((v: number) => t('tabsHome.minutesShort', { value: v }), [t]);
-  const formatSessions = useCallback((v: number) => t('activities.session', { count: v }), [t]);
 
   const delta = deltaPercent(week?.durationSeconds ?? 0, previous?.durationSeconds ?? 0);
   const trend: Trend | undefined =
@@ -354,7 +324,6 @@ const HomeSummary = memo(function HomeSummary({
           direction: delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat',
         };
   const volume = week?.volumeKg ?? 0;
-  const distance = week?.distanceMeters ?? 0;
 
   return (
     <Stack gap="lg">
@@ -370,10 +339,6 @@ const HomeSummary = memo(function HomeSummary({
         </View>
         <MetricGrid columns={2}>
           <StatTile label={t('home.sessions')} value={`${week?.workouts ?? 0}`} />
-          <StatTile
-            label={t('home.distance')}
-            value={distance > 0 ? formatDistance(distance, units, 1) : t('common.noValue')}
-          />
           <StatTile
             label={t('home.volume')}
             value={volume > 0 ? compactNumber(volume) : t('common.noValue')}
@@ -407,21 +372,6 @@ const HomeSummary = memo(function HomeSummary({
         )}
       </Card>
 
-      {slices.length > 0 ? (
-        <Card>
-          <SectionHeader
-            title={t('homeTab.mix')}
-            eyebrow={t('tabsHome.mixEyebrow', { count: summary.rangeWeeks })}
-          />
-          <ActivityDistribution
-            slices={slices}
-            theme={theme}
-            formatValue={formatSessions}
-            centerLabel={`${summary.totals.workouts}`}
-            centerSublabel={t('profileScreen.sessionWord', { count: summary.totals.workouts })}
-          />
-        </Card>
-      ) : null}
     </Stack>
   );
 });

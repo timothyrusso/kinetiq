@@ -52,7 +52,6 @@ import { openDatabase, readAllSettings, SETTING_KEYS, type DatabaseOpenResult, t
 import { seedIfEmpty } from '@/seed/seed';
 import { installQueryAdapters } from '@/query/client';
 import { startNetworkStatus } from '@/query/networkStatus';
-import { recorder } from '@/services/location';
 import {
   installNotificationHandler,
   readNotificationPermission,
@@ -115,7 +114,6 @@ const SETTINGS_KEYS = [
   SETTING_KEYS.defaultRestSeconds,
   SETTING_KEYS.autoStartRest,
   SETTING_KEYS.weeklyGoalWorkouts,
-  SETTING_KEYS.showSpeedInsteadOfPace,
   SETTING_KEYS.profile,
   SETTING_KEYS.reminder,
 ] as const;
@@ -195,7 +193,6 @@ export async function readSettingsSnapshot(): Promise<SettingsState> {
     defaultRestSeconds: values.get(SETTING_KEYS.defaultRestSeconds) as number,
     autoStartRest: values.get(SETTING_KEYS.autoStartRest) as boolean,
     weeklyGoalWorkouts: values.get(SETTING_KEYS.weeklyGoalWorkouts) as number,
-    showSpeedInsteadOfPace: values.get(SETTING_KEYS.showSpeedInsteadOfPace) as boolean,
     profile: values.get(SETTING_KEYS.profile) as SettingsState['profile'],
     reminder: values.get(SETTING_KEYS.reminder) as SettingsState['reminder'],
   });
@@ -255,11 +252,9 @@ export async function runBootstrap(systemDark: boolean): Promise<BootstrapOutcom
   const headerIcons = prefetchHeaderIcons();
   const seeded = await seedIfEmpty();
 
-  // 7. Active-workout restoration and the interrupted-recording draft. Both settle
-  //    *before* the first frame so the "resume" affordance ships with the launch
-  //    instead of popping in 300ms later.
+  // 7. Active-workout restoration settles *before* the first frame so the "resume"
+  //    affordance ships with the launch instead of popping in 300ms later.
   const session = await hydrateWorkoutSession();
-  await recorder.hydrate().catch(() => undefined);
 
   // 8. Fonts are the only thing from step 6 the first frame genuinely needs, so that
   //    is what the splash waits on.

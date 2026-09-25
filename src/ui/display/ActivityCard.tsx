@@ -5,7 +5,7 @@
  * id, so a list passes one stable callback to every card instead of building a closure per row.
  *
  * `compact` drops the surface and the thumbnail and reads as a list row; the full card is for
- * places that show a handful of activities, where a route trace is worth its draw cost.
+ * places that show a handful of workouts, where the per-exercise bars are worth drawing.
  */
 import { memo, useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -13,7 +13,6 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import type { Activity } from '@/domain/types';
 import type { Theme } from '@/theme/theme';
 import { screenGutter, spacing } from '@/theme/tokens';
-import { RouteTrace } from '@/ui/charts/RouteTrace';
 import { IconTile } from '@/ui/icons';
 import { CellText } from '@/ui/CellText';
 import { ACTIVITY_ICON } from '@/ui/rows';
@@ -28,7 +27,6 @@ export const ActivityCard = memo(function ActivityCard({
   activity,
   theme,
   units,
-  showSpeedInsteadOfPace = false,
   thumbnail = 'none',
   compact = false,
   onPress,
@@ -37,22 +35,19 @@ export const ActivityCard = memo(function ActivityCard({
   activity: Activity;
   theme: Theme;
   units: UnitSystem;
-  showSpeedInsteadOfPace?: boolean;
-  thumbnail?: 'map' | 'chart' | 'none';
+  thumbnail?: 'chart' | 'none';
   compact?: boolean;
   onPress: (id: string) => void;
   /** Same id-taking shape as `onPress`, so a list can pass one stable callback for both. */
   onLongPress?: (id: string) => void;
 }) {
   const summary = useMemo(
-    () => activitySummary(activity, units, showSpeedInsteadOfPace),
-    [activity, units, showSpeedInsteadOfPace],
+    () => activitySummary(activity, units),
+    [activity, units],
   );
   const press = useCallback(() => onPress(activity.id), [onPress, activity.id]);
   const longPress = useCallback(() => onLongPress?.(activity.id), [onLongPress, activity.id]);
   const skin = theme.surfaceSkin;
-  const route = activity.cardio?.route ?? [];
-  const showMap = !compact && thumbnail === 'map' && route.length > 1;
   const showChart = !compact && thumbnail === 'chart' && (activity.strength?.entries.length ?? 0) > 0;
 
   return (
@@ -87,19 +82,6 @@ export const ActivityCard = memo(function ActivityCard({
         </View>
         <CellText text={summary.headline} variant="numeralSm" color={theme.colors.text} align="right" />
       </View>
-      {showMap ? (
-        <RouteTrace
-          route={route}
-          kind={activity.kind}
-          theme={theme}
-          height={THUMB_HEIGHT}
-          showLegend={false}
-          showStartEnd={false}
-          // List rows carry the simplified shape only, with no timing to colour a pace by.
-          paceColoured={false}
-          style={styles.thumb}
-        />
-      ) : null}
       {showChart ? <VolumeBars activity={activity} theme={theme} /> : null}
     </Pressable>
   );

@@ -12,12 +12,11 @@
  *   (`invalidateActivities`) rather than a list of keys that drifts out of date
  *   as filters are added.
  */
-import type { ActivityKind, ExerciseFilter } from '@/domain/types';
+import type { ExerciseFilter } from '@/domain/types';
 
-export type ActivitySort = 'recent' | 'duration' | 'volume' | 'distance';
+export type ActivitySort = 'recent' | 'duration' | 'volume';
 
 export type ActivityListParams = {
-  kinds: ActivityKind[];
   search: string;
   sort: ActivitySort;
   /** Grouped by calendar day: 'day' (default) | 'week' | 'none'. */
@@ -32,11 +31,8 @@ export const queryKeys = {
      * them would make every sort change a cold miss: the list would empty to a skeleton for
      * a frame and the scroll position would be lost with it.
      */
-    list: (params: Pick<ActivityListParams, 'kinds' | 'search'>) =>
-      ['activities', 'list', {
-        kinds: [...params.kinds].sort(),
-        search: params.search.trim().toLowerCase(),
-      }] as const,
+    list: (params: Pick<ActivityListParams, 'search'>) =>
+      ['activities', 'list', { search: params.search.trim().toLowerCase() }] as const,
     /**
      * The unfiltered first page, which is exactly what Home and Progress need.
      * Separate from `list` so opening Home never invalidates or re-runs a

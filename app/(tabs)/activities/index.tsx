@@ -38,8 +38,8 @@
  * exists; the mutation is a single indexed delete, so a pending label on the button is
  * cheaper than the inconsistency.
  */
-import { memo, useCallback, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 
@@ -50,7 +50,6 @@ import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
 import { ActivityCard, MetaLine, SectionHeader, type MetaItem } from '@/ui/display';
 import { Row } from '@/ui/layout';
 import { Txt } from '@/ui/Text';
-import { Chip } from '@/ui/controls/Chip';
 import { SegmentedControl } from '@/ui/controls/SegmentedControl';
 import { TextInput } from '@/ui/controls/TextInput';
 import { Button } from '@/ui/controls/Button';
@@ -59,13 +58,12 @@ import { useActivityList, useDeleteActivity } from '@/queries/useActivities';
 import type { ActivityListParams, ActivitySort } from '@/query/keys';
 import { useSettings } from '@/settings/hooks';
 import { useIsOnline } from '@/query/networkStatus';
-import type { Activity, ActivityKind } from '@/domain/types';
+import type { Activity } from '@/domain/types';
 import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
 import { useT } from '@/i18n/useT';
 import { spacing, screenGutter } from '@/theme/tokens';
-import { compactNumber, daysBetween, formatDistance, formatDurationCompact } from '@/utils/format';
-import { toggleInArray } from '@/utils/functional';
+import { compactNumber, daysBetween, formatDurationCompact } from '@/utils/format';
 import { useDebouncedValue, useIsSettling } from '@/utils/useDebouncedValue';
 import type { TKey, TVars } from '@/i18n';
 
@@ -74,23 +72,9 @@ type RowItem =
   | { type: 'activity'; activity: Activity }
   | { type: 'label'; key: string; text: string; count: number };
 
-const KIND_CHIPS: readonly {
-  kind: ActivityKind;
-  /** A catalog key: this table is built at import time, where there is no language. */
-  label: TKey;
-  icon: 'run' | 'bike' | 'dumbbell' | 'walk' | 'yoga';
-}[] = [
-  { kind: 'run', label: 'activities.kindRuns', icon: 'run' },
-  { kind: 'ride', label: 'activities.kindRides', icon: 'bike' },
-  { kind: 'lift', label: 'activities.kindStrength', icon: 'dumbbell' },
-  { kind: 'walk', label: 'activities.kindWalks', icon: 'walk' },
-  { kind: 'yoga', label: 'activities.kindYoga', icon: 'yoga' },
-];
-
 const SORTS: readonly { value: ActivitySort; label: TKey }[] = [
   { value: 'recent', label: 'activities.sortRecent' },
   { value: 'duration', label: 'activities.sortLongest' },
-  { value: 'distance', label: 'activities.sortFurthest' },
   { value: 'volume', label: 'activities.sortHeaviest' },
 ];
 
@@ -102,10 +86,8 @@ export default function ActivitiesScreen() {
   const online = useIsOnline();
 
   const units = useSettings((s) => s.unitSystem);
-  const showSpeed = useSettings((s) => s.showSpeedInsteadOfPace);
 
   const [search, setSearch] = useState('');
-  const [kinds, setKinds] = useState<ActivityKind[]>([]);
   const [sort, setSort] = useState<ActivitySort>('recent');
   // Segment labels are catalog keys in the table above; resolved here, memoised on `t` so a
   // new array does not rebuild the native control's segments on every unrelated re-render.
@@ -123,13 +105,13 @@ export default function ActivitiesScreen() {
   // Rebuilt only when a filter changes: `useActivityList` keys on the object's contents, so
   // a fresh literal every render would be a fresh query every render.
   const params = useMemo<ActivityListParams>(
-    () => ({ kinds, search: trimmed, sort, groupBy: sort === 'recent' ? 'day' : 'none' }),
-    [kinds, sort, trimmed],
+    () => ({ search: trimmed, sort, groupBy: sort === 'recent' ? 'day' : 'none' }),
+    [sort, trimmed],
   );
 
   const list = useActivityList(params);
   const removeActivity = useDeleteActivity();
-  const filtering = kinds.length > 0 || trimmed.length > 0;
+  const filtering = trimmed.length > 0;
   const pendingDelete = useMemo(
     () => (pendingId === null ? null : (list.flat.find((a) => a.id === pendingId) ?? null)),
     [list.flat, pendingId],
@@ -172,14 +154,13 @@ export default function ActivitiesScreen() {
           activity={item.activity}
           theme={theme}
           units={units}
-          showSpeedInsteadOfPace={showSpeed}
           compact
           onPress={openActivity}
           onLongPress={setPendingId}
         />
       );
     },
-    [openActivity, showSpeed, theme, units],
+    [openActivity, theme, units],
   );
 
   const keyExtractor = useCallback(
@@ -189,14 +170,9 @@ export default function ActivitiesScreen() {
   const getItemType = useCallback((item: RowItem) => item.type, []);
 
   const clearFilters = useCallback(() => {
-    setKinds([]);
     setSearch('');
     setSort('recent');
   }, []);
-  const toggleKind = useCallback(
-    (kind: ActivityKind) => setKinds((prev) => toggleInArray(prev, kind)),
-    [],
-  );
 
   const confirmDelete = useCallback(() => {
     if (!pendingDelete) return;
@@ -211,7 +187,7 @@ export default function ActivitiesScreen() {
   }, [removeActivity]);
 
   const count = list.flat.length;
-  const { durationSeconds, distanceMeters, volumeKg } = list.totals;
+  const { durationSeconds, volumeKg } = list.totals;
   const summary = useMemo<MetaItem[]>(() => {
     if (list.isLoading || count === 0) {
       return [{ icon: 'activities', label: t('states.everySessionLands') }];
@@ -220,14 +196,11 @@ export default function ActivitiesScreen() {
       { icon: 'activities', label: t('activities.session', { count }) },
       { icon: 'clock', label: formatDurationCompact(durationSeconds) },
     ];
-    if (distanceMeters > 0) {
-      items.push({ icon: 'route', label: formatDistance(distanceMeters, units, 1) });
-    }
     if (volumeKg > 0) {
       items.push({ icon: 'dumbbell', label: `${compactNumber(volumeKg)} kg` });
     }
     return items;
-  }, [count, distanceMeters, durationSeconds, list.isLoading, t, units, volumeKg]);
+  }, [count, durationSeconds, list.isLoading, t, volumeKg]);
 
   // Memoised so a re-render that changed nothing in the header (a delete dialog opening, a
   // query notification) hands FlashList the same element and leaves the header alone.
@@ -249,25 +222,6 @@ export default function ActivitiesScreen() {
           />
         </View>
 
-        {/* A rail, the platform's shape for a row of filter chips: one line that scrolls
-            sideways, rather than a block that wraps and pushes the list down a row per chip. */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.rail}
-        >
-          {KIND_CHIPS.map((chip) => (
-            <KindChip
-              key={chip.kind}
-              kind={chip.kind}
-              label={t(chip.label)}
-              icon={chip.icon}
-              selected={kinds.includes(chip.kind)}
-              onToggle={toggleKind}
-            />
-          ))}
-        </ScrollView>
-
         <View style={styles.sort}>
           <Row gap="md" align="center">
             <View style={styles.fill}>
@@ -286,7 +240,7 @@ export default function ActivitiesScreen() {
         </View>
       </>
     ),
-    [clearFilters, filtering, kinds, online, search, settling, sort, sortSegments, summary, t, theme, toggleKind],
+    [clearFilters, filtering, online, search, settling, sort, sortSegments, summary, t, theme],
   );
 
   const refresh = list.refresh;
@@ -369,24 +323,6 @@ export default function ActivitiesScreen() {
   );
 }
 
-/** One filter chip, memoised on its own props so toggling one chip redraws one chip. */
-const KindChip = memo(function KindChip({
-  kind,
-  label,
-  icon,
-  selected,
-  onToggle,
-}: {
-  kind: ActivityKind;
-  label: string;
-  icon: 'run' | 'bike' | 'dumbbell' | 'walk' | 'yoga';
-  selected: boolean;
-  onToggle: (kind: ActivityKind) => void;
-}) {
-  const press = useCallback(() => onToggle(kind), [kind, onToggle]);
-  return <Chip label={label} icon={icon} size="sm" selected={selected} onPress={press} />;
-});
-
 /**
  * FlashList v2 pins the first visible row across data changes, which suits a feed that grows
  * at the top and is wrong for a re-sort: the row it pins moves far down the new order, so the
@@ -418,7 +354,6 @@ function dayHeading(midnight: number, t: (key: TKey, vars?: TVars) => string, lo
 const styles = StyleSheet.create({
   summary: { paddingHorizontal: screenGutter, paddingTop: spacing.md },
   filters: { paddingHorizontal: screenGutter, paddingTop: spacing.lg },
-  rail: { paddingHorizontal: screenGutter, paddingTop: spacing.md, gap: spacing.sm },
   sort: {
     paddingHorizontal: screenGutter,
     paddingTop: spacing.md,

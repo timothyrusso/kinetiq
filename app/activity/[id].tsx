@@ -1,31 +1,18 @@
 /**
- * Activity detail: one session, read back.
+ * Workout detail: one session, read back.
  *
- * ## One screen, two shapes
- *
- * A run and a lift share almost no metrics, but splitting them into two routes would mean
- * two headers, two delete flows, two notes editors and two chances to get the offline copy
- * wrong. So the chrome is one screen and only the *body* branches on `activity.kind`:
- * cardio gets map → metric grid → elevation → splits, strength gets summary → volume chart
- * → per-exercise set tables → records. The branch happens once, at the top of the body,
- * where the union actually narrows.
+ * Summary, per-exercise set tables, the records the session set, and its notes. Nothing
+ * else: the volume chart and the provenance block went with the gym-only cut, because the
+ * set tables already carry every number either one summarised.
  *
  * ## Absence is rendered, never invented
  *
- * A treadmill run has no route. A session tracked with the watch left at home has no heart
- * rate. Every such gap renders a dash plus one line saying why that is normal: rather than
- * a `0`, a flat line, or a section that quietly vanishes and leaves the user wondering
- * whether the app lost their data. The distinction between "you did zero" and "we did not
- * measure" is the difference between a training log and a lying one. That is also why
- * `Metric` takes `value: string | null` rather than a pre-formatted dash: a caller cannot
- * display a missing number without also deciding what to say about it.
- *
- * ## The map is layered, not switched
- *
- * `RouteMap` draws an SVG trace immediately and puts a native tile view over it only once
- * tiles can genuinely render (see `src/ui/RouteMap.tsx`). This screen's only job is to not
- * claim a route exists when nothing usable was traced, so it asks the same helper the map
- * will itself use: the "is there a route" test then cannot disagree with the drawing.
+ * A bodyweight session has no volume; a session nobody added exercises to has no sets.
+ * Every such gap renders a dash plus one line saying why that is normal, rather than a `0`
+ * or a section that quietly vanishes and leaves the user wondering whether the app lost
+ * their data. That is also why `Metric` takes `value: string | null` rather than a
+ * pre-formatted dash: a caller cannot display a missing number without also deciding what
+ * to say about it.
  *
  * ## Editing notes is a sheet, not an inline field
  *
@@ -41,17 +28,14 @@ import { routes } from '@/navigation/nav';
 import { ScreenHeader } from '@/ui/Screen';
 import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
 import { MetaLine, StatTile, TagRow } from '@/ui/display';
-import { useScreenContentBottom, useTransparentHeaderInset } from '@/ui/insets';
+import { useScreenContentBottom } from '@/ui/insets';
 import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { Badge, Card, Divider, MetricGrid, Row, Stack as Column } from '@/ui/layout';
 import { SectionHeader } from '@/ui/display';
 import { Txt } from '@/ui/Text';
-import { Icon, ICON_SIZE, IconTile, type IconName } from '@/ui/icons';
+import { Icon, ICON_SIZE, IconTile } from '@/ui/icons';
 import { ActionRow, ACTIVITY_ICON } from '@/ui/rows';
 import { EmptyState, ErrorState, SkeletonCard } from '@/ui/states';
-import { RouteMap } from '@/ui/RouteMap';
-import { TrendChart, type TrendPoint } from '@/ui/charts/TrendChart';
-import { useMeasuredWidth } from '@/ui/charts/useMeasuredWidth';
 import {
   useActivity,
   useDeleteActivity,
@@ -61,45 +45,23 @@ import {
 import { RECORD_LABEL, formatRecordValue } from '@/queries/useExerciseHistory';
 import { useSettings } from '@/settings/hooks';
 import { useT } from '@/i18n/useT';
-import { activityDisplay, splitRows, type SplitRow } from '@/domain/display';
+import { activityDisplay } from '@/domain/display';
 import { estimatedOneRepMax } from '@/domain/logic';
-import type {
-  Activity,
-  CardioMetrics,
-  StrengthEntry,
-  StrengthSet,
-} from '@/domain/types';
+import type { Activity, StrengthEntry, StrengthSet } from '@/domain/types';
 import { useAppTheme, type Theme } from '@/theme/theme';
 import { radius, spacing, screenGutter } from '@/theme/tokens';
 import type { UnitSystem } from '@/utils/format';
 import {
   compactNumber,
   formatCalories,
-  formatDistance,
   formatDuration,
-  formatDurationCompact,
-  formatElevation,
-  formatPaceShort,
-  formatSpeed,
   formatWeight,
   joinMiddleDot,
   splitMetric,
   weightUnit,
   weightValue,
 } from '@/utils/format';
-import { agoLabel, fullDateLabel, timeOfDayLabel } from '@/utils/relativeTime';
-import { displayRoute } from '@/services/gps';
-
-/** A chart narrower than this cannot fit its axis labels, so it is not drawn at all. */
-const MIN_CHART_WIDTH = 120;
-/**
- * Route points are per-position, so a long run records thousands of them. Sixty is well
- * past what a 300pt-wide chart can resolve, and sampling down here is what keeps the SVG
- * cheap enough to animate.
- */
-const MAX_ELEVATION_SAMPLES = 60;
-/** The route map's height: the tallest element on the screen, and the one the bar floats over. */
-const MAP_HEIGHT = 280;
+import { fullDateLabel, timeOfDayLabel } from '@/utils/relativeTime';
 
 export default function ActivityDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -107,7 +69,6 @@ export default function ActivityDetailScreen() {
   const theme = useAppTheme();
   const bottom = useScreenContentBottom();
   const units = useSettings((s) => s.unitSystem);
-  const showSpeed = useSettings((s) => s.showSpeedInsteadOfPace);
 
   const activityId = typeof id === 'string' && id.length > 0 ? id : null;
   const query = useActivity(activityId);
@@ -143,23 +104,13 @@ export default function ActivityDetailScreen() {
   const editNotes = useCallback(() => {
     if (activityId !== null) router.push(routes.activityNotes(activityId));
   }, [activityId]);
-  // The bar floats over the map, and only over the map: a session with no route has nothing
-  // full-bleed to show through it, and a transparent bar over plain text is a bar that looks
-  // missing. `displayRoute` is the same test the map uses to decide it has anything to draw.
-  const hasRoute = activity?.cardio ? displayRoute(activity.cardio.route).length >= 2 : false;
-  const transparentInset = useTransparentHeaderInset();
-  const topInset = hasRoute ? transparentInset : 0;
 
   return (
     <>
-      {/* A fade rather than a push: this screen is reached from Home, from the list and
-          from Progress, and its content is a full-bleed surface: a horizontal slide would
-          flash the previous list's rows past the hero number. */}
+      {/* A fade rather than a push: a horizontal slide would flash the previous list's rows
+          past the hero number. */}
       <Stack.Screen options={{ animation: 'fade_from_bottom' }} />
-      <ScreenHeader
-        title={activity?.title ?? t('activity.fallbackTitle')}
-        transparent={hasRoute}
-      />
+      <ScreenHeader title={activity?.title ?? t('activity.fallbackTitle')} />
       {activity ? (
         <HeaderToolbar placement="right">
           {/* Destructive: tinted as danger, and behind the native confirm below. */}
@@ -175,7 +126,7 @@ export default function ActivityDetailScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.content,
-          { paddingTop: topInset + spacing.md, paddingBottom: bottom },
+          { paddingTop: spacing.md, paddingBottom: bottom },
         ]}
         keyboardShouldPersistTaps="handled"
       >
@@ -191,14 +142,7 @@ export default function ActivityDetailScreen() {
             title={t('activity.loadError')}
           />
         ) : activity ? (
-          <ActivityBody
-            activity={activity}
-            units={units}
-            showSpeed={showSpeed}
-            theme={theme}
-            hasRoute={hasRoute}
-            onEditNotes={editNotes}
-          />
+          <ActivityBody activity={activity} units={units} theme={theme} onEditNotes={editNotes} />
         ) : null}
       </ScrollView>
 
@@ -234,30 +178,22 @@ export default function ActivityDetailScreen() {
 function ActivityBody({
   activity,
   units,
-  showSpeed,
   theme,
-  hasRoute,
   onEditNotes,
 }: {
   activity: Activity;
   units: UnitSystem;
-  showSpeed: boolean;
   theme: Theme;
-  hasRoute: boolean;
   onEditNotes: () => void;
 }) {
   const { t } = useT();
-  const [width, onLayout] = useMeasuredWidth();
-  // Charts are measured, not assumed: a `Dimensions` constant would be wrong in split view,
-  // on a tablet, and on the day this screen's padding changes.
-  const chartWidth = Math.max(0, width - spacing.lg * 2);
 
   // One call, one object: the headline, the subtitle and the spoken sentence are three
   // views of the same numbers, and computing them separately is how they start disagreeing
   // about rounding.
   const display = useMemo(
-    () => activityDisplay(activity, units, showSpeed),
-    [activity, units, showSpeed],
+    () => activityDisplay(activity, units),
+    [activity, units],
   );
   const when = useMemo(
     () => [
@@ -268,19 +204,8 @@ function ActivityBody({
   );
 
   return (
-    <View onLayout={onLayout}>
-      {/* The map first, directly under the floating bar: the one full-width picture this
-          screen has is what the transparent header is for. */}
-      {hasRoute && activity.cardio ? (
-        <RouteMap
-          route={activity.cardio.route}
-          kind={activity.kind}
-          theme={theme}
-          height={MAP_HEIGHT}
-          style={styles.map}
-        />
-      ) : null}
-      {/* One accessibility element for the whole hero, so VoiceOver reads "Tempo run. 8.43 km
+    <View>
+      {/* One accessibility element for the whole hero, so VoiceOver reads "Push. 12.4k kg
           in 52 min" as a sentence rather than four fragments in sequence. The label comes
           from the domain layer because that is what decides what is true about the numbers.
           The kind is the tile's tone and glyph, not a word: the title already names it. */}
@@ -306,17 +231,8 @@ function ActivityBody({
         </Txt>
       </View>
 
-      {activity.kind === 'lift' ? (
-        <StrengthBody activity={activity} units={units} theme={theme} chartWidth={chartWidth} />
-      ) : activity.cardio ? (
-        <CardioBody
-          activity={activity}
-          cardio={activity.cardio}
-          units={units}
-          showSpeed={showSpeed}
-          theme={theme}
-          chartWidth={chartWidth}
-        />
+      {activity.strength ? (
+        <StrengthBody activity={activity} units={units} theme={theme} />
       ) : (
         <EmptyState
           style={{ paddingTop: spacing.xxxl }}
@@ -328,298 +244,7 @@ function ActivityBody({
       )}
 
       <NotesBlock activity={activity} onEdit={onEditNotes} />
-      <ProvenanceBlock activity={activity} theme={theme} />
     </View>
-  );
-}
-
-/* ---------------------------------------------------------------- cardio -- */
-
-function CardioBody({
-  activity,
-  cardio,
-  units,
-  showSpeed,
-  theme,
-  chartWidth,
-}: {
-  activity: Activity;
-  cardio: CardioMetrics;
-  units: UnitSystem;
-  showSpeed: boolean;
-  theme: Theme;
-  chartWidth: number;
-}) {
-  const { t } = useT();
-  // The same thinning the map applies, so "there is a route" is decided by the geometry the
-  // map is about to draw rather than by a second, subtly different rule. The map itself is
-  // drawn above the hero; this body only explains its absence.
-  const hasRoute = displayRoute(cardio.route).length >= 2;
-  const splits = useMemo(() => splitRows(cardio.splits, units), [cardio.splits, units]);
-  const hasDistance = cardio.distanceMeters > 0;
-  const hasHr = cardio.avgHeartRate !== null || cardio.maxHeartRate !== null;
-  const hasClimb = cardio.elevationGainMeters > 0;
-
-  const speed =
-    cardio.avgSpeedMps ??
-    (hasDistance ? cardio.distanceMeters / Math.max(1, activity.durationSeconds) : null);
-
-  const paceLabel = !hasDistance
-    ? null
-    : showSpeed && speed !== null
-      ? formatSpeed(speed, units)
-      : formatPaceShort(cardio.avgPaceSecPerKm, units);
-
-  const elevation = useMemo<TrendPoint[]>(() => {
-    // The raw route, not the map's thinned copy: an altitude curve needs the *time* axis,
-    // which resampling for a polyline discards.
-    const source = cardio.route;
-    const first = source[0];
-    if (source.length < 4 || !first) return [];
-    const step = Math.max(1, Math.ceil(source.length / MAX_ELEVATION_SAMPLES));
-    const points: TrendPoint[] = [];
-    for (let i = 0; i < source.length; i += step) {
-      const point = source[i];
-      if (!point) continue;
-      points.push({
-        label: formatDurationCompact(Math.round((point.t - first.t) / 1000)),
-        value: point.elevation,
-      });
-    }
-    // Two samples make a straight line, which is a claim about every sample between them.
-    return points.length >= 3 ? points : [];
-  }, [cardio.route]);
-
-  // From the catalog, lowercased for the middle of a sentence: "Per kilometre", "Per chilometro".
-  const unitWord = t(units === 'metric' ? 'activity.kilometre' : 'activity.mile').toLocaleLowerCase();
-
-  return (
-    <>
-      {hasRoute ? null : (
-        <Section>
-          <Card tone="sunken">
-            <Row gap="md" align="start">
-              <Icon name="route" size={ICON_SIZE.inline} color={theme.colors.textFaint} />
-              <Column gap="xxs" style={styles.shrink}>
-                <Txt variant="subhead" weight="700">
-                  {t('misc.noRouteToDraw')}
-                </Txt>
-                <Txt variant="caption" tone="muted">
-                  {t('misc.noRouteBody')}
-                </Txt>
-              </Column>
-            </Row>
-          </Card>
-        </Section>
-      )}
-
-      <Section gap="lg">
-        <SectionHeader title={t('activity.metrics')} eyebrow={t('activity.session')} />
-        <MetricGrid columns={2}>
-          <Metric
-            label={t('activity.duration')}
-            value={formatDuration(activity.durationSeconds)}
-          />
-          <Metric
-            label={t('activity.distance')}
-            value={hasDistance ? formatDistance(cardio.distanceMeters, units, 2) : null}
-            {...(hasDistance ? {} : { note: t('activity.noGps') })}
-          />
-          <Metric
-            label={t(showSpeed ? 'activity.speed' : 'activity.pace')}
-            value={paceLabel}
-            {...(paceLabel === null ? { note: t('activity.needsDistance') } : {})}
-          />
-          <Metric
-            label={t('activity.calories')}
-            value={activity.caloriesKcal > 0 ? formatCalories(activity.caloriesKcal) : null}
-            {...(activity.caloriesKcal > 0 ? {} : { note: t('activity.noEstimate') })}
-          />
-          <Metric
-            label={t('activity.heartRate')}
-            value={cardio.avgHeartRate !== null ? `${cardio.avgHeartRate} bpm` : null}
-            note={
-              hasHr
-                ? cardio.maxHeartRate !== null
-                  ? t('activity.peakHr', { bpm: cardio.maxHeartRate })
-                  : t('activity.avgOnly')
-                : t('activity.noSensor')
-            }
-          />
-          <Metric
-            label={t('activity.elevation')}
-            value={hasClimb ? formatElevation(cardio.elevationGainMeters, units) : null}
-            note={t(hasClimb ? 'activity.totalClimb' : 'activity.flat')}
-          />
-          <Metric
-            label={t('activity.cadence')}
-            value={cardio.stridesPerMinute !== null ? `${cardio.stridesPerMinute} spm` : null}
-            note={t(
-              cardio.stridesPerMinute !== null
-                ? 'activity.stridesPerMinute'
-                : 'activity.notRecorded',
-            )}
-          />
-          <Metric
-            label={t('activity.splits')}
-            value={splits !== null ? `${splits.length}` : null}
-            note={
-              splits !== null
-                ? t('activity.perUnit', { unit: unitWord })
-                : t('activity.tooShortToSplit')
-            }
-          />
-        </MetricGrid>
-      </Section>
-
-      {elevation.length > 0 && chartWidth >= MIN_CHART_WIDTH ? (
-        <Section>
-          <SectionHeader title={t('activity.elevation')} eyebrow={t('activity.acrossSession')} />
-          <Card>
-            <TrendChart
-              points={elevation}
-              theme={theme}
-              width={chartWidth}
-              height={132}
-              color={theme.colors.tertiary}
-              showGrid={false}
-              showDots="never"
-              format={(value) => formatElevation(value, units)}
-            />
-            <Txt variant="micro" tone="faint" style={{ paddingTop: spacing.sm }}>
-              {t('activity.altitudeNote')}
-            </Txt>
-          </Card>
-        </Section>
-      ) : null}
-
-      <Section>
-        <SectionHeader
-          title={t('activity.splits')}
-          eyebrow={t('activity.perUnit', { unit: unitWord })}
-          {...(splits !== null ? { counter: splits.length } : {})}
-        />
-        {splits === null ? (
-          <Card>
-            <Row gap="md" align="start">
-              <Icon name="timer" size={ICON_SIZE.inline} color={theme.colors.textFaint} />
-              <Column gap="xxs" style={styles.shrink}>
-                <Txt variant="subhead" weight="700">
-                  {t('activity.noSplitsTitle')}
-                </Txt>
-                <Txt variant="caption" tone="muted">
-                  {t(hasDistance ? 'activity.splitsTooShort' : 'activity.splitsNoDistance', {
-                    unit: unitWord,
-                  })}
-                </Txt>
-              </Column>
-            </Row>
-          </Card>
-        ) : (
-          <SplitTable splits={splits} units={units} theme={theme} />
-        )}
-      </Section>
-    </>
-  );
-}
-
-function SplitTable({
-  splits,
-  units,
-  theme,
-}: {
-  splits: SplitRow[];
-  units: UnitSystem;
-  theme: Theme;
-}) {
-  const { t } = useT();
-  // Columns appear only when at least one split has the data. A column of dashes is worse
-  // than no column: it reads as though the *session* failed rather than one sensor.
-  const showHeart = splits.some((split) => split.heartRate !== null);
-  const showClimb = splits.some((split) => split.elevationGainMeters !== 0);
-
-  return (
-    <Card padding="sm">
-      <Row gap="md" align="center" style={[styles.headRow, styles.band]}>
-        <Txt variant="micro" tone="faint" style={styles.narrow}>
-          {t(units === 'metric' ? 'activity.colKm' : 'activity.colMi')}
-        </Txt>
-        <Txt variant="micro" tone="faint" style={styles.cell}>
-          {t('activity.colPace')}
-        </Txt>
-        <Txt variant="micro" tone="faint" style={styles.cell}>
-          {t('activity.colTime')}
-        </Txt>
-        {showHeart ? (
-          <Txt variant="micro" tone="faint" align="right" style={styles.cell}>
-            {t('activity.colHr')}
-          </Txt>
-        ) : null}
-        {showClimb ? (
-          <Txt variant="micro" tone="faint" align="right" style={styles.narrow}>
-            {t('activity.colUp')}
-          </Txt>
-        ) : null}
-      </Row>
-      {splits.map((split, index) => (
-        <View
-          // The split's stored index is part of the key: splits can start partway through a
-          // session, so the label is not necessarily its position.
-          key={`${split.label}-${index}`}
-          accessible
-          accessibilityRole="summary"
-          accessibilityLabel={joinMiddleDot([
-            `${t(units === 'metric' ? 'activity.kilometre' : 'activity.mile')} ${split.label}`,
-            split.paceLabel,
-            formatDurationCompact(split.durationSeconds),
-            split.heartRate !== null ? `${split.heartRate} bpm` : null,
-            split.fastest ? t('activity.fastest') : null,
-            split.slowest && !split.fastest ? t('activity.slowest') : null,
-          ])}
-        >
-          {index > 0 ? <Divider inset={spacing.sm} /> : null}
-          <View
-            style={[
-              styles.dataRow,
-              styles.band,
-              styles.row,
-              split.fastest ? { backgroundColor: theme.colors.successSoft } : null,
-            ]}
-          >
-            <Txt variant="caption" weight="700" tone="muted" style={styles.narrow}>
-              {split.label}
-            </Txt>
-            <Txt
-              variant="body"
-              weight="700"
-              color={
-                split.fastest
-                  ? theme.colors.success
-                  : split.slowest
-                    ? theme.colors.warning
-                    : theme.colors.text
-              }
-              style={styles.cell}
-            >
-              {split.paceLabel}
-            </Txt>
-            <Txt variant="caption" tone="muted" style={styles.cell}>
-              {formatDurationCompact(split.durationSeconds)}
-            </Txt>
-            {showHeart ? (
-              <Txt variant="caption" tone="muted" align="right" style={styles.cell}>
-                {split.heartRate !== null ? split.heartRate : '-'}
-              </Txt>
-            ) : null}
-            {showClimb ? (
-              <Txt variant="micro" tone="faint" align="right" style={styles.narrow}>
-                {split.elevationGainMeters !== 0 ? Math.round(split.elevationGainMeters) : '·'}
-              </Txt>
-            ) : null}
-          </View>
-        </View>
-      ))}
-    </Card>
   );
 }
 
@@ -629,12 +254,10 @@ function StrengthBody({
   activity,
   units,
   theme,
-  chartWidth,
 }: {
   activity: Activity;
   units: UnitSystem;
   theme: Theme;
-  chartWidth: number;
 }) {
   const { t } = useT();
   const strength = activity.strength;
@@ -648,23 +271,6 @@ function StrengthBody({
   const volume = strength?.totalVolumeKg ?? 0;
   const minutes = activity.durationSeconds / 60;
   const unit = weightUnit(units);
-
-  // Volume per movement, derived here rather than stored: a session whose sets get edited
-  // afterwards must not go on showing a chart that contradicts its own set tables.
-  const volumePoints = useMemo<TrendPoint[]>(
-    () =>
-      entries
-        .map((entry) => ({
-          label: axisLabel(entry.exerciseName),
-          value: entry.sets.reduce(
-            (sum, set) => (set.completed ? sum + set.reps * set.weightKg : sum),
-            0,
-          ),
-          detail: entry.exerciseName,
-        }))
-        .filter((point) => point.value > 0),
-    [entries],
-  );
 
   return (
     <>
@@ -712,27 +318,6 @@ function StrengthBody({
           />
         </MetricGrid>
       </Section>
-
-      {volumePoints.length >= 2 && chartWidth >= MIN_CHART_WIDTH ? (
-        <Section>
-          <SectionHeader
-            title={t('activity.volume')}
-            eyebrow={t('activity.perMovement')}
-            counter={volumePoints.length}
-          />
-          <Card>
-            <TrendChart
-              points={volumePoints}
-              theme={theme}
-              width={chartWidth}
-              height={150}
-              includeZero
-              showDots="always"
-              format={(value) => `${compactNumber(weightValue(value, units))} ${unit}`}
-            />
-          </Card>
-        </Section>
-      ) : null}
 
       <Section>
         <SectionHeader
@@ -944,50 +529,6 @@ function NotesBlock({ activity, onEdit }: { activity: Activity; onEdit: () => vo
   );
 }
 
-/**
- * Where the session came from.
- *
- * Seeded rows say so in the first four words. The app ships with a history so the charts
- * have a shape on first launch, and a user who later found their "first run" was fabricated
- * would reasonably distrust every other number in here: so the honest label costs one line
- * of copy and buys the credibility of the other thirty.
- */
-function ProvenanceBlock({ activity, theme }: { activity: Activity; theme: Theme }) {
-  const { t } = useT();
-  const icon: IconName = activity.seeded
-    ? 'info'
-    : activity.sourceSessionId
-      ? 'checkCircle'
-      : 'edit';
-  return (
-    <Section>
-      <Card tone="sunken">
-        <Row gap="md" align="start">
-          <Icon name={icon} size={ICON_SIZE.inline} color={theme.colors.textMuted} />
-          <Column gap="xxs" style={styles.shrink}>
-            <Txt variant="label" weight="700">
-              {t(
-                activity.seeded
-                  ? 'activity.sampleTitle'
-                  : activity.sourceSessionId
-                    ? 'activity.trackedTitle'
-                    : 'activity.manualTitle',
-              )}
-            </Txt>
-            <Txt variant="micro" tone="muted">
-              {activity.seeded
-                ? t('activity.sampleNote')
-                : activity.sourceSessionId
-                  ? t('activity.recordedAgo', { ago: agoLabel(activity.startedAt) })
-                  : t('activity.manualNote')}
-            </Txt>
-          </Column>
-        </Row>
-      </Card>
-    </Section>
-  );
-}
-
 /* ---------------------------------------------------------------- pieces -- */
 
 /**
@@ -996,8 +537,8 @@ function ProvenanceBlock({ activity, theme }: { activity: Activity; theme: Theme
 function Metric({ label, value, note }: { label: string; value: string | null; note?: string }) {
   const { t } = useT();
   const missing = value === null;
-  // The unit rides beside the numeral ("5:58" and "/km"), so a two-column grid can hold a
-  // pace at tile size without truncating it.
+  // The unit rides beside the numeral ("12.4k" and "kg"), so a two-column grid can hold a
+  // value at tile size without truncating it.
   const parts = missing ? { value: '-' } : splitMetric(value);
   return (
     <Column gap="xxs">
@@ -1059,27 +600,15 @@ function oneRepMaxLabel(set: StrengthSet, units: UnitSystem): string {
   return max === null ? '-' : formatWeight(max, units);
 }
 
-/** Chart axis labels are a handful of characters; the full name belongs in `detail`. */
-function axisLabel(name: string): string {
-  const first = name.trim().split(/\s+/)[0] ?? name;
-  return first.length <= 8 ? first : `${first.slice(0, 7)}…`;
-}
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: screenGutter },
-  map: { marginBottom: spacing.md },
   hero: { padding: spacing.lg, gap: spacing.sm, borderRadius: radius.xl },
   flex: { flex: 1 },
   shrink: { flex: 1, minWidth: 0 },
   section: { paddingTop: spacing.xxxl },
   headRow: { paddingVertical: spacing.xs },
   dataRow: { paddingVertical: spacing.md },
-  /**
-   * A split row's own inset, shared with the header row so the columns line up. The fastest
-   * split's highlight fills this band; it used to borrow the card's padding back with a
-   * negative margin, which is a second, hidden source for the card's inner edge.
-   */
-  band: { paddingHorizontal: spacing.sm, borderRadius: radius.sm },
   /** A planned-but-not-done set is part of the record, so it is dimmed rather than hidden. */
   dimmed: { opacity: 0.5 },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },

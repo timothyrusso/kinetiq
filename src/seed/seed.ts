@@ -12,11 +12,8 @@
  */
 import type {
   Activity,
-  ActivityKind,
-  ActivitySplit,
   ExerciseSnapshot,
   PersonalRecord,
-  RoutePoint,
   Routine,
   RoutineItem,
   StrengthEntry,
@@ -28,14 +25,7 @@ import {
   estimatedOneRepMax,
   totalVolumeKg,
 } from '@/domain/logic';
-import {
-  createRandom,
-  localId,
-  pick,
-  randomInRange,
-  roundTo,
-} from '@/utils/functional';
-import { elevationGain } from '@/utils/geometry';
+import { createRandom, localId, randomInRange, roundTo } from '@/utils/functional';
 import { addDays, startOfDay, startOfWeek } from '@/utils/format';
 import {
   activityRepository,
@@ -50,9 +40,6 @@ import {
 } from '@/persistence';
 
 const WEEKS = 13;
-/** Where the seeded athlete trains: Florence, Italy. */
-const HOME_LAT = 43.7696;
-const HOME_LNG = 11.2558;
 
 export type SeedResult = {
   activities: number;
@@ -128,67 +115,6 @@ function snapshotFor(key: string, capturedAt: number): ExerciseSnapshot {
   };
   snapshots.set(key, snapshot);
   return snapshot;
-}
-
-/* ---------------------------------------------------------------- routes -- */
-
-/**
- * A plausible running loop: drift around a bearing that slowly turns, so the path
- * curves like a route instead of zig-zagging like noise. Elevation follows a
- * gentle sine so climbs read as a river bank rather than barometric jitter.
- */
-function buildRoute(
-  rng: () => number,
-  minutes: number,
-  paceSecPerKm: number,
-  endAt: number,
-  phaseOffset: number,
-): RoutePoint[] {
-  const stepSeconds = 12;
-  const steps = Math.max(8, Math.round((minutes * 60) / stepSeconds));
-  const metresPerStep = (stepSeconds / Math.max(60, paceSecPerKm)) * 1000;
-  const points: RoutePoint[] = [];
-  let bearing = rng() * Math.PI * 2;
-  let lat = HOME_LAT + (rng() - 0.5) * 0.01;
-  let lng = HOME_LNG + (rng() - 0.5) * 0.01;
-
-  for (let i = 0; i <= steps; i += 1) {
-    bearing += (rng() - 0.5) * 0.5 + 0.13;
-    lat += (metresPerStep * Math.cos(bearing)) / 111_320;
-    lng +=
-      (metresPerStep * Math.sin(bearing)) /
-      (111_320 * Math.cos((lat * Math.PI) / 180));
-    const phase = (i / steps) * Math.PI * 2 + phaseOffset;
-    points.push({
-      t: endAt - (steps - i) * stepSeconds * 1000,
-      coords: [roundTo(lat, 6), roundTo(lng, 6)],
-      elevation: roundTo(52 + Math.sin(phase) * 9 + (rng() - 0.5) * 1.2, 1),
-      heartRate: null,
-    });
-  }
-  return points;
-}
-
-/** Kilometre splits with a slight negative split: better charts, and honest. */
-function buildSplits(
-  rng: () => number,
-  count: number,
-  targetPaceSecPerUnit: number,
-): ActivitySplit[] {
-  const splits: ActivitySplit[] = [];
-  for (let i = 0; i < count; i += 1) {
-    const drift = (i / Math.max(1, count - 1)) * -8 + (rng() - 0.5) * 14;
-    const pace = Math.max(60, Math.round(targetPaceSecPerUnit + drift));
-    splits.push({
-      index: i + 1,
-      distanceMeters: 1000,
-      durationSeconds: pace,
-      paceSecPerKm: pace,
-      elevationGainMeters: Math.round(rng() * 6),
-      heartRate: Math.round(148 + rng() * 22),
-    });
-  }
-  return splits;
 }
 
 /* ------------------------------------------------------------- strength -- */
@@ -269,81 +195,6 @@ function buildEntry(
 
 /* ------------------------------------------------------------- builders -- */
 
-const RUN_TITLES = [
-  'Morning loop along the Arno',
-  'Tempo, 3 × 1 km',
-  'Easy recovery jog',
-  'Hill repeats at San Miniato',
-  'Long run',
-  'Parkrun pace effort',
-];
-const RIDE_TITLES = ['Fiesole climb', 'Tuesday commute, fast', 'Long zone-2 ride', 'Riverside intervals'];
-const WALK_TITLES = ['Evening walk', 'Lunch walk', 'Recovery walk', 'Old town wander'];
-
-/** Metres per second for a ride, seconds per kilometre for everything else. */
-function speedFor(rng: () => number, kind: ActivityKind, form: number): number {
-  if (kind === 'ride') return randomInRange(rng, 5.4, 8.4) + form * 0.4;
-  if (kind === 'walk') return randomInRange(rng, 1.2, 1.5);
-  return randomInRange(rng, 2.65, 3.5) + form * 0.35;
-}
-
-function buildCardio(
-  rng: () => number,
-  kind: ActivityKind,
-  startedAt: number,
-  form: number,
-): Activity {
-  const minutes =
-    kind === 'ride'
-      ? Math.round(randomInRange(rng, 38, 96))
-      : kind === 'walk'
-        ? Math.round(randomInRange(rng, 22, 52))
-        : Math.round(randomInRange(rng, 24, 68));
-  const durationSeconds = minutes * 60 + Math.round((rng() - 0.5) * 300);
-  const metresPerSecond = speedFor(rng, kind, form);
-  const distanceMeters = Math.round(durationSeconds * metresPerSecond);
-  const paceSecPerKm = 1000 / metresPerSecond;
-
-  const route = buildRoute(
-    rng,
-    minutes,
-    paceSecPerKm,
-    startedAt + durationSeconds * 1000,
-    rng() * 6,
-  );
-  const splitCount = kind === 'ride' ? Math.max(1, Math.round(distanceMeters / 3000)) : Math.max(1, Math.round(distanceMeters / 1000));
-  const splits = buildSplits(rng, splitCount, kind === 'ride' ? paceSecPerKm * 3 : paceSecPerKm);
-
-  return {
-    id: localId('seed'),
-    kind,
-    title: kind === 'ride' ? pick(rng, RIDE_TITLES) : kind === 'walk' ? pick(rng, WALK_TITLES) : pick(rng, RUN_TITLES),
-    startedAt,
-    durationSeconds,
-    caloriesKcal: Math.round(estimateCalories(kind, durationSeconds, { distanceMeters })),
-    notes: null,
-    seeded: true,
-    sourceSessionId: null,
-    cardio: {
-      distanceMeters,
-      avgPaceSecPerKm: paceSecPerKm,
-      avgHeartRate: Math.round(
-        (kind === 'walk' ? 100 : kind === 'ride' ? 128 : 142) + form * 8 + rng() * 8,
-      ),
-      maxHeartRate: Math.round(
-        (kind === 'walk' ? 118 : kind === 'ride' ? 158 : 172) + form * 8 + rng() * 10,
-      ),
-      elevationGainMeters:
-        kind === 'walk' ? Math.round(randomInRange(rng, 2, 18)) : elevationGain(route),
-      avgSpeedMps: kind === 'ride' ? metresPerSecond : null,
-      stridesPerMinute: kind === 'ride' ? null : Math.round(randomInRange(rng, 158, 178)),
-      splits,
-      route,
-    },
-    strength: null,
-  };
-}
-
 function buildStrengthActivity(
   rng: () => number,
   plan: PlanTemplate,
@@ -363,11 +214,10 @@ function buildStrengthActivity(
     title: plan.name,
     startedAt,
     durationSeconds,
-    caloriesKcal: Math.round(estimateCalories('lift', durationSeconds)),
+    caloriesKcal: Math.round(estimateCalories(durationSeconds)),
     notes: null,
     seeded: true,
     sourceSessionId: null,
-    cardio: null,
     strength: {
       entries,
       totalVolumeKg: volume,
@@ -378,21 +228,18 @@ function buildStrengthActivity(
 }
 
 /**
- * Thirteen weeks, ending *in the present*: two lifts, two runs, and a ride or
- * walk per week, plus one near-empty travel week so streak breaks and sparse
- * weeks are visible rather than hypothetical.
+ * Thirteen weeks, ending *in the present*: push, pull and legs on Monday, Wednesday and
+ * Friday, rotating through the three plans, plus one near-empty travel week so streak breaks
+ * and sparse weeks are visible rather than hypothetical.
  *
  * ## Why the last loop is a repeat, not a new week
  *
  * The window runs Monday-to-Monday and its last week is the one the user is
- * standing in. Laying the normal schedule across it would date a Thursday lift
- * or a Saturday run *after* today, and `push` would then drop it: leaving a
- * visible, empty current week while the six weeks behind it look busy. Home
- * would open on "0 of 4 this week" above a full-looking history, which reads as
- * a broken summary rather than a quiet week. So the final loop reuses the
- * previous week's plan, form and progression index: same shape, shifted into the
- * past, and every session it schedules before Sunday has either happened or is
- * honestly yet to come.
+ * standing in. Laying the normal schedule across it would date a Friday lift
+ * *after* today, and `push` would then drop it: leaving a visible, empty current
+ * week while the weeks behind it look busy. So the final loop reuses the previous
+ * week's plan and progression index: same shape, shifted into the past, and every
+ * session it schedules has either happened or is honestly yet to come.
  */
 function buildHistory(rng: () => number): Activity[] {
   const activities: Activity[] = [];
@@ -412,19 +259,15 @@ function buildHistory(rng: () => number): Activity[] {
 
   for (let week = 0; week < WEEKS; week += 1) {
     const weekStart = addDays(firstMonday, week * 7);
-    // The plan/form/progression index this loop copies. Only differs from `week`
-    // on the final loop, where reusing the last full week keeps the trend line
-    // monotonic without inventing a future session.
+    // The plan/progression index this loop copies. Only differs from `week` on the final
+    // loop, where reusing the last full week keeps the trend line monotonic without
+    // inventing a future session.
     const source = week === WEEKS - 1 ? week - 1 : week;
-    // Divided by `WEEKS - 2` because `source` tops out at `WEEKS - 2`: peak form
-    // still lands on 1.
-    const form = source / (WEEKS - 2);
     const travel = source === TRAVEL_WEEK;
-    const evenWeek = source % 2 === 0;
 
-    // Monday and Thursday lifting, rotating through the three plans.
-    const lifts = travel ? [0] : [0, 1];
-    lifts.forEach((offset, index) => {
+    // Monday, Wednesday and Friday; a single Wednesday session in the travel week.
+    const days = travel ? [2] : [0, 2, 4];
+    days.forEach((offset, index) => {
       const plan = PLANS[(source + index) % PLANS.length];
       if (!plan) return;
       push(
@@ -432,25 +275,10 @@ function buildHistory(rng: () => number): Activity[] {
           rng,
           plan,
           source,
-          addDays(weekStart, offset + (travel ? 2 : index * 3)).getTime() + 19 * 3_600_000,
+          addDays(weekStart, offset).getTime() + 19 * 3_600_000,
         ),
       );
     });
-
-    // Tuesday and Saturday runs.
-    if (!travel) {
-      for (const offset of [1, 5]) {
-        push(buildCardio(rng, 'run', addDays(weekStart, offset).getTime() + 7 * 3_600_000, form));
-      }
-    }
-
-    // A ride most weeks and a short walk most weeks.
-    if (evenWeek) {
-      push(buildCardio(rng, 'ride', addDays(weekStart, 3).getTime() + 16 * 3_600_000, form));
-    }
-    if (!travel) {
-      push(buildCardio(rng, 'walk', addDays(weekStart, 2).getTime() + 20 * 3_600_000, form));
-    }
   }
 
   return activities.sort((a, b) => a.startedAt - b.startedAt);
@@ -601,7 +429,7 @@ export async function seedIfEmpty(): Promise<SeedResult | null> {
   await activityRepository.insertMany(activities);
   await recordRepository.replaceAll(records);
 
-  await setSetting(SETTING_KEYS.weeklyGoalWorkouts, 4);
+  await setSetting(SETTING_KEYS.weeklyGoalWorkouts, 3);
   await setSetting(SETTING_KEYS.defaultRestSeconds, 120);
   await writeState(SEED_DONE_KEY, true);
 

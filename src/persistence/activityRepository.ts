@@ -1,40 +1,17 @@
-/**
- * Activity history repository. Owns every read/write of recorded activities.
- *
- * Lists deliberately read `route_simplified_json` instead of the full samples;
- * a 40-minute run is ~2400 points, and parsing all of them per row is how lists
- * drop frames.
- */
+/** Activity history repository. Owns every read/write of recorded workouts. */
 import { getDatabase } from './database';
-import { encodeRoute, rowToActivity, stringify } from './codec';
+import { rowToActivity, stringify } from './codec';
 import type { ActivityRow } from './rows';
-import {
-  Activity,
-  ActivityKind,
-  ActivitySplit,
-  CompletedWorkout,
-  PersonalRecord,
-  RoutePoint,
-} from '@/domain/types';
+import type { Activity, CompletedWorkout, PersonalRecord } from '@/domain/types';
 import { completedSetCount, totalVolumeKg } from '@/domain/logic';
-import { localId } from '@/utils/functional';
 
-const LIST_COLUMNS = `
+const COLUMNS = `
   id, kind, title, started_at, duration_seconds, calories_kcal, notes, seeded,
-  source_session_id, distance_meters, avg_pace, avg_hr, max_hr, elevation_meters,
-  avg_speed_mps, cadence, splits_json, route_simplified_json AS route_json,
-  entries_json, volume_kg, total_sets, created_at`;
-
-const FULL_COLUMNS = `
-  id, kind, title, started_at, duration_seconds, calories_kcal, notes, seeded,
-  source_session_id, distance_meters, avg_pace, avg_hr, max_hr, elevation_meters,
-  avg_speed_mps, cadence, splits_json, route_json, entries_json, volume_kg,
-  total_sets, created_at`;
+  source_session_id, entries_json, volume_kg, total_sets, created_at`;
 
 export type ActivityListQuery = {
   /** Newest-first (default) or oldest-first. */
   order?: 'desc' | 'asc';
-  kinds?: readonly Activity['kind'][];
   /** Case-insensitive substring match on title. */
   search?: string;
   from?: number;
@@ -53,10 +30,6 @@ export const activityRepository = {
     const where: string[] = [];
     const args: (string | number)[] = [];
 
-    if (query.kinds && query.kinds.length > 0) {
-      where.push(`kind IN (${query.kinds.map(() => '?').join(', ')})`);
-      args.push(...query.kinds);
-    }
     if (query.search?.trim()) {
       // The search field in front of the user says "Session name, notes, exercise", so all
       // three have to match here: a screen that promises exercise filtering and quietly
@@ -85,7 +58,7 @@ export const activityRepository = {
     }
 
     const direction = query.order === 'asc' ? 'ASC' : 'DESC';
-    let sql = `SELECT ${LIST_COLUMNS} FROM activities`;
+    let sql = `SELECT ${COLUMNS} FROM activities`;
     if (where.length > 0) sql += ` WHERE ${where.join(' AND ')}`;
     sql += ` ORDER BY started_at ${direction}, id ${direction}`;
     if (typeof query.limit === 'number') sql += ` LIMIT ${Math.max(0, Math.floor(query.limit))}`;
@@ -99,7 +72,7 @@ export const activityRepository = {
 
   async byId(id: string): Promise<Activity | null> {
     const row = await getDatabase().getFirstAsync<ActivityRow>(
-      `SELECT ${FULL_COLUMNS} FROM activities WHERE id = ?`,
+      `SELECT ${COLUMNS} FROM activities WHERE id = ?`,
       id,
     );
     return row ? rowToActivity(row) : null;
@@ -134,7 +107,7 @@ export const activityRepository = {
 
   async update(activity: Activity): Promise<void> {
     // `toParams` is ordered for `INSERT_SQL`, whose *first* column is `id`. This statement
-    // writes the other 22 columns and matches on that leading value, so the id has to travel
+    // writes the other 12 columns and matches on that leading value, so the id has to travel
     // to the end of the argument list, `slice(0, -1)` is the trap: it drops `created_at`,
     // keeps `id`, and every value then binds one column early. `kind` receives
     // `seed_mu9sy8cm1u86sez`, the `NOT NULL` check refuses it, and the row is never written.
@@ -166,7 +139,6 @@ export const activityRepository = {
       notes: workout.notes,
       seeded: false,
       sourceSessionId: workout.id,
-      cardio: null,
       strength: {
         entries: workout.entries,
         totalVolumeKg: totalVolumeKg(workout.entries),
@@ -178,71 +150,22 @@ export const activityRepository = {
     return activity;
   },
 
-  async recordCardio(input: {
-    id?: string;
-    kind: ActivityKind;
-    title: string;
-    startedAt: number;
-    durationSeconds: number;
-    distanceMeters: number;
-    caloriesKcal: number;
-    route: readonly RoutePoint[];
-    avgHeartRate: number | null;
-    maxHeartRate: number | null;
-    elevationGainMeters: number;
-    notes?: string | null;
-    splits: readonly ActivitySplit[];
-  }): Promise<Activity> {
-    const secondsPerKm =
-      input.distanceMeters > 0 ? input.durationSeconds / (input.distanceMeters / 1000) : 0;
-    const activity: Activity = {
-      id: input.id ?? localId('act'),
-      kind: input.kind,
-      title: input.title,
-      startedAt: input.startedAt,
-      durationSeconds: input.durationSeconds,
-      caloriesKcal: input.caloriesKcal,
-      notes: input.notes ?? null,
-      seeded: false,
-      sourceSessionId: null,
-      cardio: {
-        distanceMeters: input.distanceMeters,
-        avgPaceSecPerKm: secondsPerKm,
-        avgHeartRate: input.avgHeartRate,
-        maxHeartRate: input.maxHeartRate,
-        elevationGainMeters: input.elevationGainMeters,
-        avgSpeedMps: input.durationSeconds > 0 ? input.distanceMeters / input.durationSeconds : null,
-        stridesPerMinute: null,
-        splits: [...input.splits],
-        route: [...input.route],
-      },
-      strength: null,
-    };
-    await this.insert(activity);
-    return activity;
-  },
 };
 
 const INSERT_SQL = `
   INSERT OR REPLACE INTO activities (
     id, kind, title, started_at, duration_seconds, calories_kcal, notes, seeded,
-    source_session_id, distance_meters, avg_pace, avg_hr, max_hr, elevation_meters,
-    avg_speed_mps, cadence, splits_json, route_json, route_simplified_json,
-    entries_json, volume_kg, total_sets, created_at
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    source_session_id, entries_json, volume_kg, total_sets, created_at
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
 const UPDATE_SQL = `
   UPDATE activities SET
     kind = ?, title = ?, started_at = ?, duration_seconds = ?, calories_kcal = ?,
-    notes = ?, seeded = ?, source_session_id = ?, distance_meters = ?, avg_pace = ?,
-    avg_hr = ?, max_hr = ?, elevation_meters = ?, avg_speed_mps = ?, cadence = ?,
-    splits_json = ?, route_json = ?, route_simplified_json = ?, entries_json = ?,
-    volume_kg = ?, total_sets = ?, created_at = ?
+    notes = ?, seeded = ?, source_session_id = ?, entries_json = ?, volume_kg = ?,
+    total_sets = ?, created_at = ?
   WHERE id = ?`;
 
 function toParams(a: Activity): (string | number | null)[] {
-  const route = a.cardio?.route ?? [];
-  const encoded = route.length > 0 ? encodeRoute(route) : { full: null, simplified: null };
   return [
     a.id,
     a.kind,
@@ -253,16 +176,6 @@ function toParams(a: Activity): (string | number | null)[] {
     a.notes,
     a.seeded ? 1 : 0,
     a.sourceSessionId,
-    a.cardio ? a.cardio.distanceMeters : null,
-    a.cardio ? a.cardio.avgPaceSecPerKm : null,
-    a.cardio?.avgHeartRate ?? null,
-    a.cardio?.maxHeartRate ?? null,
-    a.cardio ? a.cardio.elevationGainMeters : null,
-    a.cardio?.avgSpeedMps ?? null,
-    a.cardio?.stridesPerMinute ?? null,
-    a.cardio ? stringify(a.cardio.splits) : null,
-    encoded.full,
-    encoded.simplified,
     a.strength ? stringify(a.strength.entries) : null,
     a.strength ? a.strength.totalVolumeKg : null,
     a.strength ? a.strength.totalSets : null,

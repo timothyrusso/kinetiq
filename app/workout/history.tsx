@@ -59,16 +59,14 @@ import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
 import { ActivityCard, MetaLine, SectionHeader, type MetaItem } from '@/ui/display';
 import { useScreenContentBottom } from '@/ui/insets';
 import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
-import { Row } from '@/ui/layout';
-import { Chip } from '@/ui/controls/Chip';
 import { SegmentedControl } from '@/ui/controls/SegmentedControl';
 import { EmptyState, ErrorState, SkeletonList, ThemedRefreshControl } from '@/ui/states';
 import { useActivityList, useDeleteActivity } from '@/queries/useActivities';
 import { useSettings } from '@/settings';
-import { compactNumber, formatDistance, formatDurationCompact } from '@/utils/format';
+import { compactNumber, formatDurationCompact } from '@/utils/format';
 import { routes, tabHref, tabIndexOf } from '@/navigation/nav';
 import type { ActivityListParams, ActivitySort } from '@/query/keys';
-import type { Activity, ActivityKind } from '@/domain/types';
+import type { Activity } from '@/domain/types';
 import { useAppTheme } from '@/theme/theme';
 import type { Theme } from '@/theme/theme';
 import { spacing, screenGutter } from '@/theme/tokens';
@@ -132,18 +130,16 @@ export default function WorkoutHistoryScreen() {
     [t],
   );
 
-  const [kinds, setKinds] = useState<ActivityKind[]>([]);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const units = useSettings((s) => s.unitSystem);
-  const showSpeed = useSettings((s) => s.showSpeedInsteadOfPace);
   const removeActivity = useDeleteActivity();
 
   // The query's own week grouping (Monday start), so this screen and any other weekly view
   // cannot disagree about which week a session belongs to.
   const params = useMemo<ActivityListParams>(
-    () => ({ kinds, search: '', sort: SORT, groupBy: 'week' }),
-    [kinds],
+    () => ({ search: '', sort: SORT, groupBy: 'week' }),
+    [],
   );
   const list = useActivityList(params);
   const since = useMemo(() => windowStart(range), [range]);
@@ -182,14 +178,12 @@ export default function WorkoutHistoryScreen() {
 
   const totals = useMemo(() => {
     let duration = 0;
-    let distance = 0;
     let volume = 0;
     for (const activity of visible) {
       duration += activity.durationSeconds;
-      distance += activity.cardio?.distanceMeters ?? 0;
       volume += activity.strength?.totalVolumeKg ?? 0;
     }
-    return { duration, distance, volume };
+    return { duration, volume };
   }, [visible]);
 
   const openActivity = useCallback((id: string) => router.push(routes.activityDetail(id)), []);
@@ -217,13 +211,12 @@ export default function WorkoutHistoryScreen() {
           activity={item.activity}
           theme={theme}
           units={units}
-          showSpeed={showSpeed}
           onPress={openActivity}
           onLongPress={askDelete}
         />
       );
     },
-    [askDelete, openActivity, showSpeed, theme, units],
+    [askDelete, openActivity, theme, units],
   );
 
   const keyExtractor = useCallback(
@@ -232,32 +225,25 @@ export default function WorkoutHistoryScreen() {
   );
   const getItemType = useCallback((item: RowItem) => item.type, []);
 
-  const filtering = kinds.length > 0 || range !== 'all';
+  const filtering = range !== 'all';
 
-  const widen = useCallback(() => {
-    setRange('all');
-    setKinds([]);
-  }, []);
+  const widen = useCallback(() => setRange('all'), []);
 
   // The range at a glance, as the first line of content now that the native title holds one
-  // line. Count and duration always apply; the third is whichever of distance or volume this
-  // range actually has, distance winning when it has both because every strength row already
-  // shows its own volume and Progress carries the full breakdown.
+  // line: count, duration, and volume when the range has any.
   const summary = useMemo<MetaItem[]>(() => {
     if (list.isLoading) return [];
     if (visible.length === 0) return [{ icon: 'calendar', label: t('activityList.nothingInRange') }];
     return [
       { icon: 'activities', label: t('activities.session', { count: visible.length }) },
       { icon: 'clock', label: formatDurationCompact(totals.duration) },
-      ...(totals.distance > 0
-        ? [{ icon: 'route' as const, label: formatDistance(totals.distance, units, 1) }]
-        : totals.volume > 0
-          ? [{ icon: 'dumbbell' as const, label: `${compactNumber(totals.volume)} kg` }]
-          : []),
+      ...(totals.volume > 0
+        ? [{ icon: 'dumbbell' as const, label: `${compactNumber(totals.volume)} kg` }]
+        : []),
     ];
-  }, [list.isLoading, visible.length, totals, units, t]);
+  }, [list.isLoading, visible.length, totals, t]);
   // Everything a card reads besides its row, so FlashList redraws visible cards when one changes.
-  const extraData = useMemo(() => ({ units, showSpeed, theme }), [units, showSpeed, theme]);
+  const extraData = useMemo(() => ({ units, theme }), [units, theme]);
   const openSearch = useCallback(
     () => router.replace(tabHref(tabIndexOf('activities'))),
     [router],
@@ -298,24 +284,6 @@ export default function WorkoutHistoryScreen() {
               value={range}
               onChange={setRange}
             />
-            <Row gap="sm" style={styles.chips}>
-              {KIND_CHIPS.map((chip) => (
-                <Chip
-                  key={chip.kind}
-                  label={t(chip.label)}
-                  icon={chip.icon}
-                  size="sm"
-                  selected={kinds.includes(chip.kind)}
-                  onPress={() =>
-                    setKinds((prev) =>
-                      prev.includes(chip.kind)
-                        ? prev.filter((k) => k !== chip.kind)
-                        : [...prev, chip.kind],
-                    )
-                  }
-                />
-              ))}
-            </Row>
           </View>
         }
         ListEmptyComponent={
@@ -390,14 +358,12 @@ const HistoryCard = memo(function HistoryCard({
   activity,
   theme,
   units,
-  showSpeed,
   onPress,
   onLongPress,
 }: {
   activity: Activity;
   theme: Theme;
   units: UnitSystem;
-  showSpeed: boolean;
   onPress: (id: string) => void;
   onLongPress: (id: string) => void;
 }) {
@@ -407,7 +373,6 @@ const HistoryCard = memo(function HistoryCard({
         activity={activity}
         theme={theme}
         units={units}
-        showSpeedInsteadOfPace={showSpeed}
         onPress={onPress}
         onLongPress={onLongPress}
       />
@@ -415,23 +380,8 @@ const HistoryCard = memo(function HistoryCard({
   );
 });
 
-/** Icons are named per kind, so the tuple type keeps this in step with `IconName`. */
-const KIND_CHIPS: readonly {
-  kind: ActivityKind;
-  /** A catalog key: this table is built at import time, where there is no language. */
-  label: TKey;
-  icon: 'run' | 'bike' | 'dumbbell' | 'walk' | 'yoga';
-}[] = [
-  { kind: 'run', label: 'activities.kindRuns', icon: 'run' },
-  { kind: 'ride', label: 'activities.kindRides', icon: 'bike' },
-  { kind: 'lift', label: 'activities.kindStrength', icon: 'dumbbell' },
-  { kind: 'walk', label: 'activities.kindWalks', icon: 'walk' },
-  { kind: 'yoga', label: 'activities.kindYoga', icon: 'yoga' },
-];
-
 const styles = StyleSheet.create({
   controls: { gap: spacing.md, paddingBottom: spacing.md },
-  chips: { flexWrap: 'wrap' },
   firstWeek: { paddingTop: spacing.md },
   week: { paddingTop: spacing.xxl },
   card: { paddingBottom: spacing.sm },

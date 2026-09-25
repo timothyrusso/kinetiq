@@ -16,7 +16,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 import { activityRepository } from '@/persistence';
-import type { Activity, ActivityKind } from '@/domain/types';
+import type { Activity } from '@/domain/types';
 import { queryKeys, type ActivityListParams, type ActivitySort } from '@/query/keys';
 import { invalidateActivityHistory } from '@/query/invalidation';
 import { tr } from '@/i18n/tr';
@@ -33,7 +33,6 @@ export type ActivityListView = {
   flat: Activity[];
   totalDurationSeconds: number;
   totalVolumeKg: number;
-  totalDistanceMeters: number;
 };
 
 function sortActivities(items: Activity[], sort: ActivitySort): Activity[] {
@@ -42,8 +41,6 @@ function sortActivities(items: Activity[], sort: ActivitySort): Activity[] {
     switch (sort) {
       case 'duration':
         return a.durationSeconds;
-      case 'distance':
-        return a.cardio?.distanceMeters ?? 0;
       case 'volume':
         return a.strength?.totalVolumeKg ?? 0;
       default:
@@ -96,13 +93,11 @@ function bucketStart(midnightMs: number, days: number): number {
 function summarise(items: readonly Activity[]): Omit<ActivityListView, 'groups' | 'flat'> {
   let duration = 0;
   let volume = 0;
-  let distance = 0;
   for (const a of items) {
     duration += a.durationSeconds;
     volume += a.strength?.totalVolumeKg ?? 0;
-    distance += a.cardio?.distanceMeters ?? 0;
   }
-  return { totalDurationSeconds: duration, totalVolumeKg: volume, totalDistanceMeters: distance };
+  return { totalDurationSeconds: duration, totalVolumeKg: volume };
 }
 
 function selectList(items: Activity[], params: ActivityListParams): ActivityListView {
@@ -119,7 +114,6 @@ function selectList(items: Activity[], params: ActivityListParams): ActivityList
  * frozen: a fresh object literal per render would change the query key every frame.
  */
 export const DEFAULT_ACTIVITY_PARAMS: ActivityListParams = Object.freeze({
-  kinds: [],
   search: '',
   sort: 'recent',
   groupBy: 'day',
@@ -128,19 +122,17 @@ export const DEFAULT_ACTIVITY_PARAMS: ActivityListParams = Object.freeze({
 export function useActivityList(params: ActivityListParams = DEFAULT_ACTIVITY_PARAMS) {
   const normalized: ActivityListParams = useMemo(
     () => ({
-      kinds: [...params.kinds].sort() as ActivityKind[],
       search: params.search,
       sort: params.sort,
       groupBy: params.groupBy,
     }),
-    [params.kinds, params.search, params.sort, params.groupBy],
+    [params.search, params.sort, params.groupBy],
   );
 
   const query = useQuery({
     queryKey: queryKeys.activities.list(normalized),
     queryFn: () =>
       activityRepository.list({
-        kinds: normalized.kinds.length > 0 ? normalized.kinds : undefined,
         search: normalized.search || undefined,
         order: 'desc',
       }),
@@ -160,7 +152,6 @@ export function useActivityList(params: ActivityListParams = DEFAULT_ACTIVITY_PA
     totals: {
       durationSeconds: query.data?.totalDurationSeconds ?? 0,
       volumeKg: query.data?.totalVolumeKg ?? 0,
-      distanceMeters: query.data?.totalDistanceMeters ?? 0,
     },
     isEmpty: query.status === 'success' && (query.data?.flat.length ?? 0) === 0,
     isLoading: query.isLoading,
@@ -178,10 +169,8 @@ export function useRecentActivities(limit = 6) {
 }
 
 /**
- * Detail is fetched by id rather than read out of the list cache: the list uses
- * `LIST_COLUMNS` (no route points, no split rows: a 300-point route per row would
- * make scrolling a chore), and a detail screen needs the full blob. The id-only key
- * also means opening the same activity from Home, from the list or from a deep link
+ * Detail is fetched by id rather than read out of the list cache, so a detail screen opened
+ * from a deep link does not depend on a list having loaded first. The id-only key also means opening the same activity from Home, from the list or from a deep link
  * is one entry.
  */
 export function useActivity(id: string | null) {
