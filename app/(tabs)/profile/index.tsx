@@ -49,7 +49,7 @@ import { useT } from '@/i18n/useT';
 import type { Language } from '@/i18n';
 import { ProgressRing } from '@/ui/charts/ProgressRing';
 import { Txt } from '@/ui/Text';
-import { Divider, Stack } from '@/ui/layout';
+import { Stack } from '@/ui/layout';
 import { useTrainingSummary } from '@/queries/useProgress';
 import { useSettings, useSettingsUpdate } from '@/settings';
 import { routes } from '@/navigation/nav';
@@ -133,12 +133,8 @@ export default function ProfileScreen() {
     () => [
       { icon: 'ruler', label: t('tabsProfile.height', { height: heightCm }) },
       { icon: 'profile', label: t('tabsProfile.age', { count: age }) },
-      {
-        icon: 'calendar',
-        label: summary.isPending ? t('profileScreen.loadingHistory') : trainingSince(summary.data, t),
-      },
     ],
-    [age, heightCm, summary.data, summary.isPending, t],
+    [age, heightCm, t],
   );
 
   return (
@@ -216,24 +212,21 @@ export default function ProfileScreen() {
           <SectionHeader title={t('profile.preferences')} style={styles.section} />
           <Card padding="md">
             <Stack gap="lg">
-              <Preference label={t('profile.units')} hint={t('profileScreen.unitsHint')}>
+              <Preference label={t('profile.units')}>
                 <SegmentedControl
                   segments={unitSegments}
                   value={unitSystem}
                   onChange={(next) => update({ unitSystem: next })}
                 />
               </Preference>
-              <Preference
-                label={t('profile.appearance')}
-                hint={t('profileScreen.appearanceHint')}
-              >
+              <Preference label={t('profile.appearance')}>
                 <SegmentedControl
                   segments={themeSegments}
                   value={themeMode}
                   onChange={(next) => update({ themeMode: next })}
                 />
               </Preference>
-              <Preference label={t('profile.language')} hint={t('settings.languageHint')}>
+              <Preference label={t('profile.language')}>
                 <SegmentedControl
                   segments={languageSegments}
                   value={language}
@@ -250,7 +243,6 @@ export default function ProfileScreen() {
           <Card padding="xxs">
             <NavRow
               title={t('profileScreen.trainingPrefs')}
-              description={t('profileScreen.trainingPrefsSubtitle')}
               theme={theme}
               icon="target"
               topDivider={false}
@@ -258,26 +250,17 @@ export default function ProfileScreen() {
             />
             <NavRow
               title={t('profileScreen.notifications')}
-              description={t('profileScreen.notificationsSubtitle')}
               theme={theme}
               icon="bell"
               onPress={() => router.push(routes.settingsNotifications())}
             />
             <NavRow
               title={t('profileScreen.aboutTitle')}
-              description={t('profileScreen.aboutSubtitle')}
               theme={theme}
               icon="info"
               onPress={() => router.push(routes.settingsAbout())}
             />
           </Card>
-
-          <View style={{ marginTop: spacing.xl }}>
-            <Divider inset={spacing.sm} />
-          </View>
-          <Txt variant="micro" tone="faint" align="center" style={{ marginTop: spacing.md }}>
-            {t('profileScreen.privacyNote')}
-          </Txt>
         </View>
       </ScrollView>
     </>
@@ -286,26 +269,11 @@ export default function ProfileScreen() {
 
 /* ------------------------------------------------------------------ pieces -- */
 
-/**
- * A label, its explanation, and the control beneath both.
- *
- * The hint is not decoration: it says what the control changes before the user turns it.
- */
-function Preference({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint: string;
-  children: React.ReactNode;
-}) {
+/** A label and the control beneath it. */
+function Preference({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <View style={{ gap: spacing.sm }}>
       <Txt variant="strong">{label}</Txt>
-      <Txt variant="caption" tone="muted">
-        {hint}
-      </Txt>
       {children}
     </View>
   );
@@ -323,14 +291,6 @@ function goalHeadline(workouts: number, goal: number): TKey {
 
 function countSessions(n: number, t: (key: TKey, vars?: TVars) => string): string {
   return `${n} ${t('profileScreen.sessionWord', { count: n })}`;
-}
-
-function trainingSince(
-  data: { totals: { workouts: number } } | undefined,
-  t: (key: TKey, vars?: TVars) => string,
-): string {
-  if (data === undefined) return t('profileScreen.sinceUnknown');
-  return t(data.totals.workouts === 0 ? 'profileScreen.sinceNone' : 'profileScreen.sinceSome');
 }
 
 

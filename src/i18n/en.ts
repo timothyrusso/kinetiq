@@ -64,7 +64,6 @@ export const en = {
 
   accent: {
     title: 'Accent colour',
-    hint: 'Colours buttons, the selected tab and the charts. Wallpaper follows your Android theme.',
     kinetiq: 'Kinetiq lime',
     system: 'Wallpaper colours',
     ocean: 'Ocean blue',
@@ -108,7 +107,6 @@ export const en = {
     dark: 'Dark',
     english: 'English',
     italian: 'Italiano',
-    languageHint: 'Changes everything in the app straight away.',
   },
 
   // --- group-b ---
@@ -419,7 +417,6 @@ export const en = {
   profileScreen: {
     editProfileHint: 'Opens your name, height and birth year',
     athlete: 'Athlete',
-    loadingHistory: 'Loading history…',
     thisWeekLabel: 'this week',
     readingHistory: 'Reading your history…',
     goalSpare: 'Goal met with {phrase} to spare.',
@@ -429,23 +426,14 @@ export const en = {
     dayWord_one: 'day',
     dayWord_other: 'days',
     bestStreak: 'Best streak {count} {word}',
-    unitsHint: 'Affects every weight in the app: kilograms or pounds.',
-    appearanceHint: 'Dark mode is a designed palette, not inverted colours.',
     app: 'App',
     trainingPrefs: 'Training preferences',
-    trainingPrefsSubtitle: 'Default rest, auto-start, haptics, weekly goal',
     notifications: 'Notifications',
-    notificationsSubtitle: 'Rest timer, reminders, permission',
     aboutTitle: 'About Kinetiq',
-    aboutSubtitle: 'Version, data, the exercise catalog',
-    privacyNote: 'Routines, history and settings live on this device. Only exercise search leaves it.',
     headlineNothing: 'Nothing logged this week',
     headlineGoalMet: 'Goal met',
     headlineOnTrack: 'On track',
     headlineStarting: 'Getting started',
-    sinceUnknown: 'Exercise search runs against the wger catalog',
-    sinceNone: 'No sessions logged yet: search the library to build your first routine',
-    sinceSome: 'Routines and history are stored on this device',
   },
 
   workoutTab: {

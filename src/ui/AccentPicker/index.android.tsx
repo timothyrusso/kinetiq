@@ -44,9 +44,6 @@ export function AccentPreference() {
   return (
     <View style={styles.block}>
       <Txt variant="strong">{t('accent.title')}</Txt>
-      <Txt variant="caption" tone="muted">
-        {t('accent.hint')}
-      </Txt>
       <View style={styles.row} accessibilityRole="radiogroup">
         {CHOICES.map((option) => (
           <Swatch

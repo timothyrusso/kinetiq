@@ -66,7 +66,6 @@ export const it: Copy = {
 
   accent: {
     title: 'Colore principale',
-    hint: 'Colora i pulsanti, la scheda selezionata e i grafici. Sfondo segue il tema di Android.',
     kinetiq: 'Lime Kinetiq',
     system: 'Colori dello sfondo',
     ocean: 'Blu oceano',
@@ -110,7 +109,6 @@ export const it: Copy = {
     dark: 'Scuro',
     english: 'English',
     italian: 'Italiano',
-    languageHint: "Cambia subito tutta l'app.",
   },
 
   // --- group-b ---
@@ -422,7 +420,6 @@ export const it: Copy = {
   profileScreen: {
     editProfileHint: 'Apre nome, altezza e anno di nascita',
     athlete: 'Atleta',
-    loadingHistory: 'Caricamento cronologia…',
     thisWeekLabel: 'questa settimana',
     readingHistory: 'Lettura della cronologia…',
     goalSpare: 'Obiettivo raggiunto con {phrase} di margine.',
@@ -432,24 +429,14 @@ export const it: Copy = {
     dayWord_one: 'giorno',
     dayWord_other: 'giorni',
     bestStreak: 'Record di fila {count} {word}',
-    unitsHint: "Vale per ogni peso nell'app: chilogrammi o libbre.",
-    appearanceHint: 'La modalità scura è una palette progettata, non colori invertiti.',
     app: 'App',
     trainingPrefs: 'Preferenze di allenamento',
-    trainingPrefsSubtitle: 'Recupero predefinito, avvio automatico, vibrazione, obiettivo settimanale',
     notifications: 'Notifiche',
-    notificationsSubtitle: 'Timer di recupero, promemoria, permesso',
     aboutTitle: 'Informazioni su Kinetiq',
-    aboutSubtitle: 'Versione, dati, catalogo esercizi',
-    privacyNote:
-      'Schede, cronologia e impostazioni restano su questo dispositivo. Solo la ricerca esercizi lo lascia.',
     headlineNothing: 'Nulla registrato questa settimana',
     headlineGoalMet: 'Obiettivo raggiunto',
     headlineOnTrack: 'In linea',
     headlineStarting: 'Si comincia',
-    sinceUnknown: 'La ricerca esercizi usa il catalogo wger',
-    sinceNone: 'Nessuna sessione registrata: cerca nella libreria per creare la tua prima scheda',
-    sinceSome: 'Schede e cronologia sono salvate su questo dispositivo',
   },
 
   workoutTab: {
