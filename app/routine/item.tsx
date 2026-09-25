@@ -30,7 +30,6 @@ export default function RoutineItemSheet() {
 function DraftItem({ itemId }: { itemId: string }) {
   const draft = useRoutineDraft();
   const units = useSettings((s) => s.unitSystem);
-  const defaultRest = useSettings((s) => s.defaultRestSeconds);
   const item = draft.items.find((row) => row.id === itemId) ?? null;
   const snapshot = useMemo(
     () => (item ? (draft.snapshots.find((s) => s.exerciseId === item.exerciseId) ?? null) : null),
@@ -48,7 +47,6 @@ function DraftItem({ itemId }: { itemId: string }) {
           item={item}
           snapshot={snapshot}
           units={units}
-          defaultRestSeconds={defaultRest}
           onChange={change}
           onRemove={remove}
         />
@@ -60,7 +58,6 @@ function DraftItem({ itemId }: { itemId: string }) {
 function SavedItem({ routineId, itemId }: { routineId: string; itemId: string }) {
   const { t } = useT();
   const units = useSettings((s) => s.unitSystem);
-  const defaultRest = useSettings((s) => s.defaultRestSeconds);
   const { routine, snapshots } = useRoutine(routineId);
   const setItem = useSetRoutineItem();
   const removeItem = useRemoveRoutineItem();
@@ -88,7 +85,6 @@ function SavedItem({ routineId, itemId }: { routineId: string; itemId: string })
           item={item}
           snapshot={snapshot}
           units={units}
-          defaultRestSeconds={defaultRest}
           onChange={change}
           onRemove={remove}
         />

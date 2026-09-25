@@ -34,6 +34,7 @@ import { Button } from '@/ui/controls/Button';
 import { MetaLine } from '@/ui/display/MetaLine';
 import { TagRow } from '@/ui/display/TagRow';
 import { exerciseTags } from '@/ui/display/exerciseTags';
+import { SwipeToDelete } from '@/ui/SwipeToDelete';
 import { Image } from 'expo-image';
 import { useExerciseResolution } from '@/queries/useExercises';
 import { haptics } from '@/services/haptics';
@@ -104,60 +105,70 @@ export const RoutineItemRow = memo(function RoutineItemRow({
   const down = useCallback(() => onMove?.(index, index + 1), [onMove, index]);
   const remove = useCallback(() => onRemove?.(item.id), [onRemove, item.id]);
 
+  const row = (
+    <ListRow
+      theme={theme}
+      title={item.exerciseName}
+      meta={meta}
+      {...(tags ? { tags } : {})}
+      {...(onOpen === undefined
+        ? {}
+        : { onPress: open, onLongPress: open, accessibilityHint: t('itemEditor.editHint') })}
+      leading={
+        <ExerciseThumb
+          uri={snapshot === null ? null : (snapshot.thumbnailUrl ?? snapshot.imageUrl)}
+          name={item.exerciseName}
+          size={44}
+          theme={theme}
+        />
+      }
+      trailing={
+        <View style={styles.trailing}>
+          {onMove ? (
+            <>
+              <RowButton
+                icon="chevronUp"
+                label={t('routineItemA11y.moveUp', { name: item.exerciseName })}
+                disabled={index === 0}
+                theme={theme}
+                onPress={up}
+              />
+              <RowButton
+                icon="chevronDown"
+                label={t('routineItemA11y.moveDown', { name: item.exerciseName })}
+                disabled={index >= count - 1}
+                theme={theme}
+                onPress={down}
+              />
+            </>
+          ) : null}
+          {onRemove ? (
+            <RowButton
+              icon="trash"
+              label={t('routineItemA11y.remove', { name: item.exerciseName })}
+              tone="danger"
+              theme={theme}
+              onPress={remove}
+            />
+          ) : onMove ? null : (
+            <Icon name="chevronRight" size={ICON_SIZE.inline} color={theme.colors.textFaint} />
+          )}
+        </View>
+      }
+    />
+  );
+
   return (
     <View
       style={topDivider ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.hairline } : undefined}
     >
-      <ListRow
-        theme={theme}
-        title={item.exerciseName}
-        meta={meta}
-        {...(tags ? { tags } : {})}
-        {...(onOpen === undefined
-          ? {}
-          : { onPress: open, onLongPress: open, accessibilityHint: t('itemEditor.editHint') })}
-        leading={
-          <ExerciseThumb
-            uri={snapshot === null ? null : (snapshot.thumbnailUrl ?? snapshot.imageUrl)}
-            name={item.exerciseName}
-            size={44}
-            theme={theme}
-          />
-        }
-        trailing={
-          <View style={styles.trailing}>
-            {onMove ? (
-              <>
-                <RowButton
-                  icon="chevronUp"
-                  label={t('routineItemA11y.moveUp', { name: item.exerciseName })}
-                  disabled={index === 0}
-                  theme={theme}
-                  onPress={up}
-                />
-                <RowButton
-                  icon="chevronDown"
-                  label={t('routineItemA11y.moveDown', { name: item.exerciseName })}
-                  disabled={index >= count - 1}
-                  theme={theme}
-                  onPress={down}
-                />
-              </>
-            ) : null}
-            {onRemove ? (
-              <RowButton
-                icon="trash"
-                label={t('routineItemA11y.remove', { name: item.exerciseName })}
-                tone="danger"
-                theme={theme}
-                onPress={remove}
-              />
-            ) : onMove ? null : (
-              <Icon name="chevronRight" size={ICON_SIZE.inline} color={theme.colors.textFaint} />
-            )}
-          </View>
-        }
-      />
+      {onRemove ? (
+        <SwipeToDelete theme={theme} onDelete={remove}>
+          {row}
+        </SwipeToDelete>
+      ) : (
+        row
+      )}
     </View>
   );
 });
@@ -233,14 +244,12 @@ export const ItemEditorForm = memo(function ItemEditorForm({
   item,
   snapshot,
   units,
-  defaultRestSeconds,
   onChange,
   onRemove,
 }: {
   item: RoutineItem;
   snapshot: ExerciseSnapshot | null;
   units: UnitSystem;
-  defaultRestSeconds: number;
   onChange: (patch: Partial<ItemTarget>) => void;
   onRemove?: () => void;
 }) {
@@ -248,7 +257,6 @@ export const ItemEditorForm = memo(function ItemEditorForm({
   const theme = useAppTheme();
   const step = weightStep(units);
   const displayWeight = weightDisplayValue(item.weightKg, units, step);
-  const restingAtDefault = item.restSeconds === defaultRestSeconds;
   // The current targets as items under the title, so the summary a row shows and the values
   // the steppers below are changing read the same way, and update together.
   const meta = useMemo(() => itemMeta(item, units), [item, units]);
@@ -287,9 +295,6 @@ export const ItemEditorForm = memo(function ItemEditorForm({
           suffix={t('itemEditor.repsSuffix')}
           onChange={(reps) => onChange({ reps: String(reps) })}
         />
-        <Txt variant="micro" tone="faint">
-          {t('itemEditor.rangesNote')}
-        </Txt>
       </FormSection>
 
       <FormSection title={t('itemEditor.weightIn', { unit: weightUnit(units) })}>
@@ -301,11 +306,6 @@ export const ItemEditorForm = memo(function ItemEditorForm({
           step={step}
           onChange={(next) => onChange({ weightKg: weightFromDisplayValue(next, units) })}
         />
-        {item.weightKg === 0 ? (
-          <Txt variant="micro" tone="faint">
-            {t('itemEditor.bodyweightNote')}
-          </Txt>
-        ) : null}
       </FormSection>
 
       <FormSection title={t('itemEditor.restBetweenSets')}>
@@ -321,10 +321,6 @@ export const ItemEditorForm = memo(function ItemEditorForm({
         {item.restSeconds === 0 ? (
           <Txt variant="micro" tone="faint">
             {t('itemEditor.zeroRestNote')}
-          </Txt>
-        ) : restingAtDefault ? (
-          <Txt variant="micro" tone="faint">
-            {t('itemEditor.defaultRestNote')}
           </Txt>
         ) : null}
       </FormSection>

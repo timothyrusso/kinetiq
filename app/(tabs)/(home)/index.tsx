@@ -249,7 +249,6 @@ const WorkoutCell = memo(function WorkoutCell({
         activity={activity}
         theme={theme}
         units={units}
-        thumbnail="chart"
         onPress={onPress}
         onLongPress={onLongPress}
       />

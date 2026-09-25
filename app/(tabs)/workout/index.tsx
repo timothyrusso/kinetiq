@@ -114,21 +114,6 @@ export default function WorkoutScreen() {
     () => ORDER_SEGMENTS.map((seg) => ({ value: seg.value, label: t(seg.label) })),
     [t],
   );
-  const intro = useMemo<MetaItem[]>(
-    () => [
-      {
-        icon: 'layers',
-        label:
-          routines.count === 0
-            ? t('workoutTab.buildOnce')
-            : t('workoutTab.routinesReady', {
-                count: routines.count,
-                word: t('workoutTab.routineWord', { count: routines.count }),
-              }),
-      },
-    ],
-    [routines.count, t],
-  );
 
   return (
     <>
@@ -142,7 +127,6 @@ export default function WorkoutScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: bottomSpace }]}
         keyboardShouldPersistTaps="handled"
       >
-        <MetaLine items={intro} theme={theme} wrap style={styles.intro} />
 
         {resuming ? <LiveResumeCard onPress={openSession} /> : null}
 
@@ -356,7 +340,6 @@ const RoutineItem = memo(function RoutineItem({
 
 const styles = StyleSheet.create({
   content: { flexGrow: 1 },
-  intro: { paddingHorizontal: screenGutter, paddingTop: spacing.md },
   section: { paddingHorizontal: screenGutter, paddingTop: spacing.xxl },
   order: { marginBottom: spacing.md },
   cardMeta: { marginTop: spacing.xs },
