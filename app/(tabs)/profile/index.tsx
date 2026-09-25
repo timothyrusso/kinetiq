@@ -49,7 +49,7 @@ import { useT } from '@/i18n/useT';
 import type { Language } from '@/i18n';
 import { ProgressRing } from '@/ui/charts/ProgressRing';
 import { Txt } from '@/ui/Text';
-import { Divider, Stack } from '@/ui/layout';
+import { Stack } from '@/ui/layout';
 import { useTrainingSummary } from '@/queries/useProgress';
 import { useSettings, useSettingsUpdate } from '@/settings';
 import { routes } from '@/navigation/nav';
@@ -266,12 +266,6 @@ export default function ProfileScreen() {
             />
           </Card>
 
-          <View style={{ marginTop: spacing.xl }}>
-            <Divider inset={spacing.sm} />
-          </View>
-          <Txt variant="micro" tone="faint" align="center" style={{ marginTop: spacing.md }}>
-            {t('profileScreen.privacyNote')}
-          </Txt>
         </View>
       </ScrollView>
     </>

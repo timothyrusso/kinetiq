@@ -434,8 +434,6 @@ export const it: Copy = {
     trainingPrefs: 'Preferenze di allenamento',
     notifications: 'Notifiche',
     aboutTitle: 'Informazioni su Kinetiq',
-    privacyNote:
-      'Schede, cronologia e impostazioni restano su questo dispositivo. Solo la ricerca esercizi lo lascia.',
     headlineNothing: 'Nulla registrato questa settimana',
     headlineGoalMet: 'Obiettivo raggiunto',
     headlineOnTrack: 'In linea',

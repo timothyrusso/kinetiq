@@ -431,7 +431,6 @@ export const en = {
     trainingPrefs: 'Training preferences',
     notifications: 'Notifications',
     aboutTitle: 'About Kinetiq',
-    privacyNote: 'Routines, history and settings live on this device. Only exercise search leaves it.',
     headlineNothing: 'Nothing logged this week',
     headlineGoalMet: 'Goal met',
     headlineOnTrack: 'On track',
