@@ -1,8 +1,7 @@
 /**
  * Renaming a saved routine, as a form sheet.
  *
- * The header's trailing action is "Save name": the label the CRUD gate presses, and the one
- * that says what happens. An empty name is refused inline, where the typing happened, rather
+ * The header's trailing action is "Save name": the label that says what happens. An empty name is refused inline, where the typing happened, rather
  * than by a disabled button that does not say why.
  */
 import { useCallback, useState } from 'react';

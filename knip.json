@@ -1,0 +1,28 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "app/**/*.{ts,tsx}",
+    "scripts/*.{js,ts}",
+    "src/**/*.android.{ts,tsx}"
+  ],
+  "project": [
+    "app/**/*.{ts,tsx}",
+    "src/**/*.{ts,tsx}",
+    "scripts/**/*.{js,ts}"
+  ],
+  "paths": {
+    "@/ui/controls/*": [
+      "src/ui/controls/*/index.ios.tsx",
+      "src/ui/controls/*/index.tsx"
+    ],
+    "@/*": [
+      "src/*"
+    ]
+  },
+  "ignoreBinaries": [
+    "rsvg-convert"
+  ],
+  "ignoreDependencies": [
+    "expo-updates"
+  ]
+}

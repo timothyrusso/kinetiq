@@ -366,14 +366,6 @@ export function setSessionNotes(notes: string | null): void {
   commit({ notes }, true);
 }
 
-export function setRestDurationForEntry(entryIndex: number, seconds: number): void {
-  if (!session) return;
-  const entries = session.entries.map((e, i) =>
-    i === entryIndex ? { ...e, restSeconds: Math.max(0, Math.round(seconds)) } : e,
-  );
-  commit({ entries }, true);
-}
-
 /* ------------------------------------------------------------------ clock -- */
 
 let lastTickAt = 0;
@@ -452,16 +444,6 @@ export function getSessionSnapshot(): SessionSnapshot {
 
 export function getActiveSession(): WorkoutSession | null {
   return session;
-}
-
-export function isWorkoutHydrated(): boolean {
-  return hydrated;
-}
-
-export function clearAwayNotice(): void {
-  if (awayNoticeSeconds === 0) return;
-  awayNoticeSeconds = 0;
-  publish();
 }
 
 export function useWorkoutSession(): SessionSnapshot {

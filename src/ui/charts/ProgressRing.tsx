@@ -26,7 +26,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { fontFamily } from '@/theme/tokens';
 import type { Theme } from '@/theme/theme';
-import { arcPath, clamp01, sweepTo } from './geometry';
+import { clamp01 } from './geometry';
 import { useT } from '@/i18n/useT';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -165,20 +165,6 @@ export const ProgressRing = memo(function ProgressRing({
   );
 });
 
-/**
- * A ring segment for the dial variants, in the same 0→1-of-a-turn space `sweepTo` uses.
- * Exported so a gauge: a 270° dial with the number in the gap: is a caller-side
- * `strokeDasharray` away rather than a second component.
- */
-export function ringArc(
-  centre: number,
-  radius: number,
-  from: number,
-  to: number,
-): string {
-  return arcPath(centre, centre, radius, sweepTo(clamp01(from)), sweepTo(clamp01(to)));
-}
-
 // ---------------------------------------------------------------------------
 // Worklet-local geometry
 // ---------------------------------------------------------------------------
@@ -213,5 +199,3 @@ function arcFromTurns(centre: number, radius: number, fromTurn: number, toTurn: 
   const large = Math.abs(b - a) > Math.PI ? 1 : 0;
   return `M${r(sx)} ${r(sy)} A${r(radius)} ${r(radius)} 0 ${large} 1 ${r(ex)} ${r(ey)}`;
 }
-
-export type ProgressRingProps = React.ComponentProps<typeof ProgressRing>;

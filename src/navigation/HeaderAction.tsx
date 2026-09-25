@@ -7,7 +7,7 @@
  * `Stack.Toolbar.Button` or `Stack.Toolbar.Menu` and turns their props into native bar items.
  * A `<HeaderAction>` component would be an unknown type at that level and be dropped without a
  * sound, so this returns the button element itself and a screen writes
- * `{headerAction({ action: 'settings', onPress, t })}` inside its toolbar.
+ * `{headerAction({ action: 'add', onPress, t })}` inside its toolbar.
  *
  * ## Icons per platform
  *
@@ -16,14 +16,13 @@
  * in the table is rendered to an image once, during bootstrap, before the navigator mounts. A
  * row whose image is somehow missing renders nothing rather than an empty tappable square.
  */
-import type { ComponentProps, ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import { Platform } from 'react-native';
 import { Stack } from 'expo-router';
 
 import type { SFSymbol } from 'sf-symbols-typescript';
 
 import type { TKey, TVars } from '@/i18n';
-import { useAppTheme } from '@/theme/theme';
 import { materialIcon, prefetchMaterialIcons, type MaterialIconName } from '@/ui/materialIcons';
 import { HEADER_ACTIONS, type HeaderActionKey } from './headerActions';
 
@@ -42,26 +41,6 @@ export function prefetchHeaderIcons(): Promise<void> {
  * `HeaderToolbar.MenuAction` are the router's own.
  */
 export const HeaderToolbar = Stack.Toolbar;
-
-/**
- * The native header search field, under the same collision-free naming, in the app's colours.
- *
- * Android's field takes nothing from the header's theme: left alone, the typed text, the hint
- * and the search and close glyphs are Material defaults for a light bar, dark grey on the
- * dark header and close to unreadable. The glyphs take the header's tint, like the actions
- * beside them. iOS draws its field from the system and is left to it.
- */
-export function HeaderSearchBar(props: ComponentProps<typeof Stack.SearchBar>) {
-  const { colors } = useAppTheme();
-  return (
-    <Stack.SearchBar
-      {...(Platform.OS === 'android'
-        ? { textColor: colors.text, hintTextColor: colors.textFaint, headerIconColor: colors.accent }
-        : {})}
-      {...props}
-    />
-  );
-}
 
 export type HeaderActionOptions = {
   action: HeaderActionKey;

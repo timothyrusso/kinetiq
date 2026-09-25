@@ -8,7 +8,7 @@
  * app working: it would just start empty.
  *
  * Randomness is seeded (mulberry32), so the same install shape produces the same
- * history. That makes screenshots, QA scripts and bug reports comparable.
+ * history. That makes screenshots and bug reports comparable.
  */
 import type {
   Activity,
@@ -74,7 +74,7 @@ type SeedExercise = {
  * frequently incomplete, so the missing-instruction state has to be exercised on
  * a plain fresh install rather than only in theory. Same for `imageUrl`.
  */
-export const SEED_EXERCISES: readonly SeedExercise[] = [
+const SEED_EXERCISES: readonly SeedExercise[] = [
   { key: 'barbell-back-squat', name: 'Barbell Back Squat', category: 'Legs', primary: ['Quadriceps'], secondary: ['Glutes', 'Lower back'], equipment: ['Barbell', 'Squat rack'], instructions: 'Brace the core, break at hip and knee together, and drive back up through the mid-foot.', baseWeightKg: 90, progressPerWeek: 1.8, restSeconds: 180 },
   { key: 'conventional-deadlift', name: 'Conventional Deadlift', category: 'Back', primary: ['Lower back'], secondary: ['Glutes', 'Hamstrings', 'Forearms'], equipment: ['Barbell'], instructions: 'Hinge until the shins meet the bar, keep the chest proud, and stand tall without hyperextending.', baseWeightKg: 110, progressPerWeek: 2.2, restSeconds: 180 },
   { key: 'bench-press', name: 'Bench Press', category: 'Chest', primary: ['Chest'], secondary: ['Front deltoids', 'Triceps'], equipment: ['Barbell', 'Flat bench'], instructions: 'Shoulder blades down and back, bar to the lower sternum, elbow path about 45 degrees from the torso.', baseWeightKg: 70, progressPerWeek: 1.2, restSeconds: 180 },
@@ -250,11 +250,11 @@ function buildHistory(rng: () => number): Activity[] {
   /** Week 6 is a travel week: almost nothing logged. */
   const TRAVEL_WEEK = 6;
 
+  const now = Date.now();
   const push = (activity: Activity) => {
-    // `< today + 1 day`, not `< today`: an evening session scheduled on today's
-    // own date is still in the window, and dropping it would thin out the very
-    // week the app is being opened in. Nothing later than today can get through.
-    if (activity.startedAt <= today.getTime() + 86_400_000) activities.push(activity);
+    // Nothing later than now. Home lists workouts newest first, and a seeded 19:00 session
+    // dated later today sat above the workout the user had just finished.
+    if (activity.startedAt <= now) activities.push(activity);
   };
 
   for (let week = 0; week < WEEKS; week += 1) {
@@ -441,8 +441,3 @@ export async function seedIfEmpty(): Promise<SeedResult | null> {
     firstActivityAt: activities[0]?.startedAt ?? now,
   };
 }
-
-/** Exposed so tests can reason about which exercises the seed owns. */
-export const SEED_EXERCISE_IDS: readonly string[] = SEED_EXERCISES.map(
-  (e) => `local:${e.key}`,
-);

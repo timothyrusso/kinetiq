@@ -390,15 +390,6 @@ export function snapshotOf(exercise: Exercise): ExerciseSnapshot {
   };
 }
 
-export async function snapshotsOf(exerciseIds: readonly string[]): Promise<ExerciseSnapshot[]> {
-  if (exerciseIds.length === 0) return [];
-  const rows = await getDatabase().getAllAsync<ExerciseRow>(
-    `SELECT * FROM exercises WHERE id IN (${exerciseIds.map(() => '?').join(', ')})`,
-    ...exerciseIds,
-  );
-  return rows.map(rowToExerciseSnapshot);
-}
-
 /**
  * One stored exercise, or null when we have never seen it.
  *

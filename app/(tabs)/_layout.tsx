@@ -55,17 +55,21 @@ export default function TabsLayout() {
       minimizeBehavior="onScrollDown"
       {...(Platform.OS === 'android' ? androidBar(theme) : {})}
     >
-      <NativeTabs.Trigger name="(home)">
+      {/* `accessibilityLabel` repeats the label on purpose. With none set, UIKit derives the
+          tab item's spoken label from its first title and keeps it: switch the app from
+          Italian to English and the bar read "Workout" while VoiceOver still said
+          "Allenamento". Set explicitly, a language change is a prop change and reaches it. */}
+      <NativeTabs.Trigger name="(home)" accessibilityLabel={t('tabs.home')}>
         <Icon sf={{ default: 'house', selected: 'house.fill' }} md="home" />
         <Label>{t('tabs.home')}</Label>
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="workout">
+      <NativeTabs.Trigger name="workout" accessibilityLabel={t('tabs.workout')}>
         <Icon sf="figure.strengthtraining.traditional" md="fitness_center" />
         <Label>{t('tabs.workout')}</Label>
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="profile">
+      <NativeTabs.Trigger name="profile" accessibilityLabel={t('tabs.profile')}>
         <Icon sf={{ default: 'person', selected: 'person.fill' }} md="person" />
         <Label>{t('tabs.profile')}</Label>
       </NativeTabs.Trigger>

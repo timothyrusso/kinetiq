@@ -87,14 +87,13 @@ table, a plain helper) uses `tr()` from `src/i18n/tr.ts`, which reads the langua
 settings store at call time. A module-level map of labels holds catalog KEYS, never words: it
 is built at import time, when there is no language yet.
 
-Two deliberate exceptions: `app/dev.tsx` (the fault-injection console, which ships only in
-`__DEV__` and whose copy the QA scripts match on), and the product name.
+One deliberate exception: the product name.
 
 ## Gates
 
-`npm run check` before any commit. The device gates (`qa:crud`, `qa:network`, `qa:pagination`,
-`qa:offline`, `qa:faults`) need Metro on port 8083 and the iPhone 17 Pro simulator; port 8081
-belongs to a different project on this machine and must not be used.
+`npm run check` before any commit. It includes `check:unused`: knip for unused files, exports
+and dependencies, and `scripts/check-unused-keys.js` for catalog keys nothing reads.
 
-Assertions read from the database (`dbQuery`) rather than from the screen wherever the claim is
-about persistence. A row filtered out of a list and a deleted row look identical in pixels.
+There are no automated device gates. Check a change by hand on the iPhone 17 Pro simulator and
+on Android. Port 8081 belongs to a different project on this machine and must not be used for
+Metro.

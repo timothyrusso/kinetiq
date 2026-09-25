@@ -30,10 +30,6 @@ export function setHapticsEnabled(next: boolean): void {
   enabled = next;
 }
 
-export function hapticsEnabled(): boolean {
-  return enabled;
-}
-
 function fire(task: () => Promise<void>): void {
   if (!enabled || Platform.isTV) return;
   // Haptics are pure decoration: a failure (no motor, simulator, backgrounded)

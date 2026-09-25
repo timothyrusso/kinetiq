@@ -8,9 +8,9 @@
  */
 import * as SQLite from 'expo-sqlite';
 
-export const DATABASE_NAME = 'kinetiq.db';
+const DATABASE_NAME = 'kinetiq.db';
 
-export type Migration = {
+type Migration = {
   version: number;
   up: (db: SQLite.SQLiteDatabase) => Promise<void>;
 };
@@ -120,7 +120,7 @@ const SCHEMA_V1 = `
   );
 `;
 
-export const MIGRATIONS: readonly Migration[] = [
+const MIGRATIONS: readonly Migration[] = [
   {
     version: 1,
     up: async (db) => {
@@ -276,9 +276,6 @@ export const MIGRATIONS: readonly Migration[] = [
   },
 ];
 
-/** Latest schema version the app knows how to build. */
-export const TARGET_SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1]?.version ?? 1;
-
 let database: SQLite.SQLiteDatabase | null = null;
 let openPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
@@ -356,33 +353,6 @@ export function openDatabase(): Promise<DatabaseOpenResult> {
 export function getDatabase(): SQLite.SQLiteDatabase {
   if (!database) throw new Error('Database accessed before openDatabase() resolved');
   return database;
-}
-
-export function isDatabaseOpen(): boolean {
-  return database !== null;
-}
-
-/**
- * The schema version this install actually migrated to, read from the database itself.
- *
- * The point of asking the file rather than importing `SCHEMA_VERSION` is that the two can
- * disagree: a downgrade, a half-applied migration, a build that changed the target without
- * migrating: and the disagreement is exactly what a developer needs to see. Kept here rather
- * than in each screen that displays it, so a `PRAGMA` is not something UI code has to know the
- * spelling of.
- *
- * Synchronous by design: callers read it in a `useState` initialiser because the database is
- * open before the splash comes down, the pragma is sub-millisecond, and an effect would flash
- * "reading…" on a number that was never in question. Returns `null` rather than throwing, so a
- * broken database renders as "unknown" instead of taking a render path down with it.
- */
-export function readSchemaVersion(): number | null {
-  try {
-    const row = getDatabase().getFirstSync<{ user_version?: number }>('PRAGMA user_version;');
-    return typeof row?.user_version === 'number' ? row.user_version : null;
-  } catch {
-    return null;
-  }
 }
 
 /** Test/maintenance hook: wipes user data while keeping the schema. */

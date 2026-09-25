@@ -17,17 +17,11 @@ import type { TKey } from '@/i18n';
 import type { MaterialIconName } from '@/ui/materialIcons';
 
 export type HeaderActionKey =
-  | 'settings'
-  | 'filter'
   | 'add'
   | 'more'
   | 'play'
   | 'delete'
   | 'save'
-  | 'done'
-  | 'edit'
-  | 'share'
-  | 'search'
   | 'cancel';
 
 export type HeaderActionRow = {
@@ -39,17 +33,11 @@ export type HeaderActionRow = {
 };
 
 export const HEADER_ACTIONS: Record<HeaderActionKey, HeaderActionRow> = {
-  settings: { sf: 'gearshape', material: 'settings', label: 'headerActions.settings' },
-  filter: { sf: 'line.3.horizontal.decrease', material: 'filter-list', label: 'headerActions.filter' },
   add: { sf: 'plus', material: 'add', label: 'headerActions.add' },
   more: { sf: 'ellipsis', material: 'more-vert', label: 'headerActions.more' },
   play: { sf: 'play.fill', material: 'play-arrow', label: 'headerActions.play' },
   delete: { sf: 'trash', material: 'delete', label: 'headerActions.delete' },
   save: { sf: 'checkmark', material: 'check', label: 'headerActions.save', text: true },
-  done: { sf: 'checkmark', material: 'check', label: 'headerActions.done', text: true },
-  edit: { sf: 'pencil', material: 'edit', label: 'headerActions.edit' },
-  share: { sf: 'square.and.arrow.up', material: 'share', label: 'headerActions.share' },
-  search: { sf: 'magnifyingglass', material: 'search', label: 'headerActions.search' },
   // "Cancel" on iOS, the full-screen dialog's close glyph on Android.
   cancel: { sf: 'xmark', material: 'close', label: 'headerActions.cancel', text: true },
 };

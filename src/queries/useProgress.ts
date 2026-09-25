@@ -29,7 +29,7 @@ import { sum } from '@/utils/functional';
  */
 const PROGRESS_STALE_TIME_MS = 60_000;
 
-export type WeekSummary = {
+type WeekSummary = {
   /** Local Monday at midnight. */
   weekStart: number;
   /** Local label, e.g. "Mon 12 May". */

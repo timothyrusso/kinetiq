@@ -40,18 +40,15 @@ const GLYPHS = {
   home: 'home',
   activities: 'pulse',
   workout: 'barbell',
-  library: 'grid',
   profile: 'person',
 
   // Actions and affordances
   search: 'search',
   filter: 'filter',
-  sort: 'swap-vertical',
   close: 'close',
   chevronRight: 'chevron-forward',
   chevronDown: 'chevron-down',
   chevronUp: 'chevron-up',
-  arrowLeft: 'arrow-back',
   arrowUpRight: 'arrow-forward',
   plus: 'add',
   minus: 'remove',
@@ -62,24 +59,20 @@ const GLYPHS = {
   stop: 'stop',
   refresh: 'refresh',
   trash: 'trash',
-  copy: 'copy',
   more: 'ellipsis-horizontal',
   edit: 'create',
   settings: 'settings',
   share: 'share-social',
   link: 'link',
   download: 'download',
-  eye: 'eye',
   listAdd: 'list',
   layers: 'layers',
-  drag: 'reorder-three',
 
   // Training and metrics
   bell: 'notifications',
   clock: 'time',
   timer: 'timer',
   flame: 'flame',
-  bolt: 'flash',
   target: 'disc',
   calendar: 'calendar',
   trendUp: 'trending-up',
@@ -88,20 +81,15 @@ const GLYPHS = {
 
   // Training
   dumbbell: 'barbell',
-  skip: 'play-skip-forward',
-  star: 'star',
 
   // States
   offline: 'cloud-offline',
   image: 'image',
   info: 'information-circle',
   warning: 'warning',
-  lock: 'lock-closed',
 } as const;
 
 export type IconName = keyof typeof GLYPHS;
-
-export const ICON_NAMES = Object.keys(GLYPHS) as IconName[];
 
 /**
  * The only icon sizes this app uses.
@@ -162,22 +150,6 @@ export const Icon = memo(function Icon({
       {...(accessibilityLabel
         ? { accessible: true, accessibilityRole: 'image' as const, accessibilityLabel }
         : { accessible: false, importantForAccessibility: 'no' as const })}
-    />
-  );
-});
-
-/** Filled dot, for "recording" and unread indicators. */
-export const IconDot = memo(function IconDot({
-  size = 8,
-  color,
-}: {
-  size?: number;
-  color: string;
-}) {
-  return (
-    <View
-      accessible={false}
-      style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: color }}
     />
   );
 });

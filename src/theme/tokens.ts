@@ -45,9 +45,6 @@ export const palette = {
   black: '#000000',
 } as const;
 
-/** Activity accents: stable across both themes, tuned for legibility per mode. */
-export type ActivityTone = 'volt' | 'spark' | 'azure' | 'coral' | 'plum';
-
 /**
  * One family, the full weight ramp. Inter carries everything from 11pt captions
  * to the 58pt hero numeral; hierarchy comes from weight, size and tracking
@@ -72,7 +69,6 @@ export const fontFamily = {
   mono: 'JetBrainsMono_500Medium',
   monoSemiBold: 'JetBrainsMono_600SemiBold',
 } as const;
-
 
 /**
  * The spacing scale.

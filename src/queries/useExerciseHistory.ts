@@ -60,7 +60,7 @@ export type ExercisePerformance = {
 };
 
 /** One point of the heaviest-weight line: a session's heaviest completed set. */
-export type WeightPoint = {
+type WeightPoint = {
   activityId: string;
   performedAt: number;
   weightKg: number;

@@ -57,30 +57,8 @@ export function tabHref(index: number): Href {
   return TAB_HREFS[key];
 }
 
-export function tabIndexOf(key: TabKey): number {
+function tabIndexOf(key: TabKey): number {
   return TAB_ROUTES.indexOf(key);
-}
-
-/**
- * The tab a pathname belongs to.
- *
- * `/workout/session` reports `workout`, which is what lets the tab layout decide both
- * to hide its bar and to keep the Workout tab lit behind the player: the user is still
- * in the workout flow, and a bar that jumps to Home as the sheet closes reads as a bug
- * even when the stack underneath is correct.
- *
- * `undefined` means "not a tab" (a modal, or the root). Callers treat it as "no tab is
- * active" rather than defaulting to Home, so the bar never claims to be somewhere the
- * user is not.
- */
-export function tabKeyForPathname(pathname: string): TabKey | undefined {
-  const segments = pathname.split('/').filter(Boolean);
-  // `(tabs)` is the group segment and is not part of any tab's URL.
-  if (segments[0] === '(tabs)') segments.shift();
-  if (segments[0] === '(home)') segments.shift();
-  const first = segments[0];
-  if (first === undefined) return '(home)';
-  return (TAB_ROUTES as readonly string[]).includes(first) ? (first as TabKey) : undefined;
 }
 
 /**
@@ -121,7 +99,6 @@ export const routes = {
   settingsNotifications: () => '/settings/notifications' as Href,
   settingsAbout: () => '/settings/about' as Href,
   editProfile: () => '/edit-profile' as Href,
-  dev: () => '/dev' as Href,
 
   /**
    * The editors, presented as form sheets. Each takes what it edits as params and writes

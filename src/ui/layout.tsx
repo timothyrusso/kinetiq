@@ -37,7 +37,7 @@ type Gap = keyof typeof spacing;
  * `alignSelf` disagree about which of the two spellings they accept: normalising
  * here means no component ever has to remember which prop it is on.
  */
-export type Align = 'start' | 'center' | 'end' | 'stretch' | 'baseline';
+type Align = 'start' | 'center' | 'end' | 'stretch' | 'baseline';
 
 function crossAxis(align: Align): NonNullable<ViewStyle['alignItems']> {
   if (align === 'start' || align === 'end') return `flex-${align}`;
@@ -123,11 +123,6 @@ export const Row = memo(function Row({
       {children}
     </View>
   );
-});
-
-/** Pushes everything after it to the far edge, `flex: 1` under a clearer name. */
-export const Spacer = memo(function Spacer() {
-  return <View style={{ flex: 1 }} />;
 });
 
 /**

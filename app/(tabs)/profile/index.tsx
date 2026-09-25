@@ -55,9 +55,6 @@ import { useSettings, useSettingsUpdate } from '@/settings';
 import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
 import { spacing, screenGutter } from '@/theme/tokens';
-import {
-  formatDurationCompact,
-} from '@/utils/format';
 import type { UnitSystem } from '@/utils/format';
 import type { ThemeMode } from '@/settings';
 
@@ -219,7 +216,10 @@ export default function ProfileScreen() {
               <StatTile label={t('profileScreen.sessions')} value={formatNumber(totals?.workouts)} />
               <StatTile
                 label={t('profileScreen.time')}
-                value={totals === undefined ? t('common.noValue') : formatDurationCompact(totals.durationSeconds)}
+                // Whole hours with the unit drawn small: "11h 20m" does not fit a third of
+                // a phone card, and over four weeks the minutes are noise.
+                value={totals === undefined ? t('common.noValue') : `${Math.round(totals.durationSeconds / 3600)}`}
+                {...(totals === undefined ? {} : { unit: t('tabsProfile.hours') })}
               />
               <StatTile
                 label={t('profileScreen.volume')}

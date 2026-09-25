@@ -25,7 +25,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { Image } from 'expo-image';
-import type { Activity, ActivityKind, ExerciseSnapshot, Routine } from '@/domain/types';
+import type { ActivityKind, Routine } from '@/domain/types';
 import { haptics } from '@/services/haptics';
 import { radius, screenGutter, spacing, touchTarget } from '@/theme/tokens';
 import { useAppTheme, type Theme } from '@/theme/theme';
@@ -36,7 +36,6 @@ import { CellText } from './CellText';
 import { MetaLine } from './display/MetaLine';
 import { TagRow } from './display/TagRow';
 import type { MetaItem, Tag } from './display/types';
-import { tr } from '@/i18n/tr';
 import { useT } from '@/i18n/useT';
 
 /** Activity kind → glyph. One table, so a kind can never render the wrong icon. */
@@ -233,62 +232,6 @@ export const NavRow = memo(function NavRow({
   );
 });
 
-/** Activity row: the shape the Activities tab is measured in. */
-export const ActivityRow = memo(function ActivityRow({
-  activity,
-  theme,
-  onPress,
-  onLongPress,
-  headline,
-  meta,
-  selected = false,
-  trailing,
-}: {
-  activity: Activity;
-  theme: Theme;
-  onPress: () => void;
-  onLongPress?: () => void;
-  /**
-   * Right-column readout ("5.21 km"), built by the caller. Formatting is the
-   * screen's job: it depends on unit settings *and* on which metrics are meaningful
-   * for this kind, so a row that guessed would be wrong half the time.
-   */
-  headline: string;
-  meta: readonly MetaItem[];
-  selected?: boolean;
-  /** Overrides the chevron, e.g. a PR badge or a swipe-action affordance. */
-  trailing?: React.ReactNode;
-}) {
-  const { t } = useT();
-  return (
-    <ListRow
-      theme={theme}
-      title={activity.title}
-      meta={meta}
-      selected={selected}
-      onPress={onPress}
-      {...(onLongPress ? { onLongPress } : {})}
-      accessibilityHint={t('misc.opensWorkout')}
-      leading={
-        <IconTile
-          name={ACTIVITY_ICON[activity.kind]}
-          color={theme.colors.tone[activity.kind]}
-          background={theme.colors.toneSoft[activity.kind]}
-        />
-      }
-      body={
-        <CellText
-          text={headline}
-          variant="numeralSm"
-          color={theme.colors.text}
-          align="right"
-        />
-      }
-      {...(trailing ? { trailing } : { showChevron: false })}
-    />
-  );
-});
-
 /** Routine row. Its metadata is the routine's volume and history, not its description. */
 export const RoutineRow = memo(function RoutineRow({
   routine,
@@ -445,7 +388,7 @@ export const Avatar = memo(function Avatar({
 });
 
 /** Two-letter monogram. "Adrian Russo" → "AR", "athlete" → "A". */
-export function initials(name: string): string {
+function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   const first = parts[0]?.[0] ?? '';
   const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? '') : '';
@@ -540,19 +483,6 @@ const RowBadge = memo(function RowBadge({ label, theme }: { label: string; theme
   );
 });
 
-/** Up to `max` names, comma-separated, then "+n". */
-export function summarizeExerciseNames(names: string[], max = 3): string {
-  if (names.length === 0) return tr('states.noExercisesYet');
-  const rest = names.length - max;
-  const head = names.slice(0, Math.max(1, max)).join(', ');
-  return rest > 0 ? `${head} +${rest}` : head;
-}
-
-/** The best available image for a snapshot: thumb first, art second. */
-export function thumbUriOf(snapshot: ExerciseSnapshot): string | null {
-  return snapshot.thumbnailUrl ?? snapshot.imageUrl;
-}
-
 /**
  * A full-width row that behaves like a button: a list cell, a settings item. Kept
  * separate from `Button` because its anatomy is different (title + supporting text
@@ -632,5 +562,3 @@ export const ActionRow = memo(function ActionRow({
     </AnimatedPressable>
   );
 });
-
-export type ListRowProps = React.ComponentProps<typeof ListRow>;

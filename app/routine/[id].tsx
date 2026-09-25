@@ -153,7 +153,6 @@ export default function RoutineDetailScreen() {
     [items, reorder, routine, t],
   );
 
-
   const dropItem = useCallback(
     (itemId: string) => {
       if (routine === null) return;
@@ -166,7 +165,6 @@ export default function RoutineDetailScreen() {
     },
     [removeItem, routine, t],
   );
-
 
   const doDuplicate = useCallback(() => {
     if (routine === null) return;
@@ -415,8 +413,8 @@ export default function RoutineDetailScreen() {
           </Column>
         )}
 
-        {/* In content as well as in the header: the QA gates and a thumb both look for it
-            at the end of the plan, where the decision to train is made. */}
+        {/* In content as well as in the header: a thumb looks for it at the end of the plan,
+            where the decision to train is made. */}
         <View style={styles.gutter}>
           <Button
             label={t(liveSession ? 'routine.openWorkout' : 'routine.start')}

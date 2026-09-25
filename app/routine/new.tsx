@@ -112,6 +112,14 @@ export default function NewRoutineScreen() {
   // re-renders the moment the first exercise lands and not on the next unrelated change.
   const savable = draft.items.length > 0 && draft.status !== 'saving';
 
+  const [savedId, setSavedId] = useState<string | null>(null);
+  useEffect(() => {
+    // `replace`, not `push`: this screen has now become the routine it describes. Leaving the
+    // builder underneath it means "back" returns to a form whose entire contents have been
+    // saved, which the user would then be invited to save again.
+    if (savedId !== null) router.replace(routes.routine(savedId));
+  }, [savedId]);
+
   const save = useCallback(async () => {
     if (!isDraftSavable()) {
       // An inline reason, not a permanently greyed-out primary button: a call-to-action that
@@ -127,10 +135,11 @@ export default function NewRoutineScreen() {
       const saved = await saveRoutine.mutateAsync(draftToPayload());
       markDraftSaved();
       haptics.success();
-      // `replace`, not `push`: this screen has now become the routine it describes. Leaving
-      // the builder underneath it means "back" returns to a form whose entire contents have
-      // been saved, which the user would then be invited to save again.
-      router.replace(routes.routine(saved.id));
+      // Not navigated from here: `usePreventRemove` below still holds this render's "dirty",
+      // so a `replace` in the same tick was refused as a removal, the discard dialog came up
+      // over a routine that had just been saved, and a second Done saved a duplicate. The
+      // effect below navigates after the re-render that releases the guard.
+      setSavedId(saved.id);
     } catch {
       markDraftSaveFailed();
       setBlocked(t('newRoutine.saveFailed'));
@@ -170,8 +179,7 @@ export default function NewRoutineScreen() {
       </HeaderToolbar>
       <HeaderToolbar placement="right">
         {/* Disabled until there is something to save: an empty routine has no reason to exist,
-            and the empty state below already says what to do first. Labelled "Done", which is
-            the word the CRUD gate presses. */}
+            and the empty state below already says what to do first. */}
         {headerAction({
           action: 'save',
           onPress: done,

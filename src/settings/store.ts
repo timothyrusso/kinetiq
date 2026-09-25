@@ -17,7 +17,6 @@ import { DEFAULT_SETTINGS, normaliseSettings, type SettingsState } from './types
 export type SettingsPatch = Partial<SettingsState>;
 
 let state: SettingsState = DEFAULT_SETTINGS;
-let hydrated = false;
 const listeners = new Set<() => void>();
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -65,12 +64,7 @@ async function persist(next: SettingsState): Promise<void> {
  */
 export function hydrateSettings(next: Partial<SettingsState>): void {
   state = normaliseSettings(next);
-  hydrated = true;
   emit();
-}
-
-export function isSettingsHydrated(): boolean {
-  return hydrated;
 }
 
 export function getSettings(): SettingsState {
@@ -93,13 +87,4 @@ export function subscribeSettings(listener: () => void): () => void {
   return () => {
     listeners.delete(listener);
   };
-}
-
-/** Forces any pending debounced write to disk; call before backgrounding/quit paths. */
-export async function flushSettings(): Promise<void> {
-  if (flushTimer !== null) {
-    clearTimeout(flushTimer);
-    flushTimer = null;
-  }
-  await persist(state);
 }

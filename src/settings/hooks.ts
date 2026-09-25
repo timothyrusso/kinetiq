@@ -13,11 +13,6 @@ export function useSettings<T>(selector: (settings: SettingsState) => T): T {
   return useSyncExternalStore(subscribeSettings, read, read);
 }
 
-/** Whole-state read for the settings screen, which genuinely shows all of it. */
-export function useAllSettings(): SettingsState {
-  return useSyncExternalStore(subscribeSettings, getSettings, getSettings);
-}
-
 /**
  * The active theme. Returned as a `const` tuple so callers destructure
  * `[mode, resolved]`; `resolved` folds 'system' against the OS appearance.

@@ -57,7 +57,7 @@ const BLOCK_OPEN = /<(p|div|li|ul|ol|h[1-6])[^>]*>/gi;
  * becomes a bullet line, block boundaries become newlines, everything else is
  * stripped.
  */
-export function htmlToPlainText(html: string | null | undefined): string | null {
+function htmlToPlainText(html: string | null | undefined): string | null {
   if (!html) return null;
   const text = html
     .replace(/<\s*br\s*\/?\s*>/gi, '\n')

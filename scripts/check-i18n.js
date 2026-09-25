@@ -75,7 +75,6 @@ for (const [key, value] of en) {
  * under the change most likely to be made by hand (writing a paragraph into a component) and
  * not a claim that everything else is clean.
  */
-const SKIP = [/app\/dev\.tsx$/];
 const files = [];
 (function walk(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -96,7 +95,6 @@ const files = [];
 })('src');
 
 for (const file of files) {
-  if (SKIP.some((re) => re.test(file))) continue;
   const lines = fs.readFileSync(file, 'utf8').split('\n');
   lines.forEach((line, i) => {
     if (!/^\s*[A-Za-z][A-Za-z0-9 ,.'\u2019:;()%/-]{14,}$/.test(line)) return;

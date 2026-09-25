@@ -51,7 +51,7 @@ export function useTransparentHeaderInset(): number {
  * Vertical room the floating "workout in progress" pill needs above the bar: its own height
  * plus the gap between it and the bar.
  */
-export const WORKOUT_PILL_SPACE = 44 + spacing.sm;
+const WORKOUT_PILL_SPACE = 44 + spacing.sm;
 
 /**
  * Bottom padding for a scroll view on one of the five TAB screens.

@@ -6,7 +6,7 @@
  * that pops on ink is illegible on paper, so the accent itself shifts hue.
  */
 import { useMemo } from 'react';
-import { Platform, useColorScheme, useWindowDimensions } from 'react-native';
+import { useColorScheme, useWindowDimensions } from 'react-native';
 import { useThemeMode } from '@/settings';
 import type { ActivityKind } from '@/domain/types';
 import {
@@ -23,7 +23,7 @@ import {
 
 export type ThemeMode = 'light' | 'dark';
 
-export type Shadow = {
+type Shadow = {
   shadowColor: string;
   shadowOpacity: number;
   shadowRadius: number;
@@ -327,11 +327,11 @@ function buildTheme(mode: ThemeMode, scale = 1): Theme {
   };
 }
 
-export const darkTheme = buildTheme('dark');
-export const lightTheme = buildTheme('light');
+const darkTheme = buildTheme('dark');
+const lightTheme = buildTheme('light');
 
 /** Scales display type up on tablets so 22pt titles don't look lost at 1024pt. */
-export function useThemeFor(mode: ThemeMode, longestEdge: number): Theme {
+function useThemeFor(mode: ThemeMode, longestEdge: number): Theme {
   return useMemo(
     () => buildTheme(mode, longestEdge >= 700 ? 1.08 : 1),
     [mode, longestEdge],
@@ -356,16 +356,8 @@ export function useAppTheme(): Theme {
   return useThemeFor(resolved, Math.max(width, height));
 }
 
-/** Colour for an activity kind, resolved for this theme. */
-export function toneColor(theme: Theme, kind: ActivityKind): string {
-  return theme.colors.tone[kind];
-}
-
 /** Status-bar style that keeps contrast against the theme canvas. */
 export function statusBarStyle(mode: ThemeMode): 'light' | 'dark' {
   return mode === 'dark' ? 'light' : 'dark';
 }
 
-export const isNativePlatform = Platform.OS === 'ios' || Platform.OS === 'android';
-
-export { palette, spacing, radius, fontSize, weight, lineHeight, motion };

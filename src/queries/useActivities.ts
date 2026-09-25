@@ -19,13 +19,13 @@ import { invalidateActivityHistory } from '@/query/invalidation';
 import { startOfWeek } from '@/utils/format';
 import { tr } from '@/i18n/tr';
 
-export type HistoryWeek = {
+type HistoryWeek = {
   /** Local Monday at midnight. */
   weekStart: number;
   activities: Activity[];
 };
 
-export type ActivityHistory = {
+type ActivityHistory = {
   /** Every session, newest first. */
   activities: Activity[];
   /** The same rows in Monday-start weeks, newest week first. */

@@ -11,15 +11,11 @@
  * (detail routes, repositories) must not be able to drift apart.
  */
 
-export const REMOTE_ID_PREFIX = 'wger:';
-export const LOCAL_ID_PREFIX = 'local:';
+const REMOTE_ID_PREFIX = 'wger:';
+const LOCAL_ID_PREFIX = 'local:';
 
 export function remoteExerciseId(externalId: number): string {
   return `${REMOTE_ID_PREFIX}${externalId}`;
-}
-
-export function localExerciseId(key: string): string {
-  return `${LOCAL_ID_PREFIX}${key}`;
 }
 
 /** The backend's numeric id, or null for locally-authored exercises. */
