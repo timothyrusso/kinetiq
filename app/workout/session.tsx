@@ -58,6 +58,7 @@ import {
   type PreviousLift,
 } from '@/queries/useRoutines';
 import { haptics, useHaptics } from '@/services/haptics';
+import { justReachedWeeklyGoal } from '@/workout/weeklyGoal';
 import { useT } from '@/i18n/useT';
 import { tr } from '@/i18n/tr';
 import {
@@ -184,6 +185,21 @@ export default function WorkoutSessionScreen() {
 
   const retract = restRemaining > 0;
 
+  // The countdown haptics: a tick in each of the last three seconds, then a distinct buzz at
+  // zero. Only a rest that ran out gets the second: Skip and "-15 s" to nothing clear
+  // `restEndsAt`, a rest that expired keeps it. The end buzz also needs the previous reading
+  // to be one of those last seconds, so coming back to the app after the rest ended long ago
+  // does not greet the user with a buzz for something that is already over.
+  const restEndsAt = session?.restEndsAt ?? null;
+  const lastRest = useRef(restRemaining);
+  useEffect(() => {
+    const before = lastRest.current;
+    lastRest.current = restRemaining;
+    if (restRemaining >= before) return;
+    if (restRemaining > 0 && restRemaining <= 3) haptics.restTick();
+    else if (restRemaining === 0 && before <= 3 && restEndsAt !== null) haptics.restOver();
+  }, [restEndsAt, restRemaining]);
+
   const retractRestAlert = useCallback(() => {
     const id = restAlertId.current;
     restAlertId.current = null;
@@ -223,9 +239,11 @@ export default function WorkoutSessionScreen() {
       if (startedRest === null) {
         // Un-ticking: pull back the alert the tick armed, or the phone announces a rest
         // that is no longer happening.
+        haptics.light();
         retractRestAlert();
         return;
       }
+      haptics.setCompleted();
       if (autoStartRest) armRest(startedRest);
     },
     [armRest, autoStartRest, retractRestAlert],
@@ -285,7 +303,15 @@ export default function WorkoutSessionScreen() {
         setFinishing(false);
         return;
       }
-      haptics.success();
+      // One signature per finish. A PR's sheet plays its own as it appears, and two designed
+      // patterns a few hundred milliseconds apart blur into one long buzz, so a finish with a
+      // record leaves the haptic to the sheet. The goal check is one indexed read; a failure
+      // falls back to the ordinary finish.
+      if (result.personalRecords.length === 0) {
+        const closedGoal = await justReachedWeeklyGoal().catch(() => false);
+        if (closedGoal) haptics.weeklyGoalReached();
+        else haptics.workoutFinished();
+      }
       // The finished workout lives in the history on Home now, so that is where this screen
       // goes: `dismissTo` pops the player rather than stacking a second Home on top of it. A
       // PR is then presented over Home as a sheet, not a toast: it is worth stopping for.

@@ -45,6 +45,7 @@ export default function SettingsTrainingScreen() {
   const rest = useSettings((s) => s.defaultRestSeconds);
   const autoStartRest = useSettings((s) => s.autoStartRest);
   const hapticsEnabled = useSettings((s) => s.hapticsEnabled);
+  const restCountdown = useSettings((s) => s.restCountdownHaptics);
   const goal = useSettings((s) => s.weeklyGoalWorkouts);
 
   const setRest = useCallback(
@@ -96,6 +97,17 @@ export default function SettingsTrainingScreen() {
             value: hapticsEnabled,
             onChange: (next) => update({ hapticsEnabled: next }),
           },
+          {
+            // Its own switch: the one haptic someone could like everything else about and
+            // still find too much. Off with the master switch, and shown so.
+            kind: 'switch',
+            key: 'restCountdown',
+            title: t('trainingPrefs.restCountdown'),
+            subtitle: t('trainingPrefs.restCountdownHint'),
+            value: hapticsEnabled && restCountdown,
+            disabled: !hapticsEnabled,
+            onChange: (next) => update({ restCountdownHaptics: next }),
+          },
         ],
       },
       {
@@ -117,7 +129,7 @@ export default function SettingsTrainingScreen() {
         ],
       },
     ],
-    [autoStartRest, goal, hapticsEnabled, rest, setRest, t, update],
+    [autoStartRest, goal, hapticsEnabled, rest, restCountdown, setRest, t, update],
   );
 
   return (

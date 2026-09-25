@@ -609,6 +609,8 @@ export const it: Copy = {
     duringSession: 'Durante una sessione',
     autoStartRest: 'Avvia il recupero automaticamente',
     haptics: 'Vibrazione',
+    restCountdown: 'Conto alla rovescia del recupero',
+    restCountdownHint: 'Un tocco in ciascuno degli ultimi 3 secondi del recupero, poi una vibrazione alla fine.',
     weeklyGoal: 'Obiettivo settimanale',
     sessionsPerWeek: 'Sessioni a settimana',
   },
@@ -720,7 +722,7 @@ export const it: Copy = {
     clear: 'Cancella {label}',
   },
   settingsExtra: {
-    hapticsHint: 'Vibra a una serie completata, a un recupero finito e a un nuovo record.',
+    hapticsHint: 'Vibra a una serie completata, a un nuovo record, a un allenamento finito e a un obiettivo raggiunto.',
   },
   routineItemA11y: {
     moveUp: 'Sposta {name} in alto',
