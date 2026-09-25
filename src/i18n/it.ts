@@ -40,13 +40,8 @@ export const it: Copy = {
 
   // --- group-a ---
   tabsHome: {
-    today: 'Oggi',
     minutesUnit: 'min',
-    streak: 'Serie',
-    weeklyGoal: 'Obiettivo settimanale',
-    goalOf: 'su {goal}',
     nowBar: 'Ora',
-    minutesShort: '{value} min',
   },
   tabsProfile: {
     height: '{height} cm',
@@ -58,24 +53,19 @@ export const it: Copy = {
   // --- end group-a ---
 
   home: {
-    eyebrowMorning: 'Buongiorno',
-    eyebrowAfternoon: 'Buon pomeriggio',
-    eyebrowEvening: 'Buonasera',
     thisWeek: 'Questa settimana',
-    sessions: 'Sessioni',
-    volume: 'Volume',
-    calories: 'Calorie',
     trainingLoad: 'Carico di lavoro',
-    lastSixWeeks: 'Ultime 6 settimane',
+    minutesPerWeek: 'Minuti a settimana · ultime {count} settimane',
+    weeklyAverage: 'Media settimanale',
+    loadA11y: 'Minuti di allenamento a settimana: {weeks}',
+    loadA11yWeek: '{week}, {value} minuti',
+    startWorkout: 'Inizia un allenamento',
+    historyError: 'Impossibile caricare i tuoi allenamenti',
     emptyTitle: 'Nessun allenamento',
     emptyMessage:
-      'Scegli una scheda e vai ad allenarti. Kinetiq tiene il conto dalla prima serie che completi.',
+      'Inizia un allenamento dalla scheda Allenamento. Ogni sessione che completi arriva qui, dalla più recente.',
   },
 
-  activities: {
-    session_one: '{count} sessione',
-    session_other: '{count} sessioni',
-  },
 
   workout: {
     title: 'Allenamento',
@@ -135,13 +125,13 @@ export const it: Copy = {
   },
   // --- end group-b ---
   activity: {
-    fallbackTitle: 'Attività',
-    delete: 'Elimina questa attività',
-    loadError: 'Impossibile aprire questa attività',
+    fallbackTitle: 'Allenamento',
+    delete: 'Elimina questo allenamento',
+    loadError: 'Impossibile aprire questo allenamento',
     notesTitle: 'Note della sessione',
     notesLabel: 'Note',
     notesPlaceholder: 'Come è andata? Cosa cambieresti la prossima volta?',
-    notesHint: "Salvate su questo dispositivo insieme all'attività.",
+    notesHint: "Salvate su questo dispositivo insieme all'allenamento.",
     notesSaveFailed: 'Non è stato possibile salvare la nota.',
     deleteTitle: 'Eliminare questa sessione?',
     deleteMessage:
@@ -324,7 +314,7 @@ export const it: Copy = {
     needsConnection:
       'Per cercare esercizi nuovi serve una connessione. Per usare quelli salvati no.',
     onThisDevice: 'Su questo dispositivo',
-    activities: 'Attività',
+    activities: 'Allenamenti',
     counting: 'conteggio…',
     nothingStored: 'Ancora nulla di salvato.',
     routines: 'Schede',
@@ -346,11 +336,11 @@ export const it: Copy = {
       "{activities} e {routines} verranno eliminate da questo dispositivo, insieme a unità, aspetto, obiettivo e promemoria. Ti resterà un'app vuota e i dati di esempio non verranno ripristinati.",
     eraseConfirm: 'Cancella tutto',
     keepMyData: 'Tieni i miei dati',
-    activityCount_one: '{count} attività',
-    activityCount_other: '{count} attività',
+    activityCount_one: '{count} allenamento',
+    activityCount_other: '{count} allenamenti',
     routineCount_one: '{count} scheda',
     routineCount_other: '{count} schede',
-    kindLift: 'Sessioni di pesi',
+    kindLift: 'Allenamenti',
   },
   // --- group-c ---
   workoutFlow: {
@@ -401,7 +391,7 @@ export const it: Copy = {
     addAnExercise: 'Aggiungi un esercizio',
     notesTitle: 'Note della sessione',
     notesEyebrow: "Salvate con l'allenamento",
-    notesEmpty: "Com'è andata? Verrà aggiunto all'attività quando completi.",
+    notesEmpty: "Com'è andata? Verrà aggiunto all'allenamento quando completi.",
     discard: 'Scarta',
     finish: 'Completa',
     discardTitle: 'Scartare questo allenamento?',
@@ -413,12 +403,12 @@ export const it: Copy = {
     finishTitle: 'Completare questo allenamento?',
     finishPartial:
       "{left} di {planned} {word} non spuntate. Il lavoro non spuntato non viene registrato: l'allenamento salva ciò che hai completato.",
-    finishAll: "Tutte le {planned} serie sono fatte. Diventa un'attività nella tua cronologia.",
+    finishAll: "Tutte le {planned} serie sono fatte. Diventa un allenamento nella tua cronologia.",
     finishConfirm: 'Completa e salva',
     thisExercise: 'Questo esercizio',
     notesLabel: 'Note',
     notesPlaceholder: 'Velocità del bilanciere, sonno, quella spalla fastidiosa.',
-    notesHint: "Salvate su questo dispositivo, con l'attività.",
+    notesHint: "Salvate su questo dispositivo, con l'allenamento.",
     recordOne: 'Record personale',
     recordMany: '{count} record personali',
     seeInHistory: 'Vedila nella cronologia',
@@ -657,20 +647,6 @@ export const it: Copy = {
   exerciseList: {
     searching: 'Ricerca…',
   },
-  homeTab: {
-    recent: 'Recenti',
-    today: 'Oggi',
-    hi: 'Ciao {name}',
-    greetLate: 'Sessione notturna',
-    headlineFirst: 'Inizia la tua prima sessione',
-    headlineReady: 'Quando vuoi',
-    headlineDayOne: 'Giorno uno di qualcosa',
-    headlineStreak: '{count} giorni di fila',
-    deltaAgainstLastWeek: '{delta}% rispetto alla settimana scorsa',
-    latestSessions: 'Ultime sessioni',
-    settings: 'Impostazioni',
-    browseRoutines: 'Sfoglia le schede',
-  },
 
   itemEditor: {
     sets: 'Serie',
@@ -786,7 +762,7 @@ export const it: Copy = {
     migrationFailed: 'Migrazione fallita alla v{version}',
     migrated: 'da v{from} a v{to}',
     firstRun: 'Primo avvio',
-    seeded: '{activities} attività, {routines} schede create',
+    seeded: '{activities} allenamenti, {routines} schede create',
     existing: 'Database esistente',
     sessionRestore: 'Ripristino sessione',
     restored: 'Ripristinato un allenamento in pausa',
@@ -801,7 +777,7 @@ export const it: Copy = {
     genericMessage: 'Questo non ha risposto. Riprovare di solito funziona.',
     nothingLogged: 'Ancora nulla di registrato',
     noExercisesYet: 'Ancora nessun esercizio',
-    activityGone: 'Questa attività non è più salvata.',
+    activityGone: 'Questo allenamento non è più salvato.',
     autoStartOn: 'Parte il conto alla rovescia nel momento in cui completi una serie.',
     autoStartOff: 'Il recupero lo avvii tu, così una telefonata tra le serie non ti costa nulla.',
     pickerNoMatch: 'Nessun risultato',
@@ -831,10 +807,6 @@ export const it: Copy = {
     search: 'Cerca',
     cancel: 'Annulla',
   },
-  homeHero: {
-    streakUnit_one: 'giorno',
-    streakUnit_other: 'giorni',
-  },
   textInput: {
     clear: 'Cancella {label}',
   },
@@ -849,7 +821,6 @@ export const it: Copy = {
   // --- end foundation ---
   // --- followups ---
   followups: {
-    clockA11y: 'Ore {time}',
     ringA11y: 'Completato al {percent} per cento',
     a11yLift: '{title}. {sets}, volume totale {volume}, {duration}.',
     a11yPlain: '{title}. {duration}.',

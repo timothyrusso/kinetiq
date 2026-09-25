@@ -38,13 +38,8 @@ export const en = {
 
   // --- group-a ---
   tabsHome: {
-    today: 'Today',
     minutesUnit: 'min',
-    streak: 'Streak',
-    weeklyGoal: 'Weekly goal',
-    goalOf: 'of {goal}',
     nowBar: 'Now',
-    minutesShort: '{value}m',
   },
   tabsProfile: {
     height: '{height} cm',
@@ -56,24 +51,19 @@ export const en = {
   // --- end group-a ---
 
   home: {
-    eyebrowMorning: 'Good morning',
-    eyebrowAfternoon: 'Good afternoon',
-    eyebrowEvening: 'Good evening',
     thisWeek: 'This week',
-    sessions: 'Sessions',
-    volume: 'Volume',
-    calories: 'Calories',
     trainingLoad: 'Training load',
-    lastSixWeeks: 'Last 6 weeks',
-    emptyTitle: 'No training yet',
+    minutesPerWeek: 'Minutes per week · last {count} weeks',
+    weeklyAverage: 'Weekly average',
+    loadA11y: 'Minutes trained per week: {weeks}',
+    loadA11yWeek: '{week}, {value} minutes',
+    startWorkout: 'Start a workout',
+    historyError: 'Your workouts could not be loaded',
+    emptyTitle: 'No workouts yet',
     emptyMessage:
-      'Pick a routine and go lift something. Kinetiq keeps score from the first set you finish.',
+      'Start a workout from the Workout tab. Every session you finish lands here, newest first.',
   },
 
-  activities: {
-    session_one: '{count} session',
-    session_other: '{count} sessions',
-  },
 
   workout: {
     title: 'Workout',
@@ -133,13 +123,13 @@ export const en = {
   },
   // --- end group-b ---
   activity: {
-    fallbackTitle: 'Activity',
-    delete: 'Delete this activity',
-    loadError: 'Could not open this activity',
+    fallbackTitle: 'Workout',
+    delete: 'Delete this workout',
+    loadError: 'Could not open this workout',
     notesTitle: 'Session notes',
     notesLabel: 'Notes',
     notesPlaceholder: 'How did it feel? What would you change next time?',
-    notesHint: 'Stored on this device alongside the activity.',
+    notesHint: 'Stored on this device alongside the workout.',
     notesSaveFailed: 'The note could not be saved.',
     deleteTitle: 'Delete this session?',
     deleteMessage:
@@ -322,7 +312,7 @@ export const en = {
     needsConnection:
       'Browsing for new exercises needs a connection. Using the ones you saved does not.',
     onThisDevice: 'On this device',
-    activities: 'Activities',
+    activities: 'Workouts',
     counting: 'counting…',
     nothingStored: 'Nothing stored yet.',
     routines: 'Routines',
@@ -344,11 +334,11 @@ export const en = {
       '{activities} and {routines} will be deleted from this device, along with your units, appearance, goal and reminder settings. You will be left with an empty app, and the demo data does not come back.',
     eraseConfirm: 'Erase everything',
     keepMyData: 'Keep my data',
-    activityCount_one: '{count} activity',
-    activityCount_other: '{count} activities',
+    activityCount_one: '{count} workout',
+    activityCount_other: '{count} workouts',
     routineCount_one: '{count} routine',
     routineCount_other: '{count} routines',
-    kindLift: 'Strength sessions',
+    kindLift: 'Workouts',
   },
   // --- group-c ---
   workoutFlow: {
@@ -398,7 +388,7 @@ export const en = {
     addAnExercise: 'Add an exercise',
     notesTitle: 'Session notes',
     notesEyebrow: 'Saved with the workout',
-    notesEmpty: 'How did it go? Added to the activity when you finish.',
+    notesEmpty: 'How did it go? Added to the workout when you finish.',
     discard: 'Discard',
     finish: 'Finish',
     discardTitle: 'Discard this workout?',
@@ -410,12 +400,12 @@ export const en = {
     finishTitle: 'Finish this workout?',
     finishPartial:
       '{left} of {planned} {word} left un-ticked. Un-ticked work is not recorded: the workout saves what you completed.',
-    finishAll: 'All {planned} sets are done. This becomes an activity in your history.',
+    finishAll: 'All {planned} sets are done. This becomes a workout in your history.',
     finishConfirm: 'Finish and save',
     thisExercise: 'This exercise',
     notesLabel: 'Notes',
     notesPlaceholder: 'Bar speed, sleep, that nagging shoulder.',
-    notesHint: 'Stored on this device, with the activity.',
+    notesHint: 'Stored on this device, with the workout.',
     recordOne: 'Personal record',
     recordMany: '{count} personal records',
     seeInHistory: 'See it in history',
@@ -653,20 +643,6 @@ export const en = {
   exerciseList: {
     searching: 'Searching…',
   },
-  homeTab: {
-    recent: 'Recent',
-    today: 'Today',
-    hi: 'Hi {name}',
-    greetLate: 'Late session',
-    headlineFirst: 'Start your first session',
-    headlineReady: 'Ready when you are',
-    headlineDayOne: 'Day one of something',
-    headlineStreak: '{count} days in a row',
-    deltaAgainstLastWeek: '{delta}% against last week',
-    latestSessions: 'Latest sessions',
-    settings: 'Settings',
-    browseRoutines: 'Browse routines',
-  },
 
   itemEditor: {
     sets: 'Sets',
@@ -781,7 +757,7 @@ export const en = {
     migrationFailed: 'Migration failed at v{version}',
     migrated: 'v{from} to v{to}',
     firstRun: 'First run',
-    seeded: '{activities} activities, {routines} routines seeded',
+    seeded: '{activities} workouts, {routines} routines seeded',
     existing: 'Existing database',
     sessionRestore: 'Session restore',
     restored: 'Restored a paused workout',
@@ -796,7 +772,7 @@ export const en = {
     genericMessage: 'This one did not respond. Trying again usually works.',
     nothingLogged: 'Nothing logged yet',
     noExercisesYet: 'No exercises yet',
-    activityGone: 'That activity is no longer stored.',
+    activityGone: 'That workout is no longer stored.',
     autoStartOn: 'Counting down the moment you complete a set.',
     autoStartOff: 'You tap to begin resting, so a phone call between sets costs you nothing.',
     pickerNoMatch: 'Nothing matches that',
@@ -826,10 +802,6 @@ export const en = {
     search: 'Search',
     cancel: 'Cancel',
   },
-  homeHero: {
-    streakUnit_one: 'day',
-    streakUnit_other: 'days',
-  },
   textInput: {
     clear: 'Clear {label}',
   },
@@ -844,7 +816,6 @@ export const en = {
   // --- end foundation ---
   // --- followups ---
   followups: {
-    clockA11y: 'Time {time}',
     ringA11y: '{percent} percent complete',
     a11yLift: '{title}. {sets}, {volume} total volume, {duration}.',
     a11yPlain: '{title}. {duration}.',

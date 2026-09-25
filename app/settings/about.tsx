@@ -21,13 +21,12 @@
  * where that design becomes visible to them. The second paragraph answers the question the
  * first one raises, "what happens to my stuff when it's down?".
  *
- * ## The counts read the list cache, not SQL
+ * ## The count reads the history cache, not SQL
  *
- * `useActivityList` with the default params is the *same* query the Activities tab uses (the
- * default params are frozen, so the key matches), and its raw rows are cached unsorted and
- * ungrouped. Counting them here costs one pass over data the app is already holding. A second
- * query for "how many activities" would be a second source of truth for one number, and the
- * only thing that buys is a way for two screens to disagree.
+ * `useActivityHistory` is the same query Home draws, so counting it here costs one pass over
+ * data the app is already holding. A second query for "how many workouts" would be a second
+ * source of truth for one number, and the only thing that buys is a way for two screens to
+ * disagree.
  *
  * ## Reset
  *
@@ -48,7 +47,7 @@ import { getExerciseProvider } from '@/api';
 import { clearAllUserData, readSchemaVersion, SEED_DONE_KEY, writeState } from '@/persistence';
 import { DEFAULT_SETTINGS, updateSettings, useSettings } from '@/settings';
 import { routes } from '@/navigation/nav';
-import { useActivityList } from '@/queries/useActivities';
+import { useActivityHistory } from '@/queries/useActivities';
 import { useRoutines } from '@/queries/useRoutines';
 import { haptics } from '@/services/haptics';
 import { useT } from '@/i18n/useT';
@@ -65,16 +64,14 @@ export default function SettingsAboutScreen() {
 
   const unitSystem = useSettings((s) => s.unitSystem);
   const themeMode = useSettings((s) => s.themeMode);
-  // Default params = the Activities tab's own query key, so this renders from a cache the app
-  // has already filled. See the module header.
-  const activityList = useActivityList();
+  // Home's own query, so this renders from a cache the app has already filled. See the header.
+  const history = useActivityHistory();
   const { routines, isLoading: routinesLoading } = useRoutines();
 
   const [confirming, setConfirming] = useState(false);
   const [erasing, setErasing] = useState(false);
 
-  const activities = activityList.flat;
-  const activityCount = activities.length;
+  const activityCount = history.activities.length;
 
   const erase = useCallback(async () => {
     setErasing(true);
@@ -141,7 +138,7 @@ export default function SettingsAboutScreen() {
         key: 'device',
         title: t('about.onThisDevice'),
         rows: [
-          ...(activityList.isLoading
+          ...(history.isLoading
             ? [{ kind: 'info' as const, key: 'counting', title: t('about.activities'), value: t('about.counting') }]
             : activityCount === 0
               ? [{ kind: 'info' as const, key: 'none', title: t('about.nothingStored') }]
@@ -207,7 +204,7 @@ export default function SettingsAboutScreen() {
       ],
     });
     return list;
-  }, [activityCount, activityList.isLoading, appId, provider, routines.length, routinesLoading, schema, t, themeMode, unitSystem, version]);
+  }, [activityCount, history.isLoading, appId, provider, routines.length, routinesLoading, schema, t, themeMode, unitSystem, version]);
 
   return (
     <>

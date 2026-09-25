@@ -42,7 +42,7 @@ export function useHeaderOptions(): NativeStackNavigationOptions {
   );
 }
 
-/** The large-title variant for hubs and lists: the five tabs and the settings-style screens. */
+/** The large-title variant for hubs and lists: the three tabs and the settings-style screens. */
 export function useLargeTitleOptions(): NativeStackNavigationOptions {
   const base = useHeaderOptions();
   return useMemo(() => ({ ...base, headerLargeTitle: true }), [base]);
