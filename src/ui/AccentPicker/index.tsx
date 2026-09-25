@@ -1,14 +1,13 @@
 /**
- * The accent-colour preference on Android: a row of swatches, one per choice.
+ * The accent-colour preference: a row of swatches, one per choice.
  *
  * Swatches rather than a list of names, because the choice is a colour and seeing it is the
- * decision. Each is a radio button to TalkBack, named in words. The wallpaper option appears
- * only where Material You exists (Android 12+); below that it would be the static baseline
- * palette under a misleading name.
+ * decision (the pattern of the iOS Reminders list colours and of Material's colour pickers
+ * alike). Each is a radio button to VoiceOver and TalkBack, named in words. Which choices exist
+ * is the platform's answer: `useAccentSwatches` leaves out the ones it cannot offer.
  */
 import { memo, useCallback } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { isDynamicColorAvailable } from '@expo/ui/jetpack-compose';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { useT } from '@/i18n/useT';
 import type { TKey } from '@/i18n';
@@ -29,7 +28,6 @@ const NAMES: Record<AccentChoice, TKey> = {
   ruby: 'accent.ruby',
 };
 
-const CHOICES = ACCENT_CHOICES.filter((choice) => choice !== 'system' || isDynamicColorAvailable);
 const SWATCH = 36;
 
 export function AccentPreference() {
@@ -39,23 +37,26 @@ export function AccentPreference() {
   const update = useSettingsUpdate();
   const swatches = useAccentSwatches(theme.mode);
   const pick = useCallback((next: AccentChoice) => update({ accentColor: next }), [update]);
-  if (swatches === null) return null;
 
   return (
     <View style={styles.block}>
       <Txt variant="strong">{t('accent.title')}</Txt>
       <View style={styles.row} accessibilityRole="radiogroup">
-        {CHOICES.map((option) => (
-          <Swatch
-            key={option}
-            option={option}
-            color={swatches[option]}
-            label={t(NAMES[option])}
-            selected={option === choice}
-            theme={theme}
-            onPick={pick}
-          />
-        ))}
+        {ACCENT_CHOICES.map((option) => {
+          const color = swatches[option];
+          if (color === undefined) return null;
+          return (
+            <Swatch
+              key={option}
+              option={option}
+              color={color}
+              label={t(NAMES[option])}
+              selected={option === choice}
+              theme={theme}
+              onPick={pick}
+            />
+          );
+        })}
       </View>
     </View>
   );
@@ -83,15 +84,14 @@ const Swatch = memo(function Swatch({
       accessibilityRole="radio"
       accessibilityLabel={label}
       accessibilityState={{ selected }}
-      android_ripple={{ color: theme.colors.surfacePressed, borderless: true, radius: touchTarget / 2 }}
-      style={styles.hit}
+      android_ripple={{
+        color: theme.colors.surfacePressed,
+        borderless: true,
+        radius: touchTarget / 2,
+      }}
+      style={({ pressed }) => [styles.hit, pressed && styles.pressed]}
     >
-      <View
-        style={[
-          styles.ring,
-          { borderColor: selected ? theme.colors.text : 'transparent' },
-        ]}
-      >
+      <View style={[styles.ring, { borderColor: selected ? theme.colors.text : 'transparent' }]}>
         <View style={[styles.swatch, { backgroundColor: color }]}>
           {selected ? <Icon name="check" size={18} color={theme.colors.background} /> : null}
         </View>
@@ -103,7 +103,14 @@ const Swatch = memo(function Swatch({
 const styles = StyleSheet.create({
   block: { gap: spacing.sm },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  hit: { width: touchTarget, height: touchTarget, alignItems: 'center', justifyContent: 'center' },
+  // Android answers a press with the ripple; iOS dims, as its own controls do.
+  pressed: { opacity: Platform.select({ ios: 0.5, default: 1 }) },
+  hit: {
+    width: touchTarget,
+    height: touchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   ring: { borderWidth: 2, borderRadius: SWATCH, padding: 2 },
   swatch: {
     width: SWATCH,

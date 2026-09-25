@@ -355,7 +355,7 @@ export function useAppTheme(): Theme {
   const [, resolved] = useThemeMode(systemDark);
   const { width, height } = useWindowDimensions();
   const base = useThemeFor(resolved, Math.max(width, height));
-  // Android's accent preference, or `null` for the brand accent (always null on iOS).
+  // The user's accent preference, or `null` for the brand accent.
   const accent = useAccentColors(resolved);
   return useMemo(() => {
     if (accent === null) return base;

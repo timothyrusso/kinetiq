@@ -10,7 +10,7 @@
  * brand choice simply ignores its answer.
  */
 import { useMemo } from 'react';
-import { useMaterialColors } from '@expo/ui/jetpack-compose';
+import { isDynamicColorAvailable, useMaterialColors } from '@expo/ui/jetpack-compose';
 
 import { useSettings } from '@/settings';
 import type { AccentChoice } from '@/settings';
@@ -57,8 +57,12 @@ export function useAccentColors(mode: ThemeMode): AccentColors | null {
   }, [choice, container, mode, onPrimary, primary]);
 }
 
-/** Swatches for the picker, in the scheme the app is drawn in. */
-export function useAccentSwatches(mode: ThemeMode): Record<AccentChoice, string> {
+/**
+ * Swatches for the picker, in the scheme the app is drawn in. The wallpaper choice is offered
+ * only where Material You exists (Android 12+); below that it would be the static baseline
+ * palette under a misleading name.
+ */
+export function useAccentSwatches(mode: ThemeMode): Partial<Record<AccentChoice, string>> {
   const wallpaper = useMaterialColors({ colorScheme: mode });
   const ocean = useMaterialColors({ colorScheme: mode, seedColor: SEEDS.ocean });
   const sunset = useMaterialColors({ colorScheme: mode, seedColor: SEEDS.sunset });
@@ -67,7 +71,7 @@ export function useAccentSwatches(mode: ThemeMode): Record<AccentChoice, string>
   return {
     // The brand accent is the theme's own: lime on dark, the deeper volt on light.
     kinetiq: mode === 'dark' ? brand.volt : '#5E8C0B',
-    system: rgb(wallpaper.primary),
+    ...(isDynamicColorAvailable ? { system: rgb(wallpaper.primary) } : {}),
     ocean: rgb(ocean.primary),
     sunset: rgb(sunset.primary),
     berry: rgb(berry.primary),
