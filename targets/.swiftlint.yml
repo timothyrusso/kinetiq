@@ -27,7 +27,7 @@ custom_rules:
     severity: error
   unsafe_subscript:
     name: "Unchecked array index"
-    included: '.*/watch/Core/.*\.swift'
+    included: '.*/watch/(Core|Storage)/.*\.swift'
     # A positional read by literal or by an index-like name. Use `array[safe: i]`.
     regex: '[\w)\]]\[\s*(\d+|[a-z]*[iI]ndex|i|j|k|idx|offset|position)\s*\]'
     match_kinds: [identifier, number]
