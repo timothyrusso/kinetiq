@@ -71,22 +71,60 @@ final class WatchSessionManager: NSObject, WCSessionDelegate {
     }
   }
 
-  /// Sends the stored snapshot, replacing any older one still in flight. On `queue`.
+  /// Sends the stored snapshot. On `queue`.
+  ///
+  /// The application context is the channel: the system keeps only the latest one and hands it
+  /// to the watch app whenever it runs, phone reachable or not. The document travels zlib
+  /// compressed, which keeps real libraries far under the context's size limit; one that still
+  /// does not fit falls back to `transferFile`, replacing any older file still in flight.
   private func transferLatest() {
-    guard let latest = store.readLatestSnapshot(), canTransfer() else { return }
+    guard var latest = store.readLatestSnapshot(), canTransfer() else { return }
+    guard let envelope = Self.envelope(for: latest) else { return }
     let session = WCSession.default
+    do {
+      try session.updateApplicationContext(envelope)
+      for transfer in session.outstandingFileTransfers where Self.isSnapshot(transfer.file.metadata) {
+        transfer.cancel()
+      }
+      latest.delivered = true
+      store.writeLatestSnapshot(latest)
+      return
+    } catch let error as WCError where error.code == .payloadTooLarge {
+      // Falls through to the file below.
+    } catch {
+      // Not activated or not paired right now; activation retries.
+      return
+    }
     for transfer in session.outstandingFileTransfers where Self.isSnapshot(transfer.file.metadata) {
       if transfer.file.metadata?["id"] as? String == latest.id { return }
       transfer.cancel()
     }
-    guard let url = store.writeTransferFile(id: latest.id, payload: latest.payload) else { return }
-    session.transferFile(url, metadata: [
-      "kind": "snapshot",
-      "format": Self.routinesFormat,
-      "version": Self.formatVersion,
-      "id": latest.id,
-    ])
+    guard
+      let payload = envelope["payload"] as? Data,
+      let url = store.writeTransferFile(id: latest.id, data: payload)
+    else { return }
+    var metadata = envelope
+    metadata.removeValue(forKey: "payload")
+    metadata["kind"] = "snapshot"
+    session.transferFile(url, metadata: metadata)
   }
+
+  /// `{ format, version, id, encoding, payload }`, the document compressed in `payload`.
+  private static func envelope(for snapshot: WatchBridgeStore.LatestSnapshot) -> [String: Any]? {
+    guard let compressed = try? (Data(snapshot.payload.utf8) as NSData).compressed(using: .zlib) else {
+      return nil
+    }
+    return [
+      "format": routinesFormat,
+      "version": formatVersion,
+      "id": snapshot.id,
+      "encoding": "zlib",
+      "payload": compressed as Data,
+    ]
+  }
+
+  /// Small enough to ride back in a message reply, so the watch's Sync applies it at once.
+  private static let replyPayloadLimit = 48_000
 
   private func canTransfer() -> Bool {
     let session = WCSession.default
@@ -104,9 +142,19 @@ final class WatchSessionManager: NSObject, WCSessionDelegate {
     metadata?["kind"] as? String == "snapshot"
   }
 
+  /// Answers a watch request with the id of the snapshot on its way, and the snapshot itself
+  /// when it is small enough for a message.
   private func reply(to requestId: String?, id: String) {
     guard let requestId, let handler = pendingReplies.removeValue(forKey: requestId) else { return }
-    handler(["id": id])
+    guard
+      let latest = store.readLatestSnapshot(), latest.id == id,
+      let envelope = Self.envelope(for: latest),
+      let payload = envelope["payload"] as? Data, payload.count <= Self.replyPayloadLimit
+    else {
+      handler(["id": id])
+      return
+    }
+    handler(envelope)
   }
 
   // MARK: Inbox, watch to phone

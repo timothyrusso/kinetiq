@@ -6,7 +6,8 @@ import Foundation
 /// until JS has committed it (Stability rule 7 in issue #27): one file per payload, written
 /// atomically, so a crash or a launch where JS never starts loses nothing. `rejected/` keeps a
 /// payload JS could not read, out of the retry loop but never deleted. `snapshot/` holds the
-/// latest routine snapshot and the copies WatchConnectivity is transferring.
+/// latest routine snapshot and, for one too large for the application context, the copy
+/// WatchConnectivity is transferring as a file.
 final class WatchBridgeStore {
   struct InboxEntry {
     let id: String
@@ -111,11 +112,11 @@ final class WatchBridgeStore {
     try? data.write(to: url, options: .atomic)
   }
 
-  /// A copy of the snapshot for one `transferFile`, named by its id. WatchConnectivity reads it
+  /// The compressed snapshot for one `transferFile`, named by its id. WatchConnectivity reads it
   /// while the transfer is outstanding, so it is deleted only when the transfer finishes.
-  func writeTransferFile(id: String, payload: String) -> URL? {
+  func writeTransferFile(id: String, data: Data) -> URL? {
     guard let url = file(in: "snapshot", named: "transfer-\(id)") else { return nil }
-    return (try? Data(payload.utf8).write(to: url, options: .atomic)) != nil ? url : nil
+    return (try? data.write(to: url, options: .atomic)) != nil ? url : nil
   }
 
   func removeFile(at url: URL) {
