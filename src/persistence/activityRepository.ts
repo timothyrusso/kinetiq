@@ -12,42 +12,17 @@ const COLUMNS = `
 export type ActivityListQuery = {
   /** Newest-first (default) or oldest-first. */
   order?: 'desc' | 'asc';
-  /** Case-insensitive substring match on title. */
-  search?: string;
   from?: number;
   to?: number;
   limit?: number;
   offset?: number;
 };
 
-/** Strips characters that would change LIKE semantics when we have no escapes. */
-function likeTerm(search: string): string {
-  return `%${search.replace(/[\\%_]/g, ' ')}%`;
-}
-
 export const activityRepository = {
   async list(query: ActivityListQuery = {}): Promise<Activity[]> {
     const where: string[] = [];
     const args: (string | number)[] = [];
 
-    if (query.search?.trim()) {
-      // The search field in front of the user says "Session name, notes, exercise", so all
-      // three have to match here: a screen that promises exercise filtering and quietly
-      // matches only titles is worse than one that never claimed it.
-      //
-      // Strength sets are one JSON blob per session, so exercise names live inside
-      // `entries_json` and the match is deliberately raw text rather than `json_each`. Two
-      // reasons, in order of weight: this library's SQLite is built from a vendored
-      // amalgamation whose flags I cannot verify from here, and a missing JSON function
-      // would throw and take the entire list down, whereas the cost of the loose match is
-      // that a term can also hit a muscle group or: for a digit-heavy term: a rep count.
-      // A slightly wide result set is a smaller failure than a broken screen, and history is
-      // local, so if precision ever matters the fix is a name index at migration time, not a
-      // function that has to exist at runtime.
-      const term = likeTerm(query.search.trim());
-      where.push('(title LIKE ? OR notes LIKE ? OR entries_json LIKE ?)');
-      args.push(term, term, term);
-    }
     if (typeof query.from === 'number') {
       where.push('started_at >= ?');
       args.push(query.from);

@@ -14,31 +14,11 @@
  */
 import type { ExerciseFilter } from '@/domain/types';
 
-export type ActivitySort = 'recent' | 'duration' | 'volume';
-
-export type ActivityListParams = {
-  search: string;
-  sort: ActivitySort;
-  /** Grouped by calendar day: 'day' (default) | 'week' | 'none'. */
-  groupBy: 'day' | 'week' | 'none';
-};
-
 export const queryKeys = {
   activities: {
     all: ['activities'] as const,
-    /**
-     * Only what the fetch reads. Sort and grouping are applied in `select`, so keying on
-     * them would make every sort change a cold miss: the list would empty to a skeleton for
-     * a frame and the scroll position would be lost with it.
-     */
-    list: (params: Pick<ActivityListParams, 'search'>) =>
-      ['activities', 'list', { search: params.search.trim().toLowerCase() }] as const,
-    /**
-     * The unfiltered first page, which is exactly what Home and Progress need.
-     * Separate from `list` so opening Home never invalidates or re-runs a
-     * filtered Activities query, and vice versa.
-     */
-    recent: (limit: number) => ['activities', 'recent', { limit }] as const,
+    /** Every session, newest first: the only list, so its key has no parameters. */
+    list: () => ['activities', 'list'] as const,
     detail: (id: string) => ['activities', 'detail', id] as const,
   },
 

@@ -382,7 +382,7 @@ let lastTickAt = 0;
  * One-second tick that owns elapsed time.
  *
  * Doing the arithmetic here rather than in a component's interval means a screen
- * unmount: swiping to the Activities tab mid-set, which happens constantly: cannot
+ * unmount: switching to the Home tab mid-set, which happens constantly: cannot
  * lose seconds. On `resume`, `awayNoticeSeconds` reports how long the user was gone
  * so a two-minute rest can be shown as having elapsed rather than silently frozen.
  */

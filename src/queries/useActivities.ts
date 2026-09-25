@@ -1,177 +1,74 @@
 /**
- * Activity history queries.
+ * Workout history queries.
  *
- * The whole history lives in SQLite, so "server state" here means local disk
- * rather than a network. Two consequences:
+ * The whole history lives in SQLite, so "server state" here means local disk rather than a
+ * network. Two consequences:
  *
- * - Reads are cheap and synchronous-feeling, so the list query fetches the
- *   *filtered* set in one statement and does sorting and day-grouping in the
- *   `select`. Splitting those into separate queries would multiply cache entries
- *   for data we already have in memory.
- * - Writing must invalidate, not patch. Finishing a workout inserts an activity,
- *   recomputes PRs and bumps a routine's completion count in one transaction, and
- *   several cache keys become stale at once. `invalidateAfterWorkout` is the single
- *   place that says which.
+ * - Reads are cheap, so there is one list query: every session, newest first. Home draws it
+ *   whole, grouped by week, and the About screen counts it. Grouping happens in `select`, so
+ *   the cache holds the raw rows and the grouped view is rebuilt only when they change.
+ * - Writing must invalidate, not patch. Finishing a workout inserts an activity, recomputes
+ *   PRs and bumps a routine's completion count in one transaction, and several cache keys
+ *   become stale at once. `invalidateAfterWorkout` is the single place that says which.
  */
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useMemo } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { activityRepository } from '@/persistence';
 import type { Activity } from '@/domain/types';
-import { queryKeys, type ActivityListParams, type ActivitySort } from '@/query/keys';
+import { queryKeys } from '@/query/keys';
 import { invalidateActivityHistory } from '@/query/invalidation';
+import { startOfWeek } from '@/utils/format';
 import { tr } from '@/i18n/tr';
 
-export type ActivityGroup = {
-  /** Local calendar day, ms at midnight. */
-  key: number;
+export type HistoryWeek = {
+  /** Local Monday at midnight. */
+  weekStart: number;
   activities: Activity[];
 };
 
-export type ActivityListView = {
-  groups: ActivityGroup[];
-  /** Same rows, ungrouped: what a virtualised flat list wants. */
-  flat: Activity[];
-  totalDurationSeconds: number;
-  totalVolumeKg: number;
+export type ActivityHistory = {
+  /** Every session, newest first. */
+  activities: Activity[];
+  /** The same rows in Monday-start weeks, newest week first. */
+  weeks: HistoryWeek[];
 };
 
-function sortActivities(items: Activity[], sort: ActivitySort): Activity[] {
-  if (sort === 'recent') return items; // the repository already returns newest-first
-  const weight = (a: Activity): number => {
-    switch (sort) {
-      case 'duration':
-        return a.durationSeconds;
-      case 'volume':
-        return a.strength?.totalVolumeKg ?? 0;
-      default:
-        return a.startedAt;
-    }
-  };
-  return [...items].sort((a, b) => weight(b) - weight(a));
-}
-
-/** Local-day boundaries, so "Today" matches the user's clock, not UTC. */
-function dayKey(millis: number): number {
-  const d = new Date(millis);
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
-}
-
-function buildGroups(items: readonly Activity[], groupBy: ActivityListParams['groupBy']): ActivityGroup[] {
-  if (groupBy === 'none') {
-    return [
-      {
-        key: 0,
-        activities: [...items],
-      },
-    ];
-  }
-  const bucketSize = groupBy === 'week' ? 7 : 1;
-  const buckets = new Map<number, Activity[]>();
+/** Rows arrive newest first, so a new week starts wherever the Monday changes. */
+function groupByWeek(items: readonly Activity[]): ActivityHistory {
+  const weeks: HistoryWeek[] = [];
   for (const activity of items) {
-    const key = bucketStart(dayKey(activity.startedAt), bucketSize);
-    const bucket = buckets.get(key);
-    if (bucket) bucket.push(activity);
-    else buckets.set(key, [activity]);
+    const weekStart = startOfWeek(activity.startedAt).getTime();
+    const current = weeks.at(-1);
+    if (current && current.weekStart === weekStart) current.activities.push(activity);
+    else weeks.push({ weekStart, activities: [activity] });
   }
-  return [...buckets.entries()]
-    .sort((a, b) => b[0] - a[0])
-    .map(([key, activities]) => ({ key, activities }));
+  return { activities: [...items], weeks };
 }
 
-/** Rolls a day back to the Monday-start week boundary when grouping weekly. */
-function bucketStart(midnightMs: number, days: number): number {
-  if (days === 1) return midnightMs;
-  const d = new Date(midnightMs);
-  const weekday = (d.getDay() + 6) % 7; // Monday = 0
-  d.setDate(d.getDate() - weekday);
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
-}
-
-
-function summarise(items: readonly Activity[]): Omit<ActivityListView, 'groups' | 'flat'> {
-  let duration = 0;
-  let volume = 0;
-  for (const a of items) {
-    duration += a.durationSeconds;
-    volume += a.strength?.totalVolumeKg ?? 0;
-  }
-  return { totalDurationSeconds: duration, totalVolumeKg: volume };
-}
-
-function selectList(items: Activity[], params: ActivityListParams): ActivityListView {
-  const sorted = sortActivities(items, params.sort);
-  return {
-    groups: buildGroups(sorted, params.groupBy),
-    flat: sorted,
-    ...summarise(sorted),
-  };
-}
-
-/**
- * The filter panel and the list must agree on one param object, so the default is
- * frozen: a fresh object literal per render would change the query key every frame.
- */
-export const DEFAULT_ACTIVITY_PARAMS: ActivityListParams = Object.freeze({
-  search: '',
-  sort: 'recent',
-  groupBy: 'day',
-});
-
-export function useActivityList(params: ActivityListParams = DEFAULT_ACTIVITY_PARAMS) {
-  const normalized: ActivityListParams = useMemo(
-    () => ({
-      search: params.search,
-      sort: params.sort,
-      groupBy: params.groupBy,
-    }),
-    [params.search, params.sort, params.groupBy],
-  );
-
+export function useActivityHistory() {
   const query = useQuery({
-    queryKey: queryKeys.activities.list(normalized),
-    queryFn: () =>
-      activityRepository.list({
-        search: normalized.search || undefined,
-        order: 'desc',
-      }),
-    // `select` is where sorting and grouping happen, so the cached value stays the
-    // raw rows: one fetch serves every sort and grouping the user toggles. The
-    // selector's output is rebuilt only when the rows change, so its identity is
-    // stable across unrelated notifications.
-    select: useCallback((rows: Activity[]) => selectList(rows, normalized), [normalized]),
-    // A new kind or search is a new key. Holding the previous rows until it lands keeps the
-    // list from collapsing to a skeleton and back, which would throw away the scroll offset.
-    placeholderData: keepPreviousData,
+    queryKey: queryKeys.activities.list(),
+    queryFn: () => activityRepository.list({ order: 'desc' }),
+    select: groupByWeek,
   });
-
   return {
-    groups: query.data?.groups ?? [],
-    flat: query.data?.flat ?? [],
-    totals: {
-      durationSeconds: query.data?.totalDurationSeconds ?? 0,
-      volumeKg: query.data?.totalVolumeKg ?? 0,
-    },
-    isEmpty: query.status === 'success' && (query.data?.flat.length ?? 0) === 0,
-    isLoading: query.isLoading,
+    activities: query.data?.activities ?? EMPTY,
+    weeks: query.data?.weeks ?? NO_WEEKS,
+    isEmpty: query.status === 'success' && query.data.activities.length === 0,
+    isLoading: query.isPending,
+    isFetching: query.isFetching,
     error: query.error,
     refresh: query.refetch,
   };
 }
 
-/** Home and Progress need a small unfiltered slice; see the key comment on why it is separate. */
-export function useRecentActivities(limit = 6) {
-  return useQuery({
-    queryKey: queryKeys.activities.recent(limit),
-    queryFn: () => activityRepository.list({ order: 'desc', limit }),
-  });
-}
+/** Stable empties, so a screen memoising on these does not rebuild while loading. */
+const EMPTY: Activity[] = [];
+const NO_WEEKS: HistoryWeek[] = [];
 
 /**
  * Detail is fetched by id rather than read out of the list cache, so a detail screen opened
- * from a deep link does not depend on a list having loaded first. The id-only key also means opening the same activity from Home, from the list or from a deep link
- * is one entry.
+ * from a deep link does not depend on a list having loaded first. The id-only key also means opening the same session from Home or from a deep link is one
+ * entry.
  */
 export function useActivity(id: string | null) {
   return useQuery({

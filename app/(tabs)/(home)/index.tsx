@@ -1,424 +1,330 @@
 /**
- * Home: the daily answer to "did I train, and am I getting anywhere?"
+ * Home: the training load, then every workout, newest first.
  *
- * ## Order, which is the whole design
+ * ## Two blocks, in the order people ask
  *
- * Four questions, answered top to bottom in the order people ask them: *did I train*
- * (the hero's three tiles: today's minutes, the streak, the weekly goal), *how much this
- * week* (the metric card), *what did I do* (recent sessions, as cards), *is it working*
- * (the six-week load chart).
+ * *Am I training enough* is the load card: minutes per week for six weeks, this week and the
+ * weekly average above it. *What did I do* is the history under it, grouped by week. That is
+ * the whole screen: there is no second history list anywhere in the app, so this one is not a
+ * preview with a "See all", it is all.
  *
  * ## Why the FlashList owns the scroll
  *
  * There is no outer `ScrollView`. The native large title collapses by coupling to the
  * screen's first scroll view, and nesting a virtualised list in a scroll view defeats the
- * virtualisation. So everything: hero, summary cards, rows: is list content, and
- * `ListHeaderComponent` is where the part above the rows goes.
+ * virtualisation. So the load card is `ListHeaderComponent`, and the week headings are rows of
+ * their own item type, so a heading is never recycled into a card.
  *
  * ## Why the header content is memoised
  *
- * The list header is most of this screen: two SVG charts, a ring's worth of tiles, the clock.
- * As an inline element it was a new header on every render of this component, and FlashList
- * re-lays out whenever its header element changes. Memoised, a render that changed nothing
- * the header shows (a refetch settling, a units change elsewhere) leaves it alone, and the
- * clock ticking inside it re-renders two text nodes, not the header.
+ * FlashList re-lays out whenever its header element changes. Memoised, a render that changed
+ * nothing the card shows (a refetch settling, a delete dialog opening) leaves it alone.
  *
- * ## One read, two numbers
+ * ## Delete is a long press, confirmed
  *
- * The recent list is fetched at 60 rows and used twice: the top 7 render, and all 60
- * feed the current streak. Fetching a second, longer list purely to count consecutive
- * days would be a second pass over the same table for one integer, and capping the
- * streak query at 7 would silently report a 12-day streak as 7: wrong in exactly the
- * direction the user is proud of.
+ * The row's tap opens the session; a long press asks to delete it. The dialog closes only on
+ * success, so a delete that fails leaves the reason on screen instead of a row that looks as if
+ * the button did nothing.
  */
-import { memo, useCallback, useMemo, useRef } from 'react';
-import type { LayoutChangeEvent } from 'react-native';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 
 import { useTabContentBottom } from '@/ui/insets';
-
 import { SCROLL_INSETS, ScreenHeader } from '@/ui/Screen';
-import { ActivityCard, SectionHeader, StatTile, type Trend } from '@/ui/display';
-import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
-import { LiveClock } from '@/ui/LiveClock';
-import { Card, Divider, MetricGrid, Row, Stack } from '@/ui/layout';
-import { Txt } from '@/ui/Text';
-import { BarChart, type BarPoint } from '@/ui/charts/BarChart';
-import { useMeasuredWidth } from '@/ui/charts/useMeasuredWidth';
+import { ActivityCard, SectionHeader, StatTile } from '@/ui/display';
+import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
+import { Card, Row } from '@/ui/layout';
+import { WeeklyBars, type WeeklyBar } from '@/ui/charts/WeeklyBars';
 import { EmptyState, ErrorState, SkeletonCard, SkeletonList, ThemedRefreshControl } from '@/ui/states';
-import { useRecentActivities } from '@/queries/useActivities';
+import { useActivityHistory, useDeleteActivity } from '@/queries/useActivities';
 import { useTrainingSummary, type TrainingSummary } from '@/queries/useProgress';
 import { useSettings } from '@/settings/hooks';
-import { computeStreak } from '@/domain/logic';
 import type { Activity } from '@/domain/types';
 import { routes } from '@/navigation/nav';
-import { useAppTheme } from '@/theme/theme';
+import { useAppTheme, type Theme } from '@/theme/theme';
 import { spacing, screenGutter } from '@/theme/tokens';
 import { useT } from '@/i18n/useT';
 import type { TKey, TVars } from '@/i18n';
-import { compactNumber, formatDurationCompact, startOfDay } from '@/utils/format';
+import { weekHeading } from '@/utils/relativeTime';
+import type { UnitSystem } from '@/utils/format';
 
-/** Rows actually shown. The fetched set is longer: see the header note on streaks. */
-const RECENT_VISIBLE = 7;
-const RECENT_FETCHED = 60;
-
-/** `Card`'s default `padding='lg'`, subtracted from any chart that must fit inside one. */
-const CARD_PADDING = spacing.lg;
-const CHART_HEIGHT = 140;
+/** Weeks drawn in the load chart. */
+const LOAD_WEEKS = 6;
 
 type Translate = (key: TKey, vars?: TVars) => string;
+
+/** A row is a week heading or a workout. */
+type RowItem =
+  | { type: 'week'; key: string; label: string; count: number; first: boolean }
+  | { type: 'workout'; activity: Activity };
 
 export default function HomeScreen() {
   const { t, locale } = useT();
   const router = useRouter();
   const theme = useAppTheme();
   const bottomSpace = useTabContentBottom();
-  const [chartWidth, onChartLayout] = useMeasuredWidth();
-  // The hook hands back a new handler every render; the memoised header below needs one that
-  // keeps its identity, or the memo would be rebuilt on every render and buy nothing.
-  const chartLayoutRef = useRef(onChartLayout);
-  chartLayoutRef.current = onChartLayout;
-  const onSummaryLayout = useCallback((e: LayoutChangeEvent) => chartLayoutRef.current(e), []);
-
   const units = useSettings((s) => s.unitSystem);
-  const goal = useSettings((s) => s.weeklyGoalWorkouts);
-  const profileName = useSettings((s) => s.profile.name);
 
-  const summaryQuery = useTrainingSummary(8);
-  const recentQuery = useRecentActivities(RECENT_FETCHED);
+  const summaryQuery = useTrainingSummary(LOAD_WEEKS);
+  const history = useActivityHistory();
+  const removeActivity = useDeleteActivity();
+  const [pendingId, setPendingId] = useState<string | null>(null);
 
-  const summary = summaryQuery.data;
-  const fetched = useMemo(() => recentQuery.data ?? [], [recentQuery.data]);
-  const visible = useMemo(() => fetched.slice(0, RECENT_VISIBLE), [fetched]);
-  const streak = useMemo(() => computeStreak(fetched), [fetched]);
-  const todaySeconds = useMemo(() => {
-    const midnight = startOfDay(new Date()).getTime();
-    let total = 0;
-    for (const activity of fetched) if (activity.startedAt >= midnight) total += activity.durationSeconds;
-    return total;
-  }, [fetched]);
+  // Headings are phrased here rather than in the query: they are in the app's language, and
+  // the query layer has no language.
+  const rows = useMemo<RowItem[]>(() => {
+    const out: RowItem[] = [];
+    for (const week of history.weeks) {
+      out.push({
+        type: 'week',
+        key: `w-${week.weekStart}`,
+        label: weekHeading(week.weekStart, t, locale),
+        count: week.activities.length,
+        first: out.length === 0,
+      });
+      for (const activity of week.activities) out.push({ type: 'workout', activity });
+    }
+    return out;
+  }, [history.weeks, locale, t]);
 
-  const loading = summaryQuery.isPending && !summaryQuery.isError;
-  // `weeks` is oldest-first, so the current week is the *last* entry. See the contract in
-  // `useProgress.ts`: reading index 0 instead shows a week four (or seven) ago as today,
-  // with numbers plausible enough that nothing looks broken.
-  const weekWorkouts = summary?.weeks.at(-1)?.workouts ?? 0;
-
-  const openActivity = useCallback(
-    (id: string) => router.push(routes.activityDetail(id)),
-    [router],
+  const pendingDelete = useMemo(
+    () => (pendingId === null ? null : (history.activities.find((a) => a.id === pendingId) ?? null)),
+    [history.activities, pendingId],
   );
-  const openSettings = useCallback(() => router.push(routes.settings()), [router]);
+
+  const openActivity = useCallback((id: string) => router.push(routes.activityDetail(id)), [router]);
   const openWorkoutTab = useCallback(() => router.push(routes.workoutTab()), [router]);
 
   const renderItem = useCallback(
-    ({ item }: { item: Activity }) => (
-      // A cell with the gutter and the gap below, so the card itself fills the width it is
-      // given and the list builds no style object per row.
-      <View style={styles.cardCell}>
-        <ActivityCard
-          activity={item}
+    ({ item }: { item: RowItem }) =>
+      item.type === 'week' ? (
+        <SectionHeader
+          title={item.label}
+          counter={item.count}
+          style={item.first ? styles.firstWeek : styles.week}
+        />
+      ) : (
+        <WorkoutCell
+          activity={item.activity}
           theme={theme}
           units={units}
-          thumbnail="chart"
           onPress={openActivity}
+          onLongPress={setPendingId}
         />
-      </View>
-    ),
+      ),
     [openActivity, theme, units],
   );
+  const keyExtractor = useCallback(
+    (item: RowItem) => (item.type === 'workout' ? item.activity.id : item.key),
+    [],
+  );
+  const getItemType = useCallback((item: RowItem) => item.type, []);
 
-  const keyExtractor = useCallback((item: Activity) => item.id, []);
-
-  const { refetch: refetchRecent } = recentQuery;
   const { refetch: refetchSummary } = summaryQuery;
+  const { refresh: refetchHistory } = history;
   const refresh = useCallback(() => {
-    void refetchRecent();
+    void refetchHistory();
     void refetchSummary();
-  }, [refetchRecent, refetchSummary]);
+  }, [refetchHistory, refetchSummary]);
   const retrySummary = useCallback(() => void refetchSummary(), [refetchSummary]);
 
-  const empty = summary !== undefined && !summary.hasAnyHistory && !loading;
-  const hasHistory = summary?.hasAnyHistory === true;
+  const confirmDelete = useCallback(() => {
+    if (!pendingDelete) return;
+    removeActivity.mutate(pendingDelete.id, { onSuccess: () => setPendingId(null) });
+  }, [pendingDelete, removeActivity]);
+  const cancelDelete = useCallback(() => {
+    // A reopened dialog must not report the previous attempt's failure.
+    removeActivity.reset();
+    setPendingId(null);
+  }, [removeActivity]);
 
+  const summary = summaryQuery.data;
   const listHeader = useMemo(
-    () => (
-      <>
-        {/* The first content block: the day at a glance, as three numbers. */}
-        <Stack gap="md" style={styles.hero}>
-          <Txt variant="micro" tone="faint" uppercase tracking={1.1}>
-            {greeting(t)}
-          </Txt>
-          <Txt variant="headline">{headlineFor(streak.current, summary, t)}</Txt>
-          {/* Its own component so the per-second tick re-renders two Txt nodes rather than
-              the header and everything the header is a child of. */}
-          <LiveClock locale={locale} />
-          {hasHistory ? (
-            <Row gap="md" style={styles.tiles}>
-              <StatTile
-                value={`${Math.round(todaySeconds / 60)}`}
-                unit={t('tabsHome.minutesUnit')}
-                label={t('tabsHome.today')}
-              />
-              <StatTile
-                value={`${streak.current}`}
-                unit={t('homeHero.streakUnit', { count: streak.current })}
-                label={t('tabsHome.streak')}
-              />
-              <StatTile
-                value={`${weekWorkouts}`}
-                unit={t('tabsHome.goalOf', { goal })}
-                label={t('tabsHome.weeklyGoal')}
-              />
-            </Row>
-          ) : null}
-        </Stack>
-
-        <View style={styles.summary} onLayout={onSummaryLayout}>
-          {loading ? (
-            <Stack gap="lg">
-              <SkeletonCard lines={2} />
-              <SkeletonCard lines={3} />
-            </Stack>
+    () =>
+      history.isEmpty ? null : (
+        <View style={styles.load}>
+          {summaryQuery.isPending ? (
+            <SkeletonCard lines={3} />
           ) : summaryQuery.isError ? (
             <ErrorState error={summaryQuery.error} onRetry={retrySummary} compact />
           ) : summary ? (
-            <HomeSummary summary={summary} chartWidth={chartWidth} t={t} />
+            <TrainingLoad summary={summary} theme={theme} t={t} />
           ) : null}
         </View>
-
-        {empty ? null : (
-          <SectionHeader
-            title={t('homeTab.recent')}
-            eyebrow={t('homeTab.latestSessions')}
-            style={styles.recentHeader}
-          />
-        )}
-      </>
-    ),
-    [
-      chartWidth,
-      empty,
-      goal,
-      hasHistory,
-      loading,
-      locale,
-      onSummaryLayout,
-      retrySummary,
-      streak,
-      summary,
-      summaryQuery.error,
-      summaryQuery.isError,
-      t,
-      todaySeconds,
-      units,
-      visible.length,
-      weekWorkouts,
-    ],
+      ),
+    [history.isEmpty, retrySummary, summary, summaryQuery.error, summaryQuery.isError, summaryQuery.isPending, t, theme],
   );
 
   const listEmpty = useMemo(
     () =>
-      empty ? (
+      history.isLoading ? (
+        <View style={styles.skeleton}>
+          <SkeletonList rows={4} />
+        </View>
+      ) : history.error ? (
+        <ErrorState error={history.error} onRetry={refresh} title={t('home.historyError')} />
+      ) : (
         <EmptyState
           title={t('home.emptyTitle')}
           message={t('home.emptyMessage')}
-          icon="target"
-          actionLabel={t('homeTab.browseRoutines')}
+          icon="dumbbell"
+          actionLabel={t('home.startWorkout')}
           onAction={openWorkoutTab}
         />
-      ) : loading ? (
-        <SkeletonList rows={4} />
-      ) : null,
-    [empty, loading, openWorkoutTab, t],
+      ),
+    [history.error, history.isLoading, openWorkoutTab, refresh, t],
   );
   const contentContainerStyle = useMemo(() => ({ paddingBottom: bottomSpace }), [bottomSpace]);
   const listStyle = useMemo(() => ({ backgroundColor: theme.colors.background }), [theme]);
 
   return (
     <>
-      <ScreenHeader
-        title={profileName ? t('homeTab.hi', { name: firstName(profileName) }) : t('homeTab.today')}
-      />
-      <HeaderToolbar placement="right">
-        {headerAction({ action: 'settings', onPress: openSettings, t, label: 'homeTab.settings' })}
-      </HeaderToolbar>
+      <ScreenHeader title={t('tabs.home')} />
 
       <FlashList
         {...SCROLL_INSETS}
         // Keyed by locale: a card phrases its metadata with `tr()`, and its memo would keep the
         // old language until the row recycled.
         key={locale}
-        data={visible}
+        data={rows}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
+        getItemType={getItemType}
         extraData={units}
         contentContainerStyle={contentContainerStyle}
         refreshControl={
-          <ThemedRefreshControl refreshing={recentQuery.isFetching} onRefresh={refresh} />
+          <ThemedRefreshControl refreshing={history.isFetching && !history.isLoading} onRefresh={refresh} />
         }
         ListHeaderComponent={listHeader}
         ListEmptyComponent={listEmpty}
         style={listStyle}
       />
-      {/* No resume pill here: the tab bar's accessory owns it, for every tab. Home used to
-          mount its own, and both drew at once. One owner, and it is the one that is not a
-          scene. */}
+      {/* No resume pill here: the tab bar's accessory owns it, for every tab. */}
+
+      {pendingDelete ? (
+        <ConfirmDialog
+          visible={!removeActivity.isPending}
+          title={t('activity.deleteTitle')}
+          message={
+            removeActivity.isError
+              ? removeActivity.error instanceof Error
+                ? removeActivity.error.message
+                : t('activity.deleteFailed')
+              : t('activity.deleteMessage', { name: pendingDelete.title })
+          }
+          confirmLabel={t('activity.deleteConfirm')}
+          cancelLabel={t('common.cancel')}
+          destructive
+          onConfirm={confirmDelete}
+          onCancel={cancelDelete}
+        />
+      ) : null}
     </>
   );
 }
 
-/* ------------------------------------------------------------------ summary -- */
-
 /**
- * The weekly block: the week's time against the last, three metrics, six-week load.
- *
- * `chartWidth` arrives from an `onLayout` on the container, which is why the first pass
- * renders a spacer instead of the chart: `BarChart` computes path geometry in JS and
- * needs a real width, and passing 0 would draw a chart at zero width that then snaps.
- *
- * Memoised, with `t` as a prop so a language change still reaches it.
+ * One workout card with the gutter and the gap below, so the card fills the width it is
+ * given and the list builds no style object per row. `onPress` and `onLongPress` take the id,
+ * so every row gets the same two callbacks.
  */
-const HomeSummary = memo(function HomeSummary({
-  summary,
-  chartWidth,
-  t,
+const WorkoutCell = memo(function WorkoutCell({
+  activity,
+  theme,
+  units,
+  onPress,
+  onLongPress,
 }: {
-  summary: TrainingSummary;
-  chartWidth: number;
-  t: Translate;
+  activity: Activity;
+  theme: Theme;
+  units: UnitSystem;
+  onPress: (id: string) => void;
+  onLongPress: (id: string) => void;
 }) {
-  const theme = useAppTheme();
-  const week = summary.weeks.at(-1);
-  const previous = summary.weeks.at(-2);
-
-  // The last six weeks, oldest on the left. `WeekSummary.label` is "Sep 1", which is what a
-  // weekly bar wants: labelling by weekday: as this did: puts "Mon" under all six bars,
-  // because every week in the array starts on the same weekday.
-  const bars: BarPoint[] = useMemo(
-    () =>
-      summary.weeks.slice(-6).map((w, index, all) => ({
-        label: index === all.length - 1 ? t('tabsHome.nowBar') : w.label,
-        value: Math.round(w.durationSeconds / 60),
-        emphasised: index === all.length - 1,
-        detail: t('activities.session', { count: w.workouts }),
-      })),
-    [summary.weeks, t],
-  );
-
-  const formatMinutes = useCallback((v: number) => t('tabsHome.minutesShort', { value: v }), [t]);
-
-  const delta = deltaPercent(week?.durationSeconds ?? 0, previous?.durationSeconds ?? 0);
-  const trend: Trend | undefined =
-    delta === null
-      ? undefined
-      : {
-          delta: t('homeTab.deltaAgainstLastWeek', { delta: `${delta >= 0 ? '+' : ''}${delta}` }),
-          direction: delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat',
-        };
-  const volume = week?.volumeKg ?? 0;
-
   return (
-    <Stack gap="lg">
-      <Card>
-        <StatTile
-          emphasis="hero"
-          value={formatDurationCompact(week?.durationSeconds ?? 0)}
-          label={t('home.thisWeek')}
-          {...(trend ? { trend } : {})}
-        />
-        <View style={styles.divider}>
-          <Divider />
-        </View>
-        <MetricGrid columns={2}>
-          <StatTile label={t('home.sessions')} value={`${week?.workouts ?? 0}`} />
-          <StatTile
-            label={t('home.volume')}
-            value={volume > 0 ? compactNumber(volume) : t('common.noValue')}
-            {...(volume > 0 ? { unit: 'kg' } : {})}
-          />
-          <StatTile
-            label={t('home.calories')}
-            value={compactNumber(Math.round(week?.caloriesKcal ?? 0))}
-            unit="kcal"
-          />
-        </MetricGrid>
-      </Card>
-
-      <Card>
-        <SectionHeader
-          title={t('home.trainingLoad')}
-          eyebrow={t('home.lastSixWeeks')}
-          style={styles.chartTitle}
-        />
-        {chartWidth > CARD_PADDING * 2 ? (
-          <BarChart
-            points={bars}
-            theme={theme}
-            width={chartWidth - CARD_PADDING * 2}
-            height={CHART_HEIGHT}
-            format={formatMinutes}
-            showValueForLast
-          />
-        ) : (
-          <View style={styles.chartSpacer} />
-        )}
-      </Card>
-
-    </Stack>
+    <View style={styles.cell}>
+      <ActivityCard
+        activity={activity}
+        theme={theme}
+        units={units}
+        thumbnail="chart"
+        onPress={onPress}
+        onLongPress={onLongPress}
+      />
+    </View>
   );
 });
 
-/* ------------------------------------------------------------------ helpers -- */
-
 /**
- * The line under the greeting.
+ * Minutes per week, six weeks, oldest on the left.
  *
- * Phrased so the sentence is true in every state: no history, history but today off,
- * mid-streak: rather than a template that prints "0 day streak" on a fresh install.
- * That string is the most demoralising thing a fitness app can say to someone who has
- * just opened it for the first time.
- */
-function headlineFor(currentStreak: number, summary: TrainingSummary | undefined, t: Translate): string {
-  if (!summary || !summary.hasAnyHistory) return t('homeTab.headlineFirst');
-  if (currentStreak === 0) return t('homeTab.headlineReady');
-  if (currentStreak === 1) return t('homeTab.headlineDayOne');
-  return t('homeTab.headlineStreak', { count: currentStreak });
-}
-
-function greeting(t: Translate): string {
-  const hour = new Date().getHours();
-  if (hour < 5) return t('homeTab.greetLate');
-  if (hour < 12) return t('home.eyebrowMorning');
-  if (hour < 18) return t('home.eyebrowAfternoon');
-  return t('home.eyebrowEvening');
-}
-
-function firstName(full: string): string {
-  return full.trim().split(/\s+/)[0] ?? full;
-}
-
-/**
- * Percentage change, or `null` when there is nothing to compare against.
+ * The bars carry bare minutes: the eyebrow names the unit once, and "144 min" six times over
+ * does not fit a sixth of a phone card in Italian. `WeekSummary.label` is "Sep 1", which is
+ * what a weekly bar wants; labelling by weekday would put "Mon" under all six.
  *
- * A zero previous week returns null rather than `Infinity` or 100: "+∞%" is not a
- * sentence, and claiming "+100%" when last week had no training at all implies a
- * comparison that did not happen.
+ * Memoised, with `t` as a prop so a language change still reaches it.
  */
-function deltaPercent(current: number, previous: number): number | null {
-  if (previous <= 0 || current <= 0) return null;
-  return Math.round(((current - previous) / previous) * 100);
-}
+const TrainingLoad = memo(function TrainingLoad({
+  summary,
+  theme,
+  t,
+}: {
+  summary: TrainingSummary;
+  theme: Theme;
+  t: Translate;
+}) {
+  const load = useMemo(() => {
+    const weeks = summary.weeks.slice(-LOAD_WEEKS);
+    const bars: WeeklyBar[] = weeks.map((w, index) => {
+      const minutes = Math.round(w.durationSeconds / 60);
+      const current = index === weeks.length - 1;
+      return {
+        key: `${w.weekStart}`,
+        label: current ? t('tabsHome.nowBar') : w.label,
+        value: minutes,
+        valueLabel: `${minutes}`,
+        current,
+      };
+    });
+    // The average is over the finished weeks only: the current one is still being filled, and
+    // counting it would drag the average down every Monday.
+    const past = bars.slice(0, -1);
+    const average =
+      past.length > 0 ? Math.round(past.reduce((sum, b) => sum + b.value, 0) / past.length) : null;
+    const a11y = t('home.loadA11y', {
+      weeks: bars.map((b) => t('home.loadA11yWeek', { week: b.label, value: b.value })).join(', '),
+    });
+    return { bars, current: bars.at(-1)?.value ?? 0, average, a11y };
+  }, [summary.weeks, t]);
+
+  return (
+    <Card>
+      <SectionHeader
+        title={t('home.trainingLoad')}
+        eyebrow={t('home.minutesPerWeek', { count: LOAD_WEEKS })}
+        style={styles.loadTitle}
+      />
+      <Row gap="md" style={styles.loadTiles}>
+        <StatTile value={`${load.current}`} unit={t('tabsHome.minutesUnit')} label={t('home.thisWeek')} />
+        <StatTile
+          value={load.average === null ? t('common.noValue') : `${load.average}`}
+          {...(load.average === null ? {} : { unit: t('tabsHome.minutesUnit') })}
+          label={t('home.weeklyAverage')}
+        />
+      </Row>
+      <WeeklyBars bars={load.bars} theme={theme} accessibilityLabel={load.a11y} />
+    </Card>
+  );
+});
 
 const styles = StyleSheet.create({
-  hero: { paddingHorizontal: screenGutter, paddingTop: spacing.md },
-  tiles: { paddingTop: spacing.xs },
-  summary: { paddingHorizontal: screenGutter, paddingTop: spacing.xxl, paddingBottom: spacing.xxl },
-  recentHeader: { paddingHorizontal: screenGutter },
-  cardCell: { paddingHorizontal: screenGutter, paddingBottom: spacing.md },
-  divider: { marginVertical: spacing.lg },
-  chartTitle: { marginBottom: spacing.lg },
-  chartSpacer: { height: CHART_HEIGHT },
+  load: { paddingHorizontal: screenGutter, paddingTop: spacing.md },
+  loadTitle: { marginBottom: spacing.lg },
+  loadTiles: { marginBottom: spacing.xl },
+  firstWeek: { paddingHorizontal: screenGutter, paddingTop: spacing.xxl },
+  week: { paddingHorizontal: screenGutter, paddingTop: spacing.xl },
+  cell: { paddingHorizontal: screenGutter, paddingBottom: spacing.md },
+  skeleton: { paddingTop: spacing.lg },
 });
