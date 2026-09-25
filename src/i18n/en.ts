@@ -128,7 +128,7 @@ export const en = {
     notesSaveFailed: 'The note could not be saved.',
     deleteTitle: 'Delete this session?',
     deleteMessage:
-      '"{name}" goes with it, route included. Its numbers come out of your totals and records once it is gone, so the charts will move.',
+      '"{name}" goes with it. Its numbers come out of your totals and records once it is gone, so the charts will move.',
     deleteConfirm: 'Delete session',
     deleteFailed: 'The session could not be deleted.',
     emptyTitle: 'Nothing was captured',
@@ -567,7 +567,7 @@ export const en = {
     saving: 'Saving…',
     done: 'Done',
     nameLabel: 'Routine name',
-    namePlaceholder: 'Push Day, Thursday Run, Full Body B',
+    namePlaceholder: 'Push Day, Leg Day, Full Body B',
     nameHintEmpty: 'Leave it blank and the routine is named after its first exercise.',
     nameHint: 'Shows on the Workout tab, and beside every session in your history.',
     nameA11y: 'Names the routine',

@@ -130,7 +130,7 @@ export const it: Copy = {
     notesSaveFailed: 'Non è stato possibile salvare la nota.',
     deleteTitle: 'Eliminare questa sessione?',
     deleteMessage:
-      'Sparisce anche "{name}", percorso compreso. I suoi numeri escono da totali e record, quindi i grafici cambieranno.',
+      'Sparisce anche "{name}". I suoi numeri escono da totali e record, quindi i grafici cambieranno.',
     deleteConfirm: 'Elimina sessione',
     deleteFailed: 'Non è stato possibile eliminare la sessione.',
     emptyTitle: 'Nessun dato registrato',
@@ -571,7 +571,7 @@ export const it: Copy = {
     saving: 'Salvataggio…',
     done: 'Fatto',
     nameLabel: 'Nome della scheda',
-    namePlaceholder: 'Giorno di spinta, Corsa del giovedì, Full Body B',
+    namePlaceholder: 'Giorno di spinta, Giorno gambe, Full Body B',
     nameHintEmpty: 'Lascialo vuoto e la scheda prende il nome dal suo primo esercizio.',
     nameHint: 'Compare nella scheda Allenamento, e accanto a ogni sessione nella cronologia.',
     nameA11y: 'Dà il nome alla scheda',

@@ -236,6 +236,9 @@ export function markDraftSaveFailed(): void {
  * `touched`, so merely *opening* the builder: browsing it, closing it: never prompts.
  */
 export function isDraftDirty(): boolean {
+  // A saved draft loses nothing on the way out. Without this the builder's leave guard kept
+  // blocking the navigation to the routine it had just written.
+  if (state.status === 'saved') return false;
   return state.items.length > 0 || state.name.trim().length > 0;
 }
 
