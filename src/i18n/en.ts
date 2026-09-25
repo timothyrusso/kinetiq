@@ -116,6 +116,7 @@ export const en = {
   },
   // --- end group-b ---
   activity: {
+    openExerciseHint: 'Opens this exercise, with your history and records',
     fallbackTitle: 'Workout',
     delete: 'Delete this workout',
     loadError: 'Could not open this workout',
@@ -372,7 +373,7 @@ export const en = {
     exercises: 'Exercises',
     emptyTitle: 'No exercises in this workout',
     emptyMessage:
-      'The routine this started from had nothing in it. Add one from the library and it is stored on the device straight away.',
+      'Add one from the library and it is stored on the device straight away.',
     addAnExercise: 'Add an exercise',
     notesTitle: 'Session notes',
     notesEyebrow: 'Saved with the workout',

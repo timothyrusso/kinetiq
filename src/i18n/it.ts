@@ -118,6 +118,7 @@ export const it: Copy = {
   },
   // --- end group-b ---
   activity: {
+    openExerciseHint: 'Apre questo esercizio, con la tua cronologia e i record',
     fallbackTitle: 'Allenamento',
     delete: 'Elimina questo allenamento',
     loadError: 'Impossibile aprire questo allenamento',
@@ -375,7 +376,7 @@ export const it: Copy = {
     exercises: 'Esercizi',
     emptyTitle: 'Nessun esercizio in questo allenamento',
     emptyMessage:
-      'La scheda da cui è partito non conteneva nulla. Aggiungi un esercizio dalla libreria e viene salvato subito sul dispositivo.',
+      'Aggiungi un esercizio dalla libreria e viene salvato subito sul dispositivo.',
     addAnExercise: 'Aggiungi un esercizio',
     notesTitle: 'Note della sessione',
     notesEyebrow: "Salvate con l'allenamento",
