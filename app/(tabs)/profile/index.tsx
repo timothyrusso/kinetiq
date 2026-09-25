@@ -40,7 +40,7 @@ import { useTabContentBottom } from '@/ui/insets';
 import { Icon } from '@/ui/icons';
 import { SCROLL_INSETS, ScreenHeader } from '@/ui/Screen';
 import { MetaLine, type MetaItem } from '@/ui/display';
-import { Avatar, NavRow } from '@/ui/rows';
+import { NavRow } from '@/ui/rows';
 import { Badge, Card, Row } from '@/ui/layout';
 import { SectionHeader } from '@/ui/display';
 import { SegmentedControl } from '@/ui/controls/SegmentedControl';
@@ -158,7 +158,6 @@ export default function ProfileScreen() {
           style={({ pressed }) => [styles.identity, pressed ? { opacity: 0.6 } : null]}
         >
           <Row gap="md" align="center">
-            <Avatar name={name} theme={theme} size={62} />
             <Stack gap="xs" style={{ flex: 1, minWidth: 0 }}>
               <Txt variant="title" numberOfLines={1}>
                 {name || t('profileScreen.athlete')}
