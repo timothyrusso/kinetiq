@@ -7,13 +7,14 @@
  * away (`gestureEnabled: false` on the route); its one action closes it onto Home, where the
  * workout now tops the history.
  */
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 
 import type { PersonalRecord } from '@/domain/types';
 import { useT } from '@/i18n/useT';
 import { formatRecordValue, RECORD_LABEL } from '@/queries/useExerciseHistory';
+import { haptics } from '@/services/haptics';
 import { useSettings } from '@/settings';
 import { useAppTheme } from '@/theme/theme';
 import { spacing } from '@/theme/tokens';
@@ -35,6 +36,12 @@ export default function RecordsSheet() {
       return [];
     }
   }, [params.records]);
+
+  // The record's signature, as the sheet that announces it appears. The finish itself stays
+  // silent when there is a record: see `finish` in the session screen.
+  useEffect(() => {
+    if (records.length > 0) haptics.personalRecord();
+  }, [records.length]);
 
   return (
     <FormSheet

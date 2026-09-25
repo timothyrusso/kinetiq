@@ -44,6 +44,7 @@ async function persist(next: SettingsState): Promise<void> {
       setSetting(SETTING_KEYS.accentColor, next.accentColor),
       setSetting(SETTING_KEYS.language, next.language),
       setSetting(SETTING_KEYS.haptics, next.hapticsEnabled),
+      setSetting(SETTING_KEYS.restCountdownHaptics, next.restCountdownHaptics),
       setSetting(SETTING_KEYS.notifications, next.notificationsEnabled),
       setSetting(SETTING_KEYS.defaultRestSeconds, next.defaultRestSeconds),
       setSetting(SETTING_KEYS.autoStartRest, next.autoStartRest),

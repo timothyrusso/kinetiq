@@ -606,6 +606,8 @@ export const en = {
     duringSession: 'During a session',
     autoStartRest: 'Start rest automatically',
     haptics: 'Haptics',
+    restCountdown: 'Rest countdown ticks',
+    restCountdownHint: 'A tick in each of the last 3 seconds of a rest, then a buzz when it ends.',
     weeklyGoal: 'Weekly goal',
     sessionsPerWeek: 'Sessions per week',
   },
@@ -716,7 +718,7 @@ export const en = {
     clear: 'Clear {label}',
   },
   settingsExtra: {
-    hapticsHint: 'Buzz on a completed set, a rest that ends, and a new record.',
+    hapticsHint: 'Buzz on a completed set, a new record, a finished workout and a met goal.',
   },
   routineItemA11y: {
     moveUp: 'Move {name} up',

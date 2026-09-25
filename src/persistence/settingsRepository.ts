@@ -16,6 +16,7 @@ export const SETTING_KEYS = {
   accentColor: 'settings.accentColor',
   language: 'settings.language',
   haptics: 'settings.haptics',
+  restCountdownHaptics: 'settings.restCountdownHaptics',
   notifications: 'settings.notifications',
   defaultRestSeconds: 'settings.defaultRestSeconds',
   weeklyGoalWorkouts: 'settings.weeklyGoalWorkouts',

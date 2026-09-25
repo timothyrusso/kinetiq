@@ -57,7 +57,6 @@ import {
   readNotificationPermission,
   syncTrainingReminder,
 } from '@/services/notifications';
-import { setHapticsEnabled } from '@/services/haptics';
 import { getSettings, hydrateSettings } from '@/settings';
 import { normaliseSettings, type SettingsState } from '@/settings/types';
 import { themeFor } from '@/theme/theme';
@@ -110,6 +109,7 @@ const SETTINGS_KEYS = [
   SETTING_KEYS.accentColor,
   SETTING_KEYS.language,
   SETTING_KEYS.haptics,
+  SETTING_KEYS.restCountdownHaptics,
   SETTING_KEYS.notifications,
   SETTING_KEYS.defaultRestSeconds,
   SETTING_KEYS.autoStartRest,
@@ -190,6 +190,7 @@ async function readSettingsSnapshot(): Promise<SettingsState> {
     accentColor: values.get(SETTING_KEYS.accentColor) as SettingsState['accentColor'],
     language: values.get(SETTING_KEYS.language) as SettingsState['language'],
     hapticsEnabled: values.get(SETTING_KEYS.haptics) as boolean,
+    restCountdownHaptics: values.get(SETTING_KEYS.restCountdownHaptics) as boolean,
     notificationsEnabled: values.get(SETTING_KEYS.notifications) as boolean,
     defaultRestSeconds: values.get(SETTING_KEYS.defaultRestSeconds) as number,
     autoStartRest: values.get(SETTING_KEYS.autoStartRest) as boolean,
@@ -241,7 +242,6 @@ export async function runBootstrap(systemDark: boolean): Promise<BootstrapOutcom
   //    never disagree about what colour this launch was.
   const settings = await readSettingsSnapshot();
   hydrateSettings(settings);
-  setHapticsEnabled(settings.hapticsEnabled);
   const launchTheme =
     settings.themeMode === 'system' ? (systemDark ? 'dark' : 'light') : settings.themeMode;
   applyNativeChrome(launchTheme);

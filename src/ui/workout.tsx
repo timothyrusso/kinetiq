@@ -163,7 +163,8 @@ const SetRow = memo(function SetRow({
         name={set.completed ? 'checkCircle' : 'check'}
         variant={set.completed ? 'accent' : 'plain'}
         size={24}
-        weighty
+        // The session screen plays the haptic: ticking is a signature moment, un-ticking is not.
+        silent
         accessibilityLabel={t(set.completed ? 'setRow.markNotDone' : 'setRow.completeSet', {
           n: setIndex + 1,
         })}

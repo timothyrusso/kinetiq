@@ -24,6 +24,9 @@ type IconButtonProps = {
   disabled?: boolean;
   /** Fires `heavy`: for destructive or committing actions. */
   weighty?: boolean;
+  /** No haptic from the control: the caller plays its own, because what it means depends on
+   * the outcome (a set ticked is a signature moment; un-ticking it is not). */
+  silent?: boolean;
   style?: StyleProp<ViewStyle>;
   accessibilityHint?: string;
 };
@@ -36,6 +39,7 @@ export const IconButton = memo(function IconButton({
   size = 22,
   disabled = false,
   weighty = false,
+  silent = false,
   style,
   accessibilityHint,
 }: IconButtonProps) {
@@ -51,11 +55,13 @@ export const IconButton = memo(function IconButton({
   const handlePress = useCallback(
     (e: GestureResponderEvent) => {
       if (disabled) return;
-      if (weighty) haptics.heavy();
+      if (silent) {
+        // The caller's haptic.
+      } else if (weighty) haptics.heavy();
       else haptics.light();
       onPress(e);
     },
-    [disabled, onPress, weighty],
+    [disabled, onPress, silent, weighty],
   );
 
   return (

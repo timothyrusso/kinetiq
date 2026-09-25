@@ -39,6 +39,8 @@ export type SettingsState = {
   /** 'system' follows the device's preferred languages; the others force one. */
   language: Language;
   hapticsEnabled: boolean;
+  /** Ticks in the last seconds of a rest, and a distinct buzz at zero. Needs `hapticsEnabled`. */
+  restCountdownHaptics: boolean;
   notificationsEnabled: boolean;
   /** Used by both rest timers and scheduled reminders. */
   notificationsGranted: boolean;
@@ -56,6 +58,7 @@ export const DEFAULT_SETTINGS: SettingsState = {
   // `system` so a device set to Italian is in Italian on first launch, without being asked.
   language: 'system',
   hapticsEnabled: true,
+  restCountdownHaptics: true,
   notificationsEnabled: true,
   notificationsGranted: false,
   defaultRestSeconds: 90,
@@ -130,6 +133,7 @@ export function normaliseSettings(
     // edited database, must not put an unknown language code into the catalog lookup.
     language: s.language === 'en' || s.language === 'it' ? s.language : 'system',
     hapticsEnabled: s.hapticsEnabled ?? DEFAULT_SETTINGS.hapticsEnabled,
+    restCountdownHaptics: s.restCountdownHaptics ?? DEFAULT_SETTINGS.restCountdownHaptics,
     notificationsEnabled: s.notificationsEnabled ?? DEFAULT_SETTINGS.notificationsEnabled,
     notificationsGranted: s.notificationsGranted ?? DEFAULT_SETTINGS.notificationsGranted,
     defaultRestSeconds: clamp(s.defaultRestSeconds, 15, 600, DEFAULT_SETTINGS.defaultRestSeconds),
