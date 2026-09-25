@@ -1,10 +1,10 @@
 /**
- * Home: the training load, then every workout, newest first.
+ * Home: the training grid, then every workout, newest first.
  *
  * ## Two blocks, in the order people ask
  *
- * *Am I training enough* is the load card: minutes per week for six weeks, this week and the
- * weekly average above it. *What did I do* is the history under it, grouped by week. That is
+ * *Am I training consistently* is the GitHub-style grid: one square per day for twenty weeks,
+ * shaded by minutes trained. *What did I do* is the history under it, grouped by week. That is
  * the whole screen: there is no second history list anywhere in the app, so this one is not a
  * preview with a "See all", it is all.
  *
@@ -18,7 +18,7 @@
  * ## Why the header content is memoised
  *
  * FlashList re-lays out whenever its header element changes. Memoised, a render that changed
- * nothing the card shows (a refetch settling, a delete dialog opening) leaves it alone.
+ * nothing the grid shows (a refetch settling, a delete dialog opening) leaves it alone.
  *
  * ## Delete is a long press, confirmed
  *
@@ -33,13 +33,13 @@ import { FlashList } from '@shopify/flash-list';
 
 import { useTabContentBottom } from '@/ui/insets';
 import { SCROLL_INSETS, ScreenHeader } from '@/ui/Screen';
-import { ActivityCard, SectionHeader, StatTile } from '@/ui/display';
+import { ActivityCard, SectionHeader } from '@/ui/display';
 import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
-import { Card, Row } from '@/ui/layout';
-import { WeeklyBars, type WeeklyBar } from '@/ui/charts/WeeklyBars';
+import { Card } from '@/ui/layout';
+import { HeatmapCalendar } from '@/ui/charts/HeatmapCalendar';
 import { EmptyState, ErrorState, SkeletonCard, SkeletonList, ThemedRefreshControl } from '@/ui/states';
 import { useActivityHistory, useDeleteActivity } from '@/queries/useActivities';
-import { useTrainingSummary, type TrainingSummary } from '@/queries/useProgress';
+import { useTrainingHeatmap, type TrainingHeatmap } from '@/queries/useProgress';
 import { useSettings } from '@/settings/hooks';
 import type { Activity } from '@/domain/types';
 import { routes } from '@/navigation/nav';
@@ -50,8 +50,8 @@ import type { TKey, TVars } from '@/i18n';
 import { weekHeading } from '@/utils/relativeTime';
 import type { UnitSystem } from '@/utils/format';
 
-/** Weeks drawn in the load chart. */
-const LOAD_WEEKS = 6;
+/** Weeks in the grid: about five months, which keeps each square big enough to read on a phone. */
+const GRID_WEEKS = 20;
 
 type Translate = (key: TKey, vars?: TVars) => string;
 
@@ -67,7 +67,7 @@ export default function HomeScreen() {
   const bottomSpace = useTabContentBottom();
   const units = useSettings((s) => s.unitSystem);
 
-  const summaryQuery = useTrainingSummary(LOAD_WEEKS);
+  const summaryQuery = useTrainingHeatmap(GRID_WEEKS);
   const history = useActivityHistory();
   const removeActivity = useDeleteActivity();
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -150,11 +150,11 @@ export default function HomeScreen() {
           ) : summaryQuery.isError ? (
             <ErrorState error={summaryQuery.error} onRetry={retrySummary} compact />
           ) : summary ? (
-            <TrainingLoad summary={summary} theme={theme} t={t} />
+            <TrainingGrid heatmap={summary} theme={theme} locale={locale} t={t} />
           ) : null}
         </View>
       ),
-    [history.isEmpty, retrySummary, summary, summaryQuery.error, summaryQuery.isError, summaryQuery.isPending, t, theme],
+    [history.isEmpty, locale, retrySummary, summary, summaryQuery.error, summaryQuery.isError, summaryQuery.isPending, t, theme],
   );
 
   const listEmpty = useMemo(
@@ -258,63 +258,45 @@ const WorkoutCell = memo(function WorkoutCell({
 });
 
 /**
- * Minutes per week, six weeks, oldest on the left.
- *
- * The bars carry bare minutes: the eyebrow names the unit once, and "144 min" six times over
- * does not fit a sixth of a phone card in Italian. `WeekSummary.label` is "Sep 1", which is
- * what a weekly bar wants; labelling by weekday would put "Mon" under all six.
- *
- * Memoised, with `t` as a prop so a language change still reaches it.
+ * Twenty weeks of training days. Memoised, with `t` and `locale` as props so a language change
+ * still reaches it.
  */
-const TrainingLoad = memo(function TrainingLoad({
-  summary,
+const TrainingGrid = memo(function TrainingGrid({
+  heatmap,
   theme,
+  locale,
   t,
 }: {
-  summary: TrainingSummary;
+  heatmap: TrainingHeatmap;
   theme: Theme;
+  locale: string;
   t: Translate;
 }) {
-  const load = useMemo(() => {
-    const weeks = summary.weeks.slice(-LOAD_WEEKS);
-    const bars: WeeklyBar[] = weeks.map((w, index) => {
-      const minutes = Math.round(w.durationSeconds / 60);
-      const current = index === weeks.length - 1;
-      return {
-        key: `${w.weekStart}`,
-        label: current ? t('tabsHome.nowBar') : w.label,
-        value: minutes,
-        valueLabel: `${minutes}`,
-        current,
-      };
-    });
-    // The average is over the finished weeks only: the current one is still being filled, and
-    // counting it would drag the average down every Monday.
-    const past = bars.slice(0, -1);
-    const average =
-      past.length > 0 ? Math.round(past.reduce((sum, b) => sum + b.value, 0) / past.length) : null;
-    const a11y = t('home.loadA11y', {
-      weeks: bars.map((b) => t('home.loadA11yWeek', { week: b.label, value: b.value })).join(', '),
-    });
-    return { bars, current: bars.at(-1)?.value ?? 0, average, a11y };
-  }, [summary.weeks, t]);
+  const labels = useMemo(() => {
+    const trained = heatmap.days.filter((d) => d.value > 0).length;
+    const footer = t('heatmap.workouts', { count: heatmap.workouts, weeks: GRID_WEEKS });
+    return {
+      footer,
+      a11y: t('heatmap.a11y', { days: trained, weeks: GRID_WEEKS, workouts: footer }),
+    };
+  }, [heatmap, t]);
 
   return (
     <Card>
       <SectionHeader
-        title={t('home.trainingLoad')}
-        eyebrow={t('home.minutesPerWeek', { count: LOAD_WEEKS })}
+        title={t('heatmap.title')}
+        eyebrow={t('heatmap.eyebrow', { count: GRID_WEEKS })}
         style={styles.loadTitle}
       />
-      <Row gap="md" style={styles.loadTiles}>
-        <StatTile value={`${load.current}`} unit={t('tabsHome.minutesUnit')} label={t('home.thisWeek')} />
-        <StatTile
-          value={load.average === null ? t('common.noValue') : `${load.average}`}
-          {...(load.average === null ? {} : { unit: t('tabsHome.minutesUnit') })}
-          label={t('home.weeklyAverage')}
-        />
-      </Row>
-      <WeeklyBars bars={load.bars} theme={theme} accessibilityLabel={load.a11y} />
+      <HeatmapCalendar
+        days={heatmap.days}
+        theme={theme}
+        locale={locale}
+        accessibilityLabel={labels.a11y}
+        lessLabel={t('heatmap.less')}
+        moreLabel={t('heatmap.more')}
+        footer={labels.footer}
+      />
     </Card>
   );
 });
@@ -322,7 +304,6 @@ const TrainingLoad = memo(function TrainingLoad({
 const styles = StyleSheet.create({
   load: { paddingHorizontal: screenGutter, paddingTop: spacing.md },
   loadTitle: { marginBottom: spacing.lg },
-  loadTiles: { marginBottom: spacing.xl },
   firstWeek: { paddingHorizontal: screenGutter, paddingTop: spacing.xxl },
   week: { paddingHorizontal: screenGutter, paddingTop: spacing.xl },
   cell: { paddingHorizontal: screenGutter, paddingBottom: spacing.md },

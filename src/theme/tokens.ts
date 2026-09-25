@@ -20,14 +20,15 @@ export const palette = {
   azureDeep: '#1D6FD1',
   plum: '#B98CFF',
 
-  // Dark surfaces: blue-black ink, lifted with a cool cast rather than grey.
-  ink900: '#07090F',
-  ink800: '#0B0F18',
-  ink700: '#111726',
-  ink600: '#182033',
-  ink500: '#212C44',
-  ink400: '#2C3A57',
-  inkHairline: '#212B3F',
+  // Dark surfaces: true black canvas, lifted with neutral greys (the iOS dark system greys),
+  // not a blue cast. Black is also what an OLED panel draws for free.
+  ink900: '#000000',
+  ink800: '#0A0A0A',
+  ink700: '#1C1C1E',
+  ink600: '#2C2C2E',
+  ink500: '#3A3A3C',
+  ink400: '#48484A',
+  inkHairline: '#2C2C2E',
 
   // Light surfaces: warm paper, cool neutral text.
   paper0: '#FBFBF8',

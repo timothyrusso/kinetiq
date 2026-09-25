@@ -107,6 +107,7 @@ export const BOOTSTRAP_DEADLINE_MS = 5_000;
 const SETTINGS_KEYS = [
   SETTING_KEYS.unitSystem,
   SETTING_KEYS.themeMode,
+  SETTING_KEYS.accentColor,
   SETTING_KEYS.language,
   SETTING_KEYS.haptics,
   SETTING_KEYS.notifications,
@@ -186,6 +187,7 @@ async function readSettingsSnapshot(): Promise<SettingsState> {
   const settings = normaliseSettings({
     unitSystem: values.get(SETTING_KEYS.unitSystem) as SettingsState['unitSystem'],
     themeMode: values.get(SETTING_KEYS.themeMode) as SettingsState['themeMode'],
+    accentColor: values.get(SETTING_KEYS.accentColor) as SettingsState['accentColor'],
     language: values.get(SETTING_KEYS.language) as SettingsState['language'],
     hapticsEnabled: values.get(SETTING_KEYS.haptics) as boolean,
     notificationsEnabled: values.get(SETTING_KEYS.notifications) as boolean,

@@ -17,8 +17,7 @@
  *
  * ## Structured, not sentences
  *
- * The three totals are `StatTile`s in one row, and the identity line is a `MetaLine` of
- * separate facts (height, age). Links out are rows with chevrons, all of them, the identity
+ * The identity line is a `MetaLine` of separate facts (height, age). Links out are rows with chevrons, all of them, the identity
  * block included: a row that navigates and shows no chevron reads as a row that does nothing.
  *
  * ## The name is the way into the profile editor
@@ -40,11 +39,12 @@ import { useTabContentBottom } from '@/ui/insets';
 
 import { Icon } from '@/ui/icons';
 import { SCROLL_INSETS, ScreenHeader } from '@/ui/Screen';
-import { MetaLine, StatTile, type MetaItem } from '@/ui/display';
+import { MetaLine, type MetaItem } from '@/ui/display';
 import { Avatar, NavRow } from '@/ui/rows';
-import { Badge, Card, MetricGrid, Row } from '@/ui/layout';
+import { Badge, Card, Row } from '@/ui/layout';
 import { SectionHeader } from '@/ui/display';
 import { SegmentedControl } from '@/ui/controls/SegmentedControl';
+import { AccentPreference } from '@/ui/AccentPicker';
 import { useT } from '@/i18n/useT';
 import type { Language } from '@/i18n';
 import { ProgressRing } from '@/ui/charts/ProgressRing';
@@ -127,7 +127,6 @@ export default function ProfileScreen() {
   const thisWeek = weeks?.at(-1);
   const goalProgress = thisWeek === undefined ? 0 : thisWeek.workouts / Math.max(1, weeklyGoal);
 
-  const totals = summary.data?.totals;
   const age = useMemo(() => new Date().getFullYear() - birthYear, [birthYear]);
   const openEditor = useCallback(() => router.push(routes.editProfile()), [router]);
   const identity = useMemo<MetaItem[]>(
@@ -174,14 +173,18 @@ export default function ProfileScreen() {
           {/* ---- The week, and the goal it is measured against ---------------- */}
           <Card padding="lg">
             <Row gap="lg" align="center">
+              {/* Only the count inside the ring: "this week" in there overflowed the circle
+                  at the ring's size, so it is the eyebrow over the headline instead. */}
               <ProgressRing
                 progress={goalProgress}
                 theme={theme}
                 size={86}
                 label={`${thisWeek?.workouts ?? 0}/${weeklyGoal}`}
-                sublabel={t('profileScreen.thisWeekLabel')}
               />
               <Stack gap="xs" style={{ flex: 1, minWidth: 0 }}>
+                <Txt variant="micro" tone="faint" uppercase tracking={1.1}>
+                  {t('profileScreen.thisWeekLabel')}
+                </Txt>
                 <Txt variant="subhead">
                   {t(goalHeadline(thisWeek?.workouts ?? 0, weeklyGoal))}
                 </Txt>
@@ -208,25 +211,6 @@ export default function ProfileScreen() {
                 ) : null}
               </Stack>
             </Row>
-          </Card>
-
-          <SectionHeader title={t('tabsProfile.lastFourWeeks')} style={styles.section} />
-          <Card>
-            <MetricGrid columns={3}>
-              <StatTile label={t('profileScreen.sessions')} value={formatNumber(totals?.workouts)} />
-              <StatTile
-                label={t('profileScreen.time')}
-                // Whole hours with the unit drawn small: "11h 20m" does not fit a third of
-                // a phone card, and over four weeks the minutes are noise.
-                value={totals === undefined ? t('common.noValue') : `${Math.round(totals.durationSeconds / 3600)}`}
-                {...(totals === undefined ? {} : { unit: t('tabsProfile.hours') })}
-              />
-              <StatTile
-                label={t('profileScreen.volume')}
-                value={totals === undefined ? t('common.noValue') : `${Math.round(totals.volumeKg / 1000)}`}
-                {...(totals === undefined ? {} : { unit: t('tabsProfile.tonnes') })}
-              />
-            </MetricGrid>
           </Card>
 
           {/* ---- Controls that change what this tab and the rest show --------- */}
@@ -257,6 +241,8 @@ export default function ProfileScreen() {
                   onChange={(next) => update({ language: next })}
                 />
               </Preference>
+              {/* Android only: renders nothing on iOS, where the brand accent stays. */}
+              <AccentPreference />
             </Stack>
           </Card>
 
@@ -348,9 +334,6 @@ function trainingSince(
   return t(data.totals.workouts === 0 ? 'profileScreen.sinceNone' : 'profileScreen.sinceSome');
 }
 
-function formatNumber(value: number | undefined): string {
-  return value === undefined ? '-' : String(value);
-}
 
 const styles = StyleSheet.create({
   identity: { paddingHorizontal: screenGutter, paddingTop: spacing.md, paddingBottom: spacing.xl },

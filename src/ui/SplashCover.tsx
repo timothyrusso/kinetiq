@@ -28,7 +28,7 @@ import Animated, { FadeOut } from 'react-native-reanimated';
 /** Must match the `expo-splash-screen` plugin config in app.json. */
 const NATIVE_SPLASH = {
   light: { background: '#FBFBF8', icon: require('../../assets/splash-icon-light.png') },
-  dark: { background: '#07090F', icon: require('../../assets/splash-icon.png') },
+  dark: { background: '#000000', icon: require('../../assets/splash-icon.png') },
 } as const;
 
 const ICON_WIDTH = 180;
