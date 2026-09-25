@@ -216,11 +216,6 @@ export default function NewRoutineScreen() {
               value={draft.name}
               onChangeText={setDraftName}
               placeholder={t('newRoutine.namePlaceholder')}
-              hint={t(
-                draft.name.trim().length === 0 && draft.items.length > 0
-                  ? 'newRoutine.nameHintEmpty'
-                  : 'newRoutine.nameHint',
-              )}
               returnKeyType="next"
               accessibilityHint={t('newRoutine.nameA11y')}
             />
@@ -238,7 +233,6 @@ export default function NewRoutineScreen() {
             <EmptyState
               icon="listAdd"
               title={t('newRoutine.emptyTitle')}
-              message={t('newRoutine.emptyMessage')}
               actionLabel={t('newRoutine.addExercise')}
               onAction={addExercise}
             />
@@ -280,9 +274,6 @@ export default function NewRoutineScreen() {
                 )}
                 <StatTile label={t('newRoutine.estTime')} value={`~${minutes}`} unit="min" />
               </View>
-              <Txt variant="caption" tone="faint" style={styles.gutter}>
-                {t('newRoutine.reorderNote')}
-              </Txt>
             </Column>
           )}
 

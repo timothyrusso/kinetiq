@@ -407,9 +407,6 @@ export default function RoutineDetailScreen() {
                 />
               ))}
             </View>
-            <Txt variant="caption" tone="faint" style={styles.gutter}>
-              {t('routine.editHint')}
-            </Txt>
           </Column>
         )}
 
