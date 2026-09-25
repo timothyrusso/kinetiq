@@ -1,10 +1,9 @@
 /**
- * Starting a workout from a routine.
+ * Starting a workout: from a routine, or empty.
  *
- * Lives here rather than in either screen because two screens start routines: the Workout
- * tab's "last trained" card and the routine's own detail page: and starting one wrong is not
- * a cosmetic mistake: a session that begins with the wrong rest default or a half-built entry
- * list is a session the user then trains.
+ * Lives here rather than in a screen because starting one wrong is not a cosmetic mistake: a
+ * session that begins with the wrong rest default or a half-built entry list is a session the
+ * user then trains. Both starts share the same re-entrancy latch for the same reason.
  *
  * ## Why the entries come from the caller
  *
@@ -79,4 +78,31 @@ export function useStartRoutine() {
   }, []);
 
   return { start, busy };
+}
+
+/**
+ * An empty session: no routine, no entries. Exercises are added from inside the session
+ * through `pick-exercise` with target `session`, which the player already offers when its list
+ * is empty. `name` is the title the finished workout is stored under, phrased by the caller in
+ * the app's language.
+ */
+export function useStartEmptyWorkout() {
+  const starting = useRef(false);
+
+  const start = useCallback((input: { name: string; defaultRestSeconds: number }) => {
+    if (starting.current) return;
+    starting.current = true;
+    try {
+      startSession({
+        routineId: null,
+        routineName: input.name,
+        entries: [],
+        defaultRestSeconds: input.defaultRestSeconds,
+      });
+    } finally {
+      starting.current = false;
+    }
+  }, []);
+
+  return start;
 }

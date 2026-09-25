@@ -85,22 +85,15 @@ export const en = {
     units: 'Units',
     appearance: 'Appearance',
     language: 'Language',
-    weeklyGoal: 'Weekly goal',
   },
 
   settings: {
-    title: 'Settings',
     you: 'You',
     usedForEstimates: 'Used for estimates',
     name: 'Name',
     height: 'Height',
     birthYear: 'Birth year',
-    app: 'App',
-    trainingPreferences: 'Training preferences',
-    trainingSubtitle: 'Default rest, auto-start, speed against pace',
     notifications: 'Notifications',
-    permissions: 'Permissions',
-    permissionsSubtitle: 'Location, notifications, motion',
     metric: 'Metric',
     imperial: 'Imperial',
     light: 'Light',
@@ -239,6 +232,9 @@ export const en = {
     liveUnnamed: 'A workout is already in progress. Finish or discard it before starting another.',
   },
   exerciseDetail: {
+    heaviestWeight: 'Heaviest weight',
+    perSession: 'Per session',
+    weightChartA11y: 'Heaviest set in each of {count} sessions, from {first} to {last}',
     fallbackTitle: 'Exercise',
     loadError: 'Could not load this exercise',
     unknownTitle: 'Nothing known about this exercise',
@@ -300,7 +296,6 @@ export const en = {
     unknown: 'unknown',
     appId: 'App ID',
     appIdHint: 'Worth quoting if something breaks.',
-    schema: 'Database schema',
     storageNote:
       'Everything is stored on this device. Kinetiq has no account, no sign-in, and no server of its own.',
     catalog: 'Exercise catalog',
@@ -317,13 +312,6 @@ export const en = {
     nothingStored: 'Nothing stored yet.',
     routines: 'Routines',
     routinesHint: 'Each carries its own exercise snapshots.',
-    units: 'Units',
-    appearance: 'Appearance',
-    matchSystem: 'Match the system',
-    developer: 'Developer',
-    thisBuildOnly: 'This build only',
-    faultInjection: 'Fault injection',
-    faultSubtitle: 'Fail, slow or stall a request, and count what the app then sends',
     reset: 'Reset',
     eraseAll: 'Erase all Kinetiq data',
     eraseNote:
@@ -420,8 +408,8 @@ export const en = {
     moreSetsOf_other: '{count} more sets of {name}',
   },
   profileScreen: {
+    editProfileHint: 'Opens your name, height and birth year',
     athlete: 'Athlete',
-    settings: 'Settings',
     loadingHistory: 'Loading history…',
     thisWeekLabel: 'this week',
     readingHistory: 'Reading your history…',
@@ -437,16 +425,11 @@ export const en = {
     volume: 'Volume',
     unitsHint: 'Affects every distance, weight and pace in the app.',
     appearanceHint: 'Dark mode is a designed palette, not inverted colours.',
-    goalHint: 'Sessions a week. Home and this card measure against it.',
     app: 'App',
     trainingPrefs: 'Training preferences',
-    trainingPrefsSubtitle: 'Default rest, auto-start, speed against pace',
+    trainingPrefsSubtitle: 'Default rest, auto-start, haptics, weekly goal',
     notifications: 'Notifications',
-    notificationsSubtitle: 'Rest timer, reminders{haptics}',
-    hapticsOn: ', haptics on',
-    hapticsOff: ', haptics off',
-    permissions: 'Permissions',
-    permissionsSubtitle: 'Location, notifications, motion',
+    notificationsSubtitle: 'Rest timer, reminders, permission',
     aboutTitle: 'About Kinetiq',
     aboutSubtitle: 'Version, data, the exercise catalog',
     privacyNote: 'Routines, history and settings live on this device. Only exercise search leaves it.',
@@ -460,6 +443,9 @@ export const en = {
   },
 
   workoutTab: {
+    quickStart: 'Quick start',
+    startEmpty: 'Start empty workout',
+    emptyWorkoutName: 'Workout',
     orderRecent: 'Recent',
     orderName: 'A-Z',
     buildOnce: 'Build a routine once, run it forever',
@@ -473,16 +459,9 @@ export const en = {
     resumeA11y: '{name} in progress. {done} of {total} sets done. Resume.',
     trainingNow: 'Training now',
     setsOfTotal: '{done}/{total} sets',
-    lastTrainedA11y: '{name}, last trained {ago}. Opens the routine.',
-    lastTrained: 'Last trained',
     routineWord_one: 'routine',
     routineWord_other: 'routines',
     routinesReady: '{count} {word} ready to train',
-    nothingToTrain: 'Nothing to train yet: open this routine and add an exercise.',
-    start: 'Start',
-    sessionsPerRoutine: 'Sessions per routine',
-    allTime: 'All time',
-    sessionsChartNote: 'How often each routine gets run, since you started tracking.',
     doneTimes: '{count}× done',
   },
   // --- group-d ---
@@ -493,7 +472,6 @@ export const en = {
   // --- end group-d ---
   settingsScreen: {
     namePlaceholder: 'Athlete',
-    unsaved: 'Unsaved. Leaving this screen without saving discards these changes.',
     heightRequired: 'Height is needed for calorie estimates.',
     numbersOnly: 'Numbers only.',
     heightRange: 'Must be between {min} and {max} cm.',
@@ -501,12 +479,6 @@ export const en = {
     birthYearDigits: 'Four digits, like 1994.',
     birthYearRange: 'Must be between {min} and {max}.',
     nameTooShort: 'A name needs at least two characters.',
-    notificationsOff: 'All notifications off',
-    notificationsBlocked: 'Blocked in the system settings',
-    restTimerOnly: 'Rest timer only',
-    dayWord_one: 'day',
-    dayWord_other: 'days',
-    restTimerPlusDays: 'Rest timer · {count} {word} a week',
   },
   setRow: {
     bodyweight: 'bodyweight',
@@ -543,30 +515,8 @@ export const en = {
     removePlain: '{name} comes out of this workout. Nothing else changes.',
   },
   perms: {
-    title: 'Permissions',
-    askAgain: 'Ask again',
-    notifications: 'Notifications',
     granted: 'Granted',
     notGranted: 'Not granted',
-    notifGranted: 'Kinetiq may send notifications',
-    notifDenied: 'Kinetiq may not send notifications',
-    notifGrantedBody: 'Rest-timer alerts and the weekly reminder can be delivered.',
-    notifDeniedBody:
-      'The rest timer keeps counting on screen either way, so a workout is never interrupted by this.',
-    sendThemAtAll: 'Send them at all',
-    ownSwitch: 'The app own switch. Off overrides everything, granted or not.',
-    reminderDays: 'Reminder days and times',
-    motion: 'Motion',
-    noSystemPermission: 'No system permission needed',
-    haptics: 'Haptics',
-    neverRequested: 'Never requested',
-    neverBackgroundTitle: 'Background location',
-    neverBackgroundDetail: 'Positions stop the moment the app leaves the foreground.',
-    neverHealthTitle: 'Health app',
-    neverHealthDetail: 'No HealthKit read or write. Kinetiq is the source, not a mirror.',
-    neverMotionTitle: 'Motion and fitness',
-    neverMotionDetail:
-      'Steps and cadence are not collected. Distance comes from GPS or from time.',
   },
 
   notif: {
@@ -672,7 +622,6 @@ export const en = {
     autoStartRest: 'Start rest automatically',
     haptics: 'Haptics',
     weeklyGoal: 'Weekly goal',
-    alsoOnProfile: 'Also on your Profile tab',
     sessionsPerWeek: 'Sessions per week',
   },
 
@@ -714,10 +663,6 @@ export const en = {
       'The link you followed points somewhere this app does not have. Your routines, history and settings are untouched.',
     muscleTagging:
       'Muscle assignments come from the library own tagging: a guide to the movement emphasis, not an anatomical claim about your body.',
-    hapticsBody:
-      'A buzz on a completed set, a rest that ends, and a new record. The system needs no permission for this; it follows its own haptics setting.',
-    settingsFootnote:
-      'Units, appearance and your weekly goal are on the Profile tab, next to the numbers they change.',
     midSessionNote:
       'You are mid-session, so the schedule was saved but not re-armed: your rest timer keeps the alert it already has. It updates when the session ends.',
     restDefaultBody:

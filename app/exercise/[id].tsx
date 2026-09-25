@@ -50,6 +50,7 @@ import { Icon, ICON_SIZE } from '@/ui/icons';
 import { ActionRow } from '@/ui/rows';
 import { ExerciseRow, ExerciseThumb, ListRow } from '@/ui/rows';
 import { EmptyState, ErrorState, SkeletonCard } from '@/ui/states';
+import { LineChart, type LinePoint } from '@/ui/charts/LineChart';
 import {
   useExerciseResolution,
   useExerciseVariations,
@@ -72,7 +73,7 @@ import {
   weightValue,
   type UnitSystem,
 } from '@/utils/format';
-import { agoLabel, shortDateLabel } from '@/utils/relativeTime';
+import { agoLabel, formatShortDateLocalized, shortDateLabel } from '@/utils/relativeTime';
 import { useT } from '@/i18n/useT';
 import type { Exercise } from '@/domain/types';
 
@@ -89,7 +90,7 @@ const ART_HEIGHT = 260;
 const NO_ART_HEIGHT = 270;
 
 export default function ExerciseDetailScreen() {
-  const { t } = useT();
+  const { t, locale } = useT();
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useAppTheme();
   const bottom = useScreenContentBottom();
@@ -133,6 +134,29 @@ export default function ExerciseDetailScreen() {
       })),
     [exercise],
   );
+  // Heaviest completed set per session, in the user's units. Built here, once per history
+  // change, so the chart receives stable points rather than a fresh array per render.
+  const weightChart = useMemo(() => {
+    const trend = history.history.weightTrend;
+    const points: LinePoint[] = trend.map((point) => ({
+      key: point.activityId,
+      label: formatShortDateLocalized(point.performedAt, locale),
+      value: point.weightKg,
+    }));
+    const first = trend[0];
+    const last = trend.at(-1);
+    const a11y =
+      first && last
+        ? t('exerciseDetail.weightChartA11y', {
+            count: trend.length,
+            first: formatWeight(first.weightKg, units),
+            last: formatWeight(last.weightKg, units),
+          })
+        : '';
+    return { points, a11y };
+  }, [history.history.weightTrend, locale, t, units]);
+  const formatChartWeight = useCallback((kg: number) => formatWeight(kg, units), [units]);
+
   const openSession = useCallback((activityId: string) => {
     router.push(routes.activityDetail(activityId));
   }, []);
@@ -291,6 +315,23 @@ export default function ExerciseDetailScreen() {
                       value={String(history.history.totalSets)}
                     />
                   </View>
+                  {/* Two points is the least that makes a line; one session is a dot, and the
+                      set above already says what it was. */}
+                  {weightChart.points.length >= 2 ? (
+                    <Card>
+                      <SectionHeader
+                        title={t('exerciseDetail.heaviestWeight')}
+                        eyebrow={t('exerciseDetail.perSession')}
+                        style={styles.chartTitle}
+                      />
+                      <LineChart
+                        points={weightChart.points}
+                        theme={theme}
+                        format={formatChartWeight}
+                        accessibilityLabel={weightChart.a11y}
+                      />
+                    </Card>
+                  ) : null}
                 </>
               )}
             </Column>
@@ -615,6 +656,7 @@ const HistoryRow = memo(function HistoryRow({
 
 const styles = StyleSheet.create({
   section: { paddingHorizontal: screenGutter },
+  chartTitle: { marginBottom: spacing.lg },
   noArt: {
     alignItems: 'center',
     justifyContent: 'center',

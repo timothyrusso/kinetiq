@@ -59,8 +59,21 @@ export type ExercisePerformance = {
   seeded: boolean;
 };
 
+/** One point of the heaviest-weight line: a session's heaviest completed set. */
+export type WeightPoint = {
+  activityId: string;
+  performedAt: number;
+  weightKg: number;
+};
+
 export type ExerciseHistory = {
   sessions: ExercisePerformance[];
+  /**
+   * Heaviest completed set per session, oldest first, for the detail screen's line. Sessions
+   * with no weighted set (bodyweight, or skipped) are left out rather than drawn as zero: a
+   * dip to 0 kg would read as a collapse in strength that never happened.
+   */
+  weightTrend: WeightPoint[];
   sessionsCount: number;
   totalVolumeKg: number;
   totalSets: number;
@@ -76,6 +89,7 @@ export type ExerciseHistory = {
 
 const EMPTY_HISTORY: ExerciseHistory = {
   sessions: [],
+  weightTrend: [],
   sessionsCount: 0,
   totalVolumeKg: 0,
   totalSets: 0,
@@ -187,6 +201,13 @@ function summarise(exerciseId: string, activities: readonly Activity[]): Exercis
 
   return {
     sessions,
+    weightTrend: weighted
+      .map((session) => ({
+        activityId: session.activityId,
+        performedAt: session.performedAt,
+        weightKg: session.topWeightKg,
+      }))
+      .reverse(),
     sessionsCount: sessions.length,
     totalVolumeKg: sum(sessions.map((s) => s.volumeKg)),
     totalSets: sum(sessions.map((s) => s.completedSets)),

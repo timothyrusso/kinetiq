@@ -10,8 +10,7 @@
  *
  * There is no build number. Reading it needs `expo-application`, which is not a dependency,
  * and adding a native module to display one digit users will never compare is a bad trade.
- * What a support conversation actually needs is on this card instead: the app id, and the
- * database schema version.
+ * What a support conversation actually needs is on this card instead: the app id.
  *
  * ## The exercise catalog is named because it is someone else's data
  *
@@ -37,16 +36,14 @@
  */
 import { useCallback, useMemo, useState } from 'react';
 import Constants from 'expo-constants';
-import { router } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { ScreenHeader } from '@/ui/Screen';
 import { SettingsList, type SettingsSection } from '@/ui/controls/SettingsList';
 import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
 import { getExerciseProvider } from '@/api';
-import { clearAllUserData, readSchemaVersion, SEED_DONE_KEY, writeState } from '@/persistence';
-import { DEFAULT_SETTINGS, updateSettings, useSettings } from '@/settings';
-import { routes } from '@/navigation/nav';
+import { clearAllUserData, SEED_DONE_KEY, writeState } from '@/persistence';
+import { DEFAULT_SETTINGS, updateSettings } from '@/settings';
 import { useActivityHistory } from '@/queries/useActivities';
 import { useRoutines } from '@/queries/useRoutines';
 import { haptics } from '@/services/haptics';
@@ -60,10 +57,7 @@ export default function SettingsAboutScreen() {
   const config = Constants.expoConfig;
   const version = config?.version ?? null;
   const appId = config?.ios?.bundleIdentifier ?? config?.android?.package ?? config?.slug ?? null;
-  const schema = useSchemaVersion();
 
-  const unitSystem = useSettings((s) => s.unitSystem);
-  const themeMode = useSettings((s) => s.themeMode);
   // Home's own query, so this renders from a cache the app has already filled. See the header.
   const history = useActivityHistory();
   const { routines, isLoading: routinesLoading } = useRoutines();
@@ -110,13 +104,6 @@ export default function SettingsAboutScreen() {
             subtitle: t('about.appIdHint'),
             value: appId ?? t('about.unknown'),
           },
-          {
-            kind: 'info',
-            key: 'schema',
-            title: t('about.schema'),
-            // `readSchemaVersion` answers null when the read fails; "vnull" is not a version.
-            value: schema === null ? t('about.unknown') : `v${schema}`,
-          },
         ],
       },
       {
@@ -150,42 +137,9 @@ export default function SettingsAboutScreen() {
             subtitle: t('about.routinesHint'),
             value: routinesLoading ? t('about.counting') : String(routines.length),
           },
-          {
-            kind: 'info',
-            key: 'units',
-            title: t('about.units'),
-            value: t(unitSystem === 'metric' ? 'settings.metric' : 'settings.imperial'),
-          },
-          {
-            kind: 'info',
-            key: 'appearance',
-            title: t('about.appearance'),
-            value: t(
-              themeMode === 'system' ? 'about.matchSystem' : themeMode === 'light' ? 'settings.light' : 'settings.dark',
-            ),
-          },
         ],
       },
     ];
-    // Compiled into the route table either way (expo-router has no conditional routes), so
-    // `app/dev.tsx` returns null outside __DEV__ too. The entry point is what is gated: a
-    // row that leads to a blank screen is worse than no row.
-    if (__DEV__) {
-      list.push({
-        key: 'dev',
-        title: t('about.developer'),
-        footer: t('about.thisBuildOnly'),
-        rows: [
-          {
-            kind: 'nav',
-            key: 'faults',
-            title: t('about.faultInjection'),
-            subtitle: t('about.faultSubtitle'),
-            onPress: () => router.push(routes.dev()),
-          },
-        ],
-      });
-    }
     list.push({
       key: 'reset',
       title: t('about.reset'),
@@ -204,7 +158,7 @@ export default function SettingsAboutScreen() {
       ],
     });
     return list;
-  }, [activityCount, history.isLoading, appId, provider, routines.length, routinesLoading, schema, t, themeMode, unitSystem, version]);
+  }, [activityCount, history.isLoading, appId, provider, routines.length, routinesLoading, t, version]);
 
   return (
     <>
@@ -230,16 +184,6 @@ export default function SettingsAboutScreen() {
 }
 
 /* ----------------------------------------------------------------- helpers -- */
-
-/**
- * The version this install actually migrated to. The read, and why it asks the database
- * instead of importing a constant, live in `readSchemaVersion` (src/persistence/database.ts);
- * this pins the answer to the first render so the row never flashes 'reading…'.
- */
-function useSchemaVersion(): number | null {
-  const [version] = useState<number | null>(readSchemaVersion);
-  return version;
-}
 
 /**
  * The provider's own `name` is a machine identifier ('wger'): right for a query key, wrong

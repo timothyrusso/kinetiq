@@ -1,5 +1,5 @@
 /**
- * Profile tab: identity, the two numbers worth glancing at, and the way out to settings.
+ * Profile tab: identity, the week against its goal, the last four weeks, and the settings.
  *
  * ## Why this is not a settings list
  *
@@ -17,35 +17,36 @@
  *
  * ## Structured, not sentences
  *
- * The four totals are `StatTile`s in a two-column grid, the identity line is a `MetaLine` of
- * separate facts (height, age), and the weekly goal is the platform stepper from
- * `src/ui/controls`. Links out are rows with chevrons, all of them: a row that navigates and
- * shows no chevron reads as a row that does nothing.
+ * The three totals are `StatTile`s in one row, and the identity line is a `MetaLine` of
+ * separate facts (height, age). Links out are rows with chevrons, all of them, the identity
+ * block included: a row that navigates and shows no chevron reads as a row that does nothing.
+ *
+ * ## The name is the way into the profile editor
+ *
+ * Tapping the name and its facts opens the editor as a form sheet, the way a contacts card
+ * opens its own edit form. The weekly goal is edited in Training settings only: one control
+ * for one number.
  *
  * ## Streak and goal, not history
  *
- * Two numbers, both of which change daily and neither of which is available anywhere else
- * at a glance. Everything else that lives in history: volumes, PRs, the heatmap: belongs
- * to Progress, which is a full screen with range controls, and repeating a third of it here
- * would just be a second place to be out of date.
+ * Home carries the history and the load chart. This tab shows the two numbers that are about
+ * the user rather than about a session: the week against the goal, and the best streak.
  */
 import { useCallback, useMemo } from 'react';
 import type { TKey, TVars } from '@/i18n';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTabContentBottom } from '@/ui/insets';
 
 import { Icon } from '@/ui/icons';
 import { SCROLL_INSETS, ScreenHeader } from '@/ui/Screen';
 import { MetaLine, StatTile, type MetaItem } from '@/ui/display';
-import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { Avatar, NavRow } from '@/ui/rows';
 import { Badge, Card, MetricGrid, Row } from '@/ui/layout';
 import { SectionHeader } from '@/ui/display';
 import { SegmentedControl } from '@/ui/controls/SegmentedControl';
 import { useT } from '@/i18n/useT';
 import type { Language } from '@/i18n';
-import { Stepper } from '@/ui/controls/Stepper';
 import { ProgressRing } from '@/ui/charts/ProgressRing';
 import { Txt } from '@/ui/Text';
 import { Divider, Stack } from '@/ui/layout';
@@ -118,11 +119,10 @@ export default function ProfileScreen() {
     [t],
   );
   const weeklyGoal = useSettings((s) => s.weeklyGoalWorkouts);
-  const hapticsEnabled = useSettings((s) => s.hapticsEnabled);
   const update = useSettingsUpdate();
 
   // Four weeks: long enough that a week off does not zero the totals, short enough that a
-  // change in behaviour shows up. The heatmap on Progress carries the long view.
+  // change in behaviour shows up. Home's load chart carries the long view.
   const summary = useTrainingSummary(4);
   const weeks = summary.data?.weeks;
 
@@ -132,7 +132,7 @@ export default function ProfileScreen() {
 
   const totals = summary.data?.totals;
   const age = useMemo(() => new Date().getFullYear() - birthYear, [birthYear]);
-  const openSettings = useCallback(() => router.push(routes.settings()), [router]);
+  const openEditor = useCallback(() => router.push(routes.editProfile()), [router]);
   const identity = useMemo<MetaItem[]>(
     () => [
       { icon: 'ruler', label: t('tabsProfile.height', { height: heightCm }) },
@@ -148,24 +148,30 @@ export default function ProfileScreen() {
   return (
     <>
       <ScreenHeader title={t('tabs.profile')} />
-      <HeaderToolbar placement="right">
-        {headerAction({ action: 'settings', onPress: openSettings, t, label: 'profileScreen.settings' })}
-      </HeaderToolbar>
 
       <ScrollView
         {...SCROLL_INSETS}
         contentContainerStyle={[styles.content, { paddingBottom: bottomSpace }]}
         keyboardShouldPersistTaps="handled"
       >
-        <Row gap="md" align="center" style={styles.identity}>
-          <Avatar name={name} theme={theme} size={62} />
-          <Stack gap="xs" style={{ flex: 1, minWidth: 0 }}>
-            <Txt variant="title" numberOfLines={1}>
-              {name || t('profileScreen.athlete')}
-            </Txt>
-            <MetaLine items={identity} theme={theme} wrap />
-          </Stack>
-        </Row>
+        <Pressable
+          onPress={openEditor}
+          accessibilityRole="button"
+          accessibilityLabel={name || t('profileScreen.athlete')}
+          accessibilityHint={t('profileScreen.editProfileHint')}
+          style={({ pressed }) => [styles.identity, pressed ? { opacity: 0.6 } : null]}
+        >
+          <Row gap="md" align="center">
+            <Avatar name={name} theme={theme} size={62} />
+            <Stack gap="xs" style={{ flex: 1, minWidth: 0 }}>
+              <Txt variant="title" numberOfLines={1}>
+                {name || t('profileScreen.athlete')}
+              </Txt>
+              <MetaLine items={identity} theme={theme} wrap />
+            </Stack>
+            <Icon name="chevronRight" size={18} color={theme.colors.textFaint} />
+          </Row>
+        </Pressable>
 
         <View style={styles.body}>
           {/* ---- The week, and the goal it is measured against ---------------- */}
@@ -251,15 +257,6 @@ export default function ProfileScreen() {
                   onChange={(next) => update({ language: next })}
                 />
               </Preference>
-              <Preference label={t('profile.weeklyGoal')} hint={t('profileScreen.goalHint')}>
-                <Stepper
-                  value={weeklyGoal}
-                  min={1}
-                  max={14}
-                  label={t('profile.weeklyGoal')}
-                  onChange={(next) => update({ weeklyGoalWorkouts: next })}
-                />
-              </Preference>
             </Stack>
           </Card>
 
@@ -276,21 +273,10 @@ export default function ProfileScreen() {
             />
             <NavRow
               title={t('profileScreen.notifications')}
-              description={t('profileScreen.notificationsSubtitle', {
-                haptics: t(
-                  hapticsEnabled ? 'profileScreen.hapticsOn' : 'profileScreen.hapticsOff',
-                ),
-              })}
+              description={t('profileScreen.notificationsSubtitle')}
               theme={theme}
               icon="bell"
               onPress={() => router.push(routes.settingsNotifications())}
-            />
-            <NavRow
-              title={t('profileScreen.permissions')}
-              description={t('profileScreen.permissionsSubtitle')}
-              theme={theme}
-              icon="lock"
-              onPress={() => router.push(routes.permissions())}
             />
             <NavRow
               title={t('profileScreen.aboutTitle')}
@@ -318,9 +304,7 @@ export default function ProfileScreen() {
 /**
  * A label, its explanation, and the control beneath both.
  *
- * The hint is not decoration: "Units" is ambiguous between weight and distance, and a user
- * changing it to fix their pace display should be able to tell that this is the right knob
- * before they turn it.
+ * The hint is not decoration: it says what the control changes before the user turns it.
  */
 function Preference({
   label,

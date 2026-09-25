@@ -4,7 +4,7 @@
  * ## Ordered by what the user is mid-way through
  *
  * Two states, one priority: an in-flight session goes first (it is unfinished and
- * time-sensitive), then routines. A screen that keeps leading with
+ * time-sensitive); otherwise "Start empty workout", then the routines. A screen that keeps leading with
  * "start something new" while a set sits half-completed is asking to be abandoned, so the
  * resume card is not a banner appended to a list: it *is* the first thing on screen.
  *
@@ -25,13 +25,11 @@
  *
  * ## No history list
  *
- * Activities owns history. Repeating it here would be a second list with a second sort and
- * no second purpose. What this tab can answer that Activities cannot is "which routines am
- * I actually running, and when did I last do each?": so that lives on the routine rows.
+ * Home owns history. What this tab answers is "which routines do I have, and when did I last
+ * do each?", so that lives on the routine rows.
  */
 import { memo, useCallback, useMemo, useState } from 'react';
 import {
-  Pressable,
   ScrollView,
   StyleSheet,
   View,
@@ -48,11 +46,9 @@ import { MetaLine, type MetaItem } from '@/ui/display';
 import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { RoutineRow } from '@/ui/rows';
 import { SegmentedControl } from '@/ui/controls/SegmentedControl';
-import { MetricLabel, Txt } from '@/ui/Text';
+import { Txt } from '@/ui/Text';
 import { EmptyState, ErrorState, SkeletonCard } from '@/ui/states';
 import { ProgressRing } from '@/ui/charts/ProgressRing';
-import { useMeasuredWidth } from '@/ui/charts/useMeasuredWidth';
-import { BarChart, type BarPoint } from '@/ui/charts/BarChart';
 import { useRoutines } from '@/queries/useRoutines';
 import { routes } from '@/navigation/nav';
 import type { Routine } from '@/domain/types';
@@ -63,7 +59,7 @@ import { spacing, screenGutter } from '@/theme/tokens';
 import { formatTimer } from '@/utils/format';
 import { useSettings } from '@/settings';
 import { haptics } from '@/services/haptics';
-import { useStartRoutine } from '@/workout/startRoutine';
+import { useStartEmptyWorkout } from '@/workout/startRoutine';
 import { useWorkoutRunning, useWorkoutSession } from '@/workout/session';
 import { formatAgoLocalized } from '@/utils/relativeTime';
 
@@ -75,9 +71,6 @@ const ORDER_SEGMENTS: readonly { value: Order; label: TKey }[] = [
   { value: 'name', label: 'workoutTab.orderName' },
 ];
 
-/** Clearance for the floating tab bar, which this tab is inside. */
-const CARD_PADDING = spacing.lg;
-
 export default function WorkoutScreen() {
   const { t, locale } = useT();
   const router = useRouter();
@@ -86,7 +79,6 @@ export default function WorkoutScreen() {
 
   const routines = useRoutines();
   const [order, setOrder] = useState<Order>('recent');
-  const [sectionWidth, measureSection] = useMeasuredWidth();
 
   // One card covers both "I am mid-set" and "the app was killed mid-set", because by the time
   // this screen can see either they are the same object: bootstrap restores an unfinished
@@ -138,15 +130,6 @@ export default function WorkoutScreen() {
     [routines.count, t],
   );
 
-  const mostRecent = useMemo(() => {
-    const trained = routines.routines.filter((r) => r.lastPerformedAt !== null);
-    if (trained.length === 0) return null;
-    return trained.reduce((a, b) =>
-      (b.lastPerformedAt ?? 0) > (a.lastPerformedAt ?? 0) ? b : a,
-    );
-  }, [routines.routines]);
-
-  const gridWidth = sectionWidth;
 
   return (
     <>
@@ -164,11 +147,9 @@ export default function WorkoutScreen() {
 
         {resuming ? <LiveResumeCard onPress={openSession} /> : null}
 
-        {mostRecent && !resuming ? (
-          <LastTrainedCard routine={mostRecent} onOpen={openRoutine} />
-        ) : null}
+        {resuming ? null : <StartEmptyWorkout onStarted={openSession} />}
 
-        <View style={styles.section} onLayout={measureSection}>
+        <View style={styles.section}>
           <SectionHeader
             title={t('workout.yourRoutines')}
             eyebrow={t('workoutTab.saved')}
@@ -214,8 +195,6 @@ export default function WorkoutScreen() {
             </View>
           )}
         </View>
-
-        <SessionCounts routines={routines.routines} width={gridWidth} />
       </ScrollView>
     </>
   );
@@ -314,148 +293,25 @@ function ResumeCard({
 }
 
 /**
- * The card is not itself a button.
- *
- * A tappable card with a Start button inside it has to swallow the inner press to avoid
- * firing both, and RN's responder system makes that fiddly to get right on Android. Two
- * separate targets: the name block opens, Start starts: is unambiguous to read and to
- * hit, and needs no event plumbing at all.
+ * A session with nothing in it yet: exercises are added from inside the player, which offers
+ * the picker while its list is empty. Starting is a navigation, not a mutation: the session
+ * store is synchronous and persists on its own, so there is nothing to wait for.
  */
-function LastTrainedCard({ routine, onOpen }: { routine: Routine; onOpen: (id: string) => void }) {
-  const { t, locale } = useT();
-  const theme = useAppTheme();
-  const performedAt = routine.lastPerformedAt ?? routine.createdAt;
-  const ago = formatAgoLocalized(performedAt, t, locale);
-  const meta: MetaItem[] = [
-    { icon: 'calendar', label: ago },
-    { icon: 'layers', label: t('workout.exercise', { count: routine.items.length }) },
-  ];
-  // The card, not the button, shows the refusal: squeezed under a `Start` button the line
-  // would be two clipped words, and this is the one case where the button correctly did
-  // nothing: it has to be readable, not merely present.
-  const [refused, setRefused] = useState(false);
-  return (
-    <View style={styles.section}>
-      <Card>
-        <Row gap="lg" align="center">
-          <Pressable
-            onPress={() => onOpen(routine.id)}
-            accessibilityRole="button"
-            accessibilityLabel={t('workoutTab.lastTrainedA11y', { name: routine.name, ago })}
-            style={styles.lastTrained}
-          >
-            <MetricLabel label={t('workoutTab.lastTrained')} />
-            <Txt variant="subhead" weight="700" numberOfLines={1} style={{ marginTop: spacing.xs }}>
-              {routine.name}
-            </Txt>
-            <MetaLine items={meta} theme={theme} style={styles.cardMeta} />
-          </Pressable>
-          <StartButton routine={routine} onRefused={() => setRefused(true)} />
-        </Row>
-        {refused ? (
-          <Txt variant="caption" tone="danger" style={{ marginTop: spacing.sm }}>
-            {t('workoutTab.nothingToTrain')}
-          </Txt>
-        ) : null}
-      </Card>
-    </View>
-  );
-}
-
-/**
- * Starting a workout is a navigation, not a mutation.
- *
- * `startSession` is synchronous over an in-memory store and persists on its own; the session
- * screen reads the same store. `useStartRoutine` owns the whole sequence: the same one the
- * routine screen runs, which is the point: two entry points that build entries slightly
- * differently, or that read a default rest time from different places, is how a user ends up
- * with a different workout depending on which of two identical buttons they happened to tap.
- * It also latches on a ref rather than state, because a double-tap in one frame would
- * otherwise start twice and replace the session that was just created.
- */
-function StartButton({ routine, onRefused }: { routine: Routine; onRefused: () => void }) {
+function StartEmptyWorkout({ onStarted }: { onStarted: () => void }) {
   const { t } = useT();
-  const router = useRouter();
   const defaultRest = useSettings((s) => s.defaultRestSeconds);
-  const { start, busy } = useStartRoutine();
-
-  return (
-    <Button
-      label={t('workoutTab.start')}
-      icon="play"
-      size="sm"
-      loading={busy}
-      onPress={() =>
-        start({
-          routineId: routine.id,
-          routineName: routine.name,
-          items: routine.items,
-          defaultRestSeconds: defaultRest,
-          onResult: (started) => {
-            if (started) {
-              haptics.success();
-              router.push(routes.workoutSession());
-              return;
-            }
-            onRefused();
-          },
-        })
-      }
-    />
-  );
-}
-
-/**
- * Sessions per routine.
- *
- * Deliberately not volume or minutes: those belong on Progress, which derives them from
- * activity history over a date range. The honest question here is *which routines actually
- * get run*, and that is countable from the routine rows themselves: no extra query, and
- * nothing that could disagree with the Progress tab.
- */
-function SessionCounts({ routines, width }: { routines: readonly Routine[]; width: number }) {
-  const { t } = useT();
-  const theme = useAppTheme();
-  const points = useMemo<BarPoint[]>(
-    () =>
-      routines
-        .filter((routine) => routine.timesCompleted > 0)
-        .slice(0, 6)
-        .map((routine) => ({
-          label: shortLabel(routine.name),
-          value: routine.timesCompleted,
-          detail: routine.name,
-        })),
-    [routines],
-  );
-  if (points.length < 2 || width <= CARD_PADDING * 2) return null;
-
+  const start = useStartEmptyWorkout();
+  const press = useCallback(() => {
+    start({ name: t('workoutTab.emptyWorkoutName'), defaultRestSeconds: defaultRest });
+    haptics.success();
+    onStarted();
+  }, [defaultRest, onStarted, start, t]);
   return (
     <View style={styles.section}>
-      <SectionHeader
-        title={t('workoutTab.sessionsPerRoutine')}
-        eyebrow={t('workoutTab.allTime')}
-      />
-      <Card>
-        <BarChart
-          points={points}
-          theme={theme}
-          width={width - CARD_PADDING * 2}
-          height={140}
-          format={(value) => `${value}`}
-        />
-        <Txt variant="micro" tone="faint" style={{ marginTop: spacing.sm }}>
-          {t('workoutTab.sessionsChartNote')}
-        </Txt>
-      </Card>
+      <SectionHeader title={t('workoutTab.quickStart')} />
+      <Button label={t('workoutTab.startEmpty')} icon="plus" variant="secondary" fullWidth onPress={press} />
     </View>
   );
-}
-
-/** Bar labels are a few characters wide; the rest of a routine name belongs in its `detail`. */
-function shortLabel(name: string): string {
-  const clean = name.replace(/^[\s°]+/, '').trim();
-  return clean.length <= 5 ? clean : `${clean.slice(0, 4)}.`;
 }
 
 /**
@@ -505,6 +361,5 @@ const styles = StyleSheet.create({
   section: { paddingHorizontal: screenGutter, paddingTop: spacing.xxl },
   order: { marginBottom: spacing.md },
   cardMeta: { marginTop: spacing.xs },
-  lastTrained: { flex: 1, minWidth: 0, paddingVertical: spacing.xs },
   dot: { width: 8, height: 8, borderRadius: 4 },
 } satisfies Record<string, ViewStyle>);

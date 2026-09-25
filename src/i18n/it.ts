@@ -87,22 +87,15 @@ export const it: Copy = {
     units: 'Unità',
     appearance: 'Aspetto',
     language: 'Lingua',
-    weeklyGoal: 'Obiettivo settimanale',
   },
 
   settings: {
-    title: 'Impostazioni',
     you: 'Tu',
     usedForEstimates: 'Usati per le stime',
     name: 'Nome',
     height: 'Altezza',
     birthYear: 'Anno di nascita',
-    app: 'App',
-    trainingPreferences: 'Preferenze di allenamento',
-    trainingSubtitle: 'Recupero predefinito, avvio automatico, velocità o ritmo',
     notifications: 'Notifiche',
-    permissions: 'Autorizzazioni',
-    permissionsSubtitle: 'Posizione, notifiche, movimento',
     metric: 'Metrico',
     imperial: 'Imperiale',
     light: 'Chiaro',
@@ -241,6 +234,9 @@ export const it: Copy = {
     liveUnnamed: 'Un allenamento è già in corso. Completalo o scartalo prima di iniziarne un altro.',
   },
   exerciseDetail: {
+    heaviestWeight: 'Carico massimo',
+    perSession: 'Per sessione',
+    weightChartA11y: 'Serie più pesante in ciascuna di {count} sessioni, da {first} a {last}',
     fallbackTitle: 'Esercizio',
     loadError: 'Non è stato possibile caricare questo esercizio',
     unknownTitle: 'Nessuna informazione su questo esercizio',
@@ -302,7 +298,6 @@ export const it: Copy = {
     unknown: 'sconosciuta',
     appId: 'ID app',
     appIdHint: 'Utile da citare se qualcosa si rompe.',
-    schema: 'Schema del database',
     storageNote:
       'Tutto è salvato su questo dispositivo. Kinetiq non ha account, non ha accessi e non ha un server proprio.',
     catalog: 'Catalogo esercizi',
@@ -319,13 +314,6 @@ export const it: Copy = {
     nothingStored: 'Ancora nulla di salvato.',
     routines: 'Schede',
     routinesHint: 'Ognuna porta con sé le copie dei suoi esercizi.',
-    units: 'Unità',
-    appearance: 'Aspetto',
-    matchSystem: 'Come il sistema',
-    developer: 'Sviluppatore',
-    thisBuildOnly: 'Solo in questa build',
-    faultInjection: 'Iniezione di guasti',
-    faultSubtitle: "Fai fallire, rallentare o bloccare una richiesta, e conta cosa manda l'app",
     reset: 'Azzera',
     eraseAll: 'Cancella tutti i dati di Kinetiq',
     eraseNote:
@@ -423,8 +411,8 @@ export const it: Copy = {
     moreSetsOf_other: '{count} serie ancora di {name}',
   },
   profileScreen: {
+    editProfileHint: 'Apre nome, altezza e anno di nascita',
     athlete: 'Atleta',
-    settings: 'Impostazioni',
     loadingHistory: 'Caricamento cronologia…',
     thisWeekLabel: 'questa settimana',
     readingHistory: 'Lettura della cronologia…',
@@ -440,16 +428,11 @@ export const it: Copy = {
     volume: 'Volume',
     unitsHint: "Vale per ogni distanza, peso e ritmo nell'app.",
     appearanceHint: 'La modalità scura è una palette progettata, non colori invertiti.',
-    goalHint: 'Sessioni a settimana. La Home e questa scheda si misurano su questo.',
     app: 'App',
     trainingPrefs: 'Preferenze di allenamento',
-    trainingPrefsSubtitle: 'Recupero predefinito, avvio automatico, velocità o ritmo',
+    trainingPrefsSubtitle: 'Recupero predefinito, avvio automatico, vibrazione, obiettivo settimanale',
     notifications: 'Notifiche',
-    notificationsSubtitle: 'Timer di recupero, promemoria{haptics}',
-    hapticsOn: ', vibrazione attiva',
-    hapticsOff: ', vibrazione spenta',
-    permissions: 'Autorizzazioni',
-    permissionsSubtitle: 'Posizione, notifiche, movimento',
+    notificationsSubtitle: 'Timer di recupero, promemoria, permesso',
     aboutTitle: 'Informazioni su Kinetiq',
     aboutSubtitle: 'Versione, dati, catalogo esercizi',
     privacyNote:
@@ -464,6 +447,9 @@ export const it: Copy = {
   },
 
   workoutTab: {
+    quickStart: 'Avvio rapido',
+    startEmpty: 'Inizia allenamento vuoto',
+    emptyWorkoutName: 'Allenamento',
     orderRecent: 'Recenti',
     orderName: 'A-Z',
     buildOnce: 'Crea una scheda una volta, usala per sempre',
@@ -477,16 +463,9 @@ export const it: Copy = {
     resumeA11y: '{name} in corso. {done} di {total} serie fatte. Riprendi.',
     trainingNow: 'Allenamento in corso',
     setsOfTotal: '{done}/{total} serie',
-    lastTrainedA11y: '{name}, ultimo allenamento {ago}. Apre la scheda.',
-    lastTrained: 'Ultimo allenamento',
     routineWord_one: 'scheda',
     routineWord_other: 'schede',
     routinesReady: '{count} {word} pronte',
-    nothingToTrain: 'Ancora nulla da allenare: apri questa scheda e aggiungi un esercizio.',
-    start: 'Inizia',
-    sessionsPerRoutine: 'Sessioni per scheda',
-    allTime: 'Sempre',
-    sessionsChartNote: 'Quanto spesso usi ogni scheda, da quando hai iniziato a tracciare.',
     doneTimes: '{count}× fatte',
   },
   // --- group-d ---
@@ -497,7 +476,6 @@ export const it: Copy = {
   // --- end group-d ---
   settingsScreen: {
     namePlaceholder: 'Atleta',
-    unsaved: 'Non salvato. Uscendo da questa schermata senza salvare le modifiche vanno perse.',
     heightRequired: "L'altezza serve per le stime calorie.",
     numbersOnly: 'Solo numeri.',
     heightRange: 'Deve essere tra {min} e {max} cm.',
@@ -505,12 +483,6 @@ export const it: Copy = {
     birthYearDigits: 'Quattro cifre, tipo 1994.',
     birthYearRange: 'Deve essere tra {min} e {max}.',
     nameTooShort: 'Un nome ha bisogno di almeno due caratteri.',
-    notificationsOff: 'Tutte le notifiche spente',
-    notificationsBlocked: 'Bloccate nelle impostazioni di sistema',
-    restTimerOnly: 'Solo timer di recupero',
-    dayWord_one: 'giorno',
-    dayWord_other: 'giorni',
-    restTimerPlusDays: 'Timer di recupero · {count} {word} a settimana',
   },
   setRow: {
     bodyweight: 'corpo libero',
@@ -547,30 +519,8 @@ export const it: Copy = {
     removePlain: '{name} esce da questo allenamento. Nulla altro cambia.',
   },
   perms: {
-    title: 'Autorizzazioni',
-    askAgain: 'Chiedi di nuovo',
-    notifications: 'Notifiche',
     granted: 'Concesse',
     notGranted: 'Non concesse',
-    notifGranted: 'Kinetiq può inviare notifiche',
-    notifDenied: 'Kinetiq non può inviare notifiche',
-    notifGrantedBody: 'Gli avvisi del timer di recupero e il promemoria settimanale possono arrivare.',
-    notifDeniedBody:
-      'Il timer di recupero continua a contare sullo schermo in ogni caso, quindi un allenamento non viene mai interrotto da questo.',
-    sendThemAtAll: 'Inviarle del tutto',
-    ownSwitch: "L'interruttore dell'app. Spento vince su tutto, concesse o no.",
-    reminderDays: 'Giorni e orari del promemoria',
-    motion: 'Movimento',
-    noSystemPermission: 'Nessuna autorizzazione di sistema necessaria',
-    haptics: 'Vibrazione',
-    neverRequested: 'Mai richieste',
-    neverBackgroundTitle: 'Posizione in background',
-    neverBackgroundDetail: "Le posizioni si fermano nel momento in cui l'app lascia il primo piano.",
-    neverHealthTitle: 'App Salute',
-    neverHealthDetail: 'Nessuna lettura o scrittura HealthKit. Kinetiq è la fonte, non uno specchio.',
-    neverMotionTitle: 'Movimento e fitness',
-    neverMotionDetail:
-      'Passi e cadenza non vengono raccolti. La distanza viene dal GPS o dal tempo.',
   },
 
   notif: {
@@ -676,7 +626,6 @@ export const it: Copy = {
     autoStartRest: 'Avvia il recupero automaticamente',
     haptics: 'Vibrazione',
     weeklyGoal: 'Obiettivo settimanale',
-    alsoOnProfile: 'Anche nella scheda Profilo',
     sessionsPerWeek: 'Sessioni a settimana',
   },
 
@@ -719,10 +668,6 @@ export const it: Copy = {
       'Il link che hai seguito punta a un posto che questa app non ha. Schede, cronologia e impostazioni sono intatte.',
     muscleTagging:
       "L'assegnazione dei muscoli viene dalle etichette della libreria: un indizio su dove punta il movimento, non un'affermazione anatomica sul tuo corpo.",
-    hapticsBody:
-      'Una vibrazione su una serie completata, su un recupero che finisce e su un nuovo record. Il sistema non chiede autorizzazioni per questo; segue la sua impostazione di vibrazione.',
-    settingsFootnote:
-      'Unità, aspetto e obiettivo settimanale sono nella scheda Profilo, accanto ai numeri che cambiano.',
     midSessionNote:
       "Sei a metà sessione, quindi la programmazione è stata salvata ma non riarmata: il timer di recupero mantiene l'avviso che ha già. Si aggiorna quando la sessione finisce.",
     restDefaultBody:
