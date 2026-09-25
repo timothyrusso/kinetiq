@@ -24,6 +24,8 @@ export const ITEM_BOUNDS = {
   weightKg: { min: 0, max: 450 },
   restSeconds: { min: 0, max: 600 },
   repsLength: 20,
+  /** The same limit as the item editor's note field. */
+  notesLength: 200,
 } as const;
 
 /** Beyond this a file is not a routine collection anyone meant to import. */
@@ -43,7 +45,6 @@ type RoutineFileItem = {
 
 type RoutineFileRoutine = {
   name: string;
-  description?: string | null;
   items: RoutineFileItem[];
 };
 

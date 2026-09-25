@@ -63,7 +63,6 @@ import {
   moveDraftItem,
   openDraft,
   removeDraftItem,
-  setDraftDescription,
   setDraftName,
   setDraftRestDefault,
   useRoutineDraft,
@@ -218,14 +217,6 @@ export default function NewRoutineScreen() {
               placeholder={t('newRoutine.namePlaceholder')}
               returnKeyType="next"
               accessibilityHint={t('newRoutine.nameA11y')}
-            />
-            <TextInput
-              label={t('newRoutine.notesLabel')}
-              value={draft.description}
-              onChangeText={setDraftDescription}
-              placeholder={t('newRoutine.notesPlaceholder')}
-              multiline
-              accessibilityHint={t('newRoutine.notesA11y')}
             />
           </Column>
 

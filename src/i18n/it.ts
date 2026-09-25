@@ -559,9 +559,6 @@ export const it: Copy = {
     nameLabel: 'Nome della scheda',
     namePlaceholder: 'Giorno di spinta, Giorno gambe, Full Body B',
     nameA11y: 'Dà il nome alla scheda',
-    notesLabel: 'Note',
-    notesPlaceholder: 'Facoltativo: come deve andare la sessione, cosa lasciare in palestra',
-    notesA11y: 'Aggiunge una descrizione facoltativa',
     emptyTitle: 'Ancora nessun esercizio',
     addExercise: 'Aggiungi esercizio',
     exercises: 'Esercizi',
@@ -588,7 +585,7 @@ export const it: Copy = {
     sets: 'Serie',
     reps: 'Ripetizioni',
     repsSuffix: 'rip',
-    editHint: 'Cambia serie, ripetizioni, peso e recupero',
+    editHint: 'Cambia serie, ripetizioni, peso, recupero e nota',
     weightIn: 'Peso ({unit})',
     weightPerSet: 'Peso per serie in {unit}',
     bodyweightShort: 'CL',
@@ -596,6 +593,10 @@ export const it: Copy = {
     fromLibrary: 'Dalla libreria',
     remove: 'Rimuovi',
     zeroRestNote: 'Zero significa che in questo esercizio non parte alcun timer di recupero.',
+    note: 'Nota',
+    notePlaceholder: 'Un suggerimento per la serie: gomiti stretti, pausa sul petto',
+    noteHint: 'Compare su questo esercizio durante l’allenamento.',
+    noteCount: '{count} di {max}',
   },
 
 
@@ -748,7 +749,7 @@ export const it: Copy = {
     aiFooter:
       "Incolla le istruzioni in una chat con un'IA, aggiungi cosa vuoi (\"split upper/lower su 4 giorni, 45 minuti\"), copia la risposta e tocca Incolla dagli appunti. Per modificare schede esistenti, invia anche l'esportazione delle tue schede.",
     aiPrompt:
-      'Stai scrivendo schede da palestra per l\'app Kinetiq. Rispondi SOLO con un documento JSON esattamente in questa forma, senza altro testo:\n\n{\n  "format": "kinetiq.routines",\n  "version": 1,\n  "routines": [\n    {\n      "name": "Push Day",\n      "description": "Petto, spalle e tricipiti",\n      "items": [\n        { "exerciseId": "wger:73", "exerciseName": "Bench Press", "sets": 4, "reps": "8-10", "weightKg": 60, "restSeconds": 120, "notes": null }\n      ]\n    }\n  ]\n}\n\nRegole:\n- exerciseName è obbligatorio. Usa il nome inglese comune dell\'esercizio, anche se il resto è in italiano.\n- exerciseId è facoltativo. Se puoi navigare sul web, cerca l\'esercizio nel catalogo wger (https://wger.de/api/v2/exerciseinfo/?name__search=bench%20press&language__code=en) e scrivi "wger:" seguito dal suo id. Se non puoi, ometti exerciseId. Non inventare mai un id.\n- sets: da 1 a 20. reps: un numero o un intervallo con un trattino semplice, come "8-12". weightKg: da 0 a 450, e 0 per il corpo libero o se non sei sicuro. restSeconds: da 0 a 600.\n- Una scheda per giorno di allenamento, con gli esercizi nell\'ordine in cui si eseguono.\n- Se ti do un file di schede Kinetiq esistente, mantieni i suoi valori exerciseId.\n\nCosa voglio:\n',
+      'Stai scrivendo schede da palestra per l\'app Kinetiq. Rispondi SOLO con un documento JSON esattamente in questa forma, senza altro testo:\n\n{\n  "format": "kinetiq.routines",\n  "version": 1,\n  "routines": [\n    {\n      "name": "Push Day",\n      "items": [\n        { "exerciseId": "wger:73", "exerciseName": "Bench Press", "sets": 4, "reps": "8-10", "weightKg": 60, "restSeconds": 120, "notes": "Pausa del bilanciere sul petto" }\n      ]\n    }\n  ]\n}\n\nRegole:\n- exerciseName è obbligatorio. Usa il nome inglese comune dell\'esercizio, anche se il resto è in italiano.\n- exerciseId è facoltativo. Se puoi navigare sul web, cerca l\'esercizio nel catalogo wger (https://wger.de/api/v2/exerciseinfo/?name__search=bench%20press&language__code=en) e scrivi "wger:" seguito dal suo id. Se non puoi, ometti exerciseId. Non inventare mai un id.\n- sets: da 1 a 20. reps: un numero o un intervallo con un trattino semplice, come "8-12". weightKg: da 0 a 450, e 0 per il corpo libero o se non sei sicuro. restSeconds: da 0 a 600.\n- notes è facoltativo: un breve suggerimento di tecnica per quell\'esercizio, al massimo 200 caratteri, oppure null.\n- Una scheda per giorno di allenamento, con gli esercizi nell\'ordine in cui si eseguono.\n- Se ti do un file di schede Kinetiq esistente, mantieni i suoi valori exerciseId.\n\nCosa voglio:\n',
     previewTitle: 'Importa',
     matching: 'Ricerca degli esercizi…',
     matchFailed: 'Non è stato possibile cercare gli esercizi.',

@@ -136,7 +136,6 @@ export function routinesDocument(routines: readonly Routine[], now = Date.now())
     exportedAt: new Date(now).toISOString(),
     routines: routines.map((r) => ({
       name: r.name,
-      description: r.description,
       items: r.items.map((i) => ({
         exerciseId: i.exerciseId,
         exerciseName: i.exerciseName,

@@ -22,13 +22,14 @@
  * and cannot mis-fire during a scroll. If a drag earns its keep later it goes here, in
  * one place, and this paragraph is where that decision gets reversed.
  */
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { ExerciseThumb, ListRow } from '@/ui/rows';
 import { Icon, ICON_SIZE, type IconName } from '@/ui/icons';
 import { Txt } from '@/ui/Text';
 import { Stepper } from '@/ui/controls/Stepper';
+import { TextInput } from '@/ui/controls/TextInput';
 import { FormFooter, FormSection } from '@/ui/FormSheet';
 import { Button } from '@/ui/controls/Button';
 import { MetaLine } from '@/ui/display/MetaLine';
@@ -51,6 +52,7 @@ import {
 } from '@/utils/format';
 import type { ExerciseSnapshot, RoutineItem } from '@/domain/types';
 import type { ItemTarget } from '@/routines/draft';
+import { ITEM_BOUNDS } from '@/transfer/format';
 import { useT } from '@/i18n/useT';
 import { tr } from '@/i18n/tr';
 import type { MetaItem, Tag } from '@/ui/display/types';
@@ -109,6 +111,8 @@ export const RoutineItemRow = memo(function RoutineItemRow({
     <ListRow
       theme={theme}
       title={item.exerciseName}
+      // The exercise's cue, in full in the editor and on the workout card; one line here.
+      {...(item.notes ? { description: item.notes, descriptionLines: 1 } : {})}
       meta={meta}
       {...(tags ? { tags } : {})}
       {...(onOpen === undefined
@@ -326,6 +330,9 @@ export const ItemEditorForm = memo(function ItemEditorForm({
         ) : null}
       </FormSection>
 
+      {/* No FormSection: the field draws its own label in the same style. */}
+      <NoteField note={item.notes} onCommit={(notes) => onChange({ notes })} />
+
       <FormSection title={t('itemEditor.fromLibrary')}>
         {libraryTags.length > 0 ? <TagRow tags={libraryTags} theme={theme} /> : null}
         <ExerciseAbout exerciseId={item.exerciseId} />
@@ -339,6 +346,66 @@ export const ItemEditorForm = memo(function ItemEditorForm({
     </>
   );
 });
+
+/** The longest cue that still reads as one line on a row and a caption on the workout card. */
+const NOTE_MAX = ITEM_BOUNDS.notesLength;
+/** The counter appears here, so it is a warning near the limit rather than noise throughout. */
+const NOTE_COUNT_FROM = 160;
+const NOTE_SAVE_DELAY_MS = 500;
+
+/**
+ * The exercise's note, which is the cue shown on it mid-workout.
+ *
+ * Unlike the steppers it does not write on every change: a saved routine's write is a database
+ * update plus a cache refresh, and a refresh landing mid-word would move the caret. The field
+ * keeps its own text and commits it once typing pauses, and again when the sheet closes, so
+ * nothing typed is lost to a swipe. Empty or whitespace-only is stored as no note.
+ */
+function NoteField({ note, onCommit }: { note: string | null; onCommit: (notes: string | null) => void }) {
+  const { t } = useT();
+  const [text, setText] = useState(note ?? '');
+  const pending = useRef<string | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const commitRef = useRef(onCommit);
+  commitRef.current = onCommit;
+
+  const flush = useCallback(() => {
+    if (timer.current !== null) clearTimeout(timer.current);
+    timer.current = null;
+    if (pending.current === null) return;
+    const trimmed = pending.current.trim();
+    pending.current = null;
+    commitRef.current(trimmed.length > 0 ? trimmed : null);
+  }, []);
+  useEffect(() => flush, [flush]);
+
+  const change = useCallback(
+    (next: string) => {
+      setText(next);
+      pending.current = next;
+      if (timer.current !== null) clearTimeout(timer.current);
+      timer.current = setTimeout(flush, NOTE_SAVE_DELAY_MS);
+    },
+    [flush],
+  );
+
+  return (
+    <TextInput
+      label={t('itemEditor.note')}
+      value={text}
+      onChangeText={change}
+      placeholder={t('itemEditor.notePlaceholder')}
+      hint={
+        text.length >= NOTE_COUNT_FROM
+          ? t('itemEditor.noteCount', { count: text.length, max: NOTE_MAX })
+          : t('itemEditor.noteHint')
+      }
+      multiline
+      maxLength={NOTE_MAX}
+      autoCapitalize="sentences"
+    />
+  );
+}
 
 /* ------------------------------------------------------------------ helpers -- */
 

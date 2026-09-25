@@ -341,11 +341,6 @@ export default function RoutineDetailScreen() {
       >
         <Column gap="lg" style={styles.gutter}>
           <MetaLine items={summary} theme={theme} wrap />
-          {routine.description === null || routine.description.length === 0 ? null : (
-            <Txt variant="body" tone="secondary">
-              {routine.description}
-            </Txt>
-          )}
 
           <View style={styles.stats}>
             {/* A bodyweight routine has no volume to state; the summary line says so instead

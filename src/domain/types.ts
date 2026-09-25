@@ -148,7 +148,6 @@ export type Taxon = { id: number; name: string };
 export type Routine = {
   id: string;
   name: string;
-  description: string | null;
   items: RoutineItem[];
   createdAt: number;
   updatedAt: number;
