@@ -417,7 +417,6 @@ export const en = {
   profileScreen: {
     editProfileHint: 'Opens your name, height and birth year',
     athlete: 'Athlete',
-    loadingHistory: 'Loading history…',
     thisWeekLabel: 'this week',
     readingHistory: 'Reading your history…',
     goalSpare: 'Goal met with {phrase} to spare.',
@@ -435,9 +434,6 @@ export const en = {
     headlineGoalMet: 'Goal met',
     headlineOnTrack: 'On track',
     headlineStarting: 'Getting started',
-    sinceUnknown: 'Exercise search runs against the wger catalog',
-    sinceNone: 'No sessions logged yet: search the library to build your first routine',
-    sinceSome: 'Routines and history are stored on this device',
   },
 
   workoutTab: {

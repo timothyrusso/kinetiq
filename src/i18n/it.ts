@@ -420,7 +420,6 @@ export const it: Copy = {
   profileScreen: {
     editProfileHint: 'Apre nome, altezza e anno di nascita',
     athlete: 'Atleta',
-    loadingHistory: 'Caricamento cronologia…',
     thisWeekLabel: 'questa settimana',
     readingHistory: 'Lettura della cronologia…',
     goalSpare: 'Obiettivo raggiunto con {phrase} di margine.',
@@ -438,9 +437,6 @@ export const it: Copy = {
     headlineGoalMet: 'Obiettivo raggiunto',
     headlineOnTrack: 'In linea',
     headlineStarting: 'Si comincia',
-    sinceUnknown: 'La ricerca esercizi usa il catalogo wger',
-    sinceNone: 'Nessuna sessione registrata: cerca nella libreria per creare la tua prima scheda',
-    sinceSome: 'Schede e cronologia sono salvate su questo dispositivo',
   },
 
   workoutTab: {

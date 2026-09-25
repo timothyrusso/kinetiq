@@ -133,12 +133,8 @@ export default function ProfileScreen() {
     () => [
       { icon: 'ruler', label: t('tabsProfile.height', { height: heightCm }) },
       { icon: 'profile', label: t('tabsProfile.age', { count: age }) },
-      {
-        icon: 'calendar',
-        label: summary.isPending ? t('profileScreen.loadingHistory') : trainingSince(summary.data, t),
-      },
     ],
-    [age, heightCm, summary.data, summary.isPending, t],
+    [age, heightCm, t],
   );
 
   return (
@@ -265,7 +261,6 @@ export default function ProfileScreen() {
               onPress={() => router.push(routes.settingsAbout())}
             />
           </Card>
-
         </View>
       </ScrollView>
     </>
@@ -296,14 +291,6 @@ function goalHeadline(workouts: number, goal: number): TKey {
 
 function countSessions(n: number, t: (key: TKey, vars?: TVars) => string): string {
   return `${n} ${t('profileScreen.sessionWord', { count: n })}`;
-}
-
-function trainingSince(
-  data: { totals: { workouts: number } } | undefined,
-  t: (key: TKey, vars?: TVars) => string,
-): string {
-  if (data === undefined) return t('profileScreen.sinceUnknown');
-  return t(data.totals.workouts === 0 ? 'profileScreen.sinceNone' : 'profileScreen.sinceSome');
 }
 
 
