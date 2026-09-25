@@ -225,16 +225,25 @@ function StateScaffold({
       </Stack>
       {actionLabel && onAction ? (
         // `Button` fires its own haptic: a second one here doubled every tap.
-        <Button label={actionLabel} onPress={onAction} variant={tone === 'danger' ? 'secondary' : 'primary'} />
+        // Centred explicitly: a hugging `Button` aligns itself to the start, which overrode the
+        // column's centring and left the action under the first letter of the message.
+        <Button
+          label={actionLabel}
+          onPress={onAction}
+          variant={tone === 'danger' ? 'secondary' : 'primary'}
+          style={CENTRED}
+        />
       ) : null}
       {secondaryLabel && onSecondary ? (
         // The platform's text button (HIG plain, Material text), not an underlined link: a
         // link-styled line reads as navigation to somewhere else, and this is an action.
-        <Button label={secondaryLabel} variant="quiet" onPress={onSecondary} />
+        <Button label={secondaryLabel} variant="quiet" onPress={onSecondary} style={CENTRED} />
       ) : null}
     </View>
   );
 }
+
+const CENTRED = { alignSelf: 'center' } as const;
 
 export const EmptyState = memo(function EmptyState(props: StateProps) {
   return (
