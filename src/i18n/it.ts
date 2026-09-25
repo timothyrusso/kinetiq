@@ -24,9 +24,7 @@ import type { Copy } from './en';
 export const it: Copy = {
   tabs: {
     home: 'Home',
-    activities: 'Attività',
     workout: 'Allenamento',
-    exercises: 'Esercizi',
     profile: 'Profilo',
   },
 
@@ -35,8 +33,6 @@ export const it: Copy = {
     cancel: 'Annulla',
     add: 'Aggiungi',
     retry: 'Riprova',
-    filters: 'Filtri',
-    clear: 'Cancella',
     back: 'Indietro',
     noValue: '-',
     system: 'Sistema',
@@ -51,9 +47,6 @@ export const it: Copy = {
     goalOf: 'su {goal}',
     nowBar: 'Ora',
     minutesShort: '{value} min',
-  },
-  tabsWorkout: {
-    opensExercise: "{name}. Apre l'esercizio.",
   },
   tabsProfile: {
     height: '{height} cm',
@@ -80,13 +73,6 @@ export const it: Copy = {
   },
 
   activities: {
-    title: 'Attività',
-    searchPlaceholder: 'Nome sessione, note, esercizio',
-    sortRecent: 'Recenti',
-    sortLongest: 'Più lunghe',
-    sortHeaviest: 'Più pesanti',
-    today: 'Oggi',
-    yesterday: 'Ieri',
     session_one: '{count} sessione',
     session_other: '{count} sessioni',
   },
@@ -103,18 +89,7 @@ export const it: Copy = {
   },
 
   exercises: {
-    title: 'Esercizi',
-    searchLabel: 'Cerca esercizi',
-    count_one: '{count} esercizio',
-    count_other: '{count} esercizi',
-    countFor_one: '{count} esercizio per “{query}”',
-    countFor_other: '{count} esercizi per “{query}”',
     addExercise: 'Aggiungi esercizio',
-    unavailable: 'Ricerca esercizi non disponibile',
-    outdated: 'Risultati non aggiornati',
-    outdatedDetail: 'La ricerca non è andata a buon fine. Questi sono i risultati precedenti.',
-    updating: 'Aggiornamento',
-    updatingDetail: 'Mostro la ricerca precedente mentre questa è in corso',
   },
 
   profile: {
@@ -277,7 +252,6 @@ export const it: Copy = {
   },
   exerciseDetail: {
     fallbackTitle: 'Esercizio',
-    addToRoutine: 'Aggiungi questo esercizio a una scheda',
     loadError: 'Non è stato possibile caricare questo esercizio',
     unknownTitle: 'Nessuna informazione su questo esercizio',
     unknownFetchable:
@@ -309,7 +283,6 @@ export const it: Copy = {
     sameFamily: 'Stessa famiglia di movimento',
     thisExercise: 'Questo esercizio',
     variation: 'Variante',
-    browseSimilar: 'Sfoglia esercizi simili',
     viewOnWger: 'Vedi su wger',
     wgerSubtitle: 'Pagina della community con tutte le foto e le note',
     noImage: 'Nessuna immagine nella libreria',
@@ -478,9 +451,6 @@ export const it: Copy = {
     unitsHint: "Vale per ogni distanza, peso e ritmo nell'app.",
     appearanceHint: 'La modalità scura è una palette progettata, non colori invertiti.',
     goalHint: 'Sessioni a settimana. La Home e questa scheda si misurano su questo.',
-    training: 'Allenamento',
-    allActivities: 'Tutte le attività',
-    allActivitiesSubtitle: 'Ogni sessione che hai registrato',
     app: 'App',
     trainingPrefs: 'Preferenze di allenamento',
     trainingPrefsSubtitle: 'Recupero predefinito, avvio automatico, velocità o ritmo',
@@ -503,45 +473,6 @@ export const it: Copy = {
     sinceSome: 'Schede e cronologia sono salvate su questo dispositivo',
   },
 
-  addExercise: {
-    goingInto: 'Finisce in',
-    yourRoutine: 'la tua scheda',
-    repsHint: 'Va bene anche un intervallo',
-    cue: 'Nota',
-    targetsNote:
-      'Gli obiettivi sono un piano, non un limite: ogni serie si può cambiare mentre ti alleni.',
-    addToRoutineTitle: 'Aggiungi alla scheda',
-    adding: 'Aggiunta…',
-    add: 'Aggiungi',
-    loadError: 'Non è stato possibile caricare questo esercizio',
-    loadErrorMessage:
-      "L'app deve conoscere un esercizio prima di poterlo aggiungere: altrimenti la scheda salverebbe per sempre una voce senza nome, senza istruzioni e senza immagine.",
-    goBack: 'Torna indietro',
-    routine: 'Scheda',
-    whereItGoes: 'Dove finisce',
-    newRoutine: 'Nuova scheda',
-    routineName: 'Nome della scheda',
-    routineNamePlaceholder: 'Giorno di spinta',
-    nameRequired: 'Dai un nome alla scheda',
-    nameHint: 'Obbligatorio. Il nome con cui la scheda compare nella tua lista.',
-    description: 'Descrizione',
-    descriptionPlaceholder: 'Facoltativo: a cosa serve questa sessione',
-    targets: 'Obiettivi',
-    targetsEyebrow: 'Cosa intendi fare',
-    sets: 'Serie',
-    reps: 'Ripetizioni',
-    weightIn: 'Peso ({unit})',
-    blankBodyweight: 'Vuoto significa corpo libero',
-    weightPerSet: 'Peso per serie in {unit}',
-    rest: 'Recupero',
-    blankUsesDefault: 'Vuoto usa {seconds}s',
-    restBetweenSets: 'Recupero tra le serie',
-    notesPlaceholder: 'Tempo di esecuzione, presa, o un promemoria per te',
-    createAndAdd: 'Crea la scheda e aggiungi',
-    addToRoutine: 'Aggiungi alla scheda',
-    createHint: 'Crea la scheda e la apre',
-    addToRoutineHint: "Aggiunge l'esercizio e apre la scheda",
-  },
   workoutTab: {
     orderRecent: 'Recenti',
     orderName: 'A-Z',
@@ -563,11 +494,6 @@ export const it: Copy = {
     routinesReady: '{count} {word} pronte',
     nothingToTrain: 'Ancora nulla da allenare: apri questa scheda e aggiungi un esercizio.',
     start: 'Inizia',
-    library: 'Libreria esercizi',
-    catalogRemote:
-      'Il catalogo è remoto, quindi per sfogliarlo serve una connessione. Le tue schede non ne risentono: ognuna porta con sé una copia congelata di ogni esercizio che contiene.',
-    liveFromWger: 'In diretta da wger',
-    browse: 'Sfoglia',
     sessionsPerRoutine: 'Sessioni per scheda',
     allTime: 'Sempre',
     sessionsChartNote: 'Quanto spesso usi ogni scheda, da quando hai iniziato a tracciare.',
@@ -729,30 +655,7 @@ export const it: Copy = {
   },
 
   exerciseList: {
-    subtitle: 'Cerca nel catalogo wger e aggiungi qualsiasi cosa a una scheda',
-    loadingOptions: 'Carico le opzioni {what}…',
     searching: 'Ricerca…',
-    noMatchTitle: 'Nessun esercizio corrisponde',
-    noMatchMessage:
-      "La ricerca del catalogo è approssimativa, quindi se non è tornato nulla probabilmente l'ortografia va bene e il termine è solo insolito. Prova con meno parole, oppure allarga i filtri.",
-    clearSearch: 'Cancella la ricerca',
-    nothingLoadedTitle: 'Nulla caricato',
-    nothingLoadedMessage:
-      'Il catalogo ha risposto senza esercizi, cosa che non dovrebbe fare. Tira per aggiornare, oppure riprova qui sotto.',
-    filterTitle: 'Filtra esercizi',
-    category: 'Categoria',
-    primaryMuscle: 'Muscolo principale',
-    equipment: 'Attrezzatura',
-    taxonomyFailed:
-      "L'elenco dei filtri non è stato caricato, quindi non ce n'è da scegliere. La ricerca funziona comunque: i filtri sono facoltativi.",
-    showAll: 'Mostra tutti gli esercizi',
-    any: 'Qualsiasi',
-    loadingMore: 'Carico altri…',
-    countLoaded: '{shown} caricati',
-    countShown: '{shown} mostrati',
-    allLoaded: 'Caricati tutti i {shown} {word}',
-    exerciseWord_one: 'esercizio',
-    exerciseWord_other: 'esercizi',
   },
   homeTab: {
     recent: 'Recenti',
@@ -765,7 +668,6 @@ export const it: Copy = {
     headlineStreak: '{count} giorni di fila',
     deltaAgainstLastWeek: '{delta}% rispetto alla settimana scorsa',
     latestSessions: 'Ultime sessioni',
-    seeAll: 'Vedi tutte',
     settings: 'Impostazioni',
     browseRoutines: 'Sfoglia le schede',
   },
@@ -787,32 +689,7 @@ export const it: Copy = {
     defaultRestNote: 'Corrisponde al tuo valore predefinito nelle Impostazioni.',
   },
 
-  history: {
-    range7d: '7 giorni',
-    range30d: '30 giorni',
-    rangeYear: 'Anno',
-    rangeAll: 'Tutto',
-  },
 
-  activityList: {
-    search: 'Cerca',
-    searchA11y: 'Cerca nelle attività',
-    historyError: 'Non è stato possibile leggere la cronologia',
-    noMatchTitle: 'Nessun risultato',
-    noMatchMessage:
-      'Nessuna sessione corrisponde a questi filtri. Prova ad allargare la ricerca o a togliere un tipo.',
-    clearFilters: 'Cancella i filtri',
-    emptyTitle: 'Ancora nessuna attività',
-    emptyMessage:
-      'Completa un allenamento o registra una corsa e finisce qui: percorso, parziali, ogni serie.',
-    startWorkout: 'Inizia un allenamento',
-    deleteTitle: 'Eliminare questa sessione?',
-    offlineNote:
-      'Offline: la tua cronologia è salvata su questo dispositivo, quindi tutto qui sotto è intatto.',
-    historyTitle: 'Cronologia',
-    noSessionsTitle: 'Ancora nessuna sessione',
-    nothingInRange: 'Nulla in questo intervallo',
-  },
 
   trainingPrefs: {
     title: 'Allenamento',
@@ -884,13 +761,6 @@ export const it: Copy = {
       "I tuoi allenamenti e le tue schede salvate non sono stati toccati. Riavviare l'app di solito risolve.",
     routeErrorBody:
       "Allenamenti, schede e impostazioni non sono stati toccati. Puoi riprovare con la schermata, oppure tornare indietro e continuare altrove nell'app.",
-    noHistoryYet: 'Ancora nessuna cronologia di allenamento',
-    dayStreak: '{count} giorni di fila',
-    startStreak: 'Comincia oggi una serie',
-    heatmapA11y: '{label}: {streak}, giorno più intenso {busiest}',
-    consistencyLabel: 'Costanza',
-    less: 'Meno',
-    more: 'Più',
     opensWorkout: "Apre l'allenamento completo",
     opensRoutine: 'Apre la scheda',
     opensExercise: "Apre i dettagli dell'esercizio",
@@ -934,10 +804,6 @@ export const it: Copy = {
     activityGone: 'Questa attività non è più salvata.',
     autoStartOn: 'Parte il conto alla rovescia nel momento in cui completi una serie.',
     autoStartOff: 'Il recupero lo avvii tu, così una telefonata tra le serie non ti costa nulla.',
-    everySessionLands: 'Ogni sessione che completi finisce qui',
-    showEverything: 'Mostra tutto',
-    outsideRange_one: 'Hai {count} sessione fuori da questo intervallo. Allarga la finestra per vederla.',
-    outsideRange_other: 'Hai {count} sessioni fuori da questo intervallo. Allarga la finestra per vederle.',
     pickerNoMatch: 'Nessun risultato',
     pickerStart: 'Comincia a scrivere',
     pickerNoMatchBody:

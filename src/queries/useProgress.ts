@@ -1,14 +1,8 @@
 /**
- * Progress queries: weekly summaries, the training heatmap, personal records.
+ * The weekly training summary: Home's load chart and Profile's last-four-weeks tiles.
  *
- * ## Why one read fans out to three queries
- *
- * All three derive from the same activity rows, and the temptation is one query
- * returning one blob. Split anyway, keyed by what actually invalidates them:
- * `summary(4)` and `summary(12)` are different windows the user switches between, and a
- * single blob would refetch everything to change one number. `heatmap` has no range at
- * all: it is always "the last however-many weeks": so it changes only when history
- * changes.
+ * Keyed by window, so `summary(4)` and `summary(8)` are separate cache entries and one
+ * screen's window never refetches the other's.
  *
  * ## Why the window is a count of weeks, not a date range
  *
@@ -21,11 +15,11 @@
  */
 import { useQuery } from '@tanstack/react-query';
 
-import { activityRepository, recordRepository } from '@/persistence';
-import type { Activity, PersonalRecord } from '@/domain/types';
+import { activityRepository } from '@/persistence';
+import type { Activity } from '@/domain/types';
 import { queryKeys } from '@/query/keys';
 import { addDays, startOfDay, startOfWeek } from '@/utils/format';
-import { groupBy, sum } from '@/utils/functional';
+import { sum } from '@/utils/functional';
 
 /**
  * How long a computed summary stays fresh. Longer than the network queries: this is a
@@ -66,40 +60,6 @@ export type TrainingSummary = {
   /** True when the user has no activities at all: a different empty state from "no activities in this range". */
   hasAnyHistory: boolean;
 };
-
-export type HeatmapDay = {
-  /** Local midnight. */
-  dayStart: number;
-  workouts: number;
-  durationSeconds: number;
-  /** 0 none · 1 short · 2 moderate · 3 long: a bucketed intensity for colour. */
-  level: 0 | 1 | 2 | 3;
-};
-
-export type HeatmapWeek = {
-  weekStart: number;
-  /** Always 7 entries, oldest first. Leading/trailing days outside the range are `null`. */
-  days: (HeatmapDay | null)[];
-};
-
-export type TrainingHeatmap = {
-  weeks: HeatmapWeek[];
-  totalWorkouts: number;
-  /** Weeks the grid covers. */
-  spanWeeks: number;
-};
-
-/** 30 minutes is where "did something" stops reading as a scratch: the bucket boundary the ring colours use. */
-const MODERATE_MINUTES = 30;
-const LONG_MINUTES = 75;
-
-function levelFor(durationSeconds: number, workouts: number): HeatmapDay['level'] {
-  if (workouts === 0) return 0;
-  const minutes = durationSeconds / 60;
-  if (minutes >= LONG_MINUTES) return 3;
-  if (minutes >= MODERATE_MINUTES) return 2;
-  return 1;
-}
 
 /**
  * The weekly summary.
@@ -164,77 +124,6 @@ export function useTrainingSummary(rangeWeeks: number) {
         consistency: clamp01(activeDays / elapsedDays),
         hasAnyHistory: totalRows > 0,
       };
-    },
-  });
-}
-
-/**
- * The activity heatmap.
- *
- * Fixed at 26 weeks (~6 months) rather than configurable: the grid is laid out by week
- * column, and a variable span means the component cannot decide cell size from the data.
- * A user who wants a year should get a chart, not a taller calendar.
- */
-export const HEATMAP_SPAN_WEEKS = 26;
-
-export function useTrainingHeatmap() {
-  return useQuery({
-    queryKey: queryKeys.progress.heatmap(),
-    staleTime: PROGRESS_STALE_TIME_MS,
-    queryFn: async (): Promise<TrainingHeatmap> => {
-      const now = new Date();
-      const gridStart = startOfWeek(addDays(now, -7 * (HEATMAP_SPAN_WEEKS - 1))).getTime();
-      const activities = await activityRepository.list({ from: gridStart, order: 'asc' });
-
-      const byDay = groupBy(activities, (a) => startOfDay(a.startedAt).getTime());
-
-      const weeks: HeatmapWeek[] = [];
-      for (let offset = 0; offset < HEATMAP_SPAN_WEEKS; offset += 1) {
-        const weekStart = startOfWeek(addDays(now, -7 * (HEATMAP_SPAN_WEEKS - 1 - offset))).getTime();
-        const days: (HeatmapDay | null)[] = [];
-        for (let day = 0; day < 7; day += 1) {
-          const dayStart = addDays(new Date(weekStart), day).getTime();
-          // Future days inside the current week render as gaps, not as zero-intensity
-          // cells: a "no workout yet today" cell and a "that day hasn't happened" cell must
-          // not be the same colour, or the grid implies the user skipped days they didn't.
-          if (dayStart > startOfDay(now).getTime()) {
-            days.push(null);
-            continue;
-          }
-          const items = byDay.get(dayStart);
-          const workouts = items?.length ?? 0;
-          const durationSeconds = items ? sum(items.map((a) => a.durationSeconds)) : 0;
-          days.push({ dayStart, workouts, durationSeconds, level: levelFor(durationSeconds, workouts) });
-        }
-        weeks.push({ weekStart, days });
-      }
-
-      return { weeks, totalWorkouts: activities.length, spanWeeks: HEATMAP_SPAN_WEEKS };
-    },
-  });
-}
-
-/**
- * Personal records, newest achievement first.
- *
- * Read from the `records` table rather than recomputed from history. `finishSession`
- * already compares a workout against everything prior and commits the winners, so the
- * table *is* the computed answer: recomputing it here would walk every strength entry on
- * the Progress screen to reproduce a comparison that happened once, on the write, when the
- * full history was already loaded.
- *
- * It also keeps one definition of a PR. Two places deriving records independently is how
- * the Progress tab and the post-workout "3 new records" celebration end up disagreeing.
- */
-export function usePersonalRecords(limit = 12) {
-  return useQuery({
-    queryKey: [...queryKeys.progress.personalRecords(), { limit }] as const,
-    staleTime: PROGRESS_STALE_TIME_MS,
-    queryFn: async (): Promise<PersonalRecord[]> => {
-      const records = await recordRepository.all();
-      // `all()` is already ordered by achieved_at DESC; the sort is defensive rather than
-      // load-bearing: it keeps the slice honest if the repository's ordering ever changes.
-      return [...records].sort((a, b) => b.achievedAt - a.achievedAt).slice(0, limit);
     },
   });
 }

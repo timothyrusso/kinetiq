@@ -22,9 +22,7 @@
 export const en = {
   tabs: {
     home: 'Home',
-    activities: 'Activities',
     workout: 'Workout',
-    exercises: 'Exercises',
     profile: 'Profile',
   },
 
@@ -33,8 +31,6 @@ export const en = {
     cancel: 'Cancel',
     add: 'Add',
     retry: 'Try again',
-    filters: 'Filters',
-    clear: 'Clear',
     back: 'Go back',
     noValue: '-',
     system: 'System',
@@ -49,9 +45,6 @@ export const en = {
     goalOf: 'of {goal}',
     nowBar: 'Now',
     minutesShort: '{value}m',
-  },
-  tabsWorkout: {
-    opensExercise: '{name}. Opens the exercise.',
   },
   tabsProfile: {
     height: '{height} cm',
@@ -78,13 +71,6 @@ export const en = {
   },
 
   activities: {
-    title: 'Activities',
-    searchPlaceholder: 'Session name, notes, exercise',
-    sortRecent: 'Recent',
-    sortLongest: 'Longest',
-    sortHeaviest: 'Heaviest',
-    today: 'Today',
-    yesterday: 'Yesterday',
     session_one: '{count} session',
     session_other: '{count} sessions',
   },
@@ -101,18 +87,7 @@ export const en = {
   },
 
   exercises: {
-    title: 'Exercises',
-    searchLabel: 'Search exercises',
-    count_one: '{count} exercise',
-    count_other: '{count} exercises',
-    countFor_one: '{count} exercise for “{query}”',
-    countFor_other: '{count} exercises for “{query}”',
     addExercise: 'Add exercise',
-    unavailable: 'Exercise search unavailable',
-    outdated: 'Outdated results',
-    outdatedDetail: 'That search failed. Showing the results from before it.',
-    updating: 'Updating',
-    updatingDetail: 'Showing the previous search while this one runs',
   },
 
   profile: {
@@ -275,7 +250,6 @@ export const en = {
   },
   exerciseDetail: {
     fallbackTitle: 'Exercise',
-    addToRoutine: 'Add this exercise to a routine',
     loadError: 'Could not load this exercise',
     unknownTitle: 'Nothing known about this exercise',
     unknownFetchable:
@@ -307,7 +281,6 @@ export const en = {
     sameFamily: 'Same movement family',
     thisExercise: 'This exercise',
     variation: 'Variation',
-    browseSimilar: 'Browse similar exercises',
     viewOnWger: 'View on wger',
     wgerSubtitle: 'Community page with all photos and notes',
     noImage: 'No image in the library',
@@ -475,9 +448,6 @@ export const en = {
     unitsHint: 'Affects every distance, weight and pace in the app.',
     appearanceHint: 'Dark mode is a designed palette, not inverted colours.',
     goalHint: 'Sessions a week. Home and this card measure against it.',
-    training: 'Training',
-    allActivities: 'All activities',
-    allActivitiesSubtitle: 'Every session you have logged',
     app: 'App',
     trainingPrefs: 'Training preferences',
     trainingPrefsSubtitle: 'Default rest, auto-start, speed against pace',
@@ -499,44 +469,6 @@ export const en = {
     sinceSome: 'Routines and history are stored on this device',
   },
 
-  addExercise: {
-    goingInto: 'Going into',
-    yourRoutine: 'your routine',
-    repsHint: 'A range is fine',
-    cue: 'Cue',
-    targetsNote: 'Targets are a plan, not a limit: every set can be changed while you train.',
-    addToRoutineTitle: 'Add to routine',
-    adding: 'Adding…',
-    add: 'Add',
-    loadError: 'This exercise could not be loaded',
-    loadErrorMessage:
-      'The app has to know an exercise before it can be added: otherwise the routine would save an item with no name, no instructions and no picture, permanently.',
-    goBack: 'Go back',
-    routine: 'Routine',
-    whereItGoes: 'Where it goes',
-    newRoutine: 'New routine',
-    routineName: 'Routine name',
-    routineNamePlaceholder: 'Push Day',
-    nameRequired: 'Give the routine a name',
-    nameHint: 'Required. The name this routine shows in your list.',
-    description: 'Description',
-    descriptionPlaceholder: 'Optional: what this session is for',
-    targets: 'Targets',
-    targetsEyebrow: 'What you plan to do',
-    sets: 'Sets',
-    reps: 'Reps',
-    weightIn: 'Weight ({unit})',
-    blankBodyweight: 'Blank means bodyweight',
-    weightPerSet: 'Weight per set in {unit}',
-    rest: 'Rest',
-    blankUsesDefault: 'Blank uses {seconds}s',
-    restBetweenSets: 'Rest between sets',
-    notesPlaceholder: 'Tempo, grip, or a reminder for yourself',
-    createAndAdd: 'Create routine and add',
-    addToRoutine: 'Add to routine',
-    createHint: 'Creates the routine and opens it',
-    addToRoutineHint: 'Adds the exercise and opens the routine',
-  },
   workoutTab: {
     orderRecent: 'Recent',
     orderName: 'A-Z',
@@ -558,11 +490,6 @@ export const en = {
     routinesReady: '{count} {word} ready to train',
     nothingToTrain: 'Nothing to train yet: open this routine and add an exercise.',
     start: 'Start',
-    library: 'Exercise library',
-    catalogRemote:
-      'The catalog is remote, so browsing needs a connection. Your saved routines are unaffected: each one carries its own frozen copy of every exercise in it.',
-    liveFromWger: 'Live from wger',
-    browse: 'Browse',
     sessionsPerRoutine: 'Sessions per routine',
     allTime: 'All time',
     sessionsChartNote: 'How often each routine gets run, since you started tracking.',
@@ -724,30 +651,7 @@ export const en = {
   },
 
   exerciseList: {
-    subtitle: 'Search the wger catalog and add anything to a routine',
-    loadingOptions: 'Loading {what} options…',
     searching: 'Searching…',
-    noMatchTitle: 'No exercises match',
-    noMatchMessage:
-      'The catalog search is fuzzy, so if nothing came back the spelling is probably fine and the term is just unusual. Try fewer words, or widen the filters.',
-    clearSearch: 'Clear search',
-    nothingLoadedTitle: 'Nothing loaded',
-    nothingLoadedMessage:
-      'The catalog answered with no exercises, which it should not. Pull to refresh, or retry below.',
-    filterTitle: 'Filter exercises',
-    category: 'Category',
-    primaryMuscle: 'Primary muscle',
-    equipment: 'Equipment',
-    taxonomyFailed:
-      'The list of filters could not be loaded, so there are none to pick. Searching still works: filters are optional.',
-    showAll: 'Show all exercises',
-    any: 'Any',
-    loadingMore: 'Loading more…',
-    countLoaded: '{shown} loaded',
-    countShown: '{shown} shown',
-    allLoaded: 'All {shown} {word} loaded',
-    exerciseWord_one: 'exercise',
-    exerciseWord_other: 'exercises',
   },
   homeTab: {
     recent: 'Recent',
@@ -760,7 +664,6 @@ export const en = {
     headlineStreak: '{count} days in a row',
     deltaAgainstLastWeek: '{delta}% against last week',
     latestSessions: 'Latest sessions',
-    seeAll: 'See all',
     settings: 'Settings',
     browseRoutines: 'Browse routines',
   },
@@ -782,29 +685,7 @@ export const en = {
     defaultRestNote: 'Matches your default in Settings.',
   },
 
-  history: {
-    range7d: '7 days',
-    range30d: '30 days',
-    rangeYear: 'Year',
-    rangeAll: 'All',
-  },
 
-  activityList: {
-    search: 'Search',
-    searchA11y: 'Search activities',
-    historyError: 'Could not read your history',
-    noMatchTitle: 'Nothing matches',
-    noMatchMessage: 'No session fits those filters. Try widening the search or clearing a type.',
-    clearFilters: 'Clear filters',
-    emptyTitle: 'No activities yet',
-    emptyMessage: 'Finish a workout or record a run and it lands here: route, splits, every set.',
-    startWorkout: 'Start a workout',
-    deleteTitle: 'Delete this session?',
-    offlineNote: 'Offline: your history is stored on this device, so everything below is intact.',
-    historyTitle: 'History',
-    noSessionsTitle: 'No sessions yet',
-    nothingInRange: 'Nothing in this range',
-  },
 
   trainingPrefs: {
     title: 'Training',
@@ -875,13 +756,6 @@ export const en = {
       'Your saved workouts and routines were not changed. Restarting the app will usually fix this.',
     routeErrorBody:
       'Your workouts, routines and settings were not affected. You can try the screen again, or go back and carry on elsewhere in the app.',
-    noHistoryYet: 'No training history yet',
-    dayStreak: '{count}-day streak',
-    startStreak: 'Start a streak today',
-    heatmapA11y: '{label}: {streak}, busiest day {busiest}',
-    consistencyLabel: 'Consistency',
-    less: 'Less',
-    more: 'More',
     opensWorkout: 'Opens the full workout',
     opensRoutine: 'Opens the routine',
     opensExercise: 'Opens the exercise details',
@@ -925,10 +799,6 @@ export const en = {
     activityGone: 'That activity is no longer stored.',
     autoStartOn: 'Counting down the moment you complete a set.',
     autoStartOff: 'You tap to begin resting, so a phone call between sets costs you nothing.',
-    everySessionLands: 'Every session you finish lands here',
-    showEverything: 'Show everything',
-    outsideRange_one: 'You have {count} session outside it. Widen the window to see them.',
-    outsideRange_other: 'You have {count} sessions outside it. Widen the window to see them.',
     pickerNoMatch: 'Nothing matches that',
     pickerStart: 'Start typing',
     pickerNoMatchBody:

@@ -97,7 +97,6 @@ function ThemedRoot() {
                 route params and writes through the store or query the screen underneath
                 already reads, so nothing is handed back across the navigation. */}
             <Stack.Screen name="pick-exercise" options={formSheet('picker')} />
-            <Stack.Screen name="exercise/filters" options={formSheet('picker')} />
             <Stack.Screen name="routine/item" options={formSheet('fit')} />
             <Stack.Screen name="routine/rename" options={formSheet('fit')} />
             <Stack.Screen name="activity/notes" options={formSheet('fit')} />
@@ -107,7 +106,6 @@ function ThemedRoot() {
               name="workout/records"
               options={{ ...formSheet('fit'), gestureEnabled: false }}
             />
-            <Stack.Screen name="exercise/add" options={{ presentation: 'modal' }} />
             <Stack.Screen
               name="+not-found"
               options={{

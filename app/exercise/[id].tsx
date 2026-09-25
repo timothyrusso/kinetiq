@@ -29,14 +29,10 @@
  * the layout never changes shape between the two states, so an exercise without a picture
  * doesn't look broken.
  *
- * ## Chips are actions, not labels
+ * ## Chips are labels
  *
- * Muscle and equipment chips navigate: tap "Hamstrings" and the library opens filtered to
- * hamstrings, pushed over this screen, so the change is visible and back returns here. They
- * are not badges pretending to be buttons. The taxonomy id behind a name comes from the
- * cached taxonomy; when that lookup can't resolve (taxonomy never loaded, or a name the
- * taxonomy stopped using), the chip still opens the library: searching the words the user
- * just tapped: because a control that is inert is indistinguishable from one that is broken.
+ * Muscle and equipment chips name the taxonomy and go nowhere: the library is reached only to
+ * pick an exercise, so there is no browsing surface for a chip to open.
  */
 import { memo, useCallback, useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -47,18 +43,15 @@ import * as Linking from 'expo-linking';
 
 import { ScreenHeader } from '@/ui/Screen';
 import { useScreenContentBottom, useTransparentHeaderInset } from '@/ui/insets';
-import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
 import { Badge, Card, Gap, Row, Stack as Column } from '@/ui/layout';
 import { MetaLine, SectionHeader, StatTile, TagRow, type Tag } from '@/ui/display';
 import { Txt } from '@/ui/Text';
 import { Icon, ICON_SIZE } from '@/ui/icons';
 import { ActionRow } from '@/ui/rows';
-import { Button } from '@/ui/controls/Button';
 import { ExerciseRow, ExerciseThumb, ListRow } from '@/ui/rows';
 import { EmptyState, ErrorState, SkeletonCard } from '@/ui/states';
 import {
   useExerciseResolution,
-  useExerciseTaxonomy,
   useExerciseVariations,
 } from '@/queries/useExercises';
 import {
@@ -107,80 +100,42 @@ export default function ExerciseDetailScreen() {
   const exercise = detail.exercise;
   const history = useExerciseHistory(exerciseId);
   const variations = useExerciseVariations(exercise);
-  const taxonomy = useExerciseTaxonomy();
 
-  // An exercise that cannot be resolved has nothing to come back to, so its "back to library"
-  // is the tab itself.
-  const backToLibrary = useCallback(() => {
-    router.replace(routes.exercisesTab());
+  // An exercise that cannot be resolved has nothing to show, so its one way on is back.
+  const goBack = useCallback(() => {
+    if (router.canGoBack()) router.back();
+    else router.replace(routes.home());
   }, []);
 
-  // Browsing is pushed, not a switch to the tab: the tab lives under this screen in the root stack, so
-  // going there popped the detail and left no way back to it. The pushed list starts from
-  // these params with a filter of its own, leaving the tab's filter as the user set it.
-  const filterByMuscle = useCallback(
-    (name: string) => {
-      const match = taxonomy.data?.muscles.find((taxon) => taxon.name === name);
-      // An unresolvable name still opens the library, searching the words the user
-      // tapped: approximate, but visible and honest, unlike an inert chip.
-      router.push(routes.exerciseBrowse(match ? { muscleId: match.id } : { query: name }));
-    },
-    [taxonomy.data],
-  );
-
-  const filterByEquipment = useCallback(
-    (name: string) => {
-      const match = taxonomy.data?.equipment.find((taxon) => taxon.name === name);
-      router.push(routes.exerciseBrowse(match ? { equipmentId: match.id } : { query: name }));
-    },
-    [taxonomy.data],
-  );
-
-  const browseVariations = useCallback(() => {
-    if (exercise === null) return;
-    // Variation group ids are opaque UUIDs the search endpoint cannot take, so
-    // "similar" is delivered as a search on the exercise's own name: which returns
-    // the family plus near-neighbours, an honest superset rather than a fake filter.
-    router.push(routes.exerciseBrowse({ query: exercise.name }));
-  }, [exercise]);
-
-  // Taxonomy as tags that navigate. Built here, once per exercise, rather than per render.
+  // Taxonomy as tags. Built here, once per exercise, rather than per render.
   const primaryTags = useMemo<Tag[]>(
     () =>
       (exercise?.primaryMuscles ?? []).map((name) => ({
         key: `p:${name}`,
         label: name,
         tone: 'accent',
-        onPress: () => filterByMuscle(name),
       })),
-    [exercise, filterByMuscle],
+    [exercise],
   );
   const secondaryTags = useMemo<Tag[]>(
     () =>
       (exercise?.secondaryMuscles ?? []).map((name) => ({
         key: `s:${name}`,
         label: name,
-        onPress: () => filterByMuscle(name),
       })),
-    [exercise, filterByMuscle],
+    [exercise],
   );
   const equipmentTags = useMemo<Tag[]>(
     () =>
       (exercise?.equipment ?? []).map((name) => ({
         key: `e:${name}`,
         label: name,
-        onPress: () => filterByEquipment(name),
       })),
-    [exercise, filterByEquipment],
+    [exercise],
   );
   const openSession = useCallback((activityId: string) => {
     router.push(routes.activityDetail(activityId));
   }, []);
-
-  const openAddSheet = useCallback(() => {
-    if (exercise === null) return;
-    router.push({ pathname: '/exercise/add', params: { id: exercise.id, name: exercise.name } });
-  }, [exercise]);
 
   const externalUrl = useMemo(() => {
     if (exercise?.externalId === null || exercise?.externalId === undefined) return null;
@@ -202,11 +157,6 @@ export default function ExerciseDetailScreen() {
           list's thumbnails across the photo. */}
       <Stack.Screen options={{ animation: 'fade_from_bottom' }} />
       <ScreenHeader title={title} transparent={transparent} />
-      {exercise ? (
-        <HeaderToolbar placement="right">
-          {headerAction({ action: 'add', onPress: openAddSheet, t, label: 'exerciseDetail.addToRoutine' })}
-        </HeaderToolbar>
-      ) : null}
       <ScrollView contentContainerStyle={{ paddingBottom: bottom }}>
         {detail.isLoading ? (
           <Column gap="lg" style={[styles.section, { paddingTop: topInset + spacing.xl }]}>
@@ -233,7 +183,7 @@ export default function ExerciseDetailScreen() {
                 actionLabel={t(
                   detail.fetchable ? 'common.retry' : 'exerciseDetail.backToLibrary',
                 )}
-                onAction={detail.fetchable ? detail.retry : backToLibrary}
+                onAction={detail.fetchable ? detail.retry : goBack}
               />
             )}
           </View>
@@ -429,14 +379,6 @@ export default function ExerciseDetailScreen() {
                     />
                   ))}
                 </View>
-                <Column style={styles.section}>
-                  <Button
-                    label={t('exerciseDetail.browseSimilar')}
-                    variant="secondary"
-                    icon="search"
-                    onPress={browseVariations}
-                  />
-                </Column>
               </>
             ) : null}
 

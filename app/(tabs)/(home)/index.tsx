@@ -53,7 +53,7 @@ import { useTrainingSummary, type TrainingSummary } from '@/queries/useProgress'
 import { useSettings } from '@/settings/hooks';
 import { computeStreak } from '@/domain/logic';
 import type { Activity } from '@/domain/types';
-import { routes, tabHref } from '@/navigation/nav';
+import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
 import { spacing, screenGutter } from '@/theme/tokens';
 import { useT } from '@/i18n/useT';
@@ -111,8 +111,7 @@ export default function HomeScreen() {
     [router],
   );
   const openSettings = useCallback(() => router.push(routes.settings()), [router]);
-  const openActivities = useCallback(() => router.push(tabHref(1)), [router]);
-  const openWorkoutTab = useCallback(() => router.push(tabHref(2)), [router]);
+  const openWorkoutTab = useCallback(() => router.push(routes.workoutTab()), [router]);
 
   const renderItem = useCallback(
     ({ item }: { item: Activity }) => (
@@ -195,9 +194,6 @@ export default function HomeScreen() {
             title={t('homeTab.recent')}
             eyebrow={t('homeTab.latestSessions')}
             style={styles.recentHeader}
-            {...(visible.length > 0
-              ? { action: { label: t('homeTab.seeAll'), onPress: openActivities } }
-              : {})}
           />
         )}
       </>
@@ -210,7 +206,6 @@ export default function HomeScreen() {
       loading,
       locale,
       onSummaryLayout,
-      openActivities,
       retrySummary,
       streak,
       summary,

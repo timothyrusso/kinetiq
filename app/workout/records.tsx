@@ -1,11 +1,11 @@
 /**
  * What you just did better than you have ever done it.
  *
- * Presented over the workout history once a session is saved. The records arrive as a route
- * param because they are the result of the finish, which has already been written: there is
- * nothing left to read them back from before the history screen underneath has loaded.
- * The sheet cannot be swiped away (`gestureEnabled: false` on the route); its one action
- * closes it onto the history, which is where the workout now lives.
+ * Presented over Home once a session is saved. The records arrive as a route param because
+ * they are the result of the finish, which has already been written: there is nothing left to
+ * read them back from before the history underneath has loaded. The sheet cannot be swiped
+ * away (`gestureEnabled: false` on the route); its one action closes it onto Home, where the
+ * workout now tops the history.
  */
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';

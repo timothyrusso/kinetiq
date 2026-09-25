@@ -4,23 +4,16 @@
  * ## Ordered by what the user is mid-way through
  *
  * Two states, one priority: an in-flight session goes first (it is unfinished and
- * time-sensitive), then routines, then the library. A screen that keeps leading with
+ * time-sensitive), then routines. A screen that keeps leading with
  * "start something new" while a set sits half-completed is asking to be abandoned, so the
  * resume card is not a banner appended to a list: it *is* the first thing on screen.
  *
  * ## A scroll view, not a list
  *
- * Home and Activities use FlashList because their content is unbounded. Here it is bounded
- * twice over: routines are local and a keen lifter has a dozen, and the library preview is
- * six rows by construction. Virtualising that means a recycle pool larger than the content.
+ * Home uses FlashList because its content is unbounded. Here it is bounded: routines are local
+ * and a keen lifter has a dozen. Virtualising that means a recycle pool larger than the content.
  * The scroll view also lets the routine rows sit as plain siblings, which is what the
  * hairline-divider rhythm between them wants.
- *
- * ## The library is previewed, not paged
- *
- * Paging an infinite remote feed inside a `ScrollView` either loads everything or silently
- * stops, and both are worse than a link. Six exercises answer "is the catalog alive?" and
- * the Browse button hands off to the Exercises tab, which owns search, filters and paging.
  *
  * ## The session is watched by the card, not by the screen
  *
@@ -44,7 +37,7 @@ import {
   View,
   type ViewStyle,
 } from 'react-native';
-import { useRouter, useIsFocused } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useTabContentBottom } from '@/ui/insets';
 
 import { Button } from '@/ui/controls/Button';
@@ -53,7 +46,7 @@ import { SectionHeader } from '@/ui/display';
 import { SCROLL_INSETS, ScreenHeader } from '@/ui/Screen';
 import { MetaLine, type MetaItem } from '@/ui/display';
 import { HeaderToolbar, headerAction } from '@/navigation/HeaderAction';
-import { ExerciseThumb, RoutineRow } from '@/ui/rows';
+import { RoutineRow } from '@/ui/rows';
 import { SegmentedControl } from '@/ui/controls/SegmentedControl';
 import { MetricLabel, Txt } from '@/ui/Text';
 import { EmptyState, ErrorState, SkeletonCard } from '@/ui/states';
@@ -61,13 +54,12 @@ import { ProgressRing } from '@/ui/charts/ProgressRing';
 import { useMeasuredWidth } from '@/ui/charts/useMeasuredWidth';
 import { BarChart, type BarPoint } from '@/ui/charts/BarChart';
 import { useRoutines } from '@/queries/useRoutines';
-import { BROWSE_FILTER, useExerciseSearch } from '@/queries/useExercises';
 import { routes } from '@/navigation/nav';
 import type { Routine } from '@/domain/types';
 import { useAppTheme, type Theme } from '@/theme/theme';
 import { useT } from '@/i18n/useT';
 import type { TKey, TVars } from '@/i18n';
-import { radius, spacing, screenGutter } from '@/theme/tokens';
+import { spacing, screenGutter } from '@/theme/tokens';
 import { formatTimer } from '@/utils/format';
 import { useSettings } from '@/settings';
 import { haptics } from '@/services/haptics';
@@ -83,12 +75,8 @@ const ORDER_SEGMENTS: readonly { value: Order; label: TKey }[] = [
   { value: 'name', label: 'workoutTab.orderName' },
 ];
 
-/** Six is two rows of three on a compact phone and reads as a sample, not a list. */
-const LIBRARY_PREVIEW = 6;
 /** Clearance for the floating tab bar, which this tab is inside. */
 const CARD_PADDING = spacing.lg;
-/** Grid columns, fixed rather than measured: three across is legible at every width. */
-const GRID_COLUMNS = 3;
 
 export default function WorkoutScreen() {
   const { t, locale } = useT();
@@ -127,31 +115,12 @@ export default function WorkoutScreen() {
     return items;
   }, [order, routines.routines]);
 
-  // Gated on focus for the same reason as the Exercises tab: `NativeTabs` mounts every tab's
-  // screen when the bar is built, so this preview strip was fetching from wger during app
-  // launch for a tab the user had not opened.
-  const focused = useIsFocused();
-  const library = useExerciseSearch(BROWSE_FILTER, focused);
-  const preview = useMemo(() => library.items.slice(0, LIBRARY_PREVIEW), [library.items]);
-
   const openRoutine = useCallback((id: string) => router.push(routes.routine(id)), [router]);
   const openNewRoutine = useCallback(() => router.push(routes.newRoutine()), [router]);
   const openSession = useCallback(() => router.push(routes.workoutSession()), [router]);
-  const openExercise = useCallback((id: string) => router.push(routes.exerciseDetail(id)), [router]);
-  const openLibrary = useCallback(() => router.push(routes.exercisesTab()), [router]);
   const orderSegments = useMemo(
     () => ORDER_SEGMENTS.map((seg) => ({ value: seg.value, label: t(seg.label) })),
     [t],
-  );
-  const libraryTiles = useMemo(
-    () =>
-      preview.map((exercise) => ({
-        id: exercise.id,
-        name: exercise.name,
-        // `thumbUriOf` is for stored snapshots; a search hit is a live `Exercise`.
-        uri: exercise.thumbnailUrl ?? exercise.imageUrl,
-      })),
-    [preview],
   );
   const intro = useMemo<MetaItem[]>(
     () => [
@@ -178,10 +147,6 @@ export default function WorkoutScreen() {
   }, [routines.routines]);
 
   const gridWidth = sectionWidth;
-  const tileWidth =
-    gridWidth > 0
-      ? Math.floor((gridWidth - spacing.sm * (GRID_COLUMNS - 1)) / GRID_COLUMNS)
-      : 0;
 
   return (
     <>
@@ -249,15 +214,6 @@ export default function WorkoutScreen() {
             </View>
           )}
         </View>
-
-        <LibraryPreview
-          loading={library.isLoading}
-          failed={library.error !== null}
-          exercises={libraryTiles}
-          tileWidth={tileWidth}
-          onOpen={openExercise}
-          onBrowse={openLibrary}
-        />
 
         <SessionCounts routines={routines.routines} width={gridWidth} />
       </ScrollView>
@@ -449,65 +405,6 @@ function StartButton({ routine, onRefused }: { routine: Routine; onRefused: () =
   );
 }
 
-function LibraryPreview({
-  loading,
-  failed,
-  exercises,
-  tileWidth,
-  onOpen,
-  onBrowse,
-}: {
-  loading: boolean;
-  failed: boolean;
-  exercises: readonly { id: string; name: string; uri: string | null }[];
-  tileWidth: number;
-  onOpen: (id: string) => void;
-  onBrowse: () => void;
-}) {
-  const { t } = useT();
-  const theme = useAppTheme();
-  return (
-    <View style={styles.section}>
-      <SectionHeader
-        title={t('workoutTab.library')}
-        eyebrow={t('workoutTab.liveFromWger')}
-        action={{ label: t('workoutTab.browse'), onPress: onBrowse }}
-      />
-      {loading ? (
-        <SkeletonCard lines={1} />
-      ) : failed ? (
-        <Txt variant="caption" tone="muted">
-          {t('workoutTab.catalogRemote')}
-        </Txt>
-      ) : (
-        <View style={styles.grid}>
-          {exercises.map((exercise) => (
-            <Pressable
-              key={exercise.id}
-              accessibilityRole="button"
-              accessibilityLabel={t('tabsWorkout.opensExercise', { name: exercise.name })}
-              onPress={() => onOpen(exercise.id)}
-              style={({ pressed }) => [
-                styles.tile,
-                tileWidth > 0 ? { width: tileWidth } : styles.tileFlex,
-                {
-                  backgroundColor: pressed ? theme.colors.surfacePressed : theme.colors.surface,
-                  borderColor: theme.colors.border,
-                },
-              ]}
-            >
-              <ExerciseThumb uri={exercise.uri} name={exercise.name} size={44} theme={theme} />
-              <Txt variant="micro" weight="600" numberOfLines={2} style={{ marginTop: spacing.sm }}>
-                {exercise.name}
-              </Txt>
-            </Pressable>
-          ))}
-        </View>
-      )}
-    </View>
-  );
-}
-
 /**
  * Sessions per routine.
  *
@@ -610,12 +507,4 @@ const styles = StyleSheet.create({
   cardMeta: { marginTop: spacing.xs },
   lastTrained: { flex: 1, minWidth: 0, paddingVertical: spacing.xs },
   dot: { width: 8, height: 8, borderRadius: 4 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  tile: {
-    padding: spacing.md,
-    borderRadius: radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    gap: spacing.xs,
-  },
-  tileFlex: { width: '31%' },
 } satisfies Record<string, ViewStyle>);
