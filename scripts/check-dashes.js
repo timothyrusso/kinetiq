@@ -27,9 +27,10 @@ const EN = String.fromCharCode(0x2013);
 /**
  * Where shipped code lives. `scripts/` is checked too: its console output is read by people.
  * `targets/` is the native watch app (Swift, its string catalog, its lint config) and
- * `modules/` the local Expo modules.
+ * `modules/` the local Expo modules. `assets/catalog/` is the bundled exercise catalog: wger's text,
+ * but shown in the app, so the mapper folds its dashes and this proves it did.
  */
-const ROOTS = ['app', 'src', 'scripts', 'targets', 'modules'];
+const ROOTS = ['app', 'src', 'scripts', 'targets', 'modules', 'assets/catalog'];
 const EXTS = new Set([
   '.ts',
   '.tsx',

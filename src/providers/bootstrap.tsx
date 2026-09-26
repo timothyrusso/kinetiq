@@ -47,7 +47,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { configureExerciseProvider } from '@/api';
 import { createLocalProvider } from '@/api/local/provider';
-import { loadDevCatalogFixture } from '@/catalog/devFixture';
+import { installBundledCatalogIfMissing } from '@/catalog/install';
 import { loadAppFonts } from '@/fonts';
 import { openDatabase, readAllSettings, SETTING_KEYS, type DatabaseOpenResult, type SettingKey } from '@/persistence';
 import { getQueryClient, installQueryAdapters } from '@/query/client';
@@ -241,9 +241,9 @@ export async function runBootstrap(systemDark: boolean): Promise<BootstrapOutcom
   // Android's native header takes images, not glyph names, so the header-action icons are
   // rendered once here, in the same wait as the fonts, and the first bar already has them.
   const headerIcons = prefetchHeaderIcons();
-  // Temporary, until the bundled snapshot lands (#39, PR 3): a development build with an empty
-  // catalog gets a small fixture so the picker has something to show.
-  if (__DEV__) await loadDevCatalogFixture();
+  // First launch only: the bundled exercise catalog goes into SQLite, so day one works with no
+  // network. Every later launch this is one indexed read of `catalog_meta`.
+  await installBundledCatalogIfMissing();
 
   // 7. Active-workout restoration settles *before* the first frame so the "resume"
   //    affordance ships with the launch instead of popping in 300ms later.

@@ -1,50 +1,18 @@
 /**
- * DTO → domain mapping for wger responses.
+ * DTO → catalog mapping for wger responses.
  *
- * The interesting problem is language: `translations[]` arrives in *every*
- * language regardless of the `language__code` filter (that filter narrows which
- * exercises come back, not which translations each row carries), and wger does
- * not order them by preference. So `translations[0]` is a coin flip: for
- * exercise 73 it is German. Everything here resolves against an explicit
- * preference list and falls back rather than inventing content.
+ * The interesting problem is language: `translations[]` arrives in *every* language when no
+ * `language__code` filter is sent, and wger does not order them by preference, so
+ * `translations[0]` is a coin flip (for exercise 73 it is German). Each translation is picked by
+ * its explicit language id, and a missing one stays missing rather than being borrowed from
+ * another language.
+ *
+ * Nothing here synthesises a value: a missing image, video or description stays null, and the
+ * UI has a designed state for each.
  */
 import { remoteExerciseId } from '@/domain/exerciseId';
-import type { Exercise, Taxon } from '@/domain/types';
-import {
-  WgerExerciseInfo,
-  WgerImage,
-  WgerLanguage,
-  WgerMuscle,
-  WgerNamedEntity,
-  WgerTranslation,
-} from './dto';
-
-/** wger's own numeric id for English; used as the universal fallback. */
-export const WGER_ENGLISH_ID = 2;
-
-export type LanguagePreference = {
-  /** Numeric wger language ids in preference order, e.g. [5, 2]. */
-  ids: number[];
-};
-
-function preferredTranslation(
-  translations: readonly WgerTranslation[],
-  preference: LanguagePreference,
-): WgerTranslation | null {
-  if (translations.length === 0) return null;
-  // Prefer the user's language *with a usable name*; an empty translation is
-  // worse than a complete one in another language.
-  for (const id of preference.ids) {
-    const hit = translations.find((t) => t.language === id && (t.name ?? '').trim().length > 0);
-    if (hit) return hit;
-  }
-  const english = translations.find(
-    (t) => t.language === WGER_ENGLISH_ID && (t.name ?? '').trim().length > 0,
-  );
-  if (english) return english;
-  const anyName = translations.find((t) => (t.name ?? '').trim().length > 0);
-  return anyName ?? translations[0] ?? null;
-}
+import type { CatalogExercise, CatalogLanguage, CatalogPayload } from '@/catalog/types';
+import type { WgerExerciseInfo, WgerImage, WgerLanguage, WgerMuscle, WgerNamedEntity, WgerTranslation } from './dto';
 
 const BLOCK_CLOSE = /<\/(p|div|li|ul|ol|br|h[1-6])>/gi;
 const BLOCK_OPEN = /<(p|div|li|ul|ol|h[1-6])[^>]*>/gi;
@@ -107,32 +75,6 @@ function resolveInstructions(
   return body ? `${body}\n\n${tail}` : tail;
 }
 
-function distinctNames(values: readonly string[]): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const raw of values) {
-    const name = raw.trim();
-    const key = name.toLowerCase();
-    if (!name || seen.has(key)) continue;
-    seen.add(key);
-    out.push(name);
-  }
-  return out;
-}
-
-/**
- * Muscles come back with a Latin `name` and an optional English `name_en`.
- * The common name is what a user recognises ("Hamstrings", not
- * "Biceps femoris"), so it wins when present.
- */
-function muscleNames(muscles: readonly WgerMuscle[] | null | undefined): string[] {
-  return distinctNames((muscles ?? []).map((m) => m.name_en?.trim() || m.name || ''));
-}
-
-function entityNames(entities: readonly WgerNamedEntity[] | null | undefined): string[] {
-  return distinctNames((entities ?? []).map((e) => e.name ?? ''));
-}
-
 /**
  * Chooses the art to show. `is_main` is the author's own pick, so it wins;
  * otherwise the first image. `medium` thumbnails are preferred for both slots
@@ -166,17 +108,6 @@ function pickVideo(
   return main.video;
 }
 
-export function mapTaxon(entity: WgerNamedEntity): Taxon {
-  return { id: entity.id, name: entity.name.trim() || `#${entity.id}` };
-}
-
-export function mapMuscleTaxon(muscle: WgerMuscle): Taxon {
-  return {
-    id: muscle.id,
-    name: (muscle.name_en?.trim() || muscle.name || `#${muscle.id}`).trim(),
-  };
-}
-
 export function mapLanguageCodes(languages: readonly WgerLanguage[]): Map<number, string> {
   const map = new Map<number, string>();
   for (const language of languages) {
@@ -186,36 +117,83 @@ export function mapLanguageCodes(languages: readonly WgerLanguage[]): Map<number
   return map;
 }
 
-/**
- * `exerciseinfo` → `Exercise`. The row is complete on its own (media included),
- * so a list page and a detail screen map with the same function.
- *
- * Nothing here synthesises a value: a missing category, muscle list or image
- * stays null/empty, and the UI has a designed state for each.
- */
-export function mapExerciseInfo(
-  info: WgerExerciseInfo,
-  context: { preference: LanguagePreference },
-): Exercise {
-  const translations = info.translations ?? [];
-  const translation = preferredTranslation(translations, context.preference);
-  const notes = (translation?.notes ?? [])
-    .map((note) => (note.comment ?? '').trim())
-    .filter((note) => note.length > 0);
-  const { imageUrl, thumbnailUrl } = pickImages(info.images);
+type Taxonomy = Pick<CatalogPayload, 'categories' | 'equipment' | 'muscles'>;
 
+/** Categories and equipment share one shape. */
+export function mapNamedEntities(entities: readonly WgerNamedEntity[]): { id: number; name: string }[] {
+  return entities.map((e) => ({ id: e.id, name: e.name.trim() || `#${e.id}` }));
+}
+
+export function mapMuscles(muscles: readonly WgerMuscle[]): Taxonomy['muscles'] {
+  return muscles.map((m) => ({
+    id: m.id,
+    name: m.name.trim() || `#${m.id}`,
+    nameEn: m.name_en?.trim() || null,
+    isFront: m.is_front !== false,
+  }));
+}
+
+/**
+ * wger's prose uses em and en dashes, which this app does not ship (see CLAUDE.md). A dash
+ * between two numbers is a range and becomes a hyphen; any other becomes a colon, which reads
+ * correctly in every case the catalog has ("tucked in tight: do not let them flare out").
+ * Written as escapes because the dash check scans this file too.
+ */
+function withoutDashes(text: string): string {
+  return text.replace(/(\d)\s*[\u2013\u2014]\s*(\d)/g, '$1-$2').replace(/\s*[\u2013\u2014]\s*/g, ': ');
+}
+
+function translationFor(
+  translations: readonly WgerTranslation[],
+  languageId: number | null,
+): { name: string; instructions: string | null } | null {
+  if (languageId === null) return null;
+  const hit = translations.find((t) => t.language === languageId && (t.name ?? '').trim().length > 0);
+  if (!hit) return null;
+  const notes = (hit.notes ?? []).map((note) => (note.comment ?? '').trim()).filter((note) => note.length > 0);
+  const instructions = resolveInstructions(hit, notes);
   return {
-    id: remoteExerciseId(info.id),
-    name: (translation?.name ?? '').trim() || `Exercise ${info.id}`,
-    instructions: resolveInstructions(translation, notes),
-    category: info.category?.name?.trim() || null,
-    primaryMuscles: muscleNames(info.muscles),
-    secondaryMuscles: muscleNames(info.muscles_secondary),
-    equipment: entityNames(info.equipment),
-    imageUrl,
-    thumbnailUrl,
-    videoUrl: pickVideo(info.videos),
-    source: 'remote',
-    externalId: info.id,
+    name: withoutDashes(hit.name.trim()),
+    instructions: instructions === null ? null : withoutDashes(instructions),
+  };
+}
+
+/**
+ * Builds the `exerciseinfo` → catalog row mapper for one download.
+ *
+ * A row maps to null when it cannot be shown: no English or Italian name, or a category the
+ * taxonomy does not list (the column is required). Muscle and equipment ids the taxonomy does
+ * not list are dropped, so the junction tables never point at a row that is not there.
+ */
+export function catalogExerciseMapper(
+  languageIds: Record<CatalogLanguage, number | null>,
+  taxonomy: Taxonomy,
+): (info: WgerExerciseInfo) => CatalogExercise | null {
+  const categoryIds = new Set(taxonomy.categories.map((c) => c.id));
+  const muscleIds = new Set(taxonomy.muscles.map((m) => m.id));
+  const equipmentIds = new Set(taxonomy.equipment.map((e) => e.id));
+
+  return (info) => {
+    const translations = info.translations ?? [];
+    const en = translationFor(translations, languageIds.en);
+    const it = translationFor(translations, languageIds.it);
+    const categoryId = info.category?.id ?? null;
+    if ((en === null && it === null) || categoryId === null || !categoryIds.has(categoryId)) return null;
+
+    const { imageUrl, thumbnailUrl } = pickImages(info.images);
+    return {
+      id: remoteExerciseId(info.id),
+      externalId: info.id,
+      uuid: info.uuid || null,
+      variationGroup: info.variation_group ?? null,
+      categoryId,
+      primaryMuscleIds: (info.muscles ?? []).map((m) => m.id).filter((id) => muscleIds.has(id)),
+      secondaryMuscleIds: (info.muscles_secondary ?? []).map((m) => m.id).filter((id) => muscleIds.has(id)),
+      equipmentIds: (info.equipment ?? []).map((e) => e.id).filter((id) => equipmentIds.has(id)),
+      imageUrl,
+      thumbnailUrl,
+      videoUrl: pickVideo(info.videos),
+      translations: { ...(en === null ? {} : { en }), ...(it === null ? {} : { it }) },
+    };
   };
 }

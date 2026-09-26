@@ -250,13 +250,32 @@ async function hydrate(db: SQLiteDatabase, rows: readonly ExerciseRow[]): Promis
 }
 
 /** `%` and `_` in what the user typed are text, not wildcards. */
-function likePattern(term: string): string {
-  return `%${term.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
+function escapeLike(term: string): string {
+  return term.replace(/[\\%_]/g, (char) => `\\${char}`);
 }
 
 /**
- * One page of the filtered list, ordered by name in the render language. The muscle filter
- * matches primary muscles only, which is what wger's own `muscles` filter did.
+ * Relevance for a search, best first: the whole name, then the start of the name, then the
+ * start of any word, then anywhere; at each step a match in the render language before a match
+ * in English. Without it "squat" would list "1 Leg Box Squat" first, and the routine importer,
+ * which takes the top row as the closest match for a name it cannot find exactly, would pick
+ * it. Parameters: the term twice, then the escaped term four times.
+ */
+const SEARCH_RANK = `
+  CASE
+    WHEN tl.name_search = ? THEN 0
+    WHEN te.name_search = ? THEN 1
+    WHEN tl.name_search LIKE ? || '%' ESCAPE '\\' THEN 2
+    WHEN te.name_search LIKE ? || '%' ESCAPE '\\' THEN 3
+    WHEN tl.name_search LIKE '% ' || ? || '%' ESCAPE '\\' THEN 4
+    WHEN te.name_search LIKE '% ' || ? || '%' ESCAPE '\\' THEN 5
+    ELSE 6
+  END`;
+
+/**
+ * One page of the filtered list, ordered by name in the render language, and by relevance
+ * first when there is a search term. The muscle filter matches primary muscles only, which is
+ * what wger's own `muscles` filter did.
  */
 export async function catalogPage(
   filter: ExerciseFilter,
@@ -266,11 +285,12 @@ export async function catalogPage(
 ): Promise<{ items: Exercise[]; total: number }> {
   const db = getDatabase();
   const term = toSearchKey(filter.query);
+  const escaped = escapeLike(term);
   const where = [`(tl.name IS NOT NULL OR te.name IS NOT NULL)`];
   const params: (string | number)[] = [language];
   if (term.length > 0) {
-    where.push(`(tl.name_search LIKE ? ESCAPE '\\' OR te.name_search LIKE ? ESCAPE '\\')`);
-    params.push(likePattern(term), likePattern(term));
+    where.push(`(tl.name_search LIKE '%' || ? || '%' ESCAPE '\\' OR te.name_search LIKE '%' || ? || '%' ESCAPE '\\')`);
+    params.push(escaped, escaped);
   }
   if (filter.categoryId !== null) {
     where.push('e.category_id = ?');
@@ -290,10 +310,13 @@ export async function catalogPage(
     params.push(filter.muscleId);
   }
   const clause = `WHERE ${where.join(' AND ')}`;
+  const order = term.length > 0 ? ORDER_BY_NAME.replace('ORDER BY', `ORDER BY ${SEARCH_RANK},`) : ORDER_BY_NAME;
+  const rankParams = term.length > 0 ? [term, term, escaped, escaped, escaped, escaped] : [];
 
   const [rows, count] = await Promise.all([
-    db.getAllAsync<ExerciseRow>(`${SELECT_EXERCISE} ${clause} ${ORDER_BY_NAME} LIMIT ? OFFSET ?`, [
+    db.getAllAsync<ExerciseRow>(`${SELECT_EXERCISE} ${clause} ${order} LIMIT ? OFFSET ?`, [
       ...params,
+      ...rankParams,
       limit,
       offset,
     ]),

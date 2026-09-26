@@ -59,6 +59,7 @@
     "ios": "expo run:ios --device \"iPhone 17 Pro\"",
     "android": "expo run:android",
     "prebuild": "expo prebuild --clean",
+    "catalog:update": "tsx scripts/build-catalog.ts",
     "typecheck": "tsc --noEmit",
     "check:dashes": "node scripts/check-dashes.js",
     "check:i18n": "node scripts/check-i18n.js",
