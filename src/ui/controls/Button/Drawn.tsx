@@ -86,7 +86,9 @@ export const DrawnButton = memo(function DrawnButton({
       accessibilityState={{ disabled: inactive, busy: loading }}
       {...(accessibilityHint ? { accessibilityHint } : null)}
       style={[
-        fullWidth ? FILL_STYLE : null,
+        // Hug unless asked to fill, as the native buttons do: inside a column, a stretched
+        // drawn button became a full-width bar while its native siblings stayed pills.
+        fullWidth ? FILL_STYLE : HUG_STYLE,
         {
           minHeight: skin.height,
           paddingHorizontal: skin.padX,
@@ -129,7 +131,9 @@ function buttonSkin(theme: Theme, variant: ButtonVariant, size: ButtonSize): Ski
   const height = size === 'lg' ? 54 : size === 'md' ? 48 : 38;
   const padX = size === 'lg' ? spacing.xxl : size === 'md' ? spacing.xl : spacing.lg;
   const iconSize = size === 'sm' ? 16 : 18;
-  const base = { height, padX, iconSize, radius: size === 'sm' ? radius.sm : radius.pill };
+  // A capsule at every size, like the native buttons beside it: a small drawn button with
+  // squarer corners read as a different kind of control from the small native one.
+  const base = { height, padX, iconSize, radius: radius.pill };
 
   const row = {
     flexDirection: 'row' as const,
@@ -194,3 +198,6 @@ function buttonSkin(theme: Theme, variant: ButtonVariant, size: ButtonSize): Ski
  * row with a sibling.
  */
 export const FILL_STYLE = { width: '100%', flexShrink: 1 } as const;
+
+/** The hugging counterpart, shared with the native buttons so the two agree. */
+export const HUG_STYLE = { alignSelf: 'flex-start' } as const;

@@ -5,7 +5,6 @@
  * quiet, danger) and any button while it is loading is the drawn button.
  */
 import { memo } from 'react';
-import { StyleSheet } from 'react-native';
 import type { SFSymbol } from 'sf-symbols-typescript';
 import { Button as NativeButton, Host, Text } from '@expo/ui/swift-ui';
 import {
@@ -20,7 +19,7 @@ import {
 import { haptics } from '@/services/haptics';
 import { useAppTheme } from '@/theme/theme';
 import type { IconName } from '@/ui/icons';
-import { DrawnButton, FILL_STYLE } from './Drawn';
+import { DrawnButton, FILL_STYLE, HUG_STYLE } from './Drawn';
 import type { ButtonProps } from './types';
 
 export type { ButtonProps, ButtonSize, ButtonVariant } from './types';
@@ -57,7 +56,7 @@ export const Button = memo(function Button(props: ButtonProps) {
       // time its card was scrolled.
       ignoreSafeArea="all"
       colorScheme={theme.mode}
-      style={[fullWidth ? FILL_STYLE : styles.hug, style]}
+      style={[fullWidth ? FILL_STYLE : HUG_STYLE, style]}
     >
       <NativeButton
         {...(systemImage ? { systemImage } : {})}
@@ -80,8 +79,4 @@ export const Button = memo(function Button(props: ButtonProps) {
       </NativeButton>
     </Host>
   );
-});
-
-const styles = StyleSheet.create({
-  hug: { alignSelf: 'flex-start' },
 });

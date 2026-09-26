@@ -8,6 +8,7 @@ import { memo, useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { Activity } from '@/domain/types';
+import { haptics } from '@/services/haptics';
 import type { Theme } from '@/theme/theme';
 import { spacing } from '@/theme/tokens';
 import { IconTile } from '@/ui/icons';
@@ -35,8 +36,16 @@ export const ActivityCard = memo(function ActivityCard({
     () => activitySummary(activity, units),
     [activity, units],
   );
-  const press = useCallback(() => onPress(activity.id), [onPress, activity.id]);
-  const longPress = useCallback(() => onLongPress?.(activity.id), [onLongPress, activity.id]);
+  // The same register as `ActionRow`: a tap is the lightest acknowledgment, and the long
+  // press gets `warning` because what it opens is a delete confirm.
+  const press = useCallback(() => {
+    haptics.light();
+    onPress(activity.id);
+  }, [onPress, activity.id]);
+  const longPress = useCallback(() => {
+    haptics.warning();
+    onLongPress?.(activity.id);
+  }, [onLongPress, activity.id]);
   const skin = theme.surfaceSkin;
 
   return (
