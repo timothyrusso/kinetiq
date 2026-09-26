@@ -29,7 +29,7 @@ import type { Theme } from '@/theme/theme';
 import { Button } from '@/ui/controls/Button';
 import { Chip } from '@/ui/controls/Chip';
 import { TextInput } from '@/ui/controls/TextInput';
-import { Row } from '@/ui/layout';
+import { Rail, Stack } from '@/ui/layout';
 import { Txt } from '@/ui/Text';
 import { Icon, ICON_SIZE } from '@/ui/icons';
 import { EmptyState, ErrorState, SkeletonList } from '@/ui/states';
@@ -53,10 +53,6 @@ import { exerciseTags } from '@/ui/display/exerciseTags';
  * short: there is nothing left to reach.
  */
 const PAGE_ROWS = 24;
-
-/** How many taxonomy chips to offer. */
-const MUSCLE_CHIPS = 6;
-const EQUIPMENT_CHIPS = 5;
 
 export function ExercisePicker({
   onPick,
@@ -130,7 +126,6 @@ export function ExercisePicker({
         value={query}
         onChangeText={setQuery}
         placeholder={t('picker.placeholder')}
-        autoFocus
         // Text rather than a spinner: a hint is announced, and it explains the one state
         // where typing has been received and nothing has moved yet.
         hint={
@@ -141,31 +136,37 @@ export function ExercisePicker({
         accessibilityHint={t('picker.searchHint')}
       />
 
-      <Row gap="sm" wrap>
-        {(taxonomy.data?.muscles ?? []).slice(0, MUSCLE_CHIPS).map((muscle) => (
-          <Chip
-            key={muscle.id}
-            label={muscle.name}
-            size="sm"
-            selected={muscleId === muscle.id}
-            onPress={() => setMuscleId(muscleId === muscle.id ? null : muscle.id)}
-          />
-        ))}
-        {(taxonomy.data?.equipment ?? []).slice(0, EQUIPMENT_CHIPS).map((piece) => (
-          <Chip
-            key={piece.id}
-            label={piece.name}
-            size="sm"
-            selected={equipmentId === piece.id}
-            onPress={() => setEquipmentId(equipmentId === piece.id ? null : piece.id)}
-          />
-        ))}
-      </Row>
+      {/* Every muscle and every piece of equipment, one rail each. A capped, wrapped set
+          used to show the first six by name, which kept Brachialis and hid Quads. */}
+      <Stack gap="sm">
+        <Rail>
+          {(taxonomy.data?.muscles ?? []).map((muscle) => (
+            <Chip
+              key={muscle.id}
+              label={muscle.name}
+              size="sm"
+              selected={muscleId === muscle.id}
+              onPress={() => setMuscleId(muscleId === muscle.id ? null : muscle.id)}
+            />
+          ))}
+        </Rail>
+        <Rail>
+          {(taxonomy.data?.equipment ?? []).map((piece) => (
+            <Chip
+              key={piece.id}
+              label={piece.name}
+              size="sm"
+              selected={equipmentId === piece.id}
+              onPress={() => setEquipmentId(equipmentId === piece.id ? null : piece.id)}
+            />
+          ))}
+        </Rail>
+      </Stack>
 
       {filtered ? (
         <Button
           label={t('picker.clearFilter')}
-          variant="quiet"
+          variant="secondary"
           size="sm"
           icon="close"
           onPress={() => {
