@@ -3,8 +3,9 @@
  * the Apple Watch (issue #27).
  *
  * All or nothing, and idempotent. One transaction holds the duplicate check, the history read,
- * PR detection, the activity insert and the records, so a crash cannot leave a workout without
- * its PRs or PRs without their workout. An activity with the same id already means "saved":
+ * PR detection, the activity insert, the records and the routine's "trained" count and date, so
+ * a crash cannot leave a workout without its PRs, or a routine counted for a workout that was
+ * never saved. An activity with the same id already means "saved":
  * nothing is written and PR detection does not run again, because a replay would compare the
  * workout against a history that already contains it.
  */
@@ -29,10 +30,7 @@ export type CommitResult = {
 const HISTORY_WINDOW = 400;
 
 /** Returns null when a workout with this id is already in history. */
-export async function commitWorkout(
-  workout: CompletedWorkout,
-  options: { markPerformed?: boolean } = {},
-): Promise<CommitResult | null> {
+export async function commitWorkout(workout: CompletedWorkout): Promise<CommitResult | null> {
   let result: CommitResult | null = null;
   await withTransaction(async () => {
     if ((await activityRepository.byId(workout.id)) !== null) return;
@@ -41,8 +39,9 @@ export async function commitWorkout(
     const personalRecords = detectPersonalRecords(workout.entries, history, workout.endedAt);
     const activity = await activityRepository.recordWorkout(workout, personalRecords);
     await recordRepository.commitManyInTransaction(personalRecords);
-    if (options.markPerformed && workout.routineId !== null) {
-      // A routine deleted since the watch synced simply matches no row.
+    // Phone and watch alike. The duplicate check above is what keeps a replayed workout from
+    // counting twice. A routine deleted since the workout started simply matches no row.
+    if (workout.routineId !== null) {
       await routineRepository.markPerformed(workout.routineId, workout.endedAt);
     }
     result = { activity, personalRecords };

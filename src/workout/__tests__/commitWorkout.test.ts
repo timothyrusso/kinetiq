@@ -72,24 +72,29 @@ describe('commitWorkout', () => {
     persistence.recordRepository.commitManyInTransaction.mockImplementationOnce(async () => {
       expect(persistence.mockStore.inTransaction).toBe(true);
     });
-    const result = await commitWorkout(workout(), { markPerformed: true });
+    const result = await commitWorkout(workout());
     expect(result?.personalRecords.map((r) => r.kind)).toEqual(['est1rm']);
     expect(persistence.recordRepository.commitManyInTransaction).toHaveBeenCalledWith(result?.personalRecords);
     expect(persistence.routineRepository.markPerformed).toHaveBeenCalledWith('rtn_1', 2_000);
   });
 
-  it('treats a workout already in history as saved: no second insert, no second set of PRs', async () => {
+  it('treats a workout already in history as saved: no second insert, PRs or routine count', async () => {
     await commitWorkout(workout());
     jest.clearAllMocks();
     await expect(commitWorkout(workout())).resolves.toBeNull();
     expect(persistence.activityRepository.list).not.toHaveBeenCalled();
     expect(persistence.activityRepository.recordWorkout).not.toHaveBeenCalled();
     expect(persistence.recordRepository.commitManyInTransaction).not.toHaveBeenCalled();
+    expect(persistence.routineRepository.markPerformed).not.toHaveBeenCalled();
   });
 
-  it('does not mark a routine for a phone session or a workout without one', async () => {
-    await commitWorkout(workout({ id: 'session-1' }));
-    await commitWorkout(workout({ id: 'watch-2', routineId: null }), { markPerformed: true });
+  it('marks the routine for a phone session the same as for a watch workout', async () => {
+    await commitWorkout(workout({ id: 'session-1', endedAt: 5_000 }));
+    expect(persistence.routineRepository.markPerformed).toHaveBeenCalledWith('rtn_1', 5_000);
+  });
+
+  it('marks nothing for a workout without a routine', async () => {
+    await commitWorkout(workout({ id: 'session-2', routineId: null }));
     expect(persistence.routineRepository.markPerformed).not.toHaveBeenCalled();
   });
 

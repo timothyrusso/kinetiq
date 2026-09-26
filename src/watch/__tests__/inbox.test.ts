@@ -34,13 +34,11 @@ beforeEach(() => {
 });
 
 describe('drainWatchInbox', () => {
-  it('commits a valid workout, marks its routine, acks it and reports the saved id', async () => {
+  it('commits a valid workout, acks it and reports the saved id', async () => {
     mockInbox.push(entry());
     commitWorkout.mockResolvedValueOnce({ activity: { id: `watch-${UUID}` }, personalRecords: [] });
     await expect(drainWatchInbox()).resolves.toEqual([`watch-${UUID}`]);
-    expect(commitWorkout).toHaveBeenCalledWith(expect.objectContaining({ id: `watch-${UUID}` }), {
-      markPerformed: true,
-    });
+    expect(commitWorkout).toHaveBeenCalledWith(expect.objectContaining({ id: `watch-${UUID}` }));
     expect(bridge.ackInbox).toHaveBeenCalledWith(UUID);
     expect(mockInbox).toHaveLength(0);
   });
