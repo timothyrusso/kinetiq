@@ -128,7 +128,7 @@ export default function WorkoutSessionScreen() {
    *
    * This used to be a fixed 210, which was right for one font size and one device. Both float
    * over the scroll view, so its last card has to clear whichever reaches higher; measuring
-   * them means Dynamic Type and a taller home indicator cannot hide the notes card under the
+   * them means Dynamic Type and a taller home indicator cannot hide the last card under the
    * Finish button. Set on layout only, never per tick.
    */
   const [footerHeight, setFooterHeight] = useState(0);
@@ -585,19 +585,6 @@ export default function WorkoutSessionScreen() {
               ))}
             </View>
           )}
-        </View>
-
-        <View style={styles.section}>
-          <SectionHeader title={t('session.notesTitle')} eyebrow={t('session.notesEyebrow')} />
-          <Card onPress={() => router.push(routes.sessionNotes())}>
-            <Txt
-              variant={session.notes === null ? 'body' : 'bodyLg'}
-              tone={session.notes === null ? 'faint' : 'default'}
-              numberOfLines={3}
-            >
-              {session.notes ?? t('session.notesEmpty')}
-            </Txt>
-          </Card>
         </View>
       </ScrollView>
 

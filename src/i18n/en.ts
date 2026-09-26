@@ -239,14 +239,8 @@ export const en = {
     alsoWorked: 'Also worked',
     equipment: 'Equipment',
     yourHistory: 'Your history',
-    sessionCount_one: '{count} session',
-    sessionCount_other: '{count} sessions',
     neverLogged:
       'You have not logged this exercise yet. Finish a session with it and your numbers will appear here.',
-    totalVolume: 'Total volume',
-    setsDone: 'Sets done',
-    earlierSessions_one: '{count} earlier session in your history.',
-    earlierSessions_other: '{count} earlier sessions in your history.',
     records: 'Records',
     personalBests: 'Personal bests',
     variations: 'Variations',
@@ -357,9 +351,6 @@ export const en = {
     emptyMessage:
       'Add one from the library and it is stored on the device straight away.',
     addAnExercise: 'Add an exercise',
-    notesTitle: 'Session notes',
-    notesEyebrow: 'Saved with the workout',
-    notesEmpty: 'How did it go? Added to the workout when you finish.',
     discard: 'Discard',
     finish: 'Finish',
     discardTitle: 'Discard this workout?',
@@ -374,9 +365,6 @@ export const en = {
     finishAll: 'All {planned} sets are done. This becomes a workout in your history.',
     finishConfirm: 'Finish and save',
     thisExercise: 'This exercise',
-    notesLabel: 'Notes',
-    notesPlaceholder: 'Bar speed, sleep, that nagging shoulder.',
-    notesHint: 'Stored on this device, with the workout.',
     recordOne: 'Personal record',
     recordMany: '{count} personal records',
     seeInHistory: 'See it in history',
@@ -627,8 +615,6 @@ export const en = {
     loading: 'Loading',
     notFoundBody:
       'The link you followed points somewhere this app does not have. Your routines, history and settings are untouched.',
-    muscleTagging:
-      'Muscle assignments come from the library own tagging: a guide to the movement emphasis, not an anatomical claim about your body.',
     midSessionNote:
       'You are mid-session, so the schedule was saved but not re-armed: your rest timer keeps the alert it already has. It updates when the session ends.',
     restDefaultBody:

@@ -43,7 +43,7 @@ import * as Linking from 'expo-linking';
 import { ScreenHeader } from '@/ui/Screen';
 import { useScreenContentBottom, useTransparentHeaderInset } from '@/ui/insets';
 import { Badge, Card, Gap, Row, Stack as Column } from '@/ui/layout';
-import { MetaLine, SectionHeader, StatTile, TagRow, type Tag } from '@/ui/display';
+import { MetaLine, SectionHeader, TagRow, type Tag } from '@/ui/display';
 import { Txt } from '@/ui/Text';
 import { Icon, ICON_SIZE } from '@/ui/icons';
 import { ActionRow } from '@/ui/rows';
@@ -66,13 +66,7 @@ import { provisionalExerciseName } from '@/domain/exerciseId';
 import { routes } from '@/navigation/nav';
 import { useAppTheme, type Theme } from '@/theme/theme';
 import { radius, screenGutter, spacing } from '@/theme/tokens';
-import {
-  compactNumber,
-  formatWeight,
-  weightUnit,
-  weightValue,
-  type UnitSystem,
-} from '@/utils/format';
+import { formatWeight, type UnitSystem } from '@/utils/format';
 import { agoLabel, formatShortDateLocalized, shortDateLabel } from '@/utils/relativeTime';
 import { useT } from '@/i18n/useT';
 import type { Exercise } from '@/domain/types';
@@ -229,11 +223,6 @@ export default function ExerciseDetailScreen() {
                 <SectionHeader title={t('exerciseDetail.muscles')} />
                 <TagGroup label={t('exerciseDetail.primary')} tags={primaryTags} theme={theme} />
                 <TagGroup label={t('exerciseDetail.alsoWorked')} tags={secondaryTags} theme={theme} />
-                {secondaryTags.length > 0 ? (
-                  <Txt variant="caption" tone="faint">
-                    {t('misc.muscleTagging')}
-                  </Txt>
-                ) : null}
               </Column>
             ) : null}
 
@@ -267,16 +256,7 @@ export default function ExerciseDetailScreen() {
             </Column>
 
             <Column gap="lg" style={styles.section}>
-              <SectionHeader
-                title={t('exerciseDetail.yourHistory')}
-                eyebrow={
-                  history.history.sessionsCount > 0
-                    ? t('exerciseDetail.sessionCount', {
-                        count: history.history.sessionsCount,
-                      })
-                    : undefined
-                }
-              />
+              <SectionHeader title={t('exerciseDetail.yourHistory')} />
               {history.isLoading ? (
                 <SkeletonCard lines={2} />
               ) : history.history.sessionsCount === 0 ? (
@@ -303,17 +283,6 @@ export default function ExerciseDetailScreen() {
                       theme={theme}
                     />
                   )}
-                  <View style={styles.stats}>
-                    <StatTile
-                      label={t('exerciseDetail.totalVolume')}
-                      value={compactNumber(weightValue(history.history.totalVolumeKg, units))}
-                      unit={weightUnit(units)}
-                    />
-                    <StatTile
-                      label={t('exerciseDetail.setsDone')}
-                      value={String(history.history.totalSets)}
-                    />
-                  </View>
                   {/* Two points is the least that makes a line; one session is a dot, and the
                       set above already says what it was. */}
                   {weightChart.points.length >= 2 ? (
@@ -349,15 +318,6 @@ export default function ExerciseDetailScreen() {
                     onOpen={openSession}
                   />
                 ))}
-                {history.history.sessions.length > HISTORY_PREVIEW ? (
-                  <View style={styles.bandFooter}>
-                    <Txt variant="caption" tone="faint">
-                      {t('exerciseDetail.earlierSessions', {
-                        count: history.history.sessionsCount - HISTORY_PREVIEW,
-                      })}
-                    </Txt>
-                  </View>
-                ) : null}
               </View>
             ) : null}
 
@@ -371,7 +331,7 @@ export default function ExerciseDetailScreen() {
                   <Column gap="lg">
                     {history.records.map((record) => (
                       <Row key={record.kind} gap="md" align="center">
-                        <Icon name="trophy" size={ICON_SIZE.inline} color={theme.colors.onAccent} />
+                        <Icon name="trophy" size={ICON_SIZE.inline} color={theme.colors.accent} />
                         <Txt variant="label" tone="muted" style={styles.flex}>
                           {t(RECORD_LABEL[record.kind])}
                         </Txt>
@@ -656,10 +616,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: screenGutter,
   },
-  stats: { flexDirection: 'row', gap: spacing.lg },
   flex: { flex: 1 },
   // Row lists get no wrapper padding of their own: `ListRow` and `ExerciseRow` carry
   // their own `screenGutter` inset and a full-bleed hairline, so a second inset would
   // make their dividers stop short of the edge the rest of the app's dividers reach.
-  bandFooter: { paddingHorizontal: screenGutter, paddingVertical: spacing.md },
 });

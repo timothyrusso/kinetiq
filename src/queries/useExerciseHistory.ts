@@ -73,8 +73,6 @@ export type ExerciseHistory = {
    */
   weightTrend: WeightPoint[];
   sessionsCount: number;
-  totalVolumeKg: number;
-  totalSets: number;
   /** Heaviest completed set ever recorded, kg. Bodyweight work (0 kg) is excluded. */
   bestWeightKg: number | null;
   bestReps: number | null;
@@ -89,8 +87,6 @@ const EMPTY_HISTORY: ExerciseHistory = {
   sessions: [],
   weightTrend: [],
   sessionsCount: 0,
-  totalVolumeKg: 0,
-  totalSets: 0,
   bestWeightKg: null,
   bestReps: null,
   bestEstimated1rmKg: null,
@@ -206,8 +202,6 @@ function summarise(exerciseId: string, activities: readonly Activity[]): Exercis
       }))
       .reverse(),
     sessionsCount: sessions.length,
-    totalVolumeKg: sum(sessions.map((s) => s.volumeKg)),
-    totalSets: sum(sessions.map((s) => s.completedSets)),
     bestWeightKg: heaviest?.topWeightKg ?? null,
     bestReps: mostReps === null || mostReps.topReps <= 0 ? null : mostReps.topReps,
     bestEstimated1rmKg: best1rm?.estimated1rmKg ?? null,
