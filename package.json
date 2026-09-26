@@ -42,6 +42,7 @@
     "react-native-worklets": "0.10.1"
   },
   "devDependencies": {
+    "@bacons/apple-targets": "^5.0.0",
     "@types/react": "~19.2.2",
     "knip": "^6.38.0",
     "sf-symbols-typescript": "^2.2.0",
@@ -57,11 +58,12 @@
     "check:dashes": "node scripts/check-dashes.js",
     "check:i18n": "node scripts/check-i18n.js",
     "check:jsx": "tsx scripts/jsx-comment-check.ts",
-    "check": "npm run typecheck && npm run check:jsx && npm run check:dashes && npm run check:i18n && npm run check:hooks && npm run check:layout && npm run check:unused",
+    "check": "npm run typecheck && npm run check:jsx && npm run check:dashes && npm run check:i18n && npm run check:hooks && npm run check:layout && npm run check:unused && npm run check:watch",
     "lint": "expo lint",
     "check:hooks": "node scripts/check-hooks.js",
     "check:layout": "node scripts/check-layout.js",
-    "check:unused": "knip && node scripts/check-unused-keys.js"
+    "check:unused": "knip && node scripts/check-unused-keys.js",
+    "check:watch": "node scripts/check-watch-i18n.js && swiftlint lint --strict --quiet --config targets/.swiftlint.yml && swift test --package-path targets"
   },
   "private": true
 }

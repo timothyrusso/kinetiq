@@ -24,10 +24,26 @@ const ROOT = join(__dirname, '..');
 // constants the check depends on. That happened once.
 const EM = String.fromCharCode(0x2014);
 const EN = String.fromCharCode(0x2013);
-/** Where shipped code lives. `scripts/` is checked too: its console output is read by people. */
-const ROOTS = ['app', 'src', 'scripts'];
-const EXTS = new Set(['.ts', '.tsx', '.js', '.jsx', '.md', '.json']);
-const SKIP_DIRS = new Set(['node_modules', 'ios', 'android', '.git', '.expo', 'dist']);
+/**
+ * Where shipped code lives. `scripts/` is checked too: its console output is read by people.
+ * `targets/` is the native watch app (Swift, its string catalog, its lint config) and
+ * `modules/` the local Expo modules.
+ */
+const ROOTS = ['app', 'src', 'scripts', 'targets', 'modules'];
+const EXTS = new Set([
+  '.ts',
+  '.tsx',
+  '.js',
+  '.jsx',
+  '.md',
+  '.json',
+  '.swift',
+  '.xcstrings',
+  '.plist',
+  '.yml',
+  '.kt',
+]);
+const SKIP_DIRS = new Set(['node_modules', 'ios', 'android', '.git', '.expo', 'dist', '.build']);
 
 function walk(dir, out = []) {
   for (const entry of readdirSync(dir)) {
@@ -76,7 +92,7 @@ for (const file of files) {
 }
 
 if (hits.length === 0) {
-  console.log('PASS: no em or en dashes in app/, src/, scripts/ or CLAUDE.md');
+  console.log(`PASS: no em or en dashes in ${ROOTS.join('/, ')}/ or CLAUDE.md`);
   process.exit(0);
 }
 

@@ -1,0 +1,35 @@
+# Stability rule 5 in issue #27: the watch app must never crash, so the constructs that crash
+# on bad data are errors, not warnings. Run by `npm run check:watch` with `--strict`.
+included:
+  - watch
+  - watch-tests
+excluded:
+  - .build
+
+opt_in_rules:
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - fatal_error_message
+
+force_cast: error
+force_try: error
+force_unwrapping:
+  severity: error
+implicitly_unwrapped_optional:
+  severity: error
+
+custom_rules:
+  no_fatal_error:
+    name: "No fatalError"
+    regex: '\bfatalError\s*\('
+    match_kinds: [identifier]
+    message: "fatalError crashes the app. Return a failure the caller can show instead."
+    severity: error
+  unsafe_subscript:
+    name: "Unchecked array index"
+    included: '.*/watch/Core/.*\.swift'
+    # A positional read by literal or by an index-like name. Use `array[safe: i]`.
+    regex: '[\w)\]]\[\s*(\d+|[a-z]*[iI]ndex|i|j|k|idx|offset|position)\s*\]'
+    match_kinds: [identifier, number]
+    message: "Unchecked array index. Use `[safe:]` from Array+Safe.swift."
+    severity: error

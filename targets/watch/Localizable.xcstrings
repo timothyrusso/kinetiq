@@ -1,0 +1,24 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "routines.empty.body" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Open Kinetiq on your iPhone, then tap Sync." } },
+        "it" : { "stringUnit" : { "state" : "translated", "value" : "Apri Kinetiq sull'iPhone, poi tocca Sincronizza." } }
+      }
+    },
+    "routines.empty.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No routines yet" } },
+        "it" : { "stringUnit" : { "state" : "translated", "value" : "Ancora nessuna scheda" } }
+      }
+    },
+    "routines.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Kinetiq" } },
+        "it" : { "stringUnit" : { "state" : "translated", "value" : "Kinetiq" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}
