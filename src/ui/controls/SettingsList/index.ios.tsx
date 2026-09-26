@@ -15,6 +15,7 @@ import {
   Image,
   LabeledContent,
   Picker,
+  ProgressView,
   Section,
   Spacer,
   Stepper,
@@ -162,6 +163,17 @@ const Row = memo(function Row({ row, accent }: { row: SettingsRow; accent: strin
         </LabeledContent>
       );
     case 'button':
+      if (row.busy) {
+        return (
+          <Button onPress={row.onPress} modifiers={[disabledMod(true)]}>
+            <HStack>
+              <Text>{row.title}</Text>
+              <Spacer />
+              <ProgressView />
+            </HStack>
+          </Button>
+        );
+      }
       return (
         <Button
           label={row.title}

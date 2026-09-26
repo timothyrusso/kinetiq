@@ -23,9 +23,6 @@
       "src/*"
     ]
   },
-  "ignore": [
-    "src/api/http.ts"
-  ],
   "ignoreBinaries": [
     "rsvg-convert",
     "swiftlint",

@@ -728,6 +728,16 @@ export const en = {
   // --- end foundation ---
   dataTransfer: {
     title: 'Your data',
+    catalogTitle: 'Exercise library',
+    catalogFooter:
+      'A copy of the wger exercise library lives on this device, so searching and browsing work offline. When you are online it updates itself every 30 days. Erasing your data keeps it.',
+    catalogExercises: 'Exercises',
+    catalogUpdated: 'Last updated {date}',
+    catalogRefresh: 'Refresh now',
+    catalogRefreshing: 'Refreshing…',
+    catalogFailed: 'Could not refresh',
+    catalogFailedOffline: 'You are offline. The library on this device still works.',
+    catalogFailedOther: 'The wger library did not answer. The library on this device is unchanged.',
     exportTitle: 'Export',
     exportWorkouts: 'Workout history (JSON)',
     exportSets: 'Every set, as a table (CSV)',

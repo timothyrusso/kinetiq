@@ -731,6 +731,16 @@ export const it: Copy = {
   },
   // --- end foundation ---
   dataTransfer: {
+    catalogTitle: 'Libreria esercizi',
+    catalogFooter:
+      'Una copia della libreria esercizi wger è salvata su questo dispositivo, così ricerca e navigazione funzionano offline. Quando sei online si aggiorna da sola ogni 30 giorni. Cancellare i tuoi dati non la elimina.',
+    catalogExercises: 'Esercizi',
+    catalogUpdated: 'Ultimo aggiornamento {date}',
+    catalogRefresh: 'Aggiorna ora',
+    catalogRefreshing: 'Aggiornamento…',
+    catalogFailed: 'Aggiornamento non riuscito',
+    catalogFailedOffline: 'Sei offline. La libreria su questo dispositivo funziona comunque.',
+    catalogFailedOther: 'La libreria wger non ha risposto. La libreria su questo dispositivo non è cambiata.',
     title: 'I tuoi dati',
     exportTitle: 'Esporta',
     exportWorkouts: 'Storico allenamenti (JSON)',

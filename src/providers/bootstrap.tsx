@@ -48,6 +48,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { configureExerciseProvider } from '@/api';
 import { createLocalProvider } from '@/api/local/provider';
 import { installBundledCatalogIfMissing } from '@/catalog/install';
+import { maybeRefreshCatalog, scheduleCatalogRefresh } from '@/catalog/refresh';
 import { loadAppFonts } from '@/fonts';
 import { openDatabase, readAllSettings, SETTING_KEYS, type DatabaseOpenResult, type SettingKey } from '@/persistence';
 import { getQueryClient, installQueryAdapters } from '@/query/client';
@@ -267,6 +268,11 @@ export async function runBootstrap(systemDark: boolean): Promise<BootstrapOutcom
   installWatchSync(syncWatchInbox);
   syncWatch();
 
+  // 11. The exercise catalog, refreshed in the background when it is more than 30 days old and
+  //     the device is online. Not awaited, and it never throws: the catalog on the device is
+  //     what renders, and a failed download leaves it exactly as it was.
+  scheduleCatalogRefresh();
+
   // A workout that was open when the process died comes back *paused*, never
   // running: the clock in the app has been reading the stored value for hours that
   // the user did not train, so letting it keep counting would bank time that never
@@ -324,6 +330,7 @@ export function installAppLifecycle(): () => void {
         () => undefined,
       );
       syncWatch();
+      void maybeRefreshCatalog();
     }
     backgrounded = next !== 'active';
   });

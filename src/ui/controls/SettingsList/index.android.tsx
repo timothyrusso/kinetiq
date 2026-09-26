@@ -20,6 +20,7 @@
 import { memo, useEffect, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import {
+  CircularProgressIndicator,
   Column,
   Host,
   Icon,
@@ -35,7 +36,7 @@ import {
   useMaterialColors,
   useNativeState,
 } from '@expo/ui/jetpack-compose';
-import { alpha, background, clickable, clip, fillMaxSize, fillMaxWidth, padding, Shapes } from '@expo/ui/jetpack-compose/modifiers';
+import { alpha, background, clickable, clip, fillMaxSize, fillMaxWidth, padding, Shapes, size } from '@expo/ui/jetpack-compose/modifiers';
 
 import { haptics } from '@/services/haptics';
 import { useAppTheme } from '@/theme/theme';
@@ -82,6 +83,9 @@ const FULL = 20;
 const SLIGHT = 4;
 /** Section labels and footers line up with the text inside the rows, not the card edge. */
 const TEXT_INSET = spacing.lg;
+/** A busy row's spinner fills the trailing slot the glyphs use (24dp), with M3's thin stroke. */
+const BUSY_SIZE = 24;
+const BUSY_STROKE = 3;
 
 function cornersFor(index: number, count: number) {
   const top = index === 0 ? FULL : SLIGHT;
@@ -139,6 +143,16 @@ function Glyph({ name }: { name: 'chevron-right' | 'remove' | 'add' | 'check' })
 
 type Modifiers = NonNullable<Parameters<typeof ListItem>[0]['modifiers']>;
 
+/**
+ * A key naming which optional `ListItem` slots a row fills. Compose composes a `ListItem`'s slots
+ * once: a subtitle or trailing content that appears on a later render (data that arrived after
+ * the first frame, a spinner that starts) is never drawn. Keying the item on its slot set makes
+ * that change a remount, which draws it. Text changes inside an existing slot update in place.
+ */
+function slotKey(...present: unknown[]): string {
+  return present.map((slot) => (slot ? '1' : '0')).join('');
+}
+
 const Row = memo(function Row({
   row,
   colors,
@@ -155,7 +169,7 @@ const Row = memo(function Row({
   switch (row.kind) {
     case 'nav':
       return (
-        <ListItem colors={item} modifiers={[...shape, clickable(row.onPress)]}>
+        <ListItem key={slotKey(row.subtitle)} colors={item} modifiers={[...shape, clickable(row.onPress)]}>
           <ListItem.HeadlineContent>
             <Text>{row.title}</Text>
           </ListItem.HeadlineContent>
@@ -267,7 +281,7 @@ const Row = memo(function Row({
       );
     case 'info':
       return (
-        <ListItem colors={item} modifiers={shape}>
+        <ListItem key={slotKey(row.subtitle, row.value)} colors={item} modifiers={shape}>
           <ListItem.HeadlineContent>
             <Text>{row.title}</Text>
           </ListItem.HeadlineContent>
@@ -283,21 +297,32 @@ const Row = memo(function Row({
           ) : null}
         </ListItem>
       );
-    case 'button':
+    case 'button': {
+      const inactive = row.disabled === true || row.busy === true;
       return (
-        <ListItem colors={item} modifiers={row.disabled ? shape : [...shape, clickable(row.onPress)]}>
+        <ListItem
+          key={slotKey(row.busy)}
+          colors={item}
+          modifiers={inactive ? shape : [...shape, clickable(row.onPress)]}
+        >
           <ListItem.HeadlineContent>
             {/* Material dims disabled content. Without it a Save that cannot save looked
                 exactly like one that can, since the row only drops its click handler. */}
             <Text
               {...(row.destructive ? { color: danger } : {})}
-              modifiers={row.disabled ? [alpha(disabledContentAlpha)] : []}
+              modifiers={inactive ? [alpha(disabledContentAlpha)] : []}
             >
               {row.title}
             </Text>
           </ListItem.HeadlineContent>
+          {row.busy ? (
+            <ListItem.TrailingContent>
+              <CircularProgressIndicator strokeWidth={BUSY_STROKE} modifiers={[size(BUSY_SIZE, BUSY_SIZE)]} />
+            </ListItem.TrailingContent>
+          ) : null}
         </ListItem>
       );
+    }
     case 'field':
       return <FieldRow row={row} colors={colors} shape={shape} />;
   }
