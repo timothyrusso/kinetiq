@@ -63,7 +63,7 @@ async function processEntry(entry: WatchInboxEntry): Promise<string | null> {
     return null;
   }
   try {
-    const result = await commitWorkout(parsed.workout, { markPerformed: true });
+    const result = await commitWorkout(parsed.workout);
     // Saved now, or saved by an earlier delivery of the same workout: either way it is done.
     await watchBridge.ackInbox(entry.id);
     return result === null ? null : result.activity.id;
