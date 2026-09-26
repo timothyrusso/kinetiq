@@ -41,3 +41,37 @@ export type WatchRoutinesDocument = {
   unitSystem: UnitSystem;
   routines: WatchRoutine[];
 };
+
+type WatchWorkoutSet = {
+  index: number;
+  reps: number;
+  weightKg: number;
+  completed: boolean;
+  rpe: number | null;
+};
+
+type WatchWorkoutEntry = {
+  exerciseId: string;
+  exerciseName: string;
+  restSeconds: number;
+  notes: string | null;
+  sets: WatchWorkoutSet[];
+};
+
+/**
+ * Watch to phone: one finished workout. `CompletedWorkout` minus everything the phone computes
+ * (duration, calories, volume, set count, estimated 1RM, records).
+ */
+export type WatchWorkoutDocument = {
+  format: typeof WATCH_WORKOUT_FORMAT;
+  version: typeof WATCH_FORMAT_VERSION;
+  /** A UUID minted on the watch. The activity id is `watch-<id>`, which makes a replay a no-op. */
+  id: string;
+  routineId: string | null;
+  title: string;
+  /** ISO 8601. */
+  startedAt: string;
+  endedAt: string;
+  entries: WatchWorkoutEntry[];
+  notes: string | null;
+};

@@ -16,22 +16,15 @@
  * absolute deadline.
  */
 import { useSyncExternalStore } from 'react';
+import { commitWorkout, type CommitResult } from './commitWorkout';
+import { sessionRepository, type SessionPatch } from '@/persistence';
 import {
-  activityRepository,
-  recordRepository,
-  sessionRepository,
-  type SessionPatch,
-} from '@/persistence';
-import {
-  detectPersonalRecords,
   estimatedOneRepMax,
   restRemaining,
   sessionProgress,
   toCompletedWorkout,
 } from '@/domain/logic';
 import type {
-  Activity,
-  PersonalRecord,
   StrengthEntry,
   StrengthSet,
   WorkoutSession,
@@ -44,10 +37,7 @@ export type StartSessionInput = {
   defaultRestSeconds: number;
 };
 
-export type FinishResult = {
-  activity: Activity;
-  personalRecords: PersonalRecord[];
-};
+export type FinishResult = CommitResult;
 
 /**
  * Set while a persistence write is in flight *and* has failed. The UI shows a
@@ -209,35 +199,24 @@ export async function discardSession(id: string): Promise<void> {
 }
 
 /**
- * Commits the session to history.
- *
- * `detectPersonalRecords` needs prior history to compare against, and the current
- * session must not be part of it: otherwise the workout being finished would be
- * its own baseline and no PR would ever register. `activityRepository.list` is
- * called before the insert for exactly that reason, and the whole thing is one
- * repository call so a crash between "insert" and "record PRs" cannot leave a
- * workout with no PRs.
+ * Commits the session to history, through `commitWorkout`: the same all-or-nothing path a
+ * workout from the Apple Watch takes, with PRs detected against the history before it.
  */
 export async function finishSession(id: string): Promise<FinishResult | null> {
   const target = session?.id === id ? session : await sessionRepository.byId(id);
   if (!target || target.status === 'discarded') return null;
   stopTick();
 
-  const endedAt = Date.now();
-  const history = await activityRepository.list({ order: 'desc', limit: 400 });
-  const personalRecords = detectPersonalRecords(target.entries, history, endedAt);
-  const workout = toCompletedWorkout(target, endedAt);
-
+  const workout = toCompletedWorkout(target, Date.now());
   await sessionRepository.setStatus(id, 'finished');
-  const activity = await activityRepository.recordWorkout(workout, personalRecords);
-  await recordRepository.commitMany(personalRecords);
+  const result = await commitWorkout(workout);
 
   if (session?.id === id) {
     session = null;
     persistFailed = false;
     publish();
   }
-  return { activity, personalRecords };
+  return result;
 }
 
 /* ------------------------------------------------------------------ edits -- */

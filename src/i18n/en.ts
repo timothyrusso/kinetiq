@@ -774,6 +774,14 @@ export const en = {
     issueItemSkipped: 'Routine {routine}, exercise {item}: no name, left out.',
     issueDefaults: 'Routine {routine}, exercise {item}: missing sets or reps, defaults used.',
   },
+  watchInbox: {
+    invalidTitle: 'A workout from Apple Watch could not be read',
+    invalidMessage: 'It was kept on this iPhone, set aside, so nothing is lost.',
+    versionTitle: 'A workout from Apple Watch needs an update',
+    versionMessage:
+      'It comes from a newer version of Kinetiq on the watch. Update Kinetiq on this iPhone and it will be saved.',
+    ok: 'OK',
+  },
   // --- followups ---
   followups: {
     ringA11y: '{percent} percent complete',

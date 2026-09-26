@@ -3,6 +3,12 @@ import WatchConnectivity
 
 /// The watch's one `WCSession` delegate, and nothing else (issue #27).
 ///
+/// Finished workouts leave through `transferUserInfo`, which watchOS queues and delivers with the
+/// phone locked, out of range or the app closed. An outbox entry is deleted only when its
+/// transfer finishes without error; anything still in the outbox is queued again at launch,
+/// after Finish and on every Sync tap (Stability rule 8). The phone's inbox makes a repeat
+/// delivery harmless.
+///
 /// Snapshots arrive three ways: the application context (the channel), a Sync reply that
 /// carries a small one, and a file for a library too large for either. All three are unwrapped,
 /// validated and written to disk on one serial queue, before any view hears of them: the
@@ -19,6 +25,7 @@ final class PhoneConnection: NSObject, WCSessionDelegate {
 
     private let queue = DispatchQueue(label: "app.kinetiq.watch.connection")
     private let snapshots = SnapshotStore(files: .appSupport())
+    private let outbox = Outbox(files: .appSupport())
     let bounds: Bounds = Bundle.main.url(forResource: "bounds", withExtension: "json")
         .flatMap { try? Data(contentsOf: $0) }
         .flatMap(Bounds.decode) ?? .fallback
@@ -62,6 +69,27 @@ final class PhoneConnection: NSObject, WCSessionDelegate {
         )
     }
 
+    /// Queues every finished workout the phone does not have yet.
+    func sendOutbox() {
+        queue.async { self.transferOutbox() }
+    }
+
+    /// On `queue`. Skips an entry whose transfer is already outstanding, so a second call cannot
+    /// queue the same workout twice.
+    private func transferOutbox() {
+        guard WCSession.isSupported(), WCSession.default.activationState == .activated else { return }
+        let session = WCSession.default
+        let outstanding = Set(session.outstandingUserInfoTransfers.compactMap { $0.userInfo["id"] as? String })
+        for entry in outbox.entries() where !outstanding.contains(entry.id) {
+            session.transferUserInfo([
+                "format": WorkoutDocument.format,
+                "version": WorkoutDocument.version,
+                "id": entry.id,
+                "payload": entry.json
+            ])
+        }
+    }
+
     /// On `queue`.
     private func store(_ envelope: Envelope) {
         let result = snapshots.receive(envelope, bounds: bounds)
@@ -78,9 +106,16 @@ final class PhoneConnection: NSObject, WCSessionDelegate {
         guard activationState == .activated else { return }
         let context = session.receivedApplicationContext
         queue.async {
+            self.transferOutbox()
             guard let envelope = Envelope.parse(context), envelope.id != self.snapshots.load()?.id else { return }
             self.store(envelope)
         }
+    }
+
+    /// The acknowledgement: delivered to the phone, whose inbox is on disk before JS runs.
+    func session(_ session: WCSession, didFinish userInfoTransfer: WCSessionUserInfoTransfer, error: Error?) {
+        guard error == nil, let id = userInfoTransfer.userInfo["id"] as? String else { return }
+        queue.async { self.outbox.remove(id: id) }
     }
 
     func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {

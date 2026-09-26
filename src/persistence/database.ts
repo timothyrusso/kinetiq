@@ -362,6 +362,14 @@ export function openDatabase(): Promise<DatabaseOpenResult> {
   });
 }
 
+/**
+ * Runs `task` in one transaction on the main connection: every repository call inside it is
+ * part of the same all-or-nothing write, because repositories use this connection too.
+ */
+export async function withTransaction(task: () => Promise<void>): Promise<void> {
+  await getDatabase().withTransactionAsync(task);
+}
+
 export function getDatabase(): SQLite.SQLiteDatabase {
   if (!database) throw new Error('Database accessed before openDatabase() resolved');
   return database;

@@ -44,7 +44,9 @@ export function ConfirmDialog({
           <Spacer modifiers={[frame({ width: 0, height: 0 }), accessibilityHidden(true)]} />
         </Alert.Trigger>
         <Alert.Actions>
-          <Button role="cancel" label={cancelLabel} onPress={answer(onCancel)} />
+          {cancelLabel !== undefined ? (
+            <Button role="cancel" label={cancelLabel} onPress={answer(onCancel)} />
+          ) : null}
           <Button
             role={destructive ? 'destructive' : 'default'}
             label={confirmLabel}

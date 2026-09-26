@@ -45,6 +45,8 @@ final class RoutineStore: ObservableObject {
         status = .syncing
         // Whatever arrived while the app was closed is already on disk.
         stored = connection.loadSnapshot()
+        // A finished workout that has not reached the phone yet goes again.
+        connection.sendOutbox()
         request += 1
         let current = request
         connection.requestSnapshot { [weak self] result in

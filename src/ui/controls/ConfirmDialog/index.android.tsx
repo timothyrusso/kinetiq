@@ -39,11 +39,13 @@ export function ConfirmDialog({
             <Text>{confirmLabel}</Text>
           </TextButton>
         </AlertDialog.ConfirmButton>
-        <AlertDialog.DismissButton>
-          <TextButton onClick={onCancel}>
-            <Text>{cancelLabel}</Text>
-          </TextButton>
-        </AlertDialog.DismissButton>
+        {cancelLabel !== undefined ? (
+          <AlertDialog.DismissButton>
+            <TextButton onClick={onCancel}>
+              <Text>{cancelLabel}</Text>
+            </TextButton>
+          </AlertDialog.DismissButton>
+        ) : null}
       </AlertDialog>
     </Host>
   );
