@@ -313,7 +313,7 @@ function StrengthBody({
             <Column gap="lg">
               {records.map((record) => (
                 <Row key={`${record.exerciseId}-${record.kind}`} gap="md" align="center">
-                  <Icon name="trophy" size={ICON_SIZE.inline} color={theme.colors.onAccent} />
+                  <Icon name="trophy" size={ICON_SIZE.inline} color={theme.colors.accent} />
                   <Column gap="xxs" style={styles.shrink}>
                     <Txt variant="subhead" weight="700" numberOfLines={1}>
                       {record.exerciseName}

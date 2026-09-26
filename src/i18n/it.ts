@@ -241,14 +241,8 @@ export const it: Copy = {
     alsoWorked: 'Coinvolti',
     equipment: 'Attrezzatura',
     yourHistory: 'La tua cronologia',
-    sessionCount_one: '{count} sessione',
-    sessionCount_other: '{count} sessioni',
     neverLogged:
       'Non hai ancora registrato questo esercizio. Completa una sessione con esso e i tuoi numeri appariranno qui.',
-    totalVolume: 'Volume totale',
-    setsDone: 'Serie fatte',
-    earlierSessions_one: '{count} sessione precedente nella cronologia.',
-    earlierSessions_other: '{count} sessioni precedenti nella cronologia.',
     records: 'Record',
     personalBests: 'Migliori personali',
     variations: 'Varianti',
@@ -360,9 +354,6 @@ export const it: Copy = {
     emptyMessage:
       'Aggiungi un esercizio dalla libreria e viene salvato subito sul dispositivo.',
     addAnExercise: 'Aggiungi un esercizio',
-    notesTitle: 'Note della sessione',
-    notesEyebrow: "Salvate con l'allenamento",
-    notesEmpty: "Com'è andata? Verrà aggiunto all'allenamento quando completi.",
     discard: 'Scarta',
     finish: 'Completa',
     discardTitle: 'Scartare questo allenamento?',
@@ -377,9 +368,6 @@ export const it: Copy = {
     finishAll: "Tutte le {planned} serie sono fatte. Diventa un allenamento nella tua cronologia.",
     finishConfirm: 'Completa e salva',
     thisExercise: 'Questo esercizio',
-    notesLabel: 'Note',
-    notesPlaceholder: 'Velocità del bilanciere, sonno, quella spalla fastidiosa.',
-    notesHint: "Salvate su questo dispositivo, con l'allenamento.",
     recordOne: 'Record personale',
     recordMany: '{count} record personali',
     seeInHistory: 'Vedila nella cronologia',
@@ -631,8 +619,6 @@ export const it: Copy = {
     loading: 'Caricamento',
     notFoundBody:
       'Il link che hai seguito punta a un posto che questa app non ha. Schede, cronologia e impostazioni sono intatte.',
-    muscleTagging:
-      "L'assegnazione dei muscoli viene dalle etichette della libreria: un indizio su dove punta il movimento, non un'affermazione anatomica sul tuo corpo.",
     midSessionNote:
       "Sei a metà sessione, quindi la programmazione è stata salvata ma non riarmata: il timer di recupero mantiene l'avviso che ha già. Si aggiorna quando la sessione finisce.",
     restDefaultBody:

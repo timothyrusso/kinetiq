@@ -343,10 +343,6 @@ export function addExercise(entry: StrengthEntry): void {
   commit({ entries: [...session.entries, entry] }, true);
 }
 
-export function setSessionNotes(notes: string | null): void {
-  commit({ notes }, true);
-}
-
 /* ------------------------------------------------------------------ clock -- */
 
 let lastTickAt = 0;
