@@ -28,7 +28,7 @@ struct RestView: View {
                 Button("rest.skip") {
                     session.update { $0.clearRest() }
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.primary)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(.black)
@@ -72,7 +72,7 @@ struct RestEditor: View {
                 Button("rest.plus15") { set(seconds + Workout.restStep) }
             }
             Button("common.done") { dismiss() }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.primary)
         }
     }
 

@@ -9,31 +9,29 @@ struct RoutineDetailView: View {
     var body: some View {
         List {
             Section {
-                Button {
-                    session.start(routine, unitSystem: unitSystem)
-                } label: {
-                    Label("routine.start", systemImage: "play.fill")
+                if session.workout != nil {
+                    Button {
+                        session.resume()
+                    } label: {
+                        Label("workout.resume", systemImage: "play.fill")
+                    }
+                } else {
+                    Button {
+                        session.start(routine, unitSystem: unitSystem)
+                    } label: {
+                        Label("routine.start", systemImage: "play.fill")
+                    }
+                    .disabled(routine.items.isEmpty)
                 }
-                .disabled(routine.items.isEmpty)
             }
             Section {
+                // Names only: sets, reps and weights are on each exercise's page once started.
                 ForEach(routine.items) { item in
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(item.exerciseName)
-                            .font(.headline)
-                            .lineLimit(2)
-                        Text(verbatim: summary(item))
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    }
+                    Text(item.exerciseName)
+                        .lineLimit(2)
                 }
             }
         }
         .navigationTitle(routine.name)
-    }
-
-    /// "4 × 8-10 · 60 kg", the phone's routine row in one line.
-    private func summary(_ item: RoutineItem) -> String {
-        "\(item.sets) × \(item.reps) · \(Units.format(kilograms: item.weightKg, system: unitSystem))"
     }
 }

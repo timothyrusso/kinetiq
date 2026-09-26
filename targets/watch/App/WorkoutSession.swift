@@ -9,6 +9,8 @@ import SwiftUI
 @MainActor
 final class WorkoutSession: ObservableObject {
     @Published private(set) var workout: Workout?
+    /// False while the user has stepped back to the routine list with the workout still open.
+    @Published private(set) var isShowing = true
     /// A one-line outcome for the routine list: saved, discarded, or a file that could not be read.
     @Published var message: LocalizedStringKey?
 
@@ -50,7 +52,17 @@ final class WorkoutSession: ObservableObject {
         }
         message = nil
         workout = started
+        isShowing = true
         alerts.workoutStarted(started)
+    }
+
+    func minimize() {
+        isShowing = false
+    }
+
+    func resume() {
+        guard workout != nil else { return }
+        isShowing = true
     }
 
     func update(_ change: (inout Workout) -> Void) {
@@ -85,6 +97,7 @@ final class WorkoutSession: ObservableObject {
         }
         store.remove()
         workout = nil
+        isShowing = true
         message = "workout.finished"
         alerts.workoutEnded()
         onFinished?()
@@ -94,6 +107,7 @@ final class WorkoutSession: ObservableObject {
     func discard() {
         store.remove()
         workout = nil
+        isShowing = true
         message = "workout.discarded"
         alerts.workoutEnded()
     }

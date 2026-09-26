@@ -29,6 +29,17 @@ struct WorkoutView: View {
                 .tag(workout.entries.count)
             }
             .tabViewStyle(.verticalPage)
+            .toolbar {
+                // Back to the routine list; the workout stays open and saved, one tap from Resume.
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        session.minimize()
+                    } label: {
+                        Image(systemName: "chevron.backward")
+                    }
+                    .accessibilityLabel("workout.back")
+                }
+            }
             // The page is saved with the workout, so a relaunch opens the same exercise. The
             // finish page is not an exercise and is not saved.
             .onChange(of: page) { _, index in
@@ -99,7 +110,7 @@ struct ExercisePage: View {
             } label: {
                 Label("workout.completeSet", systemImage: "checkmark")
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.primary)
             .disabled(next == nil)
         }
         .toolbar {
@@ -135,6 +146,8 @@ struct ExercisePage: View {
         )
         .focusable(next != nil)
         .focused($focus, equals: .weight)
+        // A tap alone does not move the Crown to another tile; this does.
+        .onTapGesture { if next != nil { focus = .weight } }
         .digitalCrownRotation(
             Binding(
                 get: { Units.displayValue(kilograms: kilograms, system: system) },
@@ -167,6 +180,7 @@ struct ExercisePage: View {
         return ValueTile(value: String(reps), unit: String(localized: "workout.repsUnit"), focused: focus == .reps)
             .focusable(next != nil)
             .focused($focus, equals: .reps)
+            .onTapGesture { if next != nil { focus = .reps } }
             .digitalCrownRotation(
                 Binding(
                     get: { Double(reps) },
