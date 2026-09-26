@@ -53,7 +53,8 @@ export type TKey = Leaves<Copy>;
 /** Values substituted into `{placeholder}` slots. `count` also selects the plural form. */
 export type TVars = Record<string, string | number> & { count?: number };
 
-function resolveLanguage(language: Language): 'en' | 'it' {
+/** The language a setting renders in: `system` resolves against the device's preference list. */
+export function resolveLanguage(language: Language): 'en' | 'it' {
   if (language !== 'system') return language;
   // `getLocales()` is ordered by the user's own preference list, so the first Italian entry
   // anywhere in it beats an English entry further down.

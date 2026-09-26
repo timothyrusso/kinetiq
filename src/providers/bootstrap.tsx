@@ -43,10 +43,11 @@ import { useColorScheme } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import * as NavigationBar from 'expo-system-ui';
 import { StatusBar } from 'expo-status-bar';
-import { getLocales } from 'expo-localization';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { configureExerciseProvider } from '@/api';
+import { createLocalProvider } from '@/api/local/provider';
+import { loadDevCatalogFixture } from '@/catalog/devFixture';
 import { loadAppFonts } from '@/fonts';
 import { openDatabase, readAllSettings, SETTING_KEYS, type DatabaseOpenResult, type SettingKey } from '@/persistence';
 import { getQueryClient, installQueryAdapters } from '@/query/client';
@@ -212,14 +213,9 @@ export async function runBootstrap(systemDark: boolean): Promise<BootstrapOutcom
   //    fatal screen.
   const database = await openDatabase();
 
-  // 2. Language, then the provider that consumes it. `getLocales()` is synchronous
-  //    and safe before any mount, which is what lets this sit here at all.
-  configureExerciseProvider({
-    // `?? undefined` because a locale record can carry a null languageCode and the
-    // port's contract is `string | undefined`; the provider treats undefined as
-    // "no translation preference" rather than as a language called "null".
-    getLanguageCode: () => getLocales()[0]?.languageCode ?? undefined,
-  });
+  // 2. The exercise provider: the local catalog, which reads the database opened above and
+  //    the in-app language from the settings store at call time.
+  configureExerciseProvider(createLocalProvider());
 
   // 3. Query plumbing, before anything can subscribe. The disposers are dropped
   //    deliberately: these are process-lifetime singletons and there is no second
@@ -245,6 +241,9 @@ export async function runBootstrap(systemDark: boolean): Promise<BootstrapOutcom
   // Android's native header takes images, not glyph names, so the header-action icons are
   // rendered once here, in the same wait as the fonts, and the first bar already has them.
   const headerIcons = prefetchHeaderIcons();
+  // Temporary, until the bundled snapshot lands (#39, PR 3): a development build with an empty
+  // catalog gets a small fixture so the picker has something to show.
+  if (__DEV__) await loadDevCatalogFixture();
 
   // 7. Active-workout restoration settles *before* the first frame so the "resume"
   //    affordance ships with the launch instead of popping in 300ms later.

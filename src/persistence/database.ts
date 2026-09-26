@@ -7,6 +7,7 @@
  * entry to MIGRATIONS: never editing an existing step.
  */
 import * as SQLite from 'expo-sqlite';
+import { CATALOG_SCHEMA } from '@/catalog/schema';
 import { notifyRoutinesChanged } from './routineEvents';
 
 const DATABASE_NAME = 'kinetiq.db';
@@ -286,6 +287,15 @@ const MIGRATIONS: readonly Migration[] = [
       await db.execAsync('ALTER TABLE routines DROP COLUMN description;');
     },
   },
+  {
+    // The exercise catalog moves into SQLite so search, filters and detail work with no
+    // network (issue #39). New tables only: the tables are filled by `replaceCatalog`, and
+    // `clearAllUserData` below leaves them alone because the catalog is not user data.
+    version: 9,
+    up: async (db) => {
+      await db.execAsync(CATALOG_SCHEMA);
+    },
+  },
 ];
 
 let database: SQLite.SQLiteDatabase | null = null;
@@ -375,7 +385,11 @@ export function getDatabase(): SQLite.SQLiteDatabase {
   return database;
 }
 
-/** Test/maintenance hook: wipes user data while keeping the schema. */
+/**
+ * Test/maintenance hook: wipes user data while keeping the schema. The `catalog_*` tables are
+ * deliberately not in the list: the catalog is reference data, and erasing it would leave the
+ * exercise picker empty until the next download.
+ */
 export async function clearAllUserData(db?: SQLite.SQLiteDatabase): Promise<void> {
   const handle = db ?? getDatabase();
   await handle.withTransactionAsync(async () => {

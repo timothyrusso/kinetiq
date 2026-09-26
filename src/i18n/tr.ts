@@ -16,8 +16,13 @@
  */
 import { getSettings } from '@/settings/store';
 
-import { translate, type TKey, type TVars } from './index';
+import { resolveLanguage, translate, type TKey, type TVars } from './index';
 
 export function tr(key: TKey, vars?: TVars): string {
   return translate(getSettings().language, key, vars);
+}
+
+/** The language the app is rendering in right now, for code that picks data rather than copy. */
+export function currentLanguage(): 'en' | 'it' {
+  return resolveLanguage(getSettings().language);
 }

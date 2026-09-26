@@ -220,7 +220,6 @@ export default function ExerciseDetailScreen() {
                 storedAt={detail.stored?.capturedAt ?? null}
                 isFetching={detail.isFetching}
                 onRetry={detail.retry}
-                externalUrl={externalUrl}
               />
             </Column>
 
@@ -502,13 +501,11 @@ function Provenance({
   storedAt,
   isFetching,
   onRetry,
-  externalUrl,
 }: {
-  from: 'stored' | 'cache' | 'remote' | 'none';
+  from: 'catalog' | 'stored' | 'none';
   storedAt: number | null;
   isFetching: boolean;
   onRetry: () => void;
-  externalUrl: string | null;
 }) {
   const { t } = useT();
   const theme = useAppTheme();
@@ -539,23 +536,11 @@ function Provenance({
     );
   }
 
-  if (from === 'cache') {
+  if (from === 'catalog') {
     return (
       <Row gap="sm" align="center">
         <Icon name="layers" size={ICON_SIZE.micro} color={theme.colors.textFaint} />
-        <Txt variant="caption" tone="muted">{t('exerciseDetail.fromRecentSearch')}</Txt>
-      </Row>
-    );
-  }
-
-  if (from === 'remote') {
-    return (
-      <Row gap="sm" align="center">
-        <Icon name="download" size={ICON_SIZE.micro} color={theme.colors.textFaint} />
-        <Txt variant="caption" tone="muted">
-          {t('exerciseDetail.liveFromWger')}
-          {externalUrl !== null ? t('exerciseDetail.justNow') : ''}
-        </Txt>
+        <Txt variant="caption" tone="muted">{t('exerciseDetail.fromLibrary')}</Txt>
       </Row>
     );
   }
