@@ -72,39 +72,54 @@ const swift = [];
   }
 })(WATCH);
 
+/**
+ * A Swift string literal, interpolations included: `"routine.exerciseCount \(n)"`. SwiftUI turns
+ * each `\(...)` into a format specifier when it looks the key up, so the catalog holds
+ * `routine.exerciseCount %lld`. `normalise` maps both spellings to the same text.
+ */
+const LITERAL = String.raw`"((?:[^"\\]|\\\([^)]*\))+)"`;
+const normalise = (key) =>
+  key.replace(/\\\([^)]*\)/g, '%@').replace(/%(\d+\$)?(ll|l|h)?[@dDuUxXoOfeEgGcCsSaAp]/g, '%@');
+
 /** The calls whose first string literal is a catalog key. */
 const CALLS = [
-  /\bText\(\s*"([^"\\]+)"/g,
-  /\bButton\(\s*"([^"\\]+)"/g,
-  /\bLabel\(\s*"([^"\\]+)"/g,
-  /\bToggle\(\s*"([^"\\]+)"/g,
-  /\bLocalizedStringKey\(\s*"([^"\\]+)"/g,
-  /\bLocalizedStringResource\(\s*"([^"\\]+)"/g,
-  /\.navigationTitle\(\s*"([^"\\]+)"/g,
-  /\.accessibilityLabel\(\s*"([^"\\]+)"/g,
-  /\.accessibilityHint\(\s*"([^"\\]+)"/g,
-  /\.confirmationDialog\(\s*"([^"\\]+)"/g,
-  /\.alert\(\s*"([^"\\]+)"/g,
-  /String\(\s*localized:\s*"([^"\\]+)"/g,
-  // A `Loc("key")` style helper, or a literal typed as a key: `let title: LocalizedStringKey = "a.b"`.
-  /LocalizedStringKey\s*=\s*"([^"\\]+)"/g,
-  /LocalizedStringResource\s*=\s*"([^"\\]+)"/g,
-];
+  String.raw`\bText\(\s*`,
+  String.raw`\bButton\(\s*`,
+  String.raw`\bLabel\(\s*`,
+  String.raw`\bToggle\(\s*`,
+  String.raw`\bLocalizedStringKey\(\s*`,
+  String.raw`\bLocalizedStringResource\(\s*`,
+  String.raw`\.navigationTitle\(\s*`,
+  String.raw`\.accessibilityLabel\(\s*`,
+  String.raw`\.accessibilityHint\(\s*`,
+  String.raw`\.confirmationDialog\(\s*`,
+  String.raw`\.alert\(\s*`,
+  String.raw`String\(\s*localized:\s*`,
+  // A literal typed as a key: `let title: LocalizedStringKey = "a.b"`.
+  String.raw`LocalizedStringKey\s*=\s*`,
+  String.raw`LocalizedStringResource\s*=\s*`,
+  // A literal where a `LocalizedStringKey` is expected: `.failed("sync.unreachable")`.
+  String.raw`\.(?:done|failed)\(\s*`,
+].map((prefix) => new RegExp(prefix + LITERAL, 'g'));
 
-const keys = new Set(entries.map(([k]) => k));
+const keys = new Map(entries.map(([k]) => [normalise(k), k]));
 const used = new Set();
 for (const [file, text] of swift) {
   const code = text.replace(/^\s*\/\/.*$/gm, '');
   for (const re of CALLS) {
     for (const m of code.matchAll(re)) {
-      used.add(m[1]);
-      if (!keys.has(m[1])) problems.push(`${path.relative(ROOT, file)}: "${m[1]}" is not in Localizable.xcstrings`);
+      const key = keys.get(normalise(m[1]));
+      if (key) used.add(key);
+      else problems.push(`${path.relative(ROOT, file)}: "${m[1]}" is not in Localizable.xcstrings`);
     }
   }
   // A bare semantic key anywhere else in code (a table of keys, a ternary) counts as a use.
-  for (const m of code.matchAll(/"([a-z][A-Za-z0-9]*(?:\.[A-Za-z0-9]+)+)"/g)) if (keys.has(m[1])) used.add(m[1]);
+  for (const m of code.matchAll(/"([a-z][A-Za-z0-9]*(?:\.[A-Za-z0-9]+)+)"/g)) {
+    const key = keys.get(normalise(m[1]));
+    if (key) used.add(key);
+  }
 }
-for (const key of keys) if (!used.has(key)) problems.push(`${key}: in Localizable.xcstrings but no Swift file reads it`);
+for (const key of keys.values()) if (!used.has(key)) problems.push(`${key}: in Localizable.xcstrings but no Swift file reads it`);
 
 if (problems.length === 0) {
   console.log(`PASS: ${keys.size} watch keys, English and Italian agree, and every key is read`);

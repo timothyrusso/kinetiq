@@ -1,24 +1,268 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "routines.empty.body" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Open Kinetiq on your iPhone, then tap Sync." } },
-        "it" : { "stringUnit" : { "state" : "translated", "value" : "Apri Kinetiq sull'iPhone, poi tocca Sincronizza." } }
+  "sourceLanguage": "en",
+  "strings": {
+    "routine.exerciseCount %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld exercise"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld exercises"
+                }
+              }
+            }
+          }
+        },
+        "it": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld esercizio"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld esercizi"
+                }
+              }
+            }
+          }
+        }
       }
     },
-    "routines.empty.title" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "No routines yet" } },
-        "it" : { "stringUnit" : { "state" : "translated", "value" : "Ancora nessuna scheda" } }
+    "routine.start": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inizia"
+          }
+        }
       }
     },
-    "routines.title" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Kinetiq" } },
-        "it" : { "stringUnit" : { "state" : "translated", "value" : "Kinetiq" } }
+    "routines.empty.body": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap Sync to load your routines from your iPhone."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tocca Sincronizza per caricare le schede dall'iPhone."
+          }
+        }
+      }
+    },
+    "routines.empty.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No routines yet"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ancora nessuna scheda"
+          }
+        }
+      }
+    },
+    "routines.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kinetiq"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kinetiq"
+          }
+        }
+      }
+    },
+    "sync.button": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sync"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizza"
+          }
+        }
+      }
+    },
+    "sync.noSnapshot": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Kinetiq on your iPhone, then sync again."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apri Kinetiq sull'iPhone, poi sincronizza di nuovo."
+          }
+        }
+      }
+    },
+    "sync.rejected.data": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Routines from iPhone could not be read. Your routines were kept."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non è stato possibile leggere le schede dall'iPhone. Le tue schede sono state mantenute."
+          }
+        }
+      }
+    },
+    "sync.rejected.version": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your iPhone sent routines from another Kinetiq version. Update Kinetiq on both devices."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'iPhone ha inviato schede di un'altra versione di Kinetiq. Aggiorna Kinetiq su entrambi i dispositivi."
+          }
+        }
+      }
+    },
+    "sync.stillReceiving": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Still receiving from iPhone. Your routines will update when it arrives."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ricezione dall'iPhone in corso. Le schede si aggiorneranno all'arrivo."
+          }
+        }
+      }
+    },
+    "sync.syncing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Syncing with iPhone…"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizzazione con l'iPhone…"
+          }
+        }
+      }
+    },
+    "sync.unreachable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone not reachable. Your routines are unchanged."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone non raggiungibile. Le tue schede non sono cambiate."
+          }
+        }
+      }
+    },
+    "sync.upToDate": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Up to date"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tutto aggiornato"
+          }
+        }
+      }
+    },
+    "sync.updated": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Routines updated"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schede aggiornate"
+          }
+        }
       }
     }
   },
-  "version" : "1.0"
+  "version": "1.0"
 }
