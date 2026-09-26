@@ -148,13 +148,50 @@ describe('catalogPage', () => {
 
   it('matches the search term in either language, ignoring case and accents', async () => {
     const italian = await catalogPage({ ...ALL, query: 'PANCA' }, 'it', 0, 50);
-    expect(italian.items.map((e) => e.externalId)).toEqual([11, 10]);
+    expect(italian.items.map((e) => e.externalId)).toEqual([10, 11]);
 
     const english = await catalogPage({ ...ALL, query: 'bench' }, 'it', 0, 50);
-    expect(english.items.map((e) => e.externalId)).toEqual([11, 10]);
+    expect(english.items.map((e) => e.externalId)).toEqual([10, 11]);
 
     const accented = await catalogPage({ ...ALL, query: 'pànca  piana' }, 'it', 0, 50);
     expect(accented.items.map((e) => e.externalId)).toEqual([10]);
+  });
+
+  it('ranks a whole-name match, then a name prefix, then a word prefix, then the rest', async () => {
+    await replaceCatalog(
+      payload([
+        exercise(20, { en: '1 Leg Box Squat' }),
+        exercise(21, { en: 'Squatting Hold' }),
+        exercise(22, { en: 'Squat' }),
+        exercise(23, { en: 'Box Squat', it: 'Squat box' }),
+        exercise(24, { en: 'Backsquat' }),
+      ]),
+      'refresh',
+      9_000,
+    );
+
+    // Rendering in Italian: 23 is a name prefix there ("Squat box"), which outranks 21's
+    // English-only prefix, and both outrank the word-start match in 20.
+    const { items } = await catalogPage({ ...ALL, query: 'squat' }, 'it', 0, 50);
+    expect(items.map((e) => e.externalId)).toEqual([22, 23, 21, 20, 24]);
+
+    const english = await catalogPage({ ...ALL, query: 'squat' }, 'en', 0, 50);
+    expect(english.items.map((e) => e.externalId)).toEqual([22, 21, 20, 23, 24]);
+  });
+
+  it('puts a prefix in the render language ahead of one in English only', async () => {
+    await replaceCatalog(
+      payload([
+        exercise(30, { en: 'Squat Thrust', it: 'Spinte squat' }),
+        exercise(31, { en: 'Squats', it: 'Squat (stacchi)' }),
+      ]),
+      'refresh',
+      9_000,
+    );
+
+    // "Spinte squat" sorts first by name, but only its English name starts with the term.
+    const { items } = await catalogPage({ ...ALL, query: 'squat' }, 'it', 0, 50);
+    expect(items.map((e) => e.externalId)).toEqual([31, 30]);
   });
 
   it('treats % and _ in the term as text', async () => {
