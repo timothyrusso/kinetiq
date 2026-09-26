@@ -50,7 +50,8 @@ import { configureExerciseProvider } from '@/api';
 import { loadAppFonts } from '@/fonts';
 import { openDatabase, readAllSettings, SETTING_KEYS, type DatabaseOpenResult, type SettingKey } from '@/persistence';
 import { seedIfEmpty } from '@/seed/seed';
-import { installQueryAdapters } from '@/query/client';
+import { getQueryClient, installQueryAdapters } from '@/query/client';
+import { invalidateAfterWatchWorkouts } from '@/query/invalidation';
 import { startNetworkStatus } from '@/query/networkStatus';
 import {
   installNotificationHandler,
@@ -63,6 +64,8 @@ import { themeFor } from '@/theme/theme';
 import { spacing } from '@/theme/tokens';
 import { handleAppState, hydrateWorkoutSession, pauseSession } from '@/workout/session';
 import { prefetchHeaderIcons } from '@/navigation/HeaderAction';
+import { drainWatchInbox } from '@/watch/inbox';
+import { installWatchSync, pushRoutineSnapshot } from '@/watch/sync';
 
 type SeedSummary = {
   activities: number;
@@ -268,6 +271,13 @@ export async function runBootstrap(systemDark: boolean): Promise<BootstrapOutcom
     () => undefined,
   );
 
+  // 10. The Apple Watch: subscribe the routine snapshot to its triggers, push the current one,
+  //     and save any workout the watch finished while the app was closed. Not awaited, and
+  //     every step catches in place: no watch, or a watch that is out of range, must not delay
+  //     or fail the launch.
+  installWatchSync(syncWatchInbox);
+  syncWatch();
+
   // A workout that was open when the process died comes back *paused*, never
   // running: the clock in the app has been reading the stored value for hours that
   // the user did not train, so letting it keep counting would bank time that never
@@ -286,6 +296,19 @@ export async function runBootstrap(systemDark: boolean): Promise<BootstrapOutcom
     migrationFailed: database.migrationError !== undefined,
     resumedWorkout: session !== null,
   };
+}
+
+/** Saves every finished watch workout waiting in the native inbox, then refreshes history. */
+function syncWatchInbox(): void {
+  void drainWatchInbox().then((saved) => {
+    if (saved.length > 0) invalidateAfterWatchWorkouts(getQueryClient());
+  });
+}
+
+/** Both directions of the watch sync: routines out, finished workouts in. */
+function syncWatch(): void {
+  void pushRoutineSnapshot();
+  syncWatchInbox();
 }
 
 /**
@@ -312,6 +335,7 @@ export function installAppLifecycle(): () => void {
       void syncTrainingReminder(current.reminder, current.notificationsEnabled).catch(
         () => undefined,
       );
+      syncWatch();
     }
     backgrounded = next !== 'active';
   });

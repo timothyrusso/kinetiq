@@ -43,7 +43,11 @@
   },
   "devDependencies": {
     "@bacons/apple-targets": "^5.0.0",
+    "@react-native/jest-preset": "^0.86.3",
+    "@types/jest": "^29.5.14",
     "@types/react": "~19.2.2",
+    "jest": "^29.7.0",
+    "jest-expo": "~57.0.5",
     "knip": "^6.38.0",
     "sf-symbols-typescript": "^2.2.0",
     "tsx": "^4.23.15",
@@ -58,12 +62,22 @@
     "check:dashes": "node scripts/check-dashes.js",
     "check:i18n": "node scripts/check-i18n.js",
     "check:jsx": "tsx scripts/jsx-comment-check.ts",
-    "check": "npm run typecheck && npm run check:jsx && npm run check:dashes && npm run check:i18n && npm run check:hooks && npm run check:layout && npm run check:unused && npm run check:watch",
+    "check": "npm run typecheck && npm run check:jsx && npm run check:dashes && npm run check:i18n && npm run check:hooks && npm run check:layout && npm run check:unused && npm test && npm run check:watch",
     "lint": "expo lint",
     "check:hooks": "node scripts/check-hooks.js",
     "check:layout": "node scripts/check-layout.js",
     "check:unused": "knip && node scripts/check-unused-keys.js",
-    "check:watch": "node scripts/check-watch-i18n.js && swiftlint lint --strict --quiet --config targets/.swiftlint.yml && swift test --package-path targets"
+    "check:watch": "node scripts/check-watch-i18n.js && node scripts/check-watch-bounds.js && swiftlint lint --strict --quiet --config targets/.swiftlint.yml && swift test --package-path targets",
+    "test": "jest"
   },
-  "private": true
+  "private": true,
+  "jest": {
+    "preset": "jest-expo",
+    "testMatch": [
+      "<rootDir>/src/**/__tests__/*.test.ts"
+    ],
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    }
+  }
 }

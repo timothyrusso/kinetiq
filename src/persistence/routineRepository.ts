@@ -11,6 +11,7 @@ import { rowToExerciseSnapshot, rowToRoutine, stringify } from './codec';
 import type { ExerciseRow, RoutineItemRow, RoutineRow } from './rows';
 import type { Exercise, ExerciseSnapshot, Routine, RoutineItem } from '@/domain/types';
 import { localId } from '@/utils/functional';
+import { notifyRoutinesChanged } from './routineEvents';
 
 export type RoutineDraft = {
   id?: string;
@@ -141,6 +142,7 @@ export const routineRepository = {
       }
     });
 
+    notifyRoutinesChanged();
     const saved = await this.byId(id);
     if (!saved) throw new Error(`routine ${id} vanished after save`);
     return saved;
@@ -149,6 +151,7 @@ export const routineRepository = {
   async remove(id: string): Promise<void> {
     // routine_items cascade via FK, so only the parent needs deleting.
     await getDatabase().runAsync('DELETE FROM routines WHERE id = ?', id);
+    notifyRoutinesChanged();
   },
 
   async rename(id: string, name: string): Promise<void> {
@@ -158,6 +161,7 @@ export const routineRepository = {
       Date.now(),
       id,
     );
+    notifyRoutinesChanged();
   },
 
   async duplicate(id: string, name: string): Promise<Routine | null> {
@@ -196,6 +200,7 @@ export const routineRepository = {
       }
       await db.runAsync('UPDATE routines SET updated_at = ? WHERE id = ?', Date.now(), id);
     });
+    notifyRoutinesChanged();
     return this.byId(id);
   },
 
@@ -244,6 +249,7 @@ export const routineRepository = {
       Date.now(),
       row.routine_id,
     );
+    notifyRoutinesChanged();
   },
 
   async addItem(routineId: string, item: RoutineItem, snapshot: ExerciseSnapshot): Promise<void> {
@@ -271,6 +277,7 @@ export const routineRepository = {
       );
       await db.runAsync('UPDATE routines SET updated_at = ? WHERE id = ?', Date.now(), routineId);
     });
+    notifyRoutinesChanged();
   },
 
   async removeItem(routineId: string, itemId: string): Promise<void> {
@@ -278,6 +285,7 @@ export const routineRepository = {
     await db.runAsync('DELETE FROM routine_items WHERE id = ? AND routine_id = ?', itemId, routineId);
     await db.runAsync('UPDATE routines SET updated_at = ? WHERE id = ?', Date.now(), routineId);
     await renumber(db, routineId);
+    notifyRoutinesChanged();
   },
 
   /** Bookkeeping after a session is recorded against this routine. */
@@ -290,6 +298,7 @@ export const routineRepository = {
       atTime,
       id,
     );
+    notifyRoutinesChanged();
   },
 
   /**
@@ -312,6 +321,7 @@ export const routineRepository = {
       stats.updatedAt,
       id,
     );
+    notifyRoutinesChanged();
   },
 };
 

@@ -12,6 +12,7 @@ export {
   upsertSnapshot,
 } from './routineRepository';
 export type { RoutineDraft } from './routineRepository';
+export { onRoutinesChanged } from './routineEvents';
 export { sessionRepository } from './sessionRepository';
 export type { SessionPatch } from './sessionRepository';
 export {

@@ -7,6 +7,7 @@
  * entry to MIGRATIONS: never editing an existing step.
  */
 import * as SQLite from 'expo-sqlite';
+import { notifyRoutinesChanged } from './routineEvents';
 
 const DATABASE_NAME = 'kinetiq.db';
 
@@ -383,4 +384,5 @@ export async function clearAllUserData(db?: SQLite.SQLiteDatabase): Promise<void
       await handle.execAsync(`DELETE FROM ${table};`);
     }
   });
+  notifyRoutinesChanged();
 }
