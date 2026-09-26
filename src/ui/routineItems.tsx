@@ -37,6 +37,7 @@ import { TagRow } from '@/ui/display/TagRow';
 import { exerciseTags } from '@/ui/display/exerciseTags';
 import { SwipeToDelete } from '@/ui/SwipeToDelete';
 import { Image } from 'expo-image';
+import { EXERCISE_IMAGE_CACHE } from '@/ui/imageCache';
 import { useExerciseResolution } from '@/queries/useExercises';
 import { haptics } from '@/services/haptics';
 import { useAppTheme, type Theme } from '@/theme/theme';
@@ -468,6 +469,7 @@ function ExerciseAbout({ exerciseId }: { exerciseId: string }) {
           <Image
             source={{ uri: image }}
             recyclingKey={image}
+            cachePolicy={EXERCISE_IMAGE_CACHE}
             contentFit="contain"
             style={aboutStyles.image}
             accessibilityLabel={t('itemEditor.imageA11y', { name: exercise?.name ?? '' })}

@@ -33,6 +33,7 @@ import { AnimatedPressable, usePressScale } from './animation';
 import { Icon, IconTile, type IconName } from './icons';
 import { Txt } from './Text';
 import { CellText } from './CellText';
+import { EXERCISE_IMAGE_CACHE } from './imageCache';
 import { MetaLine } from './display/MetaLine';
 import { TagRow } from './display/TagRow';
 import type { MetaItem, Tag } from './display/types';
@@ -339,6 +340,7 @@ export const ExerciseThumb = memo(function ExerciseThumb({
       contentFit="cover"
       transition={180}
       recyclingKey={uri}
+      cachePolicy={EXERCISE_IMAGE_CACHE}
       // Without this a 404 leaves a square the exact colour of the background,
       // which reads as "the app broke" rather than "this exercise has no picture".
       onError={() => setFailed(true)}

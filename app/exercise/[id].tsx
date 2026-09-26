@@ -33,7 +33,7 @@
  * Muscle and equipment chips name the taxonomy and go nowhere: the library is reached only to
  * pick an exercise, so there is no browsing surface for a chip to open.
  */
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
@@ -50,6 +50,7 @@ import { ActionRow } from '@/ui/rows';
 import { ExerciseRow, ExerciseThumb, ListRow } from '@/ui/rows';
 import { EmptyState, ErrorState, SkeletonCard } from '@/ui/states';
 import { LineChart, type LinePoint } from '@/ui/charts/LineChart';
+import { EXERCISE_IMAGE_CACHE } from '@/ui/imageCache';
 import {
   useExerciseResolution,
   useExerciseVariations,
@@ -446,12 +447,16 @@ function Hero({ exercise, topInset }: { exercise: Exercise; topInset: number }) 
   const { t } = useT();
   const theme = useAppTheme();
   const uri = exercise.imageUrl ?? exercise.thumbnailUrl;
+  // Keyed by URL, so moving to another exercise (the variations list reuses this screen)
+  // starts from "try to load it" rather than inheriting the last one's failure.
+  const [failedUri, setFailedUri] = useState<string | null>(null);
 
-  if (uri === null) {
+  if (uri === null || failedUri === uri) {
     // Designed absence, not a missing image: the initials plaque the rest of the app
     // uses for an artless exercise, blown up to fill the same slot a picture would. The
-    // layout keeps its shape between the two states, so an exercise with no art reads as
-    // "the library has none for this one", never as "the picture failed to load".
+    // layout keeps its shape between the two states. The caption says which absence it is:
+    // the library has no art for this one, or it has art that cannot load right now, which
+    // offline means an image this device has never seen (images are cached once seen).
     return (
       <LinearGradient
         colors={[theme.colors.surfaceRaised, theme.colors.canvas]}
@@ -474,7 +479,7 @@ function Hero({ exercise, topInset }: { exercise: Exercise; topInset: number }) 
         <Row gap="xs" align="center">
           <Icon name="image" size={ICON_SIZE.micro} color={theme.colors.textFaint} />
           <Txt variant="micro" tone="faint" uppercase tracking={0.8}>
-            {t('exerciseDetail.noImage')}
+            {t(uri === null ? 'exerciseDetail.noImage' : 'exerciseDetail.imageUnavailable')}
           </Txt>
         </Row>
       </LinearGradient>
@@ -489,6 +494,8 @@ function Hero({ exercise, topInset }: { exercise: Exercise; topInset: number }) 
         contentFit="contain"
         transition={220}
         recyclingKey={uri}
+        cachePolicy={EXERCISE_IMAGE_CACHE}
+        onError={() => setFailedUri(uri)}
         accessibilityLabel={t('exerciseDetail.illustrationFor', { name: exercise.name })}
         accessibilityIgnoresInvertColors
       />

@@ -33,12 +33,6 @@ export interface ExerciseProvider {
    * include the exercise itself.
    */
   variations(externalId: number, signal?: AbortSignal): Promise<Exercise[]>;
-
-  /**
-   * True when the provider can answer without the network. Used to decide
-   * whether an offline screen should show "offline" or "no results".
-   */
-  supportsOffline: boolean;
 }
 
 /** Cursor used for the first page. Providers encode it however they like. */

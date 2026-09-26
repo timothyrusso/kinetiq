@@ -276,6 +276,7 @@ export const en = {
     viewOnWger: 'View on wger',
     wgerSubtitle: 'Community page with all photos and notes',
     noImage: 'No image in the library',
+    imageUnavailable: 'Picture not available right now',
     illustrationFor: 'Illustration for {name}',
     offlineCopy: 'Offline copy saved on this device',
     offlineCopyDated: 'Offline copy saved {date}',
@@ -303,13 +304,11 @@ export const en = {
     storageNote:
       'Everything is stored on this device. Kinetiq has no account, no sign-in, and no server of its own.',
     catalog: 'Exercise catalog',
-    servedRemotely: 'Served remotely',
+    catalogLicence: 'Exercise data licensed CC BY-SA 4.0',
     catalogNote:
-      'The exercise library: search, photos, muscles and equipment: is served by an external catalog, live.',
+      'The exercise library comes from wger and is stored on this device, so searching and browsing work offline. When you are online it refreshes itself every 30 days. Photos load the first time you open them and are kept for offline use after that.',
     localNote:
-      'Your own data never depends on it. Every exercise you add to a routine is stored as a local snapshot, so routines and history keep working when the catalog is offline, rate-limited, or gone.',
-    needsConnection:
-      'Browsing for new exercises needs a connection. Using the ones you saved does not.',
+      'Your own data never depends on it. Every exercise you add to a routine is stored as a snapshot, so a refresh never renames anything in your routines or history.',
     onThisDevice: 'On this device',
     activities: 'Workouts',
     counting: 'counting…',
@@ -319,7 +318,7 @@ export const en = {
     reset: 'Reset',
     eraseAll: 'Erase all Kinetiq data',
     eraseNote:
-      'Saved exercises came from the catalog and can be downloaded again. Nothing is uploaded anywhere, so there is no account to close and nothing sitting on someone else server to delete.',
+      'The exercise library stays: it is reference data, not yours. Nothing is uploaded anywhere, so there is no account to close and nothing sitting on someone else server to delete.',
     builtWith: 'Built with React Native and Expo.',
     eraseTitle: 'Erase everything?',
     eraseMessage:
