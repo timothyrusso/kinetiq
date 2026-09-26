@@ -9,6 +9,12 @@ public enum Units {
         system == .metric ? 1 : 2.5
     }
 
+    /// The watch's Crown step: 0.5 kg or 1 lb. Finer than the phone's stepper, because a Crown
+    /// detent is a much smaller gesture than a tap and whole kilograms raced past.
+    public static func crownStep(_ system: UnitSystem) -> Double {
+        system == .metric ? 0.5 : 1
+    }
+
     /// kg to the number shown in the unit, the value the Crown edits: `weightDisplayValue` on the
     /// phone, whole pounds for imperial.
     public static func displayValue(kilograms: Double, system: UnitSystem) -> Double {

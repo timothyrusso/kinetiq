@@ -46,6 +46,7 @@ export default function SettingsTrainingScreen() {
   const autoStartRest = useSettings((s) => s.autoStartRest);
   const hapticsEnabled = useSettings((s) => s.hapticsEnabled);
   const restCountdown = useSettings((s) => s.restCountdownHaptics);
+  const keepScreenAwake = useSettings((s) => s.keepScreenAwake);
   const goal = useSettings((s) => s.weeklyGoalWorkouts);
 
   const setRest = useCallback(
@@ -108,6 +109,14 @@ export default function SettingsTrainingScreen() {
             disabled: !hapticsEnabled,
             onChange: (next) => update({ restCountdownHaptics: next }),
           },
+          {
+            kind: 'switch',
+            key: 'keepAwake',
+            title: t('trainingPrefs.keepScreenAwake'),
+            subtitle: t('trainingPrefs.keepScreenAwakeHint'),
+            value: keepScreenAwake,
+            onChange: (next) => update({ keepScreenAwake: next }),
+          },
         ],
       },
       {
@@ -129,7 +138,7 @@ export default function SettingsTrainingScreen() {
         ],
       },
     ],
-    [autoStartRest, goal, hapticsEnabled, rest, restCountdown, setRest, t, update],
+    [autoStartRest, goal, hapticsEnabled, keepScreenAwake, rest, restCountdown, setRest, t, update],
   );
 
   return (

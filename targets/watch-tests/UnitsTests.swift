@@ -30,6 +30,12 @@ final class UnitsTests: XCTestCase {
         XCTAssertEqual(Units.step(.metric), 1)
         XCTAssertEqual(Units.step(.imperial), 2.5)
     }
+
+    func testCrownStepIsFinerThanThePhoneStepper() {
+        XCTAssertEqual(Units.crownStep(.metric), 0.5)
+        XCTAssertEqual(Units.crownStep(.imperial), 1)
+        XCTAssertEqual(Units.displayText(kilograms: 62.5, system: .metric), "62.5")
+    }
 }
 
 final class UnitsDisplayTests: XCTestCase {

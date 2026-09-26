@@ -41,6 +41,8 @@ export type SettingsState = {
   hapticsEnabled: boolean;
   /** Ticks in the last seconds of a rest, and a distinct buzz at zero. Needs `hapticsEnabled`. */
   restCountdownHaptics: boolean;
+  /** The screen stays on while the workout screen is open. */
+  keepScreenAwake: boolean;
   notificationsEnabled: boolean;
   /** Used by both rest timers and scheduled reminders. */
   notificationsGranted: boolean;
@@ -59,6 +61,8 @@ export const DEFAULT_SETTINGS: SettingsState = {
   language: 'system',
   hapticsEnabled: true,
   restCountdownHaptics: true,
+  // On: a phone that locks between sets hides the rest timer exactly when it is needed.
+  keepScreenAwake: true,
   notificationsEnabled: true,
   notificationsGranted: false,
   defaultRestSeconds: 90,
@@ -134,6 +138,7 @@ export function normaliseSettings(
     language: s.language === 'en' || s.language === 'it' ? s.language : 'system',
     hapticsEnabled: s.hapticsEnabled ?? DEFAULT_SETTINGS.hapticsEnabled,
     restCountdownHaptics: s.restCountdownHaptics ?? DEFAULT_SETTINGS.restCountdownHaptics,
+    keepScreenAwake: s.keepScreenAwake ?? DEFAULT_SETTINGS.keepScreenAwake,
     notificationsEnabled: s.notificationsEnabled ?? DEFAULT_SETTINGS.notificationsEnabled,
     notificationsGranted: s.notificationsGranted ?? DEFAULT_SETTINGS.notificationsGranted,
     defaultRestSeconds: clamp(s.defaultRestSeconds, 15, 600, DEFAULT_SETTINGS.defaultRestSeconds),

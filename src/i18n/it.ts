@@ -611,6 +611,8 @@ export const it: Copy = {
     haptics: 'Vibrazione',
     restCountdown: 'Conto alla rovescia del recupero',
     restCountdownHint: 'Un tocco in ciascuno degli ultimi 3 secondi del recupero, poi una vibrazione alla fine.',
+    keepScreenAwake: 'Schermo sempre acceso',
+    keepScreenAwakeHint: "Lo schermo non si blocca mentre un allenamento è aperto.",
     weeklyGoal: 'Obiettivo settimanale',
     sessionsPerWeek: 'Sessioni a settimana',
   },
