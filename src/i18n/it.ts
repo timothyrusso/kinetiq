@@ -778,6 +778,14 @@ export const it: Copy = {
     issueItemSkipped: 'Scheda {routine}, esercizio {item}: senza nome, escluso.',
     issueDefaults: 'Scheda {routine}, esercizio {item}: serie o ripetizioni mancanti, usati i valori predefiniti.',
   },
+  watchInbox: {
+    invalidTitle: "Non è stato possibile leggere un allenamento da Apple Watch",
+    invalidMessage: 'È stato conservato su questo iPhone, messo da parte, quindi non si perde nulla.',
+    versionTitle: 'Un allenamento da Apple Watch richiede un aggiornamento',
+    versionMessage:
+      "Proviene da una versione più recente di Kinetiq sull'orologio. Aggiorna Kinetiq su questo iPhone e verrà salvato.",
+    ok: 'OK',
+  },
   // --- followups ---
   followups: {
     ringA11y: 'Completato al {percent} per cento',

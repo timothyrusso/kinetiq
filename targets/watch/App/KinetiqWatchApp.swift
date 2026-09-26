@@ -16,7 +16,9 @@ struct KinetiqWatchApp: App {
         PhoneConnection.shared.activate()
         _routines = StateObject(wrappedValue: RoutineStore())
         // Reads `workout.json`: a workout open when the app was killed resumes where it was.
-        _session = StateObject(wrappedValue: WorkoutSession())
+        let session = WorkoutSession()
+        session.onFinished = { PhoneConnection.shared.sendOutbox() }
+        _session = StateObject(wrappedValue: session)
     }
 
     var body: some Scene {

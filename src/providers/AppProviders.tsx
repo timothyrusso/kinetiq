@@ -50,6 +50,7 @@ import {
   type BootstrapOutcome,
 } from './bootstrap';
 import { SplashCover } from '@/ui/SplashCover';
+import { WatchInboxNotice } from '@/watch/WatchInboxNotice';
 import { useT } from '@/i18n/useT';
 
 /**
@@ -140,6 +141,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     return (
       <QueryClientProvider client={getQueryClient()}>
         {children}
+        <WatchInboxNotice />
         <SplashHandover systemDark={systemDark} />
       </QueryClientProvider>
     );

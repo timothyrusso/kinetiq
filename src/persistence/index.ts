@@ -28,5 +28,6 @@ export type { SettingKey } from './settingsRepository';
 export {
   clearAllUserData,
   openDatabase,
+  withTransaction,
 } from './database';
 export type { DatabaseOpenResult } from './database';
