@@ -18,8 +18,14 @@ struct WorkoutView: View {
         NavigationStack {
             TabView(selection: $page) {
                 ForEach(Array(workout.entries.enumerated()), id: \.offset) { index, entry in
-                    ExercisePage(workout: workout, index: index, entry: entry)
-                        .tag(index)
+                    ExercisePage(
+                        workout: workout,
+                        index: index,
+                        entry: entry,
+                        onFinish: { confirmFinish = true },
+                        onDiscard: { confirmDiscard = true }
+                    )
+                    .tag(index)
                 }
                 FinishPage(
                     workout: workout,
@@ -76,6 +82,8 @@ struct ExercisePage: View {
     let workout: Workout
     let index: Int
     let entry: WorkoutEntry
+    let onFinish: () -> Void
+    let onDiscard: () -> Void
 
     private enum Field { case weight, reps }
     @FocusState private var focus: Field?
@@ -101,18 +109,31 @@ struct ExercisePage: View {
                     .font(.footnote)
                     .foregroundStyle(.green)
             }
-            HStack(spacing: 6) {
-                weightTile
-                repsTile
+            if next != nil {
+                HStack(spacing: 6) {
+                    weightTile
+                    repsTile
+                }
+                Button {
+                    session.completeSet(in: index)
+                } label: {
+                    Label("workout.completeSet", systemImage: "checkmark")
+                }
+                .buttonStyle(.primary)
+            } else {
+                // Every set of this exercise is done: the way out is right here, not only on the
+                // last page. The next exercise is still one swipe down.
+                Button(action: onFinish) {
+                    Label("workout.finish", systemImage: "flag.checkered")
+                }
+                .buttonStyle(.primary)
+                Button(role: .destructive, action: onDiscard) {
+                    Label("workout.discard", systemImage: "trash")
+                }
             }
-            Button {
-                session.completeSet(in: index)
-            } label: {
-                Label("workout.completeSet", systemImage: "checkmark")
-            }
-            .buttonStyle(.primary)
-            .disabled(next == nil)
         }
+        // Clear of the Undo and rest buttons in the bottom bar.
+        .padding(.bottom, 12)
         .toolbar {
             ToolbarItemGroup(placement: .bottomBar) {
                 Button {
@@ -158,7 +179,7 @@ struct ExercisePage: View {
             ),
             from: 0,
             through: Units.displayValue(kilograms: session.bounds.itemBounds.weightKg.max, system: system),
-            by: Units.step(system),
+            by: Units.crownStep(system),
             sensitivity: .low,
             isContinuous: false,
             isHapticFeedbackEnabled: true
@@ -167,7 +188,7 @@ struct ExercisePage: View {
         .accessibilityLabel("workout.weight")
         .accessibilityValue(Units.format(kilograms: kilograms, system: system))
         .accessibilityAdjustableAction { direction in
-            let step = Units.step(system)
+            let step = Units.crownStep(system)
             let shown = Units.displayValue(kilograms: kilograms, system: system)
             let target = max(0, shown + (direction == .increment ? step : -step))
             let next = Units.kilograms(fromDisplay: target, system: system)

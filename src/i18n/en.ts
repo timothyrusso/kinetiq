@@ -608,6 +608,8 @@ export const en = {
     haptics: 'Haptics',
     restCountdown: 'Rest countdown ticks',
     restCountdownHint: 'A tick in each of the last 3 seconds of a rest, then a buzz when it ends.',
+    keepScreenAwake: 'Keep screen on',
+    keepScreenAwakeHint: 'The screen does not lock while a workout is open.',
     weeklyGoal: 'Weekly goal',
     sessionsPerWeek: 'Sessions per week',
   },

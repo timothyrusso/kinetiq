@@ -31,6 +31,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, type LayoutChangeEvent, type ViewStyle } from 'react-native';
 import { router, Stack } from 'expo-router';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { ScreenHeader } from '@/ui/Screen';
 import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -95,6 +96,8 @@ import {
   SessionProgressBar,
 } from '@/ui/workout';
 
+const KEEP_AWAKE_TAG = 'kinetiq.workout';
+
 export default function WorkoutSessionScreen() {
   const { t, locale } = useT();
   const theme = useAppTheme();
@@ -111,6 +114,7 @@ export default function WorkoutSessionScreen() {
     (s) => s.notificationsEnabled && s.notificationsGranted,
   );
   const autoStartRest = useSettings((s) => s.autoStartRest);
+  const keepScreenAwake = useSettings((s) => s.keepScreenAwake);
 
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [confirmFinish, setConfirmFinish] = useState(false);
@@ -161,6 +165,17 @@ export default function WorkoutSessionScreen() {
     [session?.entries],
   );
   const previous = usePreviousPerformance(session?.routineId ?? null, entryIds);
+
+  // "Keep screen on" (Training settings): the screen stays lit while this screen is open, so
+  // the rest timer is still there when the phone is picked up between sets. Released on leave.
+  const hasSession = session !== null;
+  useEffect(() => {
+    if (!keepScreenAwake || !hasSession) return undefined;
+    void activateKeepAwakeAsync(KEEP_AWAKE_TAG).catch(() => undefined);
+    return () => {
+      void deactivateKeepAwake(KEEP_AWAKE_TAG).catch(() => undefined);
+    };
+  }, [keepScreenAwake, hasSession]);
 
   // The away notice is a one-shot the engine sets when a background stint turns out to
   // have been long enough that "your timer kept running" is worth saying out loud.
