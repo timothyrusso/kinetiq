@@ -278,6 +278,7 @@ export const it: Copy = {
     viewOnWger: 'Vedi su wger',
     wgerSubtitle: 'Pagina della community con tutte le foto e le note',
     noImage: 'Nessuna immagine nella libreria',
+    imageUnavailable: 'Immagine non disponibile ora',
     illustrationFor: 'Illustrazione per {name}',
     offlineCopy: 'Copia offline salvata su questo dispositivo',
     offlineCopyDated: 'Copia offline salvata il {date}',
@@ -305,13 +306,11 @@ export const it: Copy = {
     storageNote:
       'Tutto è salvato su questo dispositivo. Kinetiq non ha account, non ha accessi e non ha un server proprio.',
     catalog: 'Catalogo esercizi',
-    servedRemotely: 'Servito in remoto',
+    catalogLicence: 'Dati degli esercizi con licenza CC BY-SA 4.0',
     catalogNote:
-      'La libreria esercizi: ricerca, foto, muscoli e attrezzatura: è servita in diretta da un catalogo esterno.',
+      'La libreria esercizi viene da wger ed è salvata su questo dispositivo, così ricerca e navigazione funzionano offline. Quando sei online si aggiorna da sola ogni 30 giorni. Le foto si caricano la prima volta che le apri e restano disponibili offline da quel momento.',
     localNote:
-      'I tuoi dati non dipendono da esso. Ogni esercizio che aggiungi a una scheda viene salvato come copia locale, così schede e cronologia continuano a funzionare quando il catalogo è offline, limitato o scomparso.',
-    needsConnection:
-      'Per cercare esercizi nuovi serve una connessione. Per usare quelli salvati no.',
+      'I tuoi dati non dipendono da essa. Ogni esercizio che aggiungi a una scheda viene salvato come copia, così un aggiornamento non rinomina mai nulla nelle tue schede o nella cronologia.',
     onThisDevice: 'Su questo dispositivo',
     activities: 'Allenamenti',
     counting: 'conteggio…',
@@ -321,7 +320,7 @@ export const it: Copy = {
     reset: 'Azzera',
     eraseAll: 'Cancella tutti i dati di Kinetiq',
     eraseNote:
-      "Gli esercizi salvati venivano dal catalogo e si possono scaricare di nuovo. Nulla viene caricato altrove, quindi non c'è alcun account da chiudere né nulla sul server di qualcun altro da eliminare.",
+      "La libreria esercizi resta: è materiale di riferimento, non dati tuoi. Nulla viene caricato altrove, quindi non c'è alcun account da chiudere né nulla sul server di qualcun altro da eliminare.",
     builtWith: 'Realizzata con React Native ed Expo.',
     eraseTitle: 'Cancellare tutto?',
     eraseMessage:

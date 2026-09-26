@@ -5,9 +5,10 @@ organised by what would cost the most to get wrong, not by feature.
 
 ## What this is
 
-An Expo SDK 57 fitness tracker: five tabs, SQLite for everything the user owns, TanStack
-Query for everything the wger catalog owns, and a hard line between the two. The line is the
-point of the architecture, and most of the decisions below fall out of it.
+An Expo SDK 57 fitness tracker: SQLite for everything, TanStack Query as the cache in front of
+it, and a hard line between what the user owns (routines, history) and what the wger catalog
+owns (the exercise library). The line is the point of the architecture, and most of the
+decisions below fall out of it.
 
 ## The one decision everything else rests on
 
@@ -25,12 +26,29 @@ transaction in the right order. That ordering was a genuine bug (items were inse
 with foreign keys on, so saving a newly discovered exercise failed while saving an already
 stored one worked), and it is exactly the kind of bug that only appears against real data.
 
+## The exercise catalog is local, and the network only refreshes it
+
+The whole wger catalog (912 exercises, English and Italian) lives in `catalog_*` tables, and a
+local provider answers search, filters, detail and variations with SQL. A trimmed snapshot is
+committed at `assets/catalog/wger.json` and installed on first launch, so a fresh install works
+in airplane mode. When the catalog is more than 30 days old and the device is online, a
+background download replaces it: every page into memory first, then one exclusive transaction
+swaps the tables, so a failure at any point leaves the old catalog untouched. `replaceCatalog`
+is the only writer, for both the snapshot and the download.
+
+Search is `LIKE` over a lowercase, accent-folded name, ranked exact, then prefix, then word
+start, the app's language before English. That ranking matters beyond the picker: the routine
+importer takes the top row as the closest match for a name it cannot find exactly.
+
+Routines still store snapshots, and a refresh never reconciles them. Images are the one thing
+not bundled: they are cached on disk the first time they are seen.
+
 ## Where I think the code is strong
 
-**The offline claim is tested rather than asserted.** `qa:offline` kills the transport, proves
-the radio is dead by watching the exercise search fail, then opens a routine, reads its sets
-back, and starts a session from it. A cached list that looks fine until you tap it would pass
-a naive check and fail this one.
+**The offline claim is tested rather than asserted.** The catalog repository's tests run its
+SQL against a real in-memory SQLite (`node:sqlite`), including installing the committed
+snapshot with foreign keys on and proving that a download failing halfway leaves the previous
+catalog whole.
 
 **Retry policy is per fault kind, and the numbers are measured.** Offline is permanent, so it
 is not retried; a 500 is retried twice; a timeout is retried twice with backoff. The fault
@@ -86,6 +104,6 @@ second line. Defensible, documented, and still two things to keep in step.
 ## What is deliberately not here
 
 No account, no sync, no backend of the app's own. Everything the user creates is on the
-device, and the only thing that leaves it is an exercise search. That is a product decision
+device. The only network traffic is the monthly catalog download and exercise images. That is a product decision
 with an engineering consequence: there is no server to reconcile against, so there is also no
 conflict resolution, no auth, and no privacy policy to write.

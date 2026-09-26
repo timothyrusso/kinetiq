@@ -107,15 +107,13 @@ export default function SettingsAboutScreen() {
       {
         key: 'catalog',
         title: t('about.catalog'),
-        footer: [t('about.catalogNote'), t('about.localNote'), provider.supportsOffline ? null : t('about.needsConnection')]
-          .filter(Boolean)
-          .join('\n\n'),
+        footer: `${t('about.catalogNote')}\n\n${t('about.localNote')}`,
         rows: [
           {
             kind: 'info',
             key: 'provider',
             title: LABELLED_PROVIDERS[provider.name] ?? provider.name,
-            subtitle: t('about.servedRemotely'),
+            subtitle: t('about.catalogLicence'),
           },
         ],
       },

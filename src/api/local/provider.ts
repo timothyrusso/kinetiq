@@ -30,7 +30,6 @@ function parseCursor(cursor: string | null): number {
 class LocalExerciseProvider implements ExerciseProvider {
   /** The data is still wger's; this names the source for the About screen's credit. */
   readonly name = 'wger';
-  readonly supportsOffline = true;
 
   async page(filter: ExerciseFilter, cursor: string | null): Promise<ExercisePage> {
     const offset = parseCursor(cursor);

@@ -16,6 +16,7 @@ and watch your training history grow. Everything stays on your device.
 ## Features
 
 - **Routines**: create and edit your workouts, or start an empty one.
+- **Exercise library**: the full [wger](https://wger.de) catalog, over 900 exercises in English and Italian, stored on the device so search and filters work offline. It refreshes itself every 30 days.
 - **Live workout**: log weight and reps per set, with a rest timer and haptic feedback.
 - **History**: a 20-week training heatmap, weekly goal, streaks, personal records and per-exercise progress.
 - **Apple Watch**: run a full workout from your wrist; it syncs back to the phone when you finish.
@@ -37,3 +38,11 @@ and watch your training history grow. Everything stays on your device.
 npm install
 npm run ios       # or: npm run android
 ```
+
+`npm run catalog:update` regenerates the bundled exercise catalog (`assets/catalog/wger.json`) from
+wger. Run it before a release: a fresh install starts from that snapshot.
+
+## Credits
+
+Exercise data comes from [wger Workout Manager](https://wger.de) and is licensed
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
