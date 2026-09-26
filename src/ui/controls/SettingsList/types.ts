@@ -39,7 +39,16 @@ export type SettingsRow =
       onChange: (next: string) => void;
     }
   | { kind: 'info'; key: string; title: string; value?: string; subtitle?: string }
-  | { kind: 'button'; key: string; title: string; destructive?: boolean; disabled?: boolean; onPress: () => void }
+  | {
+      kind: 'button';
+      key: string;
+      title: string;
+      destructive?: boolean;
+      disabled?: boolean;
+      /** Work in progress: the platform's own spinner beside the title. Implies disabled. */
+      busy?: boolean;
+      onPress: () => void;
+    }
   | {
       kind: 'field';
       key: string;

@@ -14,6 +14,14 @@
  * reads back through "Paste from clipboard". The same format is what "Export routines" writes,
  * so an AI can also be handed the current routines and asked to change them.
  *
+ * ## The exercise library
+ *
+ * The catalog is reference data rather than the user's, but this is where "what is stored on this
+ * device" lives, so it is listed here: how many exercises, when the data was last fetched, and a
+ * Refresh for anyone who does not want to wait for the 30-day background refresh. A failed
+ * refresh shows its reason inline, like an import error, and the catalog on the device is
+ * unchanged by it.
+ *
  * ## Errors stay on the screen
  *
  * A file that is not a routines file is the user's to fix (usually by asking the AI again), so
@@ -26,17 +34,22 @@ import { useRouter } from 'expo-router';
 import { ScreenHeader } from '@/ui/Screen';
 import { SettingsList, type SettingsRow, type SettingsSection } from '@/ui/controls/SettingsList';
 import { routes } from '@/navigation/nav';
+import { isOfflineError } from '@/api';
+import { useCatalogMeta, useRefreshCatalog } from '@/queries/useCatalog';
 import { useExport, type ExportTarget } from '@/queries/useTransfer';
 import { parseRoutines, type ParseIssue } from '@/transfer/parseRoutines';
 import { copyToClipboard, ImportTooLargeError, pickImportFile, readClipboard } from '@/transfer/importSource';
 import { stageImport } from '@/transfer/stagedImport';
 import { haptics } from '@/services/haptics';
 import { useT } from '@/i18n/useT';
+import { shortDateLabel } from '@/utils/relativeTime';
 
 export default function SettingsDataScreen() {
-  const { t } = useT();
+  const { t, locale } = useT();
   const router = useRouter();
   const { mutate: exportFile, isPending: exporting, isError: exportFailed } = useExport();
+  const { data: catalog } = useCatalogMeta();
+  const { mutate: refreshCatalog, isPending: refreshing, error: refreshError } = useRefreshCatalog();
 
   const [importIssue, setImportIssue] = useState<ParseIssue | null>(null);
   const [reading, setReading] = useState(false);
@@ -135,6 +148,34 @@ export default function SettingsDataScreen() {
       });
     }
 
+    const catalogRows: SettingsRow[] = [
+      {
+        kind: 'info',
+        key: 'catalogCount',
+        title: t('dataTransfer.catalogExercises'),
+        value: catalog?.exerciseCount == null ? undefined : catalog.exerciseCount.toLocaleString(locale),
+        subtitle:
+          catalog?.generatedAt == null
+            ? undefined
+            : t('dataTransfer.catalogUpdated', { date: shortDateLabel(catalog.generatedAt) }),
+      },
+      {
+        kind: 'button',
+        key: 'catalogRefresh',
+        title: t(refreshing ? 'dataTransfer.catalogRefreshing' : 'dataTransfer.catalogRefresh'),
+        busy: refreshing,
+        onPress: () => refreshCatalog(undefined, { onSuccess: () => haptics.success(), onError: () => haptics.warning() }),
+      },
+    ];
+    if (refreshError !== null && !refreshing) {
+      catalogRows.push({
+        kind: 'info',
+        key: 'catalogError',
+        title: t('dataTransfer.catalogFailed'),
+        subtitle: t(isOfflineError(refreshError) ? 'dataTransfer.catalogFailedOffline' : 'dataTransfer.catalogFailedOther'),
+      });
+    }
+
     return [
       { key: 'export', title: t('dataTransfer.exportTitle'), footer: t('dataTransfer.exportFooter'), rows: exportRows },
       { key: 'import', title: t('dataTransfer.importTitle'), footer: t('dataTransfer.importFooter'), rows: importRows },
@@ -151,8 +192,24 @@ export default function SettingsDataScreen() {
           },
         ],
       },
+      { key: 'catalog', title: t('dataTransfer.catalogTitle'), footer: t('dataTransfer.catalogFooter'), rows: catalogRows },
     ];
-  }, [copied, copyPrompt, exportFailed, exporting, importIssue, readImport, reading, runExport, t]);
+  }, [
+    catalog,
+    copied,
+    copyPrompt,
+    exportFailed,
+    exporting,
+    importIssue,
+    locale,
+    readImport,
+    reading,
+    refreshCatalog,
+    refreshError,
+    refreshing,
+    runExport,
+    t,
+  ]);
 
   return (
     <>

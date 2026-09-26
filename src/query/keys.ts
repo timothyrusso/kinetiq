@@ -60,6 +60,12 @@ export const queryKeys = {
       ['exercises', 'variations', language, id] as const,
   },
 
+  catalog: {
+    all: ['catalog'] as const,
+    /** What `catalog_meta` says: exercise count and dates, for the Your data row. */
+    meta: () => ['catalog', 'meta'] as const,
+  },
+
   transfer: {
     /** One staged import's exercise matches; the id changes with every paste or file. */
     resolve: (importId: string) => ['transfer', 'resolve', importId] as const,
