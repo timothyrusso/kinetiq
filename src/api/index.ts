@@ -2,41 +2,29 @@
  * The single place that decides which exercise backend is live.
  *
  * Everything else: query hooks, screens, the routine picker: imports
- * `getExerciseProvider()` and depends only on the `ExerciseProvider` port. To
- * move off wger, write a new adapter and change the factory below; nothing else
- * in the app knows wger exists.
+ * `getExerciseProvider()` and depends only on the `ExerciseProvider` port. The live
+ * provider is the local catalog in SQLite (`src/api/local/provider.ts`); wger is only
+ * where that catalog is downloaded from, never a runtime dependency of a screen.
  */
 import type { ExerciseProvider } from './types';
-import { createWgerProvider } from './wger/provider';
-
-export type ProviderDependencies = {
-  /** BCP-47 code for the device UI language, e.g. "fr". */
-  getLanguageCode: () => string | undefined;
-};
 
 let provider: ExerciseProvider | null = null;
-let dependencies: ProviderDependencies | null = null;
 
 /**
- * Called once during bootstrap, before any query runs. Keeping construction
- * lazy and explicit (rather than a module-side-effect singleton) means the
- * provider can never be built before the app knows the device language, and
- * tests can install a fake provider wholesale.
+ * Called once during bootstrap, before any query runs. Explicit rather than a
+ * module-side-effect singleton, so the provider cannot be used before the database
+ * it reads is open, and a test can install a fake provider wholesale.
  */
-export function configureExerciseProvider(next: ProviderDependencies): void {
-  dependencies = next;
-  provider = null;
+export function configureExerciseProvider(next: ExerciseProvider): void {
+  provider = next;
 }
 
 export function getExerciseProvider(): ExerciseProvider {
   if (!provider) {
-    if (!dependencies) {
-      throw new Error(
-        'Exercise provider used before configureExerciseProvider(). ' +
-          'Check the bootstrap order in src/providers/bootstrap.tsx.',
-      );
-    }
-    provider = createWgerProvider({ getLanguageCode: dependencies.getLanguageCode });
+    throw new Error(
+      'Exercise provider used before configureExerciseProvider(). ' +
+        'Check the bootstrap order in src/providers/bootstrap.tsx.',
+    );
   }
   return provider;
 }

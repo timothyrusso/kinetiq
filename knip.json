@@ -23,6 +23,11 @@
       "src/*"
     ]
   },
+  "ignore": [
+    "src/api/wger/dto.ts",
+    "src/api/wger/mappers.ts",
+    "src/api/http.ts"
+  ],
   "ignoreBinaries": [
     "rsvg-convert",
     "swiftlint",

@@ -12,6 +12,7 @@
  *   (`invalidateActivities`) rather than a list of keys that drifts out of date
  *   as filters are added.
  */
+import type { CatalogLanguage } from '@/catalog/types';
 import type { ExerciseFilter } from '@/domain/types';
 
 export const queryKeys = {
@@ -46,12 +47,17 @@ export const queryKeys = {
 
   exercises: {
     all: ['exercises'] as const,
-    /** Provider capability: offline or not: used to pick the error copy. */
-    status: () => ['exercises', 'status'] as const,
     taxonomy: () => ['exercises', 'taxonomy'] as const,
-    list: (filter: ExerciseFilter) => ['exercises', 'list', filter] as const,
-    detail: (id: string) => ['exercises', 'detail', id] as const,
-    variations: (id: string) => ['exercises', 'variations', id] as const,
+    /**
+     * The render language is an input: the provider names each row in it. Without it in the
+     * key, switching the app to Italian would keep showing the cached English page.
+     */
+    list: (filter: ExerciseFilter, language: CatalogLanguage) =>
+      ['exercises', 'list', language, filter] as const,
+    detail: (id: string, language: CatalogLanguage) =>
+      ['exercises', 'detail', language, id] as const,
+    variations: (id: string, language: CatalogLanguage) =>
+      ['exercises', 'variations', language, id] as const,
   },
 
   transfer: {

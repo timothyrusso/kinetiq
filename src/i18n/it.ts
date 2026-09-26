@@ -247,13 +247,13 @@ export const it: Copy = {
     loadError: 'Non è stato possibile caricare questo esercizio',
     unknownTitle: 'Nessuna informazione su questo esercizio',
     unknownFetchable:
-      'Non è nelle tue schede e la libreria esercizi non ha risposto. Controlla la connessione e riprova.',
+      'Non è nelle tue schede e la libreria esercizi su questo dispositivo non lo contiene.',
     unknownBuiltIn:
       'Questo esercizio arriva dalla libreria interna, che non ne conserva una descrizione.',
     backToLibrary: 'Torna alla libreria',
     howTo: 'Come si esegue',
     noDescriptionOffline:
-      'Con questo esercizio non è stata salvata alcuna descrizione, e la libreria è offline in questo momento.',
+      'Con questo esercizio non è stata salvata alcuna descrizione, e la libreria esercizi non lo contiene più.',
     noDescription:
       'La libreria esercizi non ha una descrizione per questo. Le tue note dalle sessioni passate sono il riferimento migliore.',
     muscles: 'Muscoli',
@@ -283,9 +283,7 @@ export const it: Copy = {
     offlineCopyDated: 'Copia offline salvata il {date}',
     checking: 'Controllo…',
     checkUpdates: 'Cerca aggiornamenti',
-    fromRecentSearch: 'Dai tuoi risultati di ricerca recenti',
-    liveFromWger: 'In diretta dalla libreria della community wger',
-    justNow: ' · proprio ora',
+    fromLibrary: 'Dalla libreria esercizi wger, salvata su questo dispositivo',
     builtIn: 'Esercizio interno',
     bodyweightTimes: 'Corpo libero × {reps}',
     openSession: 'Apre la sessione',
@@ -639,12 +637,12 @@ export const it: Copy = {
 
   picker: {
     title: 'Aggiungi esercizi',
-    subtitle: 'Cercati in diretta nella libreria esercizi',
+    subtitle: 'Dalla libreria esercizi su questo dispositivo',
     search: 'Cerca',
     placeholder: 'Squat, curl, lat machine',
     searchHint: 'Filtra la libreria esercizi mentre scrivi',
     clearFilter: 'Cancella il filtro',
-    unreachable: 'La libreria non è raggiungibile',
+    unreachable: 'Impossibile leggere la libreria',
     loadMore: 'Carica altri',
     done: 'Fatto',
   },

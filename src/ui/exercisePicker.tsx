@@ -1,5 +1,5 @@
 /**
- * The remote-library exercise picker: the body of the `pick-exercise` form-sheet route.
+ * The exercise picker: the body of the `pick-exercise` form-sheet route.
  *
  * Shared by the three places that put an exercise into a list: the routine builder, a saved
  * routine and the live session. The route decides the destination and passes `onPick`; this
@@ -16,7 +16,7 @@
  * ## Why an old response cannot overwrite a new one
  *
  * The query key is built from the *debounced* filter, so typing "roman", "romanian",
- * "romanian deadlift" costs one request rather than three, and TanStack Query owns
+ * "romanian deadlift" costs one catalog read rather than three, and TanStack Query owns
  * cancellation per key. The part that actually carries the correctness is that no result is
  * ever copied out of the cache into local state: there is no shadow array for a late response
  * to overwrite, so an old response can only repaint the list its own key asked for.

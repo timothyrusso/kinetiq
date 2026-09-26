@@ -245,13 +245,13 @@ export const en = {
     loadError: 'Could not load this exercise',
     unknownTitle: 'Nothing known about this exercise',
     unknownFetchable:
-      'It is not in your routines, and the exercise library did not answer. Check your connection and try again.',
+      'It is not in your routines, and the exercise library on this device does not list it.',
     unknownBuiltIn:
       'This exercise came from the built-in library, which does not store a description for it.',
     backToLibrary: 'Back to library',
     howTo: 'How to do it',
     noDescriptionOffline:
-      'No description was saved with this exercise, and the library is offline right now.',
+      'No description was saved with this exercise, and the exercise library no longer lists it.',
     noDescription:
       'The exercise library has no description for this one. Your own notes from past sessions are the best reference.',
     muscles: 'Muscles',
@@ -281,9 +281,7 @@ export const en = {
     offlineCopyDated: 'Offline copy saved {date}',
     checking: 'Checking…',
     checkUpdates: 'Check for updates',
-    fromRecentSearch: 'From your recent search results',
-    liveFromWger: 'Live from the wger community library',
-    justNow: ' · just now',
+    fromLibrary: 'From the wger exercise library, saved on this device',
     builtIn: 'Built-in exercise',
     bodyweightTimes: 'Bodyweight × {reps}',
     openSession: 'Opens the session',
@@ -635,12 +633,12 @@ export const en = {
 
   picker: {
     title: 'Add exercises',
-    subtitle: 'Searched live from the exercise library',
+    subtitle: 'From the exercise library on this device',
     search: 'Search',
     placeholder: 'Squat, curl, lat pulldown',
     searchHint: 'Filters the exercise library as you type',
     clearFilter: 'Clear filter',
-    unreachable: 'The library is unreachable',
+    unreachable: 'The library could not be read',
     loadMore: 'Load more',
     done: 'Done',
   },
