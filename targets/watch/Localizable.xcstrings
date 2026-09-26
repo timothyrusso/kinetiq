@@ -739,6 +739,74 @@
         }
       }
     },
+    "workout.setRow %lld %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set %lld, %@"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serie %lld, %@"
+          }
+        }
+      }
+    },
+    "workout.setTick": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mark set as done"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Segna la serie come fatta"
+          }
+        }
+      }
+    },
+    "workout.setUntick": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mark set as not done"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Segna la serie come non fatta"
+          }
+        }
+      }
+    },
+    "workout.setsDone %lld %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld of %lld sets"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld serie su %lld"
+          }
+        }
+      }
+    },
     "workout.startFailed": {
       "extractionState": "manual",
       "localizations": {
@@ -752,23 +820,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Impossibile iniziare l'allenamento. Riprova."
-          }
-        }
-      }
-    },
-    "workout.undo": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Undo last set"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Annulla ultima serie"
           }
         }
       }
