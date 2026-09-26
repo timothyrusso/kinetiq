@@ -1,0 +1,15 @@
+- generic [ref=f7e3]:
+  - generic [ref=f7e5]:
+    - heading "Page not found" [level=2] [ref=f7e6]
+    - separator [ref=f7e7]
+  - generic [ref=f7e10]:
+    - paragraph [ref=f7e11]: The page you requested does not exist.
+    - paragraph [ref=f7e12]:
+      - link "" [ref=f7e13] [cursor=pointer]:
+        - /url: https://discord.gg/rPWFv6W
+      - link [ref=f7e15] [cursor=pointer]:
+        - /url: https://fosstodon.org/@wger
+        - generic [aria-hidden] [ref=f7e16]: 
+      - link [ref=f7e17] [cursor=pointer]:
+        - /url: https://github.com/wger-project/wger/issues/new/choose
+        - generic [aria-hidden] [ref=f7e18]: 
