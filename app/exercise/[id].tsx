@@ -220,7 +220,7 @@ export default function ExerciseDetailScreen() {
                 from={detail.from}
                 storedAt={detail.stored?.capturedAt ?? null}
                 isFetching={detail.isFetching}
-                onRetry={detail.retry}
+                onRetry={detail.fetchable ? detail.retry : null}
               />
             </Column>
 
@@ -512,7 +512,8 @@ function Provenance({
   from: 'catalog' | 'stored' | 'none';
   storedAt: number | null;
   isFetching: boolean;
-  onRetry: () => void;
+  /** Null when the catalog cannot have this exercise (a `local:` id): nothing to check. */
+  onRetry: (() => void) | null;
 }) {
   const { t } = useT();
   const theme = useAppTheme();
@@ -529,16 +530,18 @@ function Provenance({
         {/* A Text with role="button" rather than a nested Touchable: it sits in a line of
             text-width content, and VoiceOver reads the label as its own element either
             way: this way there is one less layout wrapper. */}
-        <Txt
-          variant="caption"
-          weight="700"
-          color={theme.colors.accent}
-          role="button"
-          onPress={onRetry}
-          suppressHighlighting
-        >
-          {t(isFetching ? 'exerciseDetail.checking' : 'exerciseDetail.checkUpdates')}
-        </Txt>
+        {onRetry !== null ? (
+          <Txt
+            variant="caption"
+            weight="700"
+            color={theme.colors.accent}
+            role="button"
+            onPress={onRetry}
+            suppressHighlighting
+          >
+            {t(isFetching ? 'exerciseDetail.checking' : 'exerciseDetail.checkUpdates')}
+          </Txt>
+        ) : null}
       </Row>
     );
   }
