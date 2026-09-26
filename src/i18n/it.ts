@@ -138,7 +138,6 @@ export const it: Copy = {
     emptyMessage:
       'Questa sessione ha una durata e nessuna metrica. Conta comunque per i giorni di fila e per i totali.',
     session: 'Sessione',
-    summary: 'Riepilogo',
     duration: 'Durata',
     calories: 'Calorie',
     noEstimate: 'Stima non disponibile',
@@ -149,7 +148,6 @@ export const it: Copy = {
     noSets: 'Nessuna serie registrata',
     nothingAdded: 'Nulla aggiunto',
     exercises: 'Esercizi',
-    work: 'Lavoro',
     records: 'Record',
     setThisSession: 'Fatti in questa sessione',
     firstOfKind: ': il primo del suo genere',

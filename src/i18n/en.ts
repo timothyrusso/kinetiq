@@ -136,7 +136,6 @@ export const en = {
     emptyMessage:
       'This session has a duration and no metrics. It still counts toward your streak and your totals.',
     session: 'Session',
-    summary: 'Summary',
     duration: 'Duration',
     calories: 'Calories',
     noEstimate: 'Estimate unavailable',
@@ -147,7 +146,6 @@ export const en = {
     noSets: 'No sets recorded',
     nothingAdded: 'Nothing added',
     exercises: 'Exercises',
-    work: 'Work',
     records: 'Records',
     setThisSession: 'Set this session',
     firstOfKind: ': first of its kind',

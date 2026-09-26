@@ -257,7 +257,7 @@ function StrengthBody({
   return (
     <>
       <Section gap="lg">
-        <SectionHeader title={t('activity.session')} eyebrow={t('activity.summary')} />
+        <SectionHeader title={t('activity.session')} />
         <MetricGrid columns={2}>
           <Metric
             label={t('activity.duration')}
@@ -289,7 +289,6 @@ function StrengthBody({
       <Section>
         <SectionHeader
           title={t('activity.exercises')}
-          eyebrow={t('activity.work')}
           counter={entries.length}
         />
         {entries.map((entry, index) => (
