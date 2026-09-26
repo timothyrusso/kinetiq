@@ -3,9 +3,28 @@ import SwiftUI
 /// The first screen: a Sync button, then the routines synced from the iPhone.
 struct RoutineListView: View {
     @EnvironmentObject private var store: RoutineStore
+    @EnvironmentObject private var session: WorkoutSession
 
     var body: some View {
         List {
+            if let message = session.message {
+                Text(message)
+                    .font(.footnote)
+                    .listRowBackground(Color.clear)
+            }
+            if let workout = session.workout {
+                Section {
+                    Button {
+                        session.resume()
+                    } label: {
+                        Label("workout.resume", systemImage: "play.fill")
+                    }
+                    .buttonStyle(.primary)
+                    .listRowBackground(Color.clear)
+                } footer: {
+                    Text(workout.title)
+                }
+            }
             Section {
                 SyncButton()
             } footer: {

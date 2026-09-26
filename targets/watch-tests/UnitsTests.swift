@@ -31,3 +31,29 @@ final class UnitsTests: XCTestCase {
         XCTAssertEqual(Units.step(.imperial), 2.5)
     }
 }
+
+final class UnitsDisplayTests: XCTestCase {
+    func testDisplayRoundTripMatchesWeightDisplayValue() {
+        XCTAssertEqual(Units.displayValue(kilograms: 60, system: .imperial), 132)
+        XCTAssertEqual(Units.kilograms(fromDisplay: 135, system: .imperial), 61.23)
+        XCTAssertEqual(Units.kilograms(fromDisplay: 62.5, system: .metric), 62.5)
+        XCTAssertEqual(Units.displayText(kilograms: 62.5, system: .metric), "62.5")
+        XCTAssertEqual(Units.displayText(kilograms: 60, system: .imperial), "132")
+    }
+
+    func testAdjustRestEndsItWhenPushedPastNow() {
+        let now = Date(timeIntervalSince1970: 0)
+        let routine = Routine(id: "r", name: "R", items: [
+            RoutineItem(
+                id: "i", exerciseId: "e", exerciseName: "E", sets: 2, reps: "5",
+                weightKg: 0, restSeconds: 30, notes: nil
+            )
+        ])
+        var workout = Workout.start(routine: routine, unitSystem: .metric, id: "w", now: now)
+        workout.completeNextSet(in: 0, now: now)
+        workout.adjustRest(by: 15, now: now)
+        XCTAssertEqual(workout.restRemaining(now: now), 45)
+        workout.adjustRest(by: -60, now: now)
+        XCTAssertNil(workout.restEndsAt)
+    }
+}

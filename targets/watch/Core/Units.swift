@@ -9,13 +9,26 @@ public enum Units {
         system == .metric ? 1 : 2.5
     }
 
-    /// kg to the number shown in the unit, the value the Crown edits.
+    /// kg to the number shown in the unit, the value the Crown edits: `weightDisplayValue` on the
+    /// phone, whole pounds for imperial.
     public static func displayValue(kilograms: Double, system: UnitSystem) -> Double {
-        system == .metric ? kilograms : kilograms * lbPerKg
+        system == .metric ? kilograms : (kilograms * lbPerKg).rounded()
     }
 
+    /// `weightFromDisplayValue`: the unit's number back to kilograms, to two decimals.
     public static func kilograms(fromDisplay value: Double, system: UnitSystem) -> Double {
-        system == .metric ? value : value / lbPerKg
+        let kilograms = system == .metric ? value : value / lbPerKg
+        return (kilograms * 100).rounded() / 100
+    }
+
+    /// The Crown's number as text: one decimal at most in kg, whole pounds in lb.
+    public static func displayText(kilograms: Double, system: UnitSystem) -> String {
+        switch system {
+        case .metric:
+            return oneDecimal(max(0, kilograms))
+        case .imperial:
+            return String(Int(displayValue(kilograms: max(0, kilograms), system: system)))
+        }
     }
 
     /// `formatWeight` on the phone: one decimal at most in kg, whole pounds in lb.
