@@ -19,7 +19,7 @@ struct FinishPage: View {
             Button(action: onFinish) {
                 Label("workout.finish", systemImage: "flag.checkered")
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.primary)
             Button(role: .destructive, action: onDiscard) {
                 Label("workout.discard", systemImage: "trash")
             }

@@ -24,7 +24,7 @@ struct KinetiqWatchApp: App {
     var body: some Scene {
         WindowGroup {
             Group {
-                if let workout = session.workout {
+                if let workout = session.workout, session.isShowing {
                     WorkoutView(workout: workout)
                 } else {
                     NavigationStack {

@@ -433,6 +433,23 @@
         }
       }
     },
+    "workout.back": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back to routines"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Torna alle schede"
+          }
+        }
+      }
+    },
     "workout.completeSet": {
       "extractionState": "manual",
       "localizations": {
@@ -667,6 +684,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tempo di recupero"
+          }
+        }
+      }
+    },
+    "workout.resume": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resume workout"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Riprendi allenamento"
           }
         }
       }

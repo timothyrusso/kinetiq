@@ -12,6 +12,19 @@ struct RoutineListView: View {
                     .font(.footnote)
                     .listRowBackground(Color.clear)
             }
+            if let workout = session.workout {
+                Section {
+                    Button {
+                        session.resume()
+                    } label: {
+                        Label("workout.resume", systemImage: "play.fill")
+                    }
+                    .buttonStyle(.primary)
+                    .listRowBackground(Color.clear)
+                } footer: {
+                    Text(workout.title)
+                }
+            }
             Section {
                 SyncButton()
             } footer: {
