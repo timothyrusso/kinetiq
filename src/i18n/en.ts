@@ -325,7 +325,7 @@ export const en = {
     builtWith: 'Built with React Native and Expo.',
     eraseTitle: 'Erase everything?',
     eraseMessage:
-      '{activities} and {routines} will be deleted from this device, along with your units, appearance, goal and reminder settings. You will be left with an empty app, and the demo data does not come back.',
+      '{activities} and {routines} will be deleted from this device, along with your units, appearance, goal and reminder settings. You will be left with an empty app.',
     eraseConfirm: 'Erase everything',
     keepMyData: 'Keep my data',
     activityCount_one: '{count} workout',
@@ -735,7 +735,7 @@ export const en = {
     exportSets: 'Every set, as a table (CSV)',
     exportRoutines: 'Routines (JSON)',
     exportFooter:
-      'Files open in the share sheet: save them, send them to another device, or share them with an AI chat. Weights are always in kilograms. Demo workouts are left out.',
+      'Files open in the share sheet: save them, send them to another device, or share them with an AI chat. Weights are always in kilograms.',
     exportFailed: 'The export could not be created. Try again.',
     importTitle: 'Import routines',
     pasteClipboard: 'Paste from clipboard',

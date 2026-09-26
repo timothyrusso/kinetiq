@@ -1,13 +1,13 @@
 /**
  * Exercise identity across sources.
  *
- * Exercises come from two places: the remote catalog and the local seed. Their
+ * Exercises come from two places: the remote catalog and locally-authored rows. Their
  * ids live in one namespace (`wger:46`, `local:bench-press`) so a routine item
  * can reference either without a second column, and so a remote exercise that
  * has been saved offline still has one stable id.
  *
  * Both prefixes are defined here because the id scheme is the app's, not the
- * backend's: the construction sites (provider, seed) and the parse sites
+ * backend's: the construction sites (provider, importers) and the parse sites
  * (detail routes, repositories) must not be able to drift apart.
  */
 
@@ -50,7 +50,7 @@ export function provisionalExerciseName(id: string): string {
   return 'Exercise';
 }
 
-/** `"romanian deadlift"` → `"Romanian Deadlift"`. Seed keys are already lowercase words. */
+/** `"romanian deadlift"` → `"Romanian Deadlift"`. Local keys are lowercase words. */
 function titleCase(words: string): string {
   return words
     .split(' ')

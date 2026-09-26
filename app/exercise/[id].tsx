@@ -13,8 +13,7 @@
  *
  * ## Nothing is inferred to fill a gap
  *
- * wger returns no description for a large share of its catalog, and the seeded exercises
- * deliberately have none either. That renders as a named silence, "the library has no
+ * wger returns no description for a large share of its catalog. That renders as a named silence, "the library has no
  * description for this one": rather than a blank card, an invented cue, or a section
  * that quietly vanishes. The same rule governs the anatomy caveat, the missing art (a
  * designed monogram, never a grey square), and an empty records list.

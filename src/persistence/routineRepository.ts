@@ -27,7 +27,7 @@ export const routineRepository = {
     const [rows, items] = await Promise.all([
       db.getAllAsync<RoutineRow>(
         `SELECT id, name, created_at, updated_at, times_completed,
-                last_performed_at, seeded
+                last_performed_at
          FROM routines ORDER BY updated_at DESC`,
       ),
       db.getAllAsync<RoutineItemRow>(
@@ -50,7 +50,7 @@ export const routineRepository = {
     const [row, items] = await Promise.all([
       db.getFirstAsync<RoutineRow>(
         `SELECT id, name, created_at, updated_at, times_completed,
-                last_performed_at, seeded FROM routines WHERE id = ?`,
+                last_performed_at FROM routines WHERE id = ?`,
         id,
       ),
       db.getAllAsync<RoutineItemRow>(
@@ -95,8 +95,8 @@ export const routineRepository = {
 
       await db.runAsync(
         `INSERT INTO routines (id, name, created_at, updated_at,
-                               times_completed, last_performed_at, seeded)
-         VALUES (?, ?, ?, ?, 0, NULL, 0)
+                               times_completed, last_performed_at)
+         VALUES (?, ?, ?, ?, 0, NULL)
          ON CONFLICT(id) DO UPDATE SET
            name = excluded.name,
            updated_at = excluded.updated_at`,
@@ -111,7 +111,7 @@ export const routineRepository = {
       // exists violates the constraint and throws, taking the whole save with it.
       //
       // This is why adding a NEWLY discovered wger exercise to a routine could not be saved,
-      // while adding one that happened to be in the seed worked: the seeded rows were already
+      // while adding one that was already stored worked: those rows were already
       // in `exercises`, so the foreign key found them. The screen said "Could not save. Nothing
       // was lost": true, and no hint that the cause was ordering.
       //
@@ -300,29 +300,6 @@ export const routineRepository = {
     );
     notifyRoutinesChanged();
   },
-
-  /**
-   * Seed-only maintenance: `save` always stamps updated_at to now, which would
-   * make a freshly seeded set of routines indistinguishable from ones just
-   * edited. Back-fills the bookkeeping columns the normal write path owns.
-   */
-  async backfillStats(
-    id: string,
-    stats: { timesCompleted: number; lastPerformedAt: number | null; createdAt: number; updatedAt: number },
-  ): Promise<void> {
-    await getDatabase().runAsync(
-      `UPDATE routines
-         SET times_completed = ?, last_performed_at = ?, created_at = ?, updated_at = ?,
-             seeded = 1
-       WHERE id = ?`,
-      stats.timesCompleted,
-      stats.lastPerformedAt,
-      stats.createdAt,
-      stats.updatedAt,
-      id,
-    );
-    notifyRoutinesChanged();
-  },
 };
 
 async function renumber(db: ReturnType<typeof getDatabase>, routineId: string): Promise<void> {
@@ -370,7 +347,7 @@ export async function upsertSnapshot(snapshot: ExerciseSnapshot): Promise<void> 
     stringify(snapshot.equipment),
     snapshot.imageUrl,
     snapshot.thumbnailUrl ?? snapshot.imageUrl,
-    // Snapshots of seeded/local exercises exist (a routine can mix both), and
+    // Snapshots of local exercises exist (a routine can mix both), and
     // mislabelling them as 'remote' would make the UI offer to "refresh" data
     // that has no remote counterpart.
     snapshot.externalId === null ? 'local' : 'remote',

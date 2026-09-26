@@ -8,7 +8,6 @@ export type ActivityRow = {
   duration_seconds: number;
   calories_kcal: number;
   notes: string | null;
-  seeded: number;
   source_session_id: string | null;
   entries_json: string | null;
   volume_kg: number | null;
@@ -23,7 +22,6 @@ export type RoutineRow = {
   updated_at: number;
   times_completed: number;
   last_performed_at: number | null;
-  seeded: number;
 };
 
 export type RoutineItemRow = {

@@ -22,7 +22,6 @@ const routine = (overrides: Partial<Routine> = {}): Routine => ({
   updatedAt: 0,
   timesCompleted: 0,
   lastPerformedAt: null,
-  seeded: false,
   ...overrides,
 });
 

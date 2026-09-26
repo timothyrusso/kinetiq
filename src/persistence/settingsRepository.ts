@@ -24,7 +24,6 @@ export const SETTING_KEYS = {
   autoStartRest: 'settings.autoStartRest',
   profile: 'settings.profile',
   reminder: 'settings.reminder',
-  seededAt: 'app.seededAt',
 } as const;
 
 export type SettingKey = (typeof SETTING_KEYS)[keyof typeof SETTING_KEYS];
@@ -184,57 +183,4 @@ export const recordRepository = {
   async commitManyInTransaction(records: readonly PersonalRecord[]): Promise<void> {
     for (const record of records) await upsertRecord(record);
   },
-
-  /** Rebuilds every record from history; used by "reset & recompute" maintenance. */
-  async replaceAll(records: readonly PersonalRecord[]): Promise<void> {
-    const db = getDatabase();
-    await db.withExclusiveTransactionAsync(async () => {
-      await db.execAsync('DELETE FROM records;');
-      for (const record of records) {
-        await db.runAsync(
-          `INSERT INTO records (exercise_id, kind, exercise_name, value, achieved_at)
-           VALUES (?, ?, ?, ?, ?)
-           ON CONFLICT(exercise_id, kind) DO UPDATE SET
-             value = MAX(records.value, excluded.value),
-             achieved_at = excluded.achieved_at`,
-          record.exerciseId,
-          record.kind,
-          record.exerciseName,
-          record.value,
-          record.achievedAt,
-        );
-      }
-    });
-  },
 };
-
-/* ------------------------------------------------------------ app_state -- */
-
-/**
- * Set once the first-run seed has had its one chance. Without it an emptied database looks
- * like a fresh install, and "Erase all Kinetiq data" would be undone by the next launch.
- */
-export const SEED_DONE_KEY = 'seed.done';
-
-/** Free-form machine state (last seen schema, dismissals, queue markers). */
-export async function readState<T>(key: string, fallback: T): Promise<T> {
-  const row = await getDatabase().getFirstAsync<{ value_json: string }>(
-    'SELECT value_json FROM app_state WHERE key = ?',
-    key,
-  );
-  if (!row) return fallback;
-  try {
-    return JSON.parse(row.value_json) as T;
-  } catch {
-    return fallback;
-  }
-}
-
-export async function writeState<T>(key: string, value: T): Promise<void> {
-  await getDatabase().runAsync(
-    `INSERT INTO app_state (key, value_json) VALUES (?, ?)
-     ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json`,
-    key,
-    stringify(value),
-  );
-}

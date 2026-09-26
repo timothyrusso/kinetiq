@@ -599,7 +599,7 @@ function Section({ gap = 'md', children }: { gap?: 'md' | 'lg'; children: ReactN
 /**
  * The heaviest completed set by estimated 1RM, or `null` when nothing was completed.
  * `estimated1rm` is computed on write, so the stored value wins; the recompute covers rows
- * seeded before the field existed.
+ * written before the field existed.
  */
 function heaviestCompletedSet(sets: readonly StrengthSet[]): StrengthSet | null {
   let best: StrengthSet | null = null;

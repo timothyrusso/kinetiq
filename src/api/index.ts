@@ -33,7 +33,7 @@ export function getExerciseProvider(): ExerciseProvider {
     if (!dependencies) {
       throw new Error(
         'Exercise provider used before configureExerciseProvider(). ' +
-          'Check the bootstrap order in src/providers/BootstrapProvider.tsx.',
+          'Check the bootstrap order in src/providers/bootstrap.tsx.',
       );
     }
     provider = createWgerProvider({ getLanguageCode: dependencies.getLanguageCode });

@@ -382,7 +382,7 @@ export const MetricGrid = memo(function MetricGrid({
   );
 });
 
-/** Pill badge for a status: PR, PB, seeded, set complete. */
+/** Pill badge for a status: PR, PB, set complete. */
 export const Badge = memo(function Badge({
   label,
   tone = 'neutral',

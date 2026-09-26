@@ -45,7 +45,7 @@ export type StrengthEntry = {
   /** Snapshot id: see `ExerciseSnapshot`. */
   exerciseId: string;
   exerciseName: string;
-  /** Present for seeded/legacy rows; snapshots are authoritative. */
+  /** Present for legacy rows; snapshots are authoritative. */
   muscleGroup: string | null;
   sets: StrengthSet[];
   notes: string | null;
@@ -63,8 +63,6 @@ export type Activity = {
   durationSeconds: number;
   caloriesKcal: number;
   notes: string | null;
-  /** True for rows that came from seed data rather than a real recording. */
-  seeded: boolean;
   /** Session that produced this activity, when it came from the tracker. */
   sourceSessionId: string | null;
   strength: StrengthMetrics | null;
@@ -154,7 +152,6 @@ export type Routine = {
   /** How many times this routine has been completed. */
   timesCompleted: number;
   lastPerformedAt: number | null;
-  seeded: boolean;
 };
 
 export type RoutineItem = {

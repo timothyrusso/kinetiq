@@ -8,12 +8,6 @@
  * OS, and it writes to the cache directory: the share sheet needs a real file to hand over,
  * and nothing about an export is worth keeping once it has been handed over.
  *
- * ## Demo workouts stay behind
- *
- * Seeded history exists so a first launch is not an empty screen. In an analysis it is noise
- * that looks exactly like data, so the workout exports drop it. Routines are exported whether
- * seeded or not: a seeded routine the user trains with is their routine.
- *
  * ## CSV is one row per set
  *
  * The JSON is nested (workout, exercise, set) because that is what the data is. A spreadsheet
@@ -39,17 +33,13 @@ const MIME: Record<ExportKind, { mimeType: string; UTI: string }> = {
   csv: { mimeType: 'text/csv', UTI: 'public.comma-separated-values-text' },
 };
 
-function recorded(activities: readonly Activity[]): Activity[] {
-  return activities.filter((a) => !a.seeded);
-}
-
 export function workoutsDocument(activities: readonly Activity[], now = Date.now()): WorkoutsFile {
   return {
     format: WORKOUTS_FORMAT,
     version: FORMAT_VERSION,
     exportedAt: new Date(now).toISOString(),
     units: { weight: 'kg' },
-    workouts: recorded(activities).map((a) => ({
+    workouts: activities.map((a) => ({
       id: a.id,
       title: a.title,
       startedAt: new Date(a.startedAt).toISOString(),
@@ -100,7 +90,7 @@ function csvCell(value: string | number | boolean | null): string {
 
 export function setsCsv(activities: readonly Activity[]): string {
   const lines: string[] = [CSV_HEADER.join(',')];
-  for (const a of recorded(activities)) {
+  for (const a of activities) {
     const startedAt = new Date(a.startedAt).toISOString();
     for (const e of a.strength?.entries ?? []) {
       for (const s of e.sets) {
