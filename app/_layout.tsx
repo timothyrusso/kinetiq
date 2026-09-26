@@ -102,7 +102,6 @@ function ThemedRoot() {
                 body outgrows the screen, and a fit-to-contents sheet clips instead of scrolling. */}
             <Stack.Screen name="routine/item" options={formSheet('picker')} />
             <Stack.Screen name="routine/rename" options={formSheet('fit')} />
-            <Stack.Screen name="activity/notes" options={formSheet('fit')} />
             <Stack.Screen name="workout/notes" options={formSheet('fit')} />
             <Stack.Screen name="workout/set" options={formSheet('fit')} />
             <Stack.Screen

@@ -1,9 +1,10 @@
 /**
  * Workout detail: one session, read back.
  *
- * Summary, per-exercise set tables, the records the session set, and its notes. Nothing
- * else: the volume chart and the provenance block went with the gym-only cut, because the
- * set tables already carry every number either one summarised.
+ * Summary, per-exercise set tables, and the records the session set. Nothing else: the
+ * volume chart and the provenance block went with the gym-only cut, because the set tables
+ * already carry every number either one summarised, and the notes block went because the
+ * summary is read, not written.
  *
  * ## Absence is rendered, never invented
  *
@@ -13,12 +14,6 @@
  * their data. That is also why `Metric` takes `value: string | null` rather than a
  * pre-formatted dash: a caller cannot display a missing number without also deciding what
  * to say about it.
- *
- * ## Editing notes is a sheet, not an inline field
- *
- * An always-live `TextField` at the bottom of a long detail screen is a keyboard trap: the
- * user scrolls, the field takes focus, the keyboard covers the thing they were reading. A
- * "tap to edit" row that opens a sheet keeps a reading surface a reading surface.
  */
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -34,7 +29,7 @@ import { Badge, Card, Divider, MetricGrid, Row, Stack as Column } from '@/ui/lay
 import { SectionHeader } from '@/ui/display';
 import { Txt } from '@/ui/Text';
 import { Icon, ICON_SIZE, IconTile } from '@/ui/icons';
-import { ActionRow, ACTIVITY_ICON } from '@/ui/rows';
+import { ACTIVITY_ICON } from '@/ui/rows';
 import { EmptyState, ErrorState, SkeletonCard } from '@/ui/states';
 import {
   useActivity,
@@ -75,9 +70,6 @@ export default function ActivityDetailScreen() {
   const activity = query.data ?? null;
 
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  // The draft *is* the open/closed flag: `null` means no sheet, a string (including `''`)
-  // means an open one. Two pieces of state would be two ways to disagree about whether a
-  // sheet is up.
 
   const removeActivity = useDeleteActivity();
 
@@ -101,9 +93,6 @@ export default function ActivityDetailScreen() {
   }, [activityId, removeActivity]);
 
   const askDelete = useCallback(() => setConfirmingDelete(true), []);
-  const editNotes = useCallback(() => {
-    if (activityId !== null) router.push(routes.activityNotes(activityId));
-  }, [activityId]);
 
   return (
     <>
@@ -142,7 +131,7 @@ export default function ActivityDetailScreen() {
             title={t('activity.loadError')}
           />
         ) : activity ? (
-          <ActivityBody activity={activity} units={units} theme={theme} onEditNotes={editNotes} />
+          <ActivityBody activity={activity} units={units} theme={theme} />
         ) : null}
       </ScrollView>
 
@@ -179,18 +168,15 @@ function ActivityBody({
   activity,
   units,
   theme,
-  onEditNotes,
 }: {
   activity: Activity;
   units: UnitSystem;
   theme: Theme;
-  onEditNotes: () => void;
 }) {
   const { t } = useT();
 
-  // One call, one object: the headline, the subtitle and the spoken sentence are three
-  // views of the same numbers, and computing them separately is how they start disagreeing
-  // about rounding.
+  // The spoken sentence comes from the same helper as the list row's headline, so the
+  // summary VoiceOver reads and the row it came from cannot disagree about rounding.
   const display = useMemo(
     () => activityDisplay(activity, units),
     [activity, units],
@@ -206,10 +192,11 @@ function ActivityBody({
   return (
     <View>
       {/* One accessibility element for the whole hero, so VoiceOver reads "Push. 12.4k kg
-          in 52 min" as a sentence rather than four fragments in sequence. The label comes
-          from the domain layer because that is what decides what is true about the numbers.
-          The kind is the tile's glyph, not a word: the title already names it. The tile is
-          the accent, like every other workout icon. */}
+          in 52 min" as a sentence rather than fragments in sequence. The label comes from
+          the domain layer because that is what decides what is true about the numbers. The
+          kind is the tile's glyph, not a word: the title already names it. The tile is the
+          accent, like every other workout icon. The volume is not repeated here: it is one
+          of the summary tiles below, and a hero that shouts it twice on one screen is noise. */}
       <View
         accessible
         accessibilityRole="summary"
@@ -224,12 +211,6 @@ function ActivityBody({
           />
           <MetaLine items={when} theme={theme} wrap style={styles.flex} />
         </Row>
-        {/* `display`, not `numeralLg`: this number is read as part of a sentence, and the
-            mono face is for values that tick (a timer), not for history. The facts that used
-            to trail it as a joined line are the tiles below. */}
-        <Txt variant="display" weight="700">
-          {display.headline}
-        </Txt>
       </View>
 
       {activity.strength ? (
@@ -243,8 +224,6 @@ function ActivityBody({
           compact
         />
       )}
-
-      <NotesBlock activity={activity} onEdit={onEditNotes} />
     </View>
   );
 }
@@ -273,7 +252,6 @@ function StrengthBody({
     0,
   );
   const volume = strength?.totalVolumeKg ?? 0;
-  const minutes = activity.durationSeconds / 60;
   const unit = weightUnit(units);
 
   return (
@@ -288,7 +266,7 @@ function StrengthBody({
           <Metric
             label={t('activity.volume')}
             value={volume > 0 ? `${compactNumber(weightValue(volume, units))} ${unit}` : null}
-            note={t(volume > 0 ? 'activity.repsTimesWeight' : 'activity.bodyweightWork')}
+            {...(volume > 0 ? {} : { note: t('activity.bodyweightWork') })}
           />
           <Metric
             label={t('activity.sets')}
@@ -296,29 +274,14 @@ function StrengthBody({
             note={t(planned > 0 ? 'activity.completed' : 'activity.noSets')}
           />
           <Metric
-            label={t('activity.movements')}
+            label={t('activity.exercises')}
             value={entries.length > 0 ? `${entries.length}` : null}
-            note={
-              entries.length > 0
-                ? `${entries.length} ${t('activity.exerciseWord', { count: entries.length })}`
-                : t('activity.nothingAdded')
-            }
+            {...(entries.length > 0 ? {} : { note: t('activity.nothingAdded') })}
           />
           <Metric
             label={t('activity.calories')}
             value={activity.caloriesKcal > 0 ? formatCalories(activity.caloriesKcal) : null}
             {...(activity.caloriesKcal > 0 ? {} : { note: t('activity.noEstimate') })}
-          />
-          <Metric
-            label={t('activity.density')}
-            value={
-              volume > 0 && minutes >= 1
-                ? `${Math.round(weightValue(volume / minutes, units))} ${unit}/min`
-                : null
-            }
-            note={t(
-              volume > 0 && minutes >= 1 ? 'activity.volumePerMinute' : 'activity.needsMinute',
-            )}
           />
         </MetricGrid>
       </Section>
@@ -526,36 +489,6 @@ function ExerciseCard({
   );
 }
 
-/* ----------------------------------------------------------------- notes -- */
-
-function NotesBlock({ activity, onEdit }: { activity: Activity; onEdit: () => void }) {
-  const { t } = useT();
-  const hasNotes = activity.notes !== null;
-  return (
-    <Section>
-      <SectionHeader title={t('activity.notesSection')} eyebrow={t('activity.session')} />
-      <Card>
-        {/* Selectable so a note can be copied into a training log elsewhere without the app
-            needing a share sheet it does not have. */}
-        <Txt selectable variant="body" numberOfLines={8}>
-          {hasNotes
-            ? activity.notes
-            : t('activity.notesEmpty')}
-        </Txt>
-      </Card>
-      {/* `ActionRow` paints its own surface, padding and chevron, so it is a row on this
-          screen rather than something wrapped in a second card: nesting the two gives a
-          card inside a card with two radii that do not line up. */}
-      <ActionRow
-        title={t(hasNotes ? 'activity.editNotes' : 'activity.addNotes')}
-        {...(hasNotes ? { subtitle: t('activity.notesSubtitle') } : {})}
-        icon="edit"
-        onPress={onEdit}
-      />
-    </Section>
-  );
-}
-
 /* ---------------------------------------------------------------- pieces -- */
 
 /**
@@ -630,7 +563,7 @@ function oneRepMaxLabel(set: StrengthSet, units: UnitSystem): string {
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: screenGutter },
-  hero: { padding: spacing.lg, gap: spacing.sm, borderRadius: radius.xl },
+  hero: { padding: spacing.lg, borderRadius: radius.xl },
   flex: { flex: 1 },
   shrink: { flex: 1, minWidth: 0 },
   section: { paddingTop: spacing.xxxl },

@@ -91,19 +91,3 @@ export function useDeleteActivity() {
   });
 }
 
-export function useUpdateActivityNotes() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, notes }: { id: string; notes: string | null }) => {
-      const existing = await activityRepository.byId(id);
-      if (!existing) throw new Error(tr('states.activityGone'));
-      await activityRepository.update({ ...existing, notes });
-    },
-    onSuccess: (_result, variables) => {
-      invalidateActivityHistory(client);
-      void client.invalidateQueries({
-        queryKey: queryKeys.activities.detail(variables.id),
-      });
-    },
-  });
-}

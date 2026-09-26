@@ -114,7 +114,6 @@ export const routes = {
       params: routineId ? { target, item: itemId, id: routineId } : { target, item: itemId },
     }) as Href,
   renameRoutine: (id: string) => ({ pathname: '/routine/rename', params: { id } }) as Href,
-  activityNotes: (id: string) => ({ pathname: '/activity/notes', params: { id } }) as Href,
   sessionNotes: () => '/workout/notes' as Href,
   sessionSet: (entryIndex: number, setIndex: number) =>
     ({ pathname: '/workout/set', params: { entry: String(entryIndex), set: String(setIndex) } }) as Href,
