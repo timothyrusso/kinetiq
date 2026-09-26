@@ -74,8 +74,9 @@ final class WorkoutSession: ObservableObject {
         alerts.restChanged(next)
     }
 
-    func completeSet(in entry: Int) {
-        update { $0.completeNextSet(in: entry, now: Date()) }
+    /// Complete set on the exercise page: the selected set, not necessarily the next open one.
+    func completeSet(_ set: Int, in entry: Int) {
+        update { $0.completeSet(set, in: entry, now: Date()) }
         alerts.setCompleted()
     }
 

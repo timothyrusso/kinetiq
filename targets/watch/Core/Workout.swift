@@ -81,6 +81,21 @@ public struct Workout: Codable, Equatable, Sendable {
 
     public var canUndo: Bool { !completionLog.isEmpty }
 
+    public func isDone(_ entry: Int) -> Bool {
+        guard let row = entries[safe: entry] else { return false }
+        return row.sets.allSatisfy(\.completed)
+    }
+
+    public var allDone: Bool { entries.indices.allSatisfy(isDone) }
+
+    /// The first exercise after `entry` with a set left to do, wrapping round to the start: where
+    /// the workout goes once an exercise is finished. Nil when everything is done.
+    public func nextUnfinished(after entry: Int) -> Int? {
+        let count = entries.count
+        guard count > 0 else { return nil }
+        return (1...count).map { (entry + $0) % count }.first { !isDone($0) }
+    }
+
     /// Seconds of rest left, rounded up, from the absolute deadline so a relaunch or a lowered
     /// wrist cannot make the timer run slow. Zero when no rest is running.
     public func restRemaining(now: Date) -> Int {
@@ -113,6 +128,71 @@ public struct Workout: Codable, Equatable, Sendable {
             clearRest()
         }
         return rest
+    }
+
+    /// Completes one particular set (the one selected on the exercise page) and starts its rest.
+    /// Returns the rest in seconds, or nil when the set was already done or does not exist.
+    @discardableResult
+    public mutating func completeSet(_ set: Int, in entry: Int, now: Date) -> Int? {
+        guard var row = entries[safe: entry], var target = row.sets[safe: set], !target.completed else {
+            return nil
+        }
+        target.completed = true
+        row.sets[safe: set] = target
+        entries[safe: entry] = row
+        completionLog.append(SetRef(entry: entry, set: set))
+        let rest = row.restSeconds
+        // After the last set of the whole workout there is nothing to rest for.
+        if rest > 0, !allDone {
+            restEndsAt = now.addingTimeInterval(TimeInterval(rest))
+            restDuration = rest
+        } else {
+            clearRest()
+        }
+        return rest
+    }
+
+    /// The set's checkbox: ticks an open set (starting its rest, like Complete set) or unticks a
+    /// done one so it can be redone.
+    public mutating func toggleSet(_ set: Int, in entry: Int, now: Date) {
+        guard var row = entries[safe: entry], var target = row.sets[safe: set] else { return }
+        if !target.completed {
+            completeSet(set, in: entry, now: now)
+            return
+        }
+        target.completed = false
+        row.sets[safe: set] = target
+        entries[safe: entry] = row
+        completionLog.removeAll { $0 == SetRef(entry: entry, set: set) }
+        clearRest()
+    }
+
+    /// Weight for `set`. On an open set it also carries to the open sets after it, since the
+    /// number is usually the same for the rest of the exercise; on a done set (a correction) it
+    /// changes that set alone. Clamped to `ITEM_BOUNDS`.
+    public mutating func setWeight(_ kilograms: Double, set: Int, in entry: Int, bounds: Bounds) {
+        let value = bounds.itemBounds.weightKg.clamp(kilograms.isFinite ? kilograms : 0)
+        update(set, in: entry) { $0.weightKg = value }
+    }
+
+    /// Reps for `set`, 1 to 100, carried forward the same way as the weight.
+    public mutating func setReps(_ reps: Int, set: Int, in entry: Int) {
+        let value = min(Self.repsRange.upperBound, max(Self.repsRange.lowerBound, reps))
+        update(set, in: entry) { $0.reps = value }
+    }
+
+    private mutating func update(_ set: Int, in entry: Int, _ change: (inout WorkoutSet) -> Void) {
+        guard var row = entries[safe: entry], let target = row.sets[safe: set] else { return }
+        let indices = target.completed
+            ? [set]
+            : row.sets.indices.filter { $0 >= set && !(row.sets[safe: $0]?.completed ?? true) }
+        for index in indices {
+            if var item = row.sets[safe: index] {
+                change(&item)
+                row.sets[safe: index] = item
+            }
+        }
+        entries[safe: entry] = row
     }
 
     /// Reopens the most recently completed set and stops its rest.

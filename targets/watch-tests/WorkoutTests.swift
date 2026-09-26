@@ -133,3 +133,69 @@ final class WorkoutTests: XCTestCase {
         XCTAssertTrue(outbox.entries().isEmpty)
     }
 }
+
+final class WorkoutOverviewTests: XCTestCase {
+    private let now = Date(timeIntervalSince1970: 1_790_000_000)
+
+    private func workout() -> Workout {
+        let routine = Routine(id: "r", name: "Push", items: [
+            RoutineItem(
+                id: "a", exerciseId: "bench", exerciseName: "Bench",
+                sets: 3, reps: "8", weightKg: 60, restSeconds: 90, notes: nil
+            ),
+            RoutineItem(
+                id: "b", exerciseId: "dips", exerciseName: "Dips",
+                sets: 2, reps: "10", weightKg: 0, restSeconds: 60, notes: nil
+            )
+        ])
+        return Workout.start(routine: routine, unitSystem: .metric, id: "w", now: now)
+    }
+
+    func testCompletingAParticularSetAndTickingOffTheRest() {
+        var workout = workout()
+        XCTAssertEqual(workout.completeSet(1, in: 0, now: now), 90)
+        XCTAssertEqual(workout.entries.first?.sets.map(\.completed), [false, true, false])
+        XCTAssertNil(workout.completeSet(1, in: 0, now: now), "already done")
+        XCTAssertEqual(workout.nextSet(in: 0), 0)
+    }
+
+    func testTheCheckboxTicksAndUnticks() {
+        var workout = workout()
+        workout.toggleSet(0, in: 0, now: now)
+        XCTAssertEqual(workout.entries.first?.sets.first?.completed, true)
+        XCTAssertNotNil(workout.restEndsAt)
+        workout.toggleSet(0, in: 0, now: now)
+        XCTAssertEqual(workout.entries.first?.sets.first?.completed, false)
+        XCTAssertNil(workout.restEndsAt)
+        XCTAssertFalse(workout.canUndo)
+    }
+
+    func testEditingADoneSetChangesOnlyThatSet() {
+        var workout = workout()
+        workout.completeSet(0, in: 0, now: now)
+        workout.setWeight(65, set: 0, in: 0, bounds: Fixtures.bounds)
+        workout.setReps(6, set: 0, in: 0)
+        XCTAssertEqual(workout.entries.first?.sets.map(\.weightKg), [65, 60, 60])
+        XCTAssertEqual(workout.entries.first?.sets.map(\.reps), [6, 8, 8])
+    }
+
+    func testEditingAnOpenSetCarriesToTheOpenSetsAfterIt() {
+        var workout = workout()
+        workout.completeSet(2, in: 0, now: now)
+        workout.setWeight(62.5, set: 0, in: 0, bounds: Fixtures.bounds)
+        XCTAssertEqual(workout.entries.first?.sets.map(\.weightKg), [62.5, 62.5, 60])
+    }
+
+    func testTheNextUnfinishedExerciseWrapsAndStopsWhenAllAreDone() {
+        var workout = workout()
+        XCTAssertEqual(workout.nextUnfinished(after: 0), 1)
+        XCTAssertEqual(workout.nextUnfinished(after: 1), 0)
+        for set in 0..<2 { workout.completeSet(set, in: 1, now: now) }
+        XCTAssertTrue(workout.isDone(1))
+        XCTAssertEqual(workout.nextUnfinished(after: 0), 0, "only the current one is left")
+        for set in 0..<3 { workout.completeSet(set, in: 0, now: now) }
+        XCTAssertTrue(workout.allDone)
+        XCTAssertNil(workout.restEndsAt, "no rest after the workout's last set")
+        XCTAssertNil(workout.nextUnfinished(after: 0))
+    }
+}

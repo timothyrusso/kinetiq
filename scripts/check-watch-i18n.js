@@ -77,9 +77,11 @@ const swift = [];
  * each `\(...)` into a format specifier when it looks the key up, so the catalog holds
  * `routine.exerciseCount %lld`. `normalise` maps both spellings to the same text.
  */
-const LITERAL = String.raw`"((?:[^"\\]|\\\([^)]*\))+)"`;
+// An interpolation may hold one level of parentheses: `\(count(entry))`.
+const INTERPOLATION = String.raw`\\\((?:[^()]|\([^()]*\))*\)`;
+const LITERAL = String.raw`"((?:[^"\\]|${INTERPOLATION})+)"`;
 const normalise = (key) =>
-  key.replace(/\\\([^)]*\)/g, '%@').replace(/%(\d+\$)?(ll|l|h)?[@dDuUxXoOfeEgGcCsSaAp]/g, '%@');
+  key.replace(new RegExp(INTERPOLATION, 'g'), '%@').replace(/%(\d+\$)?(ll|l|h)?[@dDuUxXoOfeEgGcCsSaAp]/g, '%@');
 
 /** The calls whose first string literal is a catalog key. */
 const CALLS = [
