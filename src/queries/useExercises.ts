@@ -217,7 +217,7 @@ export function useExerciseTaxonomy(active = true) {
  * able to say about it.
  *
  * - A **stored snapshot** exists for everything the user ever added to a routine (and
- *   for the seeded set), so those open with the network off. It is also what paints on
+ *   in the history), so those open with the network off. It is also what paints on
  *   frame one while the network confirms it.
  * - A **cached list row** is the exercise as the search response returned it, including
  *   the field only the response carries (`videoUrl`). Reading it from the cache instead

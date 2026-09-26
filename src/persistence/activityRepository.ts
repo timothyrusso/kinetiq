@@ -6,7 +6,7 @@ import type { Activity, CompletedWorkout, PersonalRecord } from '@/domain/types'
 import { completedSetCount, totalVolumeKg } from '@/domain/logic';
 
 const COLUMNS = `
-  id, kind, title, started_at, duration_seconds, calories_kcal, notes, seeded,
+  id, kind, title, started_at, duration_seconds, calories_kcal, notes,
   source_session_id, entries_json, volume_kg, total_sets, created_at`;
 
 export type ActivityListQuery = {
@@ -61,31 +61,16 @@ export const activityRepository = {
     return row?.n ?? 0;
   },
 
-  /** Seeding guard: refuses to re-seed over a database the user has used. */
-  async isEmpty(): Promise<boolean> {
-    return (await this.count()) === 0;
-  },
-
-  async insertMany(activities: readonly Activity[]): Promise<void> {
-    if (activities.length === 0) return;
-    const db = getDatabase();
-    await db.withExclusiveTransactionAsync(async () => {
-      for (const activity of activities) {
-        await db.runAsync(INSERT_SQL, ...toParams(activity));
-      }
-    });
-  },
-
   async insert(activity: Activity): Promise<void> {
     await getDatabase().runAsync(INSERT_SQL, ...toParams(activity));
   },
 
   async update(activity: Activity): Promise<void> {
     // `toParams` is ordered for `INSERT_SQL`, whose *first* column is `id`. This statement
-    // writes the other 12 columns and matches on that leading value, so the id has to travel
+    // writes the other 11 columns and matches on that leading value, so the id has to travel
     // to the end of the argument list, `slice(0, -1)` is the trap: it drops `created_at`,
     // keeps `id`, and every value then binds one column early. `kind` receives
-    // `seed_mu9sy8cm1u86sez`, the `NOT NULL` check refuses it, and the row is never written.
+    // the activity id, the `NOT NULL` check refuses it, and the row is never written.
     const [, ...written] = toParams(activity);
     await getDatabase().runAsync(UPDATE_SQL, ...written, activity.id);
   },
@@ -112,7 +97,6 @@ export const activityRepository = {
       durationSeconds: workout.durationSeconds,
       caloriesKcal: workout.caloriesKcal,
       notes: workout.notes,
-      seeded: false,
       sourceSessionId: workout.id,
       strength: {
         entries: workout.entries,
@@ -129,14 +113,14 @@ export const activityRepository = {
 
 const INSERT_SQL = `
   INSERT OR REPLACE INTO activities (
-    id, kind, title, started_at, duration_seconds, calories_kcal, notes, seeded,
+    id, kind, title, started_at, duration_seconds, calories_kcal, notes,
     source_session_id, entries_json, volume_kg, total_sets, created_at
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
 const UPDATE_SQL = `
   UPDATE activities SET
     kind = ?, title = ?, started_at = ?, duration_seconds = ?, calories_kcal = ?,
-    notes = ?, seeded = ?, source_session_id = ?, entries_json = ?, volume_kg = ?,
+    notes = ?, source_session_id = ?, entries_json = ?, volume_kg = ?,
     total_sets = ?, created_at = ?
   WHERE id = ?`;
 
@@ -149,7 +133,6 @@ function toParams(a: Activity): (string | number | null)[] {
     a.durationSeconds,
     a.caloriesKcal,
     a.notes,
-    a.seeded ? 1 : 0,
     a.sourceSessionId,
     a.strength ? stringify(a.strength.entries) : null,
     a.strength ? a.strength.totalVolumeKg : null,

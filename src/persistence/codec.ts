@@ -49,7 +49,6 @@ export function rowToActivity(row: ActivityRow): Activity {
     durationSeconds: row.duration_seconds,
     caloriesKcal: row.calories_kcal,
     notes: row.notes,
-    seeded: row.seeded === 1,
     sourceSessionId: row.source_session_id,
     strength: hasStrength
       ? {
@@ -103,7 +102,6 @@ export function rowToRoutine(
     updatedAt: row.updated_at,
     timesCompleted: row.times_completed,
     lastPerformedAt: row.last_performed_at,
-    seeded: row.seeded === 1,
     items: sorted.map((item) => ({
       id: item.id,
       exerciseId: item.exercise_id,

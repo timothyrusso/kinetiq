@@ -63,8 +63,7 @@ let inFlight: Promise<BootstrapOutcome> | null = null;
 
 /**
  * Idempotent by design. React runs effects twice in the development build, and a
- * migration must not run twice; `seedIfEmpty` is guarded by its own row count, but
- * re-opening the database and re-registering the notification handler for nothing is
+ * migration must not run twice, and re-opening the database and re-registering the notification handler for nothing is
  * still a way to make a startup race look intermittent.
  */
 function startOnce(systemDark: boolean): Promise<BootstrapOutcome> {

@@ -23,7 +23,7 @@
  *    attaches. Installing them after the first mount would leave the app's first
  *    screen without focus/online wiring: precisely the bug that shows up as "why is
  *    it refetching when I switch tabs".
- * 3. **Cheap before expensive.** Fonts and the first-run seed are the two slow steps,
+ * 3. **Cheap before expensive.** Fonts and the header icons are the two slow steps,
  *    and nothing downstream awaits them, so they overlap with each other and with
  *    everything after rather than serialising in front.
  * 4. **Never block the UI on the network.** Nothing here awaits a request. The
@@ -49,7 +49,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { configureExerciseProvider } from '@/api';
 import { loadAppFonts } from '@/fonts';
 import { openDatabase, readAllSettings, SETTING_KEYS, type DatabaseOpenResult, type SettingKey } from '@/persistence';
-import { seedIfEmpty } from '@/seed/seed';
 import { getQueryClient, installQueryAdapters } from '@/query/client';
 import { invalidateAfterWatchWorkouts } from '@/query/invalidation';
 import { startNetworkStatus } from '@/query/networkStatus';
@@ -67,14 +66,6 @@ import { prefetchHeaderIcons } from '@/navigation/HeaderAction';
 import { drainWatchInbox } from '@/watch/inbox';
 import { installWatchSync, pushRoutineSnapshot } from '@/watch/sync';
 
-type SeedSummary = {
-  activities: number;
-  routines: number;
-  exercises: number;
-  records: number;
-  firstActivityAt: number;
-};
-
 /**
  * `launchTheme` is a launch-time reading kept for the diagnostics row only. Nothing
  * should branch on it: it goes stale the moment the OS flips appearance while the
@@ -88,8 +79,6 @@ export type BootstrapOutcome = {
   settings: SettingsState;
   /** The theme the launch chrome was painted with. Diagnostics only: do not branch on it. */
   launchTheme: 'light' | 'dark';
-  /** Rows created by the first-run seed, or null when the database already had data. */
-  seeded: SeedSummary | null;
   /** True when migrations reported a problem but the app is still usable. */
   migrationFailed: boolean;
   /** A workout was open when the process died and has come back paused. */
@@ -256,7 +245,6 @@ export async function runBootstrap(systemDark: boolean): Promise<BootstrapOutcom
   // Android's native header takes images, not glyph names, so the header-action icons are
   // rendered once here, in the same wait as the fonts, and the first bar already has them.
   const headerIcons = prefetchHeaderIcons();
-  const seeded = await seedIfEmpty();
 
   // 7. Active-workout restoration settles *before* the first frame so the "resume"
   //    affordance ships with the launch instead of popping in 300ms later.
@@ -294,7 +282,6 @@ export async function runBootstrap(systemDark: boolean): Promise<BootstrapOutcom
     database,
     settings,
     launchTheme,
-    seeded,
     migrationFailed: database.migrationError !== undefined,
     resumedWorkout: session !== null,
   };

@@ -13,7 +13,7 @@ point of the architecture, and most of the decisions below fall out of it.
 
 **A routine stores a snapshot of every exercise in it, not a reference to one.**
 
-`routine_items` carries an `exercise_id`, and `exercise_snapshots` carries the name, muscles,
+`routine_items` carries an `exercise_id`, and `exercises` carries the name, muscles,
 equipment and image URL captured at the moment the user added it. The alternative, storing an
 id and resolving it from the catalog at read time, is smaller and is how this usually gets
 built. It also means a routine cannot be opened on a plane, and that wger renaming or
@@ -22,8 +22,8 @@ retiring an exercise silently rewrites a training plan the user wrote.
 The cost is real: the snapshot table is the second-largest in the schema, a snapshot can go
 stale against the catalog, and the write path has to insert snapshots and items in one
 transaction in the right order. That ordering was a genuine bug (items were inserted first,
-with foreign keys on, so saving a newly discovered exercise failed while saving a seeded one
-worked), and it is exactly the kind of bug that only appears against real data.
+with foreign keys on, so saving a newly discovered exercise failed while saving an already
+stored one worked), and it is exactly the kind of bug that only appears against real data.
 
 ## Where I think the code is strong
 
@@ -80,10 +80,7 @@ second line. Defensible, documented, and still two things to keep in step.
 2. **Make the gates structural.** Match on testIDs, not on sentences.
 3. **Enforce the `useT` / `tr` rule in `npm run check`.** The analysis is not hard: a
    memoised component whose body calls `tr()` is the bug.
-4. **Fix the seeded catalog's language.** The seed ships English exercise names and
-   instructions because that is what the upstream catalog returns. An Italian user sees an
-   Italian app around English exercise names, which is defensible but noticeable.
-5. **Decide what a subtitle is worth.** If the answer is "less than a native header", the
+4. **Decide what a subtitle is worth.** If the answer is "less than a native header", the
    remaining screens can move and the custom bar can go.
 
 ## What is deliberately not here

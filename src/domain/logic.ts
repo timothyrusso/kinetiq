@@ -34,7 +34,7 @@ export function setVolumeKg(set: Pick<StrengthSet, 'reps' | 'weightKg'>): number
   return Math.max(0, set.reps) * Math.max(0, set.weightKg);
 }
 
-export function entryVolumeKg(entry: Pick<StrengthEntry, 'sets'>): number {
+function entryVolumeKg(entry: Pick<StrengthEntry, 'sets'>): number {
   return sum(entry.sets.filter((s) => s.completed).map(setVolumeKg));
 }
 

@@ -55,8 +55,6 @@ export type ExercisePerformance = {
   topReps: number;
   /** Best estimated 1RM in the session, or null when no set supports the estimate. */
   estimated1rmKg: number | null;
-  /** True for a seeded row, so the screen can say so rather than imply provenance. */
-  seeded: boolean;
 };
 
 /** One point of the heaviest-weight line: a session's heaviest completed set. */
@@ -185,7 +183,6 @@ function summarise(exerciseId: string, activities: readonly Activity[]): Exercis
       activityId: activity.id,
       performedAt: activity.startedAt,
       exerciseName: entry.exerciseName,
-      seeded: activity.seeded,
       ...rollup,
     });
   }

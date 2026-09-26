@@ -9,7 +9,6 @@ export {
   snapshotById,
   snapshotByName,
   snapshotOf,
-  upsertSnapshot,
 } from './routineRepository';
 export type { RoutineDraft } from './routineRepository';
 export { onRoutinesChanged } from './routineEvents';
@@ -17,12 +16,9 @@ export { sessionRepository } from './sessionRepository';
 export type { SessionPatch } from './sessionRepository';
 export {
   readAllSettings,
-  readState,
   recordRepository,
-  SEED_DONE_KEY,
   SETTING_KEYS,
   setSetting,
-  writeState,
 } from './settingsRepository';
 export type { SettingKey } from './settingsRepository';
 export {

@@ -327,7 +327,7 @@ export const it: Copy = {
     builtWith: 'Realizzata con React Native ed Expo.',
     eraseTitle: 'Cancellare tutto?',
     eraseMessage:
-      "{activities} e {routines} verranno eliminate da questo dispositivo, insieme a unità, aspetto, obiettivo e promemoria. Ti resterà un'app vuota e i dati di esempio non verranno ripristinati.",
+      "{activities} e {routines} verranno eliminate da questo dispositivo, insieme a unità, aspetto, obiettivo e promemoria. Ti resterà un'app vuota.",
     eraseConfirm: 'Cancella tutto',
     keepMyData: 'Tieni i miei dati',
     activityCount_one: '{count} allenamento',
@@ -739,7 +739,7 @@ export const it: Copy = {
     exportSets: 'Tutte le serie, in tabella (CSV)',
     exportRoutines: 'Schede (JSON)',
     exportFooter:
-      "I file si aprono nel menu di condivisione: salvali, inviali a un altro dispositivo o condividili con una chat con un'IA. I pesi sono sempre in chilogrammi. Gli allenamenti demo sono esclusi.",
+      "I file si aprono nel menu di condivisione: salvali, inviali a un altro dispositivo o condividili con una chat con un'IA. I pesi sono sempre in chilogrammi.",
     exportFailed: "Non è stato possibile creare l'esportazione. Riprova.",
     importTitle: 'Importa schede',
     pasteClipboard: 'Incolla dagli appunti',
