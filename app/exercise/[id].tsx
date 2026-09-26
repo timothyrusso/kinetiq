@@ -155,9 +155,12 @@ export default function ExerciseDetailScreen() {
     router.push(routes.activityDetail(activityId));
   }, []);
 
+  // wger's web app serves an exercise at `/exercise/<base id>/view` (no trailing slash: the
+  // route is spelled that way in wger's own `exercises/urls.py`). The bare `/exercise/<id>/`
+  // this used to build has no route and answered 404 for every exercise.
   const externalUrl = useMemo(() => {
     if (exercise?.externalId === null || exercise?.externalId === undefined) return null;
-    return `https://wger.de/en/exercise/${exercise.externalId}/`;
+    return `https://wger.de/en/exercise/${exercise.externalId}/view`;
   }, [exercise]);
 
   const title =
