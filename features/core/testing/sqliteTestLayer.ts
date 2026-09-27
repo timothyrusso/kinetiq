@@ -11,6 +11,9 @@ export const makeMigratedSqliteLayer = () =>
   Layer.effect(
     SchemaStatus,
     Effect.flatMap(SqliteClient, db => runMigrations(db, migrations)).pipe(
-      Effect.map(report => SchemaStatus.of({ fromVersion: report.from, toVersion: report.to, migrationError: null })),
+      Effect.map(report => {
+        const current = { fromVersion: report.from, toVersion: report.to, migrationError: null };
+        return SchemaStatus.of({ current: Effect.succeed(current), remigrate: Effect.succeed(current) });
+      }),
     ),
   ).pipe(Layer.provideMerge(makeNodeSqliteLayer()));
