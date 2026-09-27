@@ -11,10 +11,9 @@ agentic-kit (shipped in the plugin as `${CLAUDE_PLUGIN_ROOT}/docs/`). `docs/ARCH
 holds this app's deltas and wins on conflict. `kit.config.json` holds the project settings the
 kit's tools and agents read (features root, board, QA target, lint options, catalog).
 
-Code under `src/` predates the kit and is moved into `features/` one child issue at a time. Until
-a folder moves, the rules it breaks are lowered to `warn` for it (the `LEGACY` lists in
-`eslint.config.mjs`, `biome.json` and `.dependency-cruiser.mjs`); a child that moves a folder
-removes it from those lists.
+Every file lives under `features/` (or `app/`, whose route files only re-export a feature's
+page from its `pages.ts`); the legacy `src/` tree is gone and every rule runs at `error`
+everywhere. `npm run arch:report` prints the feature dependency graph.
 
 ## Non-negotiable rules
 
@@ -51,11 +50,11 @@ Three sources, and no fourth:
 1. SF Symbols (`sf`) and Material Symbols (`md`) where an Expo UI or expo-router API takes them:
    the tab bar, `Stack.Toolbar`, native buttons and lists.
 2. MaterialIcons from `@expo/vector-icons`, rendered to an image, for Android surfaces that only
-   take an image source (header items, Compose icons). `src/ui/materialIcons.ts` renders them
+   take an image source (header items, Compose icons). `features/core/design-system/icons/materialIcons.ts` renders them
    once at bootstrap.
 3. Ionicons, via `@expo/vector-icons`, for every icon drawn in React Native content.
 
-Header icons are named in one table, `src/navigation/headerActions.ts`: an `sf` and a
+Header icons are named in one table, `features/core/navigation/headerActions.ts`: an `sf` and a
 `material` name per action. Do not hand-author SVG glyph paths. If no source has a needed icon,
 ask rather than drawing one.
 
@@ -65,24 +64,25 @@ Both platforms must feel native. Where Expo UI has a control on one platform onl
 platform gets a fallback that follows its own conventions (HIG on iOS, Material 3 on Android);
 never ship one platform's look on the other.
 
-Controls live in `src/ui/controls/<Name>/`. Import from `@expo/ui` (the universal API) first;
+Controls live in `features/core/design-system/controls/<Name>/`. Import from `@expo/ui` (the universal API) first;
 if the control is missing there, use `@expo/ui/swift-ui` in `index.ios.tsx` and
 `@expo/ui/jetpack-compose` in `index.android.tsx`, with a shared `types.ts`. A platform with
-nothing gets the React Native fallback in its own file. Callers import `@/ui/controls/Name` and
-never see the branch. `Platform.select` is for single values (a number, a colour), never for UI
+nothing gets the React Native fallback in its own file. Callers import `@/features/core/design-system`
+and never see the branch. `Platform.select` is for single values (a number, a colour), never for UI
 structure.
 
 `RNHostView` can host React Native inside Expo UI, but not in list rows or anything that
 scrolls: its size is fixed at mount and each host is a native view boundary. Confirms are
 `ConfirmDialog`, editors are form-sheet routes, settings screens are `SettingsList`.
 
-Where neither platform has a control, build a small component in `src/ui/` modelled on the
+Where neither platform has a control, build a small component in `features/core/design-system/` modelled on the
 react-native-reusables patterns. Do not add a component library.
 
 ## Layout
 
-One source of truth per measurement. Spacing comes from `spacing` in `src/theme/tokens.ts`,
-bottom insets from `src/ui/insets.ts`, type from the `VARIANTS` table in `src/ui/Text.tsx`,
+One source of truth per measurement. Spacing comes from `spacing` in `features/core/theme/tokens.ts`,
+bottom insets from `features/core/design-system/layout/insets.ts`, type from the `VARIANTS` table
+in `features/core/design-system/text/Text.tsx`,
 the grouped-surface skin from `platformSurface`. A screen that hard-codes a number another
 screen also needs is a bug waiting to diverge, and this codebase has already paid for it twice:
 fifteen conflicting `BOTTOM_SPACE` constants, and two header components with different
@@ -90,15 +90,15 @@ vertical-centring maths.
 
 `screenGutter` is the only horizontal edge token; `spacing.xl` is never a gutter.
 `arch/no-literal-gutter` fails on a literal or `spacing.xl` horizontal padding or margin in
-`app/` and the design system (`src/ui/` until it moves); chart internals that place labels by
+`app/` and the design system; chart internals that place labels by
 measured offsets are allowlisted in `layout.allow`.
 
 Metadata is never a joined string: rows and cards take `meta` and `tags` and draw them with
-`MetaLine`, `TagRow`, `StatTile` and `Badge` (`src/ui/display/`). `joinMiddleDot` is for
+`MetaLine`, `TagRow`, `StatTile` and `Badge` (`features/core/design-system/display/`). `joinMiddleDot` is for
 accessibility labels only.
 
 The header is always the navigator's own (`ScreenHeader` sets the per-screen options). Only the
-live workout and a running recording hide it.
+live workout hides it.
 
 ## Performance
 
@@ -113,12 +113,12 @@ per frame, no RN `Animated`, no `LayoutAnimation`. Sorting, grouping and formatt
 ## Internationalisation
 
 All user-facing copy, including accessibility labels, goes through the catalog in
-`src/i18n/` (`i18n.catalogPath` in `kit.config.json`). English and Italian are both required; a
+`features/core/translations/catalog/` (`i18n.catalogPath` in `kit.config.json`). English and Italian are both required; a
 key present in one and missing from the other fails `check:i18n`, and a key nothing reads fails
 `check:unused-keys`.
 
 Components read it with `useT()`. Code that cannot call a hook (a service, a module-level
-table, a plain helper) uses `tr()` from `src/i18n/tr.ts`, which reads the language from the
+table, a plain helper) uses `tr()` from `features/core/translations`, which reads the language from the
 settings store at call time. A module-level map of labels holds catalog KEYS, never words: it
 is built at import time, when there is no language yet.
 

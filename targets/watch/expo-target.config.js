@@ -7,13 +7,13 @@
  *
  * @type {import('@bacons/apple-targets/app.plugin').ConfigFunction}
  */
-module.exports = (config) => ({
+const watchTarget = config => ({
   type: 'watch',
   name: 'KinetiqWatch',
   displayName: 'Kinetiq',
   bundleIdentifier: `${config.ios.bundleIdentifier}.watchkitapp`,
   deploymentTarget: '10.0',
-  // The free personal team the personal build signs with. Carried here so prebuild no longer
+  // NOTE: the free personal team the personal build signs with. Carried here so prebuild no longer
   // resets signing on the watch target.
   appleTeamId: config.ios.appleTeamId,
   icon: '../../assets/icon.png',
@@ -21,3 +21,5 @@ module.exports = (config) => ({
     $accent: '#C6F24E',
   },
 });
+
+module.exports = watchTarget;

@@ -12,7 +12,7 @@
     "exactOptionalPropertyTypes": false,
     "moduleSuffixes": [".ios", ""],
     "paths": {
-      "@/*": ["./src/*", "./*"]
+      "@/*": ["./*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts", "scripts/**/*.ts"],

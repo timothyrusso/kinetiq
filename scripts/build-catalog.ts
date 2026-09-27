@@ -29,10 +29,10 @@ async function fetchJson(url: string): Promise<unknown> {
   for (let attempt = 1; ; attempt += 1) {
     const response = await fetch(url, { headers: { Accept: 'application/json' } });
     if (response.ok) return response.json();
-    // wger rate-limits and occasionally 5xxs; anything else is a real error.
+    // NOTE: wger rate-limits and occasionally 5xxs; anything else is a real error.
     const retryable = response.status === 429 || response.status >= 500;
     if (!retryable || attempt >= RETRIES) throw new Error(`${response.status} for ${url}`);
-    await new Promise((done) => setTimeout(done, 2_000 * attempt));
+    await new Promise(done => setTimeout(done, 2_000 * attempt));
   }
 }
 
@@ -49,7 +49,7 @@ function validate(payload: CatalogPayload): void {
 
 function serialise(payload: CatalogPayload): string {
   const { exercises, ...head } = payload;
-  const lines = exercises.map((exercise) => `  ${JSON.stringify(exercise)}`);
+  const lines = exercises.map(exercise => `  ${JSON.stringify(exercise)}`);
   const header = JSON.stringify(head).slice(0, -1);
   return `${header},"exercises":[\n${lines.join(',\n')}\n]}\n`;
 }
@@ -64,7 +64,7 @@ async function main(): Promise<void> {
   const payload = await Effect.runPromise(
     downloadWgerCatalog(
       wgerBaseUrl(),
-      (url) => Effect.tryPromise({ try: () => fetchJson(url), catch: (cause) => cause }),
+      url => Effect.tryPromise({ try: () => fetchJson(url), catch: cause => cause }),
       (endpoint, cause) => new Error(`${endpoint} is not the shape the catalog reads: ${cause.message}`),
     ),
   );
@@ -72,8 +72,8 @@ async function main(): Promise<void> {
   const text = serialise(payload);
   writeFileSync(OUTPUT, text);
 
-  const italian = payload.exercises.filter((e) => e.translations.it !== undefined).length;
-  const english = payload.exercises.filter((e) => e.translations.en !== undefined).length;
+  const italian = payload.exercises.filter(e => e.translations.it !== undefined).length;
+  const english = payload.exercises.filter(e => e.translations.en !== undefined).length;
   console.log(
     [
       `wrote ${OUTPUT} (${(text.length / 1024 / 1024).toFixed(2)} MB)`,
