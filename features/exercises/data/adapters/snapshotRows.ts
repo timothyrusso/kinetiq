@@ -45,3 +45,25 @@ export function snapshotFromRow(row: typeof SnapshotRow.Type): ExerciseSnapshot 
     capturedAt: row.captured_at,
   };
 }
+
+/**
+ * The bound values of the snapshot upsert, in its column order. The list columns are JSON, and
+ * `source` says whether a copy came from the catalog: a `local` exercise has nothing to refresh
+ * from, so labelling it `remote` would make the detail screen offer a refresh that cannot work.
+ */
+export function snapshotToRow(snapshot: ExerciseSnapshot): (string | number | null)[] {
+  return [
+    snapshot.exerciseId,
+    snapshot.name,
+    snapshot.externalId,
+    snapshot.instructions,
+    snapshot.category,
+    JSON.stringify(snapshot.primaryMuscles),
+    JSON.stringify(snapshot.secondaryMuscles),
+    JSON.stringify(snapshot.equipment),
+    snapshot.imageUrl,
+    snapshot.thumbnailUrl ?? snapshot.imageUrl,
+    snapshot.externalId === null ? 'local' : 'remote',
+    snapshot.capturedAt,
+  ];
+}

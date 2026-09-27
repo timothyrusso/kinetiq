@@ -89,6 +89,15 @@ export const serverError = () => new HttpError({ kind: 'server', status: 503, re
 
 /** An `ExerciseSnapshotRepository` holding `snapshots`. */
 export const makeExerciseSnapshotRepositoryFake = (snapshots: readonly ExerciseSnapshot[] = []) =>
-  Layer.succeed(ExerciseSnapshotRepository, {
-    byId: exerciseId => Effect.sync(() => snapshots.find(snapshot => snapshot.exerciseId === exerciseId)),
+  Layer.sync(ExerciseSnapshotRepository, () => {
+    const stored = new Map(snapshots.map(snapshot => [snapshot.exerciseId, snapshot]));
+    return {
+      byId: exerciseId => Effect.sync(() => stored.get(exerciseId)),
+      byIds: exerciseIds => Effect.sync(() => new Map([...stored].filter(([id]) => exerciseIds.includes(id)))),
+      byName: name =>
+        Effect.sync(() =>
+          [...stored.values()].find(snapshot => snapshot.name.toLowerCase() === name.trim().toLowerCase()),
+        ),
+      upsert: snapshot => Effect.sync(() => void stored.set(snapshot.exerciseId, snapshot)),
+    };
   });
