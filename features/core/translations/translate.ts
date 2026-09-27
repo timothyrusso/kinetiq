@@ -56,10 +56,10 @@ export type TVars = Record<string, string | number> & { count?: number };
 /** The language a setting renders in: `system` resolves against the device's preference list. */
 export function resolveLanguage(language: Language): 'en' | 'it' {
   if (language !== 'system') return language;
-  // NOTE: `getLocales()` is ordered by the user's own preference list, so the first Italian entry
-  // anywhere in it beats an English entry further down.
-  const tags = getLocales().map(l => l.languageCode ?? '');
-  return tags.includes('it') ? 'it' : 'en';
+  // NOTE: `getLocales()` is ordered by the user's own preference list, so the first entry the app
+  // speaks wins: an Italian entry beats an English one only when it comes first.
+  const supported = getLocales().find(l => l.languageCode === 'en' || l.languageCode === 'it');
+  return supported?.languageCode === 'it' ? 'it' : 'en';
 }
 
 function lookup(catalog: Copy, path: string): unknown {
