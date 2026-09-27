@@ -15,16 +15,14 @@ import { RowButton } from '@/features/routines/ui/components/RowButton/RowButton
  * The builder and the saved routine draw the same row and differ only in what it can do, so the
  * actions arrive as optional callbacks: each screen renders exactly the controls it can perform.
  *
- * Reordering is up and down buttons, not a drag: the same operation, one-handed, readable by a
- * screen reader, and unable to fire during a scroll. `theme` is a prop and every callback takes
+ * Reordering is up and down buttons, not a drag: the same operation, one-handed, offered to a
+ * screen reader as the row's actions, and unable to fire during a scroll. `theme` is a prop and every callback takes
  * the row's id or index, so a screen passes the same functions to every row and `memo` skips the
  * rows a stepper press did not touch.
  */
 export const RoutineItemRow = memo(function RoutineItemRow(
   props: RoutineItemRowInput & {
     theme: Theme;
-    /** Where the row sits, so the first and last rows disable the impossible move. */
-    count: number;
     topDivider?: boolean;
   },
 ) {
@@ -43,6 +41,9 @@ export const RoutineItemRow = memo(function RoutineItemRow(
       {...(onOpen === undefined
         ? {}
         : { onPress: effects.open, onLongPress: effects.open, accessibilityHint: t('itemEditor.editHint') })}
+      {...(derived.accessibilityActions.length > 0
+        ? { accessibilityActions: derived.accessibilityActions, onAccessibilityAction: effects.onAccessibilityAction }
+        : {})}
       leading={<ExerciseThumb uri={derived.thumbnail} name={item.exerciseName} size={44} theme={theme} />}
       trailing={
         <View style={styles.trailing}>

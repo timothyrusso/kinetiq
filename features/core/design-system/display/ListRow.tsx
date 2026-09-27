@@ -16,7 +16,14 @@
  * and a tinted row reads as promptly as a shrinking one.
  */
 import { memo } from 'react';
-import { Pressable, type StyleProp, View, type ViewStyle } from 'react-native';
+import {
+  type AccessibilityActionEvent,
+  type AccessibilityActionInfo,
+  Pressable,
+  type StyleProp,
+  View,
+  type ViewStyle,
+} from 'react-native';
 import { MetaLine } from '@/features/core/design-system/display/MetaLine';
 import { TagRow } from '@/features/core/design-system/display/TagRow';
 import type { MetaItem, Tag } from '@/features/core/design-system/display/types';
@@ -51,6 +58,8 @@ export const ListRow = memo(function ListRow({
   body,
   style,
   accessibilityHint,
+  accessibilityActions,
+  onAccessibilityAction,
 }: {
   title: string;
   /**
@@ -78,6 +87,12 @@ export const ListRow = memo(function ListRow({
   body?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   accessibilityHint?: string;
+  /**
+   * What the row's trailing controls do, for a screen reader: the row is one accessible element,
+   * which hides its children from VoiceOver, so its buttons reach it as the row's actions.
+   */
+  accessibilityActions?: readonly AccessibilityActionInfo[];
+  onAccessibilityAction?: (event: AccessibilityActionEvent) => void;
 }) {
   const interactive = onPress !== undefined;
   return (
@@ -88,6 +103,8 @@ export const ListRow = memo(function ListRow({
       accessibilityRole={interactive ? 'button' : undefined}
       accessibilityLabel={title}
       accessibilityHint={accessibilityHint}
+      accessibilityActions={accessibilityActions}
+      onAccessibilityAction={onAccessibilityAction}
       {...(disabled ? { accessibilityState: { disabled: true } } : {})}
       style={({ pressed }) => [
         {
