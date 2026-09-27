@@ -6,7 +6,7 @@
  */
 import { Stack } from 'expo-router';
 
-import { useLargeTitleOptions } from './headerOptions';
+import { useLargeTitleOptions } from '@/features/core/navigation/headerOptions';
 
 export function TabStack() {
   const screenOptions = useLargeTitleOptions();

@@ -19,7 +19,7 @@
  *   pace      -> "ritmo"
  *   PR        -> "record"
  */
-import type { Copy } from './en';
+import type { Copy } from '@/features/core/translations/catalog/en';
 
 export const it: Copy = {
   tabs: {
@@ -38,13 +38,13 @@ export const it: Copy = {
     system: 'Sistema',
   },
 
-  // --- group-a ---
+  // NOTE: --- group-a ---
   tabsProfile: {
     height: '{height} cm',
     age_one: '{count} anno',
     age_other: '{count} anni',
   },
-  // --- end group-a ---
+  // NOTE: --- end group-a ---
 
   home: {
     startWorkout: 'Inizia un allenamento',
@@ -53,7 +53,6 @@ export const it: Copy = {
     emptyMessage:
       'Inizia un allenamento dalla scheda Allenamento. Ogni sessione che completi arriva qui, dalla più recente.',
   },
-
 
   heatmap: {
     title: 'Giorni di allenamento',
@@ -112,7 +111,7 @@ export const it: Copy = {
     italian: 'Italiano',
   },
 
-  // --- group-b ---
+  // NOTE: --- group-b ---
   details: {
     repsValue: '{reps} rip.',
     bodyweightA11y: 'Corpo libero',
@@ -123,15 +122,14 @@ export const it: Copy = {
     lastPerformedAgo: 'Ultima volta {ago}',
     setsOfTotal: '{done} serie su {total}',
   },
-  // --- end group-b ---
+  // NOTE: --- end group-b ---
   activity: {
     openExerciseHint: 'Apre questo esercizio, con la tua cronologia e i record',
     fallbackTitle: 'Allenamento',
     delete: 'Elimina questo allenamento',
     loadError: 'Impossibile aprire questo allenamento',
     deleteTitle: 'Eliminare questa sessione?',
-    deleteMessage:
-      'Sparisce anche "{name}". I suoi numeri escono da totali e record, quindi i grafici cambieranno.',
+    deleteMessage: 'Sparisce anche "{name}". I suoi numeri escono da totali e record, quindi i grafici cambieranno.',
     deleteConfirm: 'Elimina sessione',
     deleteFailed: 'Non è stato possibile eliminare la sessione.',
     emptyTitle: 'Nessun dato registrato',
@@ -208,8 +206,7 @@ export const it: Copy = {
     deleteTitle: 'Eliminare “{name}”?',
     deleteCompleted:
       "L'hai completata {count} {word}. Quegli allenamenti restano nella cronologia e nei progressi: viene rimosso solo il piano.",
-    deleteNever:
-      'Questa scheda non è mai stata completata, e nulla la userà più una volta eliminata.',
+    deleteNever: 'Questa scheda non è mai stata completata, e nulla la userà più una volta eliminata.',
     nameRequired: 'Una scheda ha bisogno di un nome.',
     renameTitle: 'Rinomina scheda',
     renameHint: 'Gli allenamenti futuri mantengono questo nome nella cronologia',
@@ -226,10 +223,8 @@ export const it: Copy = {
     fallbackTitle: 'Esercizio',
     loadError: 'Non è stato possibile caricare questo esercizio',
     unknownTitle: 'Nessuna informazione su questo esercizio',
-    unknownFetchable:
-      'Non è nelle tue schede e la libreria esercizi su questo dispositivo non lo contiene.',
-    unknownBuiltIn:
-      'Questo esercizio arriva dalla libreria interna, che non ne conserva una descrizione.',
+    unknownFetchable: 'Non è nelle tue schede e la libreria esercizi su questo dispositivo non lo contiene.',
+    unknownBuiltIn: 'Questo esercizio arriva dalla libreria interna, che non ne conserva una descrizione.',
     backToLibrary: 'Torna alla libreria',
     howTo: 'Come si esegue',
     noDescriptionOffline:
@@ -307,7 +302,7 @@ export const it: Copy = {
     routineCount_other: '{count} schede',
     kindLift: 'Allenamenti',
   },
-  // --- group-c ---
+  // NOTE: --- group-c ---
   workoutFlow: {
     justNow: 'adesso',
     hoursAgo_one: '{count} h fa',
@@ -324,7 +319,7 @@ export const it: Copy = {
     repCount_one: '{count} ripetizione',
     repCount_other: '{count} ripetizioni',
   },
-  // --- end group-c ---
+  // NOTE: --- end group-c ---
   session: {
     thisSet: 'Questa serie',
     addNotChanged:
@@ -335,8 +330,7 @@ export const it: Copy = {
     saveFailed: 'Il telefono non ha potuto salvare la sessione. Riprova.',
     saveFailedKept: 'Il telefono non ha potuto salvare la sessione. Non hai perso nulla: riprova.',
     noneTitle: 'Nessun allenamento in corso',
-    noneMessage:
-      "Iniziane uno da una scheda e comparirà qui, con i numeri dell'ultima volta accanto a ogni serie.",
+    noneMessage: "Iniziane uno da una scheda e comparirà qui, con i numeri dell'ultima volta accanto a ogni serie.",
     pickRoutine: 'Scegli una scheda',
     leave: "Esci dall'allenamento. Continua a girare.",
     leaveHint: 'Torna alla schermata precedente. La sessione non va persa.',
@@ -347,12 +341,10 @@ export const it: Copy = {
     running: 'In corso',
     paused: 'In pausa',
     finishA11y: 'Completa e salva questo allenamento',
-    awayNotice:
-      "Via per {time}. L'orologio conta solo mentre l'app è aperta, e il recupero è ripreso da dove era.",
+    awayNotice: "Via per {time}. L'orologio conta solo mentre l'app è aperta, e il recupero è ripreso da dove era.",
     exercises: 'Esercizi',
     emptyTitle: 'Nessun esercizio in questo allenamento',
-    emptyMessage:
-      'Aggiungi un esercizio dalla libreria e viene salvato subito sul dispositivo.',
+    emptyMessage: 'Aggiungi un esercizio dalla libreria e viene salvato subito sul dispositivo.',
     addAnExercise: 'Aggiungi un esercizio',
     discard: 'Scarta',
     finish: 'Completa',
@@ -365,7 +357,7 @@ export const it: Copy = {
     finishTitle: 'Completare questo allenamento?',
     finishPartial:
       "{left} di {planned} {word} non spuntate. Il lavoro non spuntato non viene registrato: l'allenamento salva ciò che hai completato.",
-    finishAll: "Tutte le {planned} serie sono fatte. Diventa un allenamento nella tua cronologia.",
+    finishAll: 'Tutte le {planned} serie sono fatte. Diventa un allenamento nella tua cronologia.',
     finishConfirm: 'Completa e salva',
     thisExercise: 'Questo esercizio',
     recordOne: 'Record personale',
@@ -422,12 +414,12 @@ export const it: Copy = {
     setsOfTotal: '{done}/{total} serie',
     doneTimes: '{count}× fatte',
   },
-  // --- group-d ---
+  // NOTE: --- group-d ---
   systemScreens: {
     openTab: 'Vai a una sezione',
     unknownError: 'Errore sconosciuto',
   },
-  // --- end group-d ---
+  // NOTE: --- end group-d ---
   settingsScreen: {
     namePlaceholder: 'Atleta',
     heightRequired: "L'altezza serve per le stime calorie.",
@@ -466,10 +458,8 @@ export const it: Copy = {
     restMore: 'Quindici secondi di recupero in più',
     skipRest: 'Salta il recupero',
     removeExerciseTitle: 'Rimuovere questo esercizio?',
-    removeWithSets_one:
-      '{name} e la {count} serie già registrata escono da questo allenamento. Nulla altro cambia.',
-    removeWithSets_other:
-      '{name} e le {count} serie già registrate escono da questo allenamento. Nulla altro cambia.',
+    removeWithSets_one: '{name} e la {count} serie già registrata escono da questo allenamento. Nulla altro cambia.',
+    removeWithSets_other: '{name} e le {count} serie già registrate escono da questo allenamento. Nulla altro cambia.',
     removePlain: '{name} esce da questo allenamento. Nulla altro cambia.',
   },
   perms: {
@@ -564,8 +554,6 @@ export const it: Copy = {
     noteCount: '{count} di {max}',
   },
 
-
-
   trainingPrefs: {
     title: 'Allenamento',
     restTimer: 'Timer di recupero',
@@ -577,7 +565,7 @@ export const it: Copy = {
     restCountdown: 'Conto alla rovescia del recupero',
     restCountdownHint: 'Un tocco in ciascuno degli ultimi 3 secondi del recupero, poi una vibrazione alla fine.',
     keepScreenAwake: 'Schermo sempre acceso',
-    keepScreenAwakeHint: "Lo schermo non si blocca mentre un allenamento è aperto.",
+    keepScreenAwakeHint: 'Lo schermo non si blocca mentre un allenamento è aperto.',
     weeklyGoal: 'Obiettivo settimanale',
     sessionsPerWeek: 'Sessioni a settimana',
   },
@@ -589,8 +577,7 @@ export const it: Copy = {
     resetLocalData: 'Azzera i dati locali',
     openDeviceSettings: 'Apri le impostazioni del dispositivo',
     takingLonger: 'Sta impiegando più del previsto',
-    eraseWarning:
-      'Cancellare rimuove cronologia, schede e impostazioni. Non si può annullare.',
+    eraseWarning: 'Cancellare rimuove cronologia, schede e impostazioni. Non si può annullare.',
     couldNotStart: 'Kinetiq non è riuscita ad avviarsi',
     couldNotStartDetail:
       "Qualcosa è andato storto prima che l'app potesse aprire il suo archivio locale. I tuoi dati non sono stati toccati.",
@@ -614,7 +601,6 @@ export const it: Copy = {
     done: 'Fatto',
   },
 
-
   misc: {
     loading: 'Caricamento',
     notFoundBody:
@@ -629,8 +615,7 @@ export const it: Copy = {
       "L'anello nella Home e la linea obiettivo nei Progressi. Cambiarlo non riscrive la cronologia: cambia solo cosa conta come in linea da ora in poi.",
     persistFailedBody:
       "Il telefono ha rifiutato una scrittura, quindi queste serie esistono solo finché l'app resta aperta. Vai avanti: riproverà a ogni serie, ma non chiuderla a forza.",
-    fatalBody:
-      "I tuoi allenamenti e le tue schede salvate non sono stati toccati. Riavviare l'app di solito risolve.",
+    fatalBody: "I tuoi allenamenti e le tue schede salvate non sono stati toccati. Riavviare l'app di solito risolve.",
     routeErrorBody:
       "Allenamenti, schede e impostazioni non sono stati toccati. Puoi riprovare con la schermata, oppure tornare indietro e continuare altrove nell'app.",
     opensRoutine: 'Apre la scheda',
@@ -673,7 +658,7 @@ export const it: Copy = {
     stillStartingBody:
       "Kinetiq è ancora in avvio. Di solito significa che l'archivio locale è occupato o è stato lasciato in uno stato illeggibile.",
   },
-  // --- foundation ---
+  // NOTE: --- foundation ---
   headerActions: {
     add: 'Aggiungi',
     more: 'Altre opzioni',
@@ -694,7 +679,7 @@ export const it: Copy = {
     moveDown: 'Sposta {name} in basso',
     remove: 'Rimuovi {name} da questa scheda',
   },
-  // --- end foundation ---
+  // NOTE: --- end foundation ---
   dataTransfer: {
     catalogTitle: 'Libreria esercizi',
     catalogFooter:
@@ -724,7 +709,7 @@ export const it: Copy = {
     aiCopy: "Copia le istruzioni per l'IA",
     aiCopied: 'Istruzioni copiate',
     aiFooter:
-      "Incolla le istruzioni in una chat con un'IA, aggiungi cosa vuoi (\"split upper/lower su 4 giorni, 45 minuti\"), copia la risposta e tocca Incolla dagli appunti. Per modificare schede esistenti, invia anche l'esportazione delle tue schede.",
+      'Incolla le istruzioni in una chat con un\'IA, aggiungi cosa vuoi ("split upper/lower su 4 giorni, 45 minuti"), copia la risposta e tocca Incolla dagli appunti. Per modificare schede esistenti, invia anche l\'esportazione delle tue schede.',
     aiPrompt:
       'Stai scrivendo schede da palestra per l\'app Kinetiq. Rispondi SOLO con un documento JSON esattamente in questa forma, senza altro testo:\n\n{\n  "format": "kinetiq.routines",\n  "version": 1,\n  "routines": [\n    {\n      "name": "Push Day",\n      "items": [\n        { "exerciseId": "wger:73", "exerciseName": "Bench Press", "sets": 4, "reps": "8-10", "weightKg": 60, "restSeconds": 120, "notes": "Pausa del bilanciere sul petto" }\n      ]\n    }\n  ]\n}\n\nRegole:\n- exerciseName è obbligatorio. Usa il nome inglese comune dell\'esercizio, anche se il resto è in italiano.\n- exerciseId è facoltativo. Se puoi navigare sul web, cerca l\'esercizio nel catalogo wger (https://wger.de/api/v2/exerciseinfo/?name__search=bench%20press&language__code=en) e scrivi "wger:" seguito dal suo id. Se non puoi, ometti exerciseId. Non inventare mai un id.\n- sets: da 1 a 20. reps: un numero o un intervallo con un trattino semplice, come "8-12". weightKg: da 0 a 450, e 0 per il corpo libero o se non sei sicuro. restSeconds: da 0 a 600.\n- notes è facoltativo: un breve suggerimento di tecnica per quell\'esercizio, al massimo 200 caratteri, oppure null.\n- Una scheda per giorno di allenamento, con gli esercizi nell\'ordine in cui si eseguono.\n- Se ti do un file di schede Kinetiq esistente, mantieni i suoi valori exerciseId.\n\nCosa voglio:\n',
     previewTitle: 'Importa',
@@ -754,18 +739,26 @@ export const it: Copy = {
     issueDefaults: 'Scheda {routine}, esercizio {item}: serie o ripetizioni mancanti, usati i valori predefiniti.',
   },
   watchInbox: {
-    invalidTitle: "Non è stato possibile leggere un allenamento da Apple Watch",
+    invalidTitle: 'Non è stato possibile leggere un allenamento da Apple Watch',
     invalidMessage: 'È stato conservato su questo iPhone, messo da parte, quindi non si perde nulla.',
     versionTitle: 'Un allenamento da Apple Watch richiede un aggiornamento',
     versionMessage:
       "Proviene da una versione più recente di Kinetiq sull'orologio. Aggiorna Kinetiq su questo iPhone e verrà salvato.",
     ok: 'OK',
   },
-  // --- followups ---
+  // NOTE: --- followups ---
   followups: {
     ringA11y: 'Completato al {percent} per cento',
     a11yLift: '{title}. {sets}, volume totale {volume}, {duration}.',
     a11yPlain: '{title}. {duration}.',
   },
-  // --- end followups ---
+  // NOTE: --- end followups ---
+  errors: {
+    unexpected: 'Qualcosa è andato storto. Riprova.',
+    sql: 'Non è stato possibile salvare o leggere i tuoi dati.',
+    config: 'Kinetiq non è configurata correttamente.',
+    offline: 'Sei offline.',
+    http: 'Non è stato possibile raggiungere il server. Riprova.',
+    decode: 'Non è stato possibile leggere alcuni dati.',
+  },
 };

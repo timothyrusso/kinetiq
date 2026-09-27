@@ -9,17 +9,16 @@
  * The hook is called on every render whatever the choice, so the hook order never changes; the
  * brand choice simply ignores its answer.
  */
-import { useMemo } from 'react';
+
 import { isDynamicColorAvailable, useMaterialColors } from '@expo/ui/jetpack-compose';
+import { useMemo } from 'react';
+import type { AccentColors } from '@/features/core/theme/accent';
+import type { AccentChoice, ThemeMode } from '@/features/core/theme/appearance';
+import { useAppearanceStore } from '@/features/core/theme/state/appearanceStore';
+import { palette as brand } from '@/features/core/theme/tokens';
+import { withAlpha } from '@/features/core/utils';
 
-import { useSettings } from '@/settings';
-import type { AccentChoice } from '@/settings';
-import { palette as brand } from '@/theme/tokens';
-import { withAlpha } from '@/utils/color';
-import type { AccentColors } from './accent';
-import type { ThemeMode } from './theme';
-
-export type { AccentColors } from './accent';
+export type { AccentColors } from '@/features/core/theme/accent';
 
 /** Seed colours for the named choices. `kinetiq` and `system` have none. */
 const SEEDS: Partial<Record<AccentChoice, string>> = {
@@ -35,13 +34,13 @@ function rgb(hex: string): string {
 }
 
 export function useAccentColors(mode: ThemeMode): AccentColors | null {
-  const choice = useSettings((s) => s.accentColor);
+  const choice = useAppearanceStore.use.accentColor();
   const seed = SEEDS[choice];
   const palette = useMaterialColors({ colorScheme: mode, ...(seed ? { seedColor: seed } : {}) });
   const primary = rgb(palette.primary);
   const onPrimary = rgb(palette.onPrimary);
   const container = rgb(palette.primaryContainer);
-  // Keyed on the strings, not on `palette`: a new object per render would make a new theme per
+  // NOTE: Keyed on the strings, not on `palette`: a new object per render would make a new theme per
   // render, and every memoised row that takes `theme` would redraw for nothing.
   return useMemo(() => {
     if (choice === 'kinetiq') return null;
@@ -69,7 +68,7 @@ export function useAccentSwatches(mode: ThemeMode): Partial<Record<AccentChoice,
   const berry = useMaterialColors({ colorScheme: mode, seedColor: SEEDS.berry });
   const ruby = useMaterialColors({ colorScheme: mode, seedColor: SEEDS.ruby });
   return {
-    // The brand accent is the theme's own: lime on dark, the deeper volt on light.
+    // NOTE: The brand accent is the theme's own: lime on dark, the deeper volt on light.
     kinetiq: mode === 'dark' ? brand.volt : '#5E8C0B',
     ...(isDynamicColorAvailable ? { system: rgb(wallpaper.primary) } : {}),
     ocean: rgb(ocean.primary),

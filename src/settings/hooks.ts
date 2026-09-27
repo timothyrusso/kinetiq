@@ -13,18 +13,6 @@ export function useSettings<T>(selector: (settings: SettingsState) => T): T {
   return useSyncExternalStore(subscribeSettings, read, read);
 }
 
-/**
- * The active theme. Returned as a `const` tuple so callers destructure
- * `[mode, resolved]`; `resolved` folds 'system' against the OS appearance.
- */
-export function useThemeMode(systemDark: boolean): readonly [
-  SettingsState['themeMode'],
-  'light' | 'dark',
-] {
-  const mode = useSettings((s) => s.themeMode);
-  return [mode, mode === 'system' ? (systemDark ? 'dark' : 'light') : mode];
-}
-
 export function useSettingsUpdate(): (patch: SettingsPatch) => void {
   return updateSettings;
 }

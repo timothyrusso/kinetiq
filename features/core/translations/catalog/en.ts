@@ -36,22 +36,20 @@ export const en = {
     system: 'System',
   },
 
-  // --- group-a ---
+  // NOTE: --- group-a ---
   tabsProfile: {
     height: '{height} cm',
     age_one: '{count} year old',
     age_other: '{count} years old',
   },
-  // --- end group-a ---
+  // NOTE: --- end group-a ---
 
   home: {
     startWorkout: 'Start a workout',
     historyError: 'Your workouts could not be loaded',
     emptyTitle: 'No workouts yet',
-    emptyMessage:
-      'Start a workout from the Workout tab. Every session you finish lands here, newest first.',
+    emptyMessage: 'Start a workout from the Workout tab. Every session you finish lands here, newest first.',
   },
-
 
   heatmap: {
     title: 'Training days',
@@ -110,7 +108,7 @@ export const en = {
     italian: 'Italiano',
   },
 
-  // --- group-b ---
+  // NOTE: --- group-b ---
   details: {
     repsValue: '{reps} reps',
     bodyweightA11y: 'Bodyweight',
@@ -121,7 +119,7 @@ export const en = {
     lastPerformedAgo: 'Last performed {ago}',
     setsOfTotal: '{done} of {total} sets',
   },
-  // --- end group-b ---
+  // NOTE: --- end group-b ---
   activity: {
     openExerciseHint: 'Opens this exercise, with your history and records',
     fallbackTitle: 'Workout',
@@ -133,8 +131,7 @@ export const en = {
     deleteConfirm: 'Delete session',
     deleteFailed: 'The session could not be deleted.',
     emptyTitle: 'Nothing was captured',
-    emptyMessage:
-      'This session has a duration and no metrics. It still counts toward your streak and your totals.',
+    emptyMessage: 'This session has a duration and no metrics. It still counts toward your streak and your totals.',
     session: 'Session',
     duration: 'Duration',
     calories: 'Calories',
@@ -187,8 +184,7 @@ export const en = {
     estTime: 'Est. time',
     trained: 'Trained',
     emptyTitle: 'No exercises in this routine',
-    emptyMessage:
-      'Nothing here to train yet. Add one from the library and it is stored on the device straight away.',
+    emptyMessage: 'Nothing here to train yet. Add one from the library and it is stored on the device straight away.',
     exercises: 'Exercises',
     rowWord_one: 'row',
     rowWord_other: 'rows',
@@ -206,8 +202,7 @@ export const en = {
     deleteTitle: 'Delete “{name}”?',
     deleteCompleted:
       'You have completed it {count} {word}. Those workouts stay in your history and your progress: only the plan is removed.',
-    deleteNever:
-      'This routine has never been completed, and nothing else will reference it once it is gone.',
+    deleteNever: 'This routine has never been completed, and nothing else will reference it once it is gone.',
     nameRequired: 'A routine needs a name.',
     renameTitle: 'Rename routine',
     renameHint: 'Future workouts keep this name in your history',
@@ -224,14 +219,11 @@ export const en = {
     fallbackTitle: 'Exercise',
     loadError: 'Could not load this exercise',
     unknownTitle: 'Nothing known about this exercise',
-    unknownFetchable:
-      'It is not in your routines, and the exercise library on this device does not list it.',
-    unknownBuiltIn:
-      'This exercise came from the built-in library, which does not store a description for it.',
+    unknownFetchable: 'It is not in your routines, and the exercise library on this device does not list it.',
+    unknownBuiltIn: 'This exercise came from the built-in library, which does not store a description for it.',
     backToLibrary: 'Back to library',
     howTo: 'How to do it',
-    noDescriptionOffline:
-      'No description was saved with this exercise, and the exercise library no longer lists it.',
+    noDescriptionOffline: 'No description was saved with this exercise, and the exercise library no longer lists it.',
     noDescription:
       'The exercise library has no description for this one. Your own notes from past sessions are the best reference.',
     muscles: 'Muscles',
@@ -239,8 +231,7 @@ export const en = {
     alsoWorked: 'Also worked',
     equipment: 'Equipment',
     yourHistory: 'Your history',
-    neverLogged:
-      'You have not logged this exercise yet. Finish a session with it and your numbers will appear here.',
+    neverLogged: 'You have not logged this exercise yet. Finish a session with it and your numbers will appear here.',
     records: 'Records',
     personalBests: 'Personal bests',
     variations: 'Variations',
@@ -275,8 +266,7 @@ export const en = {
     unknown: 'unknown',
     appId: 'App ID',
     appIdHint: 'Worth quoting if something breaks.',
-    storageNote:
-      'Everything is stored on this device. Kinetiq has no account, no sign-in, and no server of its own.',
+    storageNote: 'Everything is stored on this device. Kinetiq has no account, no sign-in, and no server of its own.',
     catalog: 'Exercise catalog',
     catalogLicence: 'Exercise data licensed CC BY-SA 4.0',
     catalogNote:
@@ -305,7 +295,7 @@ export const en = {
     routineCount_other: '{count} routines',
     kindLift: 'Workouts',
   },
-  // --- group-c ---
+  // NOTE: --- group-c ---
   workoutFlow: {
     justNow: 'just now',
     hoursAgo_one: '{count}h ago',
@@ -322,7 +312,7 @@ export const en = {
     repCount_one: '{count} rep',
     repCount_other: '{count} reps',
   },
-  // --- end group-c ---
+  // NOTE: --- end group-c ---
   session: {
     thisSet: 'This set',
     addNotChanged:
@@ -332,8 +322,7 @@ export const en = {
     saveFailed: 'Your phone could not save the session. Try again.',
     saveFailedKept: 'Your phone could not save the session. Nothing was lost: try again.',
     noneTitle: 'No workout in progress',
-    noneMessage:
-      'Start one from a routine and it shows up here, with your last numbers beside every set.',
+    noneMessage: 'Start one from a routine and it shows up here, with your last numbers beside every set.',
     pickRoutine: 'Pick a routine',
     leave: 'Leave the workout. It keeps running.',
     leaveHint: 'Returns to the previous screen. The session is not lost.',
@@ -344,12 +333,10 @@ export const en = {
     running: 'Running',
     paused: 'Paused',
     finishA11y: 'Finish and save this workout',
-    awayNotice:
-      'Away for {time}. The clock only counts while the app is open, and rest resumed from where it was.',
+    awayNotice: 'Away for {time}. The clock only counts while the app is open, and rest resumed from where it was.',
     exercises: 'Exercises',
     emptyTitle: 'No exercises in this workout',
-    emptyMessage:
-      'Add one from the library and it is stored on the device straight away.',
+    emptyMessage: 'Add one from the library and it is stored on the device straight away.',
     addAnExercise: 'Add an exercise',
     discard: 'Discard',
     finish: 'Finish',
@@ -411,20 +398,19 @@ export const en = {
     new: 'New',
     routinesError: 'Could not open your routines',
     emptyTitle: 'No routines yet',
-    emptyMessage:
-      'Pick a few exercises, set your reps and weights, and the next six weeks sort themselves out.',
+    emptyMessage: 'Pick a few exercises, set your reps and weights, and the next six weeks sort themselves out.',
     createRoutine: 'Create a routine',
     resumeA11y: '{name} in progress. {done} of {total} sets done. Resume.',
     trainingNow: 'Training now',
     setsOfTotal: '{done}/{total} sets',
     doneTimes: '{count}× done',
   },
-  // --- group-d ---
+  // NOTE: --- group-d ---
   systemScreens: {
     openTab: 'Open a tab',
     unknownError: 'Unknown error',
   },
-  // --- end group-d ---
+  // NOTE: --- end group-d ---
   settingsScreen: {
     namePlaceholder: 'Athlete',
     heightRequired: 'Height is needed for calorie estimates.',
@@ -561,8 +547,6 @@ export const en = {
     noteCount: '{count} of {max}',
   },
 
-
-
   trainingPrefs: {
     title: 'Training',
     restTimer: 'Rest timer',
@@ -610,7 +594,6 @@ export const en = {
     done: 'Done',
   },
 
-
   misc: {
     loading: 'Loading',
     notFoundBody:
@@ -625,8 +608,7 @@ export const en = {
       'The ring on Home and the target line on Progress. Changing it never rewrites history: only what counts as on target from now on.',
     persistFailedBody:
       'Your phone refused a write, so these sets exist only until the app closes. Keep going: it will retry with every set, but do not force quit.',
-    fatalBody:
-      'Your saved workouts and routines were not changed. Restarting the app will usually fix this.',
+    fatalBody: 'Your saved workouts and routines were not changed. Restarting the app will usually fix this.',
     routeErrorBody:
       'Your workouts, routines and settings were not affected. You can try the screen again, or go back and carry on elsewhere in the app.',
     opensRoutine: 'Opens the routine',
@@ -669,7 +651,7 @@ export const en = {
     stillStartingBody:
       'Kinetiq is still starting up. This usually means local storage is busy or was left in a state it cannot read.',
   },
-  // --- foundation ---
+  // NOTE: --- foundation ---
   headerActions: {
     add: 'Add',
     more: 'More options',
@@ -690,7 +672,7 @@ export const en = {
     moveDown: 'Move {name} down',
     remove: 'Remove {name} from this routine',
   },
-  // --- end foundation ---
+  // NOTE: --- end foundation ---
   dataTransfer: {
     title: 'Your data',
     catalogTitle: 'Exercise library',
@@ -757,13 +739,21 @@ export const en = {
       'It comes from a newer version of Kinetiq on the watch. Update Kinetiq on this iPhone and it will be saved.',
     ok: 'OK',
   },
-  // --- followups ---
+  // NOTE: --- followups ---
   followups: {
     ringA11y: '{percent} percent complete',
     a11yLift: '{title}. {sets}, {volume} total volume, {duration}.',
     a11yPlain: '{title}. {duration}.',
   },
-  // --- end followups ---
+  // NOTE: --- end followups ---
+  errors: {
+    unexpected: 'Something went wrong. Please try again.',
+    sql: 'Your data could not be saved or read.',
+    config: 'Kinetiq is not configured correctly.',
+    offline: 'You are offline.',
+    http: 'The server could not be reached. Please try again.',
+    decode: 'Some data could not be read.',
+  },
 } as const;
 
 /**

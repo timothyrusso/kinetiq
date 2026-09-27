@@ -12,17 +12,10 @@
  * app bar only takes icons, and Material's confirming action is the check.)
  */
 import type { SFSymbol } from 'sf-symbols-typescript';
+import type { MaterialIconName } from '@/features/core/design-system';
+import type { TKey } from '@/features/core/translations';
 
-import type { TKey } from '@/i18n';
-import type { MaterialIconName } from '@/ui/materialIcons';
-
-export type HeaderActionKey =
-  | 'add'
-  | 'more'
-  | 'play'
-  | 'delete'
-  | 'save'
-  | 'cancel';
+export type HeaderActionKey = 'add' | 'more' | 'play' | 'delete' | 'save' | 'cancel';
 
 export type HeaderActionRow = {
   sf: SFSymbol;
@@ -38,6 +31,6 @@ export const HEADER_ACTIONS: Record<HeaderActionKey, HeaderActionRow> = {
   play: { sf: 'play.fill', material: 'play-arrow', label: 'headerActions.play' },
   delete: { sf: 'trash', material: 'delete', label: 'headerActions.delete' },
   save: { sf: 'checkmark', material: 'check', label: 'headerActions.save', text: true },
-  // "Cancel" on iOS, the full-screen dialog's close glyph on Android.
+  // NOTE: "Cancel" on iOS, the full-screen dialog's close glyph on Android.
   cancel: { sf: 'xmark', material: 'close', label: 'headerActions.cancel', text: true },
 };

@@ -16,22 +16,22 @@
  * in the table is rendered to an image once, during bootstrap, before the navigator mounts. A
  * row whose image is somehow missing renders nothing rather than an empty tappable square.
  */
+
+import { Stack } from 'expo-router';
 import type { ReactElement } from 'react';
 import { Platform } from 'react-native';
-import { Stack } from 'expo-router';
 
 import type { SFSymbol } from 'sf-symbols-typescript';
-
-import type { TKey, TVars } from '@/i18n';
-import { materialIcon, prefetchMaterialIcons, type MaterialIconName } from '@/ui/materialIcons';
-import { HEADER_ACTIONS, type HeaderActionKey } from './headerActions';
+import { type MaterialIconName, materialIcon, prefetchMaterialIcons } from '@/features/core/design-system';
+import { HEADER_ACTIONS, type HeaderActionKey } from '@/features/core/navigation/headerActions';
+import type { TKey, TVars } from '@/features/core/translations';
 
 /** Glyphs the settings lists draw on Android, beside the header's own. */
 const LIST_GLYPHS: readonly MaterialIconName[] = ['chevron-right', 'remove', 'add', 'check'];
 
 /** Bootstrap calls this before the first navigator renders. A no-op off Android. */
 export function prefetchHeaderIcons(): Promise<void> {
-  const header = Object.values(HEADER_ACTIONS).map((row) => row.material);
+  const header = Object.values(HEADER_ACTIONS).map(row => row.material);
   return prefetchMaterialIcons([...header, ...LIST_GLYPHS]);
 }
 
@@ -42,7 +42,7 @@ export function prefetchHeaderIcons(): Promise<void> {
  */
 export const HeaderToolbar = Stack.Toolbar;
 
-export type HeaderActionOptions = {
+type HeaderActionOptions = {
   action: HeaderActionKey;
   onPress: () => void;
   t: (key: TKey, vars?: TVars) => string;
@@ -76,12 +76,16 @@ export function headerAction({
     ...(variant === undefined ? {} : { variant }),
     ...(tint === undefined ? {} : { tintColor: tint }),
   };
-  // A word on iOS, where a confirming verb in a bar is read. Android's top bar only draws
+  // NOTE: A word on iOS, where a confirming verb in a bar is read. Android's top bar only draws
   // icons (a text-only toolbar button renders nothing there), and Material's confirming
   // action is the check glyph, so text rows fall through to their icon with the label as
   // the spoken name.
   if (row.text && Platform.OS === 'ios') {
-    return <Stack.Toolbar.Button key={action} {...shared}>{spoken}</Stack.Toolbar.Button>;
+    return (
+      <Stack.Toolbar.Button key={action} {...shared}>
+        {spoken}
+      </Stack.Toolbar.Button>
+    );
   }
   if (Platform.OS === 'android') {
     const source = materialIcon(row.material);
@@ -121,7 +125,7 @@ export function headerMenu({
   if (!icon) return null;
   return (
     <Stack.Toolbar.Menu key={action} icon={icon} accessibilityLabel={t(label ?? row.label)}>
-      {items.map((item) => (
+      {items.map(item => (
         <Stack.Toolbar.MenuAction
           key={item.key}
           onPress={item.onPress}

@@ -8,4 +8,4 @@ export {
   hydrateSettings,
   updateSettings,
 } from './store';
-export { useSettings, useSettingsUpdate, useThemeMode } from './hooks';
+export { useSettings, useSettingsUpdate } from './hooks';
