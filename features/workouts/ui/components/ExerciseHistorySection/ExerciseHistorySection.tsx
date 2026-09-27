@@ -14,9 +14,9 @@ import {
 } from '@/features/core/design-system';
 import { useAppTheme } from '@/features/core/theme';
 import { useT } from '@/features/core/translations';
-import { ExerciseHistoryRow } from '@/features/exercises/ui/components/ExerciseHistoryRow/ExerciseHistoryRow';
-import { useExerciseHistorySectionLogic } from '@/features/exercises/ui/components/ExerciseHistorySection/ExerciseHistorySection.logic';
-import { createStyles } from '@/features/exercises/ui/components/ExerciseHistorySection/ExerciseHistorySection.style';
+import { ExerciseHistoryRow } from '@/features/workouts/ui/components/ExerciseHistoryRow/ExerciseHistoryRow';
+import { useExerciseHistorySectionLogic } from '@/features/workouts/ui/components/ExerciseHistorySection/ExerciseHistorySection.logic';
+import { createStyles } from '@/features/workouts/ui/components/ExerciseHistorySection/ExerciseHistorySection.style';
 
 /**
  * The exercise detail's history: when it was last done, the heaviest weight per session, the

@@ -4,9 +4,9 @@ import { Badge, ICON_SIZE, Icon, ListRow, Txt, useStyles } from '@/features/core
 import type { Theme } from '@/features/core/theme';
 import { useT } from '@/features/core/translations';
 import type { UnitSystem } from '@/features/core/utils';
-import { useExerciseHistoryRowLogic } from '@/features/exercises/ui/components/ExerciseHistoryRow/ExerciseHistoryRow.logic';
-import { createStyles } from '@/features/exercises/ui/components/ExerciseHistoryRow/ExerciseHistoryRow.style';
-import type { ExercisePerformance } from '@/queries/useExerciseHistory';
+import type { ExercisePerformance } from '@/features/workouts/domain/entities/ExerciseHistory';
+import { useExerciseHistoryRowLogic } from '@/features/workouts/ui/components/ExerciseHistoryRow/ExerciseHistoryRow.logic';
+import { createStyles } from '@/features/workouts/ui/components/ExerciseHistoryRow/ExerciseHistoryRow.style';
 
 /**
  * One past session with this exercise: the top set as the title, the date and the sets done as

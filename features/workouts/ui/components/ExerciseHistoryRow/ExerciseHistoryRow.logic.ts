@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import type { MetaItem } from '@/features/core/design-system';
 import { useT } from '@/features/core/translations';
 import { agoLabel, formatWeight, shortDateLabel, type UnitSystem } from '@/features/core/utils';
-import type { ExercisePerformance } from '@/queries/useExerciseHistory';
+import type { ExercisePerformance } from '@/features/workouts/domain/entities/ExerciseHistory';
 
 /** One past session's labels: the top set, the date and sets done, and the estimate or the age. */
 export function useExerciseHistoryRowLogic(

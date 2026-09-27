@@ -17,7 +17,6 @@
  * at a glance.
  */
 import type { Href } from 'expo-router';
-import type { PersonalRecord } from '@/domain/types';
 import type { TKey } from '@/features/core/translations';
 
 type TabKey = '(home)' | 'workout' | 'profile';
@@ -110,6 +109,7 @@ export const routes = {
   renameRoutine: (id: string) => ({ pathname: '/routine/rename', params: { id } }) as Href,
   sessionSet: (entryIndex: number, setIndex: number) =>
     ({ pathname: '/workout/set', params: { entry: String(entryIndex), set: String(setIndex) } }) as Href,
-  sessionRecords: (records: readonly PersonalRecord[]) =>
+  // NOTE: the records a finish set go to the sheet as JSON, and the sheet decodes them.
+  sessionRecords: (records: readonly object[]) =>
     ({ pathname: '/workout/records', params: { records: JSON.stringify(records) } }) as Href,
 } as const;

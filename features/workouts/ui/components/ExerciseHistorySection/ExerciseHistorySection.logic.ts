@@ -5,7 +5,8 @@ import { routes } from '@/features/core/navigation';
 import { useT } from '@/features/core/translations';
 import { agoLabel, formatShortDateLocalized, formatWeight } from '@/features/core/utils';
 import { useSettings } from '@/features/settings';
-import { formatRecordValue, RECORD_LABEL, useExerciseHistory } from '@/queries/useExerciseHistory';
+import { useExerciseHistory } from '@/features/workouts/facades/useExerciseHistory';
+import { formatRecordValue, RECORD_LABEL } from '@/features/workouts/mappers/recordLabels';
 
 /** History rows shown before the list stops. */
 const HISTORY_PREVIEW = 6;
