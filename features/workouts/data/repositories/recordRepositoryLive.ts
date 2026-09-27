@@ -1,7 +1,7 @@
 import { Effect, Layer } from 'effect';
 import { SqliteClient, trySql } from '@/features/core/sqlite';
 import { decodeRows } from '@/features/workouts/data/adapters/decodeRows';
-import { RecordRow, recordFromRow } from '@/features/workouts/data/adapters/recordRows';
+import { RecordRow, recordsFromRows } from '@/features/workouts/data/adapters/recordRows';
 import { RecordRepository } from '@/features/workouts/domain/repositories/RecordRepository';
 import type { PersonalRecord } from '@/features/workouts/domain/schemas/PersonalRecordSchema';
 
@@ -63,10 +63,7 @@ export const RecordRepositoryLive = Layer.effect(
        WHERE exercise_id = ? ORDER BY kind`,
             [exerciseId],
           ),
-        ).pipe(
-          Effect.flatMap(decodeRecords),
-          Effect.map(rows => rows.map(recordFromRow)),
-        ),
+        ).pipe(Effect.flatMap(decodeRecords), Effect.map(recordsFromRows)),
 
       upsertBests: records => Effect.forEach(records, upsertBest, { discard: true }),
     };
