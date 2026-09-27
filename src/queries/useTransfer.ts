@@ -53,7 +53,7 @@ export function useExport() {
 export function useResolvedImport(staged: StagedImport | null) {
   return useQuery({
     queryKey: queryKeys.transfer.resolve(staged?.id ?? 'none'),
-    queryFn: ({ signal }) => resolveRoutines(staged?.routines ?? [], signal),
+    queryFn: () => resolveRoutines(staged?.routines ?? []),
     enabled: staged !== null,
     staleTime: Infinity,
     gcTime: 0,

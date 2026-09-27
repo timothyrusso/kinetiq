@@ -70,76 +70,8 @@ export type Activity = {
 
 /* ------------------------------------------------------------- exercises -- */
 
-/**
- * The exercise shape the app actually uses. `source` + `externalId` let us trace
- * a row back to wger, and let a saved routine survive the API disappearing.
- */
-export type Exercise = {
-  id: string;
-  name: string;
-  instructions: string | null;
-  category: string | null;
-  primaryMuscles: string[];
-  secondaryMuscles: string[];
-  equipment: string[];
-  imageUrl: string | null;
-  /** Smaller/thumbnail image for list rows; falls back to `imageUrl`. */
-  thumbnailUrl: string | null;
-  videoUrl: string | null;
-  source: ExerciseSource;
-  /** Remote id, when this originated from the exercise provider. */
-  externalId: number | null;
-};
-
-type ExerciseSource = 'remote' | 'local';
-
-/**
- * Frozen copy of an exercise stored alongside a routine/session. This is what
- * makes saved routines work with the network off: we never re-fetch to render a
- * routine the user already owns.
- */
-export type ExerciseSnapshot = {
-  exerciseId: string;
-  name: string;
-  instructions: string | null;
-  category: string | null;
-  primaryMuscles: string[];
-  secondaryMuscles: string[];
-  equipment: string[];
-  /** Full-size image, used on the detail screen. */
-  imageUrl: string | null;
-  /**
-   * Small variant for list rows. Stored separately because routine lists can
-   * show a dozen at once, and fetching full-size art per row is a frame budget
-   * spent on pixels nobody can see.
-   */
-  thumbnailUrl: string | null;
-  externalId: number | null;
-  capturedAt: number;
-};
-
-/** Provider-facing page shape; pagination cursor is provider-agnostic. */
-export type ExercisePage = {
-  items: Exercise[];
-  /** Opaque cursor for the next page; null when exhausted. */
-  nextCursor: string | null;
-  total: number | null;
-};
-
-export type ExerciseFilter = {
-  query: string;
-  categoryId: number | null;
-  equipmentId: number | null;
-  muscleId: number | null;
-};
-
-export type ExerciseTaxonomy = {
-  categories: Taxon[];
-  equipment: Taxon[];
-  muscles: Taxon[];
-};
-
-export type Taxon = { id: number; name: string };
+/** Moved to `@/features/exercises`: this re-export keeps legacy imports building until the owning child deletes it. */
+export type { Exercise, ExerciseSnapshot } from '@/features/exercises';
 
 /* --------------------------------------------------------------- routine -- */
 

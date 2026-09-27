@@ -3,14 +3,11 @@ import type { Migration } from '@timothyrusso/effect-core';
 /**
  * Schema v9: the exercise catalog.
  *
- * Exported so the legacy catalog repository tests can build the same tables in an in-memory
- * database without running every migration.
- *
  * Junction tables rather than JSON arrays, so the muscle and equipment filters are indexed joins.
  * The `exercises` snapshot table and `routine_items.exercise_id` are untouched: the catalog is
  * reference data, and a routine keeps the snapshot it was written with.
  */
-export const CATALOG_SCHEMA = `
+const CATALOG_SCHEMA = `
   CREATE TABLE catalog_meta (
     key   TEXT PRIMARY KEY NOT NULL,
     value TEXT NOT NULL

@@ -13,12 +13,12 @@
 import { memo } from 'react';
 import { RefreshControl, type RefreshControlProps, type StyleProp, View, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { isOfflineError } from '@/api';
 import { useShimmer } from '@/features/core/design-system/animation/animation';
 import { Button } from '@/features/core/design-system/controls/Button';
 import { Icon, type IconName } from '@/features/core/design-system/icons/icons';
 import { Stack } from '@/features/core/design-system/layout/Stack';
 import { Txt } from '@/features/core/design-system/text/Text';
+import { isOfflineFailure } from '@/features/core/error';
 import { haptics } from '@/features/core/haptics';
 import { radius, screenGutter, spacing, useAppTheme } from '@/features/core/theme';
 import { useT } from '@/features/core/translations';
@@ -267,7 +267,7 @@ export const ErrorState = memo(function ErrorState({
   compact?: boolean;
 }) {
   const { t } = useT();
-  const offline = isOfflineError(error);
+  const offline = isOfflineFailure(error);
   return (
     <StateScaffold
       icon={offline ? 'offline' : 'warning'}

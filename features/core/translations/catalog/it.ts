@@ -763,5 +763,8 @@ export const it: Copy = {
     notificationPermissionDenied: 'Le notifiche di Kinetiq sono disattivate nelle impostazioni di sistema.',
     notificationScheduleFailed: 'Non è stato possibile programmare la notifica.',
     watchUnavailable: "L'Apple Watch non è disponibile.",
+    catalogNotInstalled: 'Non è stato possibile installare la libreria degli esercizi.',
+    catalogFetchFailed: 'Non è stato possibile leggere il download della libreria degli esercizi. Riprova più tardi.',
+    exerciseNotFound: 'Questo esercizio non è nella libreria.',
   },
 };

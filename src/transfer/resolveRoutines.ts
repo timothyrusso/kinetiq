@@ -20,11 +20,9 @@
  * muscles, no picture and no instructions that nothing could ever refresh. The preview lists
  * what was dropped, and says when the reason is being offline rather than a bad name.
  */
-import { FIRST_PAGE } from '@/api/types';
-import { getExerciseProvider, isOfflineError } from '@/api';
-import type { ExerciseProvider } from '@/api';
-import { externalIdOf } from '@/domain/exerciseId';
 import type { ExerciseSnapshot, RoutineItem } from '@/domain/types';
+import { isOfflineFailure } from '@/features/core/error';
+import { catalogExercise, searchCatalog } from '@/services/catalog';
 import {
   routineRepository,
   snapshotById,
@@ -46,35 +44,21 @@ function normalise(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 }
 
-async function byCatalogId(
-  provider: ExerciseProvider,
-  id: string,
-  signal?: AbortSignal,
-): Promise<ExerciseSnapshot | null> {
-  const externalId = externalIdOf(id);
-  if (externalId === null) return null;
-  const exercise = await provider.byId(externalId, signal);
+async function byCatalogId(id: string): Promise<ExerciseSnapshot | null> {
+  const exercise = await catalogExercise(id);
   return exercise ? snapshotOf(exercise) : null;
 }
 
-async function byCatalogName(
-  provider: ExerciseProvider,
-  name: string,
-  signal?: AbortSignal,
-): Promise<Match | null> {
-  const page = await provider.page(
-    { query: name, categoryId: null, equipmentId: null, muscleId: null },
-    FIRST_PAGE,
-    signal,
-  );
+async function byCatalogName(name: string): Promise<Match | null> {
+  const items = await searchCatalog(name);
   const wanted = normalise(name);
-  const exact = page.items.find((e) => normalise(e.name) === wanted);
+  const exact = items.find((e) => normalise(e.name) === wanted);
   if (exact) return { status: 'catalog', snapshot: snapshotOf(exact) };
-  const first = page.items[0];
+  const first = items[0];
   return first ? { status: 'closest', snapshot: snapshotOf(first) } : null;
 }
 
-async function matchItem(provider: ExerciseProvider, item: ParsedItem, signal?: AbortSignal): Promise<Match> {
+async function matchItem(item: ParsedItem): Promise<Match> {
   let offline = false;
   // Each catalog step is allowed to fail on its own: an offline id lookup must not stop a
   // stored-name match from being found.
@@ -82,7 +66,7 @@ async function matchItem(provider: ExerciseProvider, item: ParsedItem, signal?: 
     try {
       return await step();
     } catch (error) {
-      if (isOfflineError(error)) offline = true;
+      if (isOfflineFailure(error)) offline = true;
       return null;
     }
   };
@@ -91,7 +75,7 @@ async function matchItem(provider: ExerciseProvider, item: ParsedItem, signal?: 
     const stored = await snapshotById(item.exerciseId);
     if (stored) return { status: 'stored', snapshot: stored };
     if (!offline) {
-      const remote = await attempt(() => byCatalogId(provider, item.exerciseId!, signal));
+      const remote = await attempt(() => byCatalogId(item.exerciseId!));
       if (remote) return { status: 'catalog', snapshot: remote };
     }
   }
@@ -99,25 +83,21 @@ async function matchItem(provider: ExerciseProvider, item: ParsedItem, signal?: 
     const stored = await snapshotByName(item.exerciseName);
     if (stored) return { status: 'stored', snapshot: stored };
     if (!offline) {
-      const found = await attempt(() => byCatalogName(provider, item.exerciseName, signal));
+      const found = await attempt(() => byCatalogName(item.exerciseName));
       if (found) return found;
     }
   }
   return { status: 'missing', offline };
 }
 
-export async function resolveRoutines(
-  routines: readonly ParsedRoutine[],
-  signal?: AbortSignal,
-): Promise<ResolvedRoutine[]> {
-  const provider = getExerciseProvider();
+export async function resolveRoutines(routines: readonly ParsedRoutine[]): Promise<ResolvedRoutine[]> {
   // The same exercise in four routines of a split is one lookup, not four requests.
   const cache = new Map<string, Promise<Match>>();
   const lookup = (item: ParsedItem) => {
     const key = `${item.exerciseId ?? ''}|${normalise(item.exerciseName)}`;
     let pending = cache.get(key);
     if (!pending) {
-      pending = matchItem(provider, item, signal);
+      pending = matchItem(item);
       cache.set(key, pending);
     }
     return pending;

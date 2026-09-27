@@ -15,8 +15,7 @@
  *    the exercise list has been browsed once still show results.
  */
 import { focusManager, MutationCache, onlineManager, QueryClient } from '@tanstack/react-query';
-import { isApiError } from '@/api';
-import { HttpError, type HttpErrorKind, isAppError } from '@/features/core/error';
+import { HTTP_RETRY_BUDGET, HttpError, httpRetryDelayMs, isAppError } from '@/features/core/error';
 import { type QueryAdapters, setupQueryAdapters } from '@/features/core/query/adapters';
 
 /**
@@ -28,55 +27,18 @@ import { type QueryAdapters, setupQueryAdapters } from '@/features/core/query/ad
 const STALE_TIME_MS = 2 * 60_000;
 
 /**
- * Retry budget by failure kind. The count is the number of *retries*, so 2 means
- * at most three attempts.
- *
- * The distinction that matters: a 429 from wger is a real rate limit and
- * `retryAfterSeconds` tells us how long to wait, while an offline error must not
- * be retried at all: the connection is gone, and hammering it drains battery and
- * makes a dead network look like a slow one. Offline recovery is the `online`
- * manager's job: it resumes paused retries the moment the interface comes back.
- */
-const RETRY_BUDGET: Record<HttpErrorKind, number> = {
-  'rate-limit': 3,
-  timeout: 2,
-  server: 2,
-  offline: 0,
-  cancelled: 0,
-  'not-found': 0,
-  'bad-request': 0,
-  parse: 0,
-  unknown: 1,
-};
-
-/**
- * The remote failure a query reports, if it is one: an `HttpError` from an Effect query, or the
- * legacy `ApiError` the plain queries still throw until the exercise sources move to Effect.
- */
-function httpFailure(error: Error): { kind: HttpErrorKind; retryAfterSeconds: number | null } | null {
-  if (error instanceof HttpError || isApiError(error)) return error;
-  return null;
-}
-
-/**
- * Remote failures retry by kind. Any other app error already went through its Effect, retries
- * included, and was logged once at the boundary, so TanStack does not run it again; a plain
- * query's unknown failure keeps its one retry.
+ * Remote failures retry by kind, on the budget in `core/error`. Any other app error already went
+ * through its Effect, retries included, and was logged once at the boundary, so TanStack does not
+ * run it again; a plain query's unknown failure keeps its one retry.
  */
 function shouldRetry(failureCount: number, error: Error): boolean {
-  const failure = httpFailure(error);
-  if (failure === null && isAppError(error)) return false;
-  return failureCount < (RETRY_BUDGET[failure?.kind ?? 'unknown'] ?? 0);
+  if (error instanceof HttpError) return failureCount < HTTP_RETRY_BUDGET[error.kind];
+  if (isAppError(error)) return false;
+  return failureCount < HTTP_RETRY_BUDGET.unknown;
 }
 
 function retryDelay(attemptIndex: number, error: Error): number {
-  const failure = httpFailure(error);
-  if (failure !== null && failure.retryAfterSeconds !== null) {
-    // NOTE: Honour the server's own backoff, with a floor so a `Retry-After: 0` cannot
-    // turn into a hot loop.
-    return Math.max(1_000, failure.retryAfterSeconds * 1_000);
-  }
-  return Math.min(20_000, 300 * 2 ** attemptIndex);
+  return httpRetryDelayMs(attemptIndex, error instanceof HttpError ? error.retryAfterSeconds : null);
 }
 
 function createQueryClient(): QueryClient {

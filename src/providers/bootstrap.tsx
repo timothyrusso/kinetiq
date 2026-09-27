@@ -18,9 +18,8 @@
  * 1. **Database first.** Almost everything downstream reads from it, and opening it
  *    runs the migrations: the only step that can permanently change on-disk state,
  *    so it is deliberately the earliest thing allowed to fail.
- * 2. **Config before consumers.** The exercise provider is configured before any
- *    query can run, and the query adapters are installed before the first subscriber
- *    attaches. Installing them after the first mount would leave the app's first
+ * 2. **Config before consumers.** The query adapters are installed before the first
+ *    subscriber attaches. Installing them after the first mount would leave the app's first
  *    screen without focus/online wiring: precisely the bug that shows up as "why is
  *    it refetching when I switch tabs".
  * 3. **Cheap before expensive.** Fonts and the header icons are the two slow steps,
@@ -45,10 +44,7 @@ import * as NavigationBar from 'expo-system-ui';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import { configureExerciseProvider } from '@/api';
-import { createLocalProvider } from '@/api/local/provider';
-import { installBundledCatalogIfMissing } from '@/catalog/install';
-import { maybeRefreshCatalog, scheduleCatalogRefresh } from '@/catalog/refresh';
+import { installBundledCatalog, maybeRefreshCatalog, scheduleCatalogRefresh } from '@/services/catalog';
 import { loadAppFonts } from '@/fonts';
 import type { DatabaseOpenResult } from '@/persistence';
 import { bootDatabase, readStoredSettings } from '@/providers/database';
@@ -163,21 +159,17 @@ export async function runBootstrap(systemDark: boolean): Promise<BootstrapOutcom
   //    fatal screen.
   const database = await bootDatabase();
 
-  // 2. The exercise provider: the local catalog, which reads the database opened above and
-  //    the in-app language from the settings store at call time.
-  configureExerciseProvider(createLocalProvider());
-
-  // 3. Query plumbing, before anything can subscribe. The disposers are dropped
+  // 2. Query plumbing, before anything can subscribe. The disposers are dropped
   //    deliberately: these are process-lifetime singletons and there is no second
   //    bootstrap to tear them down for.
   void startNetworkStatus();
   void installQueryAdapters();
 
-  // 4. The handler must exist before any notification can be scheduled: including
+  // 3. The handler must exist before any notification can be scheduled: including
   //    the reminder two steps down.
   installNotificationHandler();
 
-  // 5. Settings, into the store, before the first component reads them. The chrome is
+  // 4. Settings, into the store, before the first component reads them. The chrome is
   //    painted from the same folded value the store is about to hold, so the two can
   //    never disagree about what colour this launch was.
   const settings = await readSettingsSnapshot(database.migrationError !== undefined);
@@ -186,38 +178,38 @@ export async function runBootstrap(systemDark: boolean): Promise<BootstrapOutcom
     settings.themeMode === 'system' ? (systemDark ? 'dark' : 'light') : settings.themeMode;
   applyNativeChrome(launchTheme);
 
-  // 6. The two slow steps, overlapped with each other and with everything after.
+  // 5. The two slow steps, overlapped with each other and with everything after.
   const fontsLoaded = loadAppFonts();
   // Android's native header takes images, not glyph names, so the header-action icons are
   // rendered once here, in the same wait as the fonts, and the first bar already has them.
   const headerIcons = prefetchHeaderIcons();
   // First launch only: the bundled exercise catalog goes into SQLite, so day one works with no
   // network. Every later launch this is one indexed read of `catalog_meta`.
-  await installBundledCatalogIfMissing();
+  await installBundledCatalog(database.migrationError !== undefined);
 
-  // 7. Active-workout restoration settles *before* the first frame so the "resume"
+  // 6. Active-workout restoration settles *before* the first frame so the "resume"
   //    affordance ships with the launch instead of popping in 300ms later.
   const session = await hydrateWorkoutSession();
 
-  // 8. Fonts are the only thing from step 6 the first frame genuinely needs, so that
+  // 7. Fonts are the only thing from step 5 the first frame genuinely needs, so that
   //    is what the splash waits on.
   await Promise.all([fontsLoaded, headerIcons]);
 
-  // 9. Reconcile the reminder schedule with reality, including the case where the
+  // 8. Reconcile the reminder schedule with reality, including the case where the
   //    user revoked permission in the OS while the app was closed. Not awaited: a
   //    device with no notification support must not delay the launch.
   void syncTrainingReminder(settings.reminder, settings.notificationsEnabled).catch(
     () => undefined,
   );
 
-  // 10. The Apple Watch: subscribe the routine snapshot to its triggers, push the current one,
+  // 9. The Apple Watch: subscribe the routine snapshot to its triggers, push the current one,
   //     and save any workout the watch finished while the app was closed. Not awaited, and
   //     every step catches in place: no watch, or a watch that is out of range, must not delay
   //     or fail the launch.
   installWatchSync(syncWatchInbox);
   syncWatch();
 
-  // 11. The exercise catalog, refreshed in the background when it is more than 30 days old and
+  // 10. The exercise catalog, refreshed in the background when it is more than 30 days old and
   //     the device is online. Not awaited, and it never throws: the catalog on the device is
   //     what renders, and a failed download leaves it exactly as it was.
   scheduleCatalogRefresh();

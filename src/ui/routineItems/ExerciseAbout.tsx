@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Txt } from '@/ui/Text';
 import { Image } from 'expo-image';
 import { EXERCISE_IMAGE_CACHE } from '@/ui/imageCache';
-import { useExerciseResolution } from '@/queries/useExercises';
+import { useExercise } from '@/queries/useExercises';
 import { palette, spacing } from '@/theme/tokens';
 import { useT } from '@/i18n/useT';
 
@@ -11,13 +11,13 @@ import { useT } from '@/i18n/useT';
  * What the library says about the exercise: its picture and its description, under the
  * targets so adjusting sets and reps never has to scroll past them.
  *
- * Read through `useExerciseResolution`, not the snapshot alone: a snapshot captured from a
+ * Read through `useExercise`, not the snapshot alone: a snapshot captured from a
  * search row often has no description and only a thumbnail, and the resolution fills both in
  * from wger (or from the stored copy offline). A missing description is said, not hidden.
  */
 export function ExerciseAbout({ exerciseId }: { exerciseId: string }) {
   const { t } = useT();
-  const detail = useExerciseResolution(exerciseId);
+  const detail = useExercise(exerciseId);
   const exercise = detail.exercise;
   const image = exercise?.imageUrl ?? exercise?.thumbnailUrl ?? null;
   const instructions = exercise?.instructions?.trim() || null;
