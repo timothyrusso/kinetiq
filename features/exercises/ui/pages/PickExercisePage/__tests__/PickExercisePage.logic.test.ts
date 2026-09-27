@@ -53,6 +53,26 @@ describe('usePickExercisePageLogic', () => {
     await done();
   });
 
+  it('offers Load more while rows already read are still hidden', async () => {
+    const { result, done } = await renderPicker();
+
+    await waitFor(() => expect(result.current.state.rows).toHaveLength(24));
+
+    expect(result.current.state.hasMore).toBe(true);
+    await done();
+  });
+
+  it('stops offering Load more once every matching row is shown', async () => {
+    const { result, done } = await renderPicker();
+    await waitFor(() => expect(result.current.state.rows).toHaveLength(24));
+
+    await act(async () => result.current.effects.loadMore());
+
+    await waitFor(() => expect(result.current.state.rows).toHaveLength(32));
+    expect(result.current.state.hasMore).toBe(false);
+    await done();
+  });
+
   it('hands the chosen row to onPick', async () => {
     const picked: Exercise[] = [];
     const { result, done } = await renderPicker(picked);
