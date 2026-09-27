@@ -26,7 +26,8 @@ export const makeTestAppLayer = () => {
   return { layer, logs, haptics: haptics.played };
 };
 
-type CoreTestServices = Layer.Layer.Success<ReturnType<typeof makeTestAppLayer>['layer']>;
+/** What {@link makeTestAppLayer} provides: the services a feature Layer under test may need. */
+export type CoreTestServices = Layer.Layer.Success<ReturnType<typeof makeTestAppLayer>['layer']>;
 
 /**
  * A runtime for facade and hook tests: the given feature Layers over {@link makeTestAppLayer},

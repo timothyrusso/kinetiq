@@ -107,6 +107,8 @@ jobs:
 
       - run: npm run check
 
+      - run: npm run test:coverage
+
       - name: Bundle for iOS (JavaScript only, no native build)
         run: npx expo export --platform ios --output-dir "$RUNNER_TEMP/expo-export"
 

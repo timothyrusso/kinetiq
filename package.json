@@ -81,6 +81,7 @@
     "check:hooks": "config-presets check-hooks",
     "check:watch": "node scripts/check-watch-i18n.js && node scripts/check-watch-bounds.js && swiftlint lint --strict --quiet --config targets/.swiftlint.yml && swift test --package-path targets",
     "test": "jest --passWithNoTests",
+    "test:coverage": "jest --coverage && node scripts/check-coverage.js",
     "format": "biome check --write .",
     "check:text": "config-presets check-text",
     "check:arch": "config-presets check-deps",
