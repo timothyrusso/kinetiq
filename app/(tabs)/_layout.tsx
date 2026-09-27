@@ -1,43 +1,28 @@
-/**
- * Bottom tabs: the real one.
- *
- * `NativeTabs` renders a `UITabBarController` on iOS and a `BottomNavigationView` on Android,
- * so the bar is the platform's own rather than a drawn imitation of it. On iOS 26 that means
- * genuine Liquid Glass: the system material, its scroll-edge behaviour, the minimise-on-scroll
- * gesture and the tab-bar accessory slot: none of which can be reproduced by putting a glass
- * view behind a row of `Pressable`s, which is what this file used to do.
- *
- * ## What the custom bar was buying, and where each piece went
- *
- *  - The live-workout pill: now `NativeTabs.BottomAccessory`, which on iOS 26 is the same slot
- *    Apple Music puts its mini player in. It was previously a hand-positioned overlay, then an
- *    accessory inside a hand-drawn bar; this is the real thing.
- *  - The sliding accent indicator: gone, deliberately. The system bar has its own selection
- *    treatment, and a second indicator drawn on top would fight it.
- *  - Icons: SF Symbols on iOS and Material glyphs on Android, via one `Icon` carrying both,
- *    no icon-font dependency, since both sets are built into their platform. Every SF Symbol
- *    chosen here exists at or below iOS 16.0, this app's deployment target: `dumbbell` would
- *    have been the obvious pick for Workout and is iOS 17+, so it would render as a blank
- *    square on the floor of our support range.
- *
- * ## Content insets and headers
- *
- * Each tab is its own stack with the platform's large-title header (`src/navigation/TabStack`),
- * and the system's automatic content insets are on: the tab's list is the screen's first child
- * and adjusts itself for the header above and the bar below. The one thing the system does not
- * account for is the bottom accessory, which `useTabContentBottom` adds while a workout runs.
- */
-import { Platform } from 'react-native';
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
-// `Icon` and `Label` are the shared primitives, exported from the package root rather than
-// from the native-tabs subpath.
 import { Icon, Label } from 'expo-router';
-
-import { useAppTheme, type Theme } from '@/theme/theme';
-import { useT } from '@/i18n/useT';
+import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { Platform } from 'react-native';
+import { type Theme, useAppTheme } from '@/features/core/theme';
+import { useT } from '@/features/core/translations';
 import { useWorkoutRunning } from '@/features/workouts';
 import { WorkoutAccessory } from '@/features/workouts/pages';
 
+/**
+ * Bottom tabs: the real one. `NativeTabs` renders a `UITabBarController` on iOS and a
+ * `BottomNavigationView` on Android, so the bar is the platform's own: on iOS 26 that is genuine
+ * Liquid Glass, its scroll-edge behaviour, the minimise-on-scroll gesture and the accessory slot.
+ * The tint is the app's accent, so the selected tab belongs to this product.
+ *
+ * Icons are SF Symbols on iOS and Material glyphs on Android, both built into their platform;
+ * every SF Symbol here exists at or below iOS 16.0, the deployment target (`dumbbell` is iOS 17+).
+ * `accessibilityLabel` repeats the label on purpose: without it UIKit derives the spoken label from
+ * the first title and keeps it, so after a language change VoiceOver kept the old language.
+ *
+ * The live-workout pill is `NativeTabs.BottomAccessory`, the slot Apple Music puts its mini player
+ * in, mounted only while a workout runs: returning `null` inside it still renders the slot, a glass
+ * pill over the bar. The boolean selector keeps this cheap while the session ticks every second.
+ * Each tab is its own stack with the platform's large-title header (`TabStack`), and the system's
+ * automatic content insets are on; `useTabContentBottom` adds the accessory's height.
+ */
 export default function TabsLayout() {
   const theme = useAppTheme();
   const { t } = useT();
@@ -45,18 +30,10 @@ export default function TabsLayout() {
 
   return (
     <NativeTabs
-      // The app's accent, so the selected tab belongs to this product rather than to the
-      // system default blue.
       tintColor={theme.colors.accent}
-      // iOS 26: the bar shrinks to a pill as the user scrolls down and returns on scroll up.
-      // This is the behaviour people now read as "a current iOS app".
       minimizeBehavior="onScrollDown"
       {...(Platform.OS === 'android' ? androidBar(theme) : {})}
     >
-      {/* `accessibilityLabel` repeats the label on purpose. With none set, UIKit derives the
-          tab item's spoken label from its first title and keeps it: switch the app from
-          Italian to English and the bar read "Workout" while VoiceOver still said
-          "Allenamento". Set explicitly, a language change is a prop change and reaches it. */}
       <NativeTabs.Trigger name="(home)" accessibilityLabel={t('tabs.home')}>
         <Icon sf={{ default: 'house', selected: 'house.fill' }} md="home" />
         <Label>{t('tabs.home')}</Label>
@@ -72,11 +49,6 @@ export default function TabsLayout() {
         <Label>{t('tabs.profile')}</Label>
       </NativeTabs.Trigger>
 
-      {/* Mounted only while a workout is running. Returning `null` from inside the accessory is
-          not enough: the slot itself still renders, and on iOS that is a full-width glass pill
-          sitting over the tab bar. In dark mode it read as a light bar across the bottom of the
-          screen with the tab labels hidden behind it. The boolean selector is what makes this
-          cheap, since the session republishes every second while a workout runs. */}
       {running ? (
         <NativeTabs.BottomAccessory>
           <WorkoutAccessory />
@@ -87,14 +59,11 @@ export default function TabsLayout() {
 }
 
 /**
- * The Android bar's colours, from the app's theme rather than the system's.
- *
- * Left to the defaults, `BottomNavigationView` takes Material You's dynamic colours, which
- * follow the SYSTEM light or dark mode, not the app's. With the app dark and the phone light,
- * that was a pale grey bar under a dark screen, with the lime accent close to invisible on it.
- * So the bar is the app's surface, the selected tab is the accent pill with the ink that sits
- * on the accent everywhere else (near-black in dark mode), and the labels are always shown:
- * the default hides every label but the selected one. The press ripple is off.
+ * The Android bar's colours, from the app's theme rather than the system's. Left to the defaults,
+ * `BottomNavigationView` takes Material You's dynamic colours, which follow the system's light or
+ * dark mode, not the app's: a pale bar under a dark screen. So the bar is the app's surface, the
+ * selected tab is the accent pill with the ink that sits on the accent, the labels are always
+ * shown, and the press ripple is off.
  */
 function androidBar(theme: Theme) {
   const { colors } = theme;
@@ -107,4 +76,3 @@ function androidBar(theme: Theme) {
     labelStyle: { default: { color: colors.textMuted }, selected: { color: colors.text } },
   } as const;
 }
-
