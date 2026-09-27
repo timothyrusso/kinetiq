@@ -13,14 +13,14 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 
-import type { Exercise } from '@/domain/types';
+import type { Exercise } from '@/features/exercises';
+import { PickExercisePage } from '@/features/exercises/pages';
 import { useT } from '@/i18n/useT';
 import { useAddRoutineExercise, useRoutine } from '@/queries/useRoutines';
 import { defaultItemTarget } from '@/routines/draft';
 import { addDraftExercise, containsExercise, useRoutineDraft } from '@/routines/draftStore';
 import { haptics } from '@/services/haptics';
 import { useSettings } from '@/features/settings';
-import { ExercisePicker } from '@/ui/exercisePicker';
 import { useWorkoutSession } from '@/workout/session';
 import { addExerciseToSession } from '@/workout/sessionExercises';
 
@@ -40,7 +40,7 @@ function IntoDraft() {
     addDraftExercise(exercise);
     haptics.success();
   }, []);
-  return <ExercisePicker isIncluded={containsExercise} onPick={pick} error={null} />;
+  return <PickExercisePage isIncluded={containsExercise} onPick={pick} error={null} />;
 }
 
 function IntoRoutine({ routineId }: { routineId: string }) {
@@ -66,7 +66,7 @@ function IntoRoutine({ routineId }: { routineId: string }) {
     },
     [addExercise, defaultRest, routineId, t],
   );
-  return <ExercisePicker isIncluded={isIncluded} onPick={pick} error={error} />;
+  return <PickExercisePage isIncluded={isIncluded} onPick={pick} error={error} />;
 }
 
 function IntoSession() {
@@ -101,5 +101,5 @@ function IntoSession() {
     },
     [defaultRest, ids, t],
   );
-  return <ExercisePicker isIncluded={isIncluded} onPick={pick} error={error} />;
+  return <PickExercisePage isIncluded={isIncluded} onPick={pick} error={error} />;
 }
