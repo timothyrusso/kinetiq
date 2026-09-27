@@ -48,6 +48,18 @@ describe('makeWgerGetJson', () => {
     }),
   );
 
+  const throttled = makeFetch([status(429, { 'Retry-After': '86400' }), json({ count: 3 })]);
+  itEffect(
+    'retries a rate limit after one minute when the server asks for a day',
+    Effect.gen(function* () {
+      const fiber = yield* Effect.fork(makeWgerGetJson(throttled.fetchImpl)(URL));
+
+      yield* advanceClock('1 minute');
+
+      expect(yield* Fiber.join(fiber)).toEqual({ count: 3 });
+    }),
+  );
+
   const flooded = makeFetch([status(429), status(429), status(429), status(429), json({})]);
   itEffect(
     'gives up on a rate limit after three retries',
