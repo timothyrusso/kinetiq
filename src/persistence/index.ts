@@ -22,7 +22,6 @@ export {
 } from './settingsRepository';
 export type { SettingKey } from './settingsRepository';
 export {
-  clearAllUserData,
   openDatabase,
   withTransaction,
 } from './database';
