@@ -603,6 +603,50 @@ export const it: Copy = {
     done: 'Fatto',
   },
 
+  exerciseCategories: {
+    arms: 'Braccia',
+    legs: 'Gambe',
+    abs: 'Addominali',
+    chest: 'Petto',
+    back: 'Schiena',
+    shoulders: 'Spalle',
+    calves: 'Polpacci',
+    cardio: 'Cardio',
+  },
+
+  exerciseMuscles: {
+    biceps: 'Bicipiti',
+    shoulders: 'Spalle',
+    serratus: 'Dentato anteriore',
+    chest: 'Petto',
+    triceps: 'Tricipiti',
+    abs: 'Addominali',
+    calves: 'Polpacci',
+    glutes: 'Glutei',
+    trapezius: 'Trapezio',
+    quads: 'Quadricipiti',
+    hamstrings: 'Femorali',
+    lats: 'Dorsali',
+    brachialis: 'Brachiale',
+    obliques: 'Obliqui esterni',
+    soleus: 'Soleo',
+  },
+
+  exerciseEquipment: {
+    barbell: 'Bilanciere',
+    szBar: 'Bilanciere EZ',
+    dumbbell: 'Manubrio',
+    gymMat: 'Tappetino',
+    swissBall: 'Fitball',
+    pullUpBar: 'Sbarra per trazioni',
+    bodyweight: 'Nessuno (corpo libero)',
+    bench: 'Panca',
+    inclineBench: 'Panca inclinata',
+    kettlebell: 'Kettlebell',
+    resistanceBand: 'Elastico',
+    cableMachine: 'Macchina a cavi',
+  },
+
   misc: {
     loading: 'Caricamento',
     notFoundBody:

@@ -11,13 +11,14 @@ import {
   metaFromRows,
 } from '@/features/exercises/data/adapters/catalogRows';
 import { toSearchKey } from '@/features/exercises/data/adapters/searchKey';
+import { type TaxonKind, taxonName } from '@/features/exercises/data/adapters/taxonNames';
 import type { CatalogWriteKind } from '@/features/exercises/domain/entities/CatalogMeta';
 import { CatalogRepository } from '@/features/exercises/domain/repositories/CatalogRepository';
 import { CATALOG_LANGUAGES, type CatalogLanguage } from '@/features/exercises/domain/schemas/CatalogLanguage';
 import type { CatalogPayload } from '@/features/exercises/domain/schemas/CatalogPayloadSchema';
 import type { ExerciseFilter } from '@/features/exercises/domain/schemas/ExerciseFilterSchema';
 import type { Exercise } from '@/features/exercises/domain/schemas/ExerciseSchema';
-import { TaxonSchema } from '@/features/exercises/domain/schemas/ExerciseTaxonomySchema';
+import { type Taxon, TaxonSchema } from '@/features/exercises/domain/schemas/ExerciseTaxonomySchema';
 
 /**
  * Bound parameters per statement. SQLite builds before 3.32 cap a statement at 999, and a batch
@@ -170,7 +171,7 @@ const SELECT_EXERCISE = `
   SELECT e.id, e.external_id,
          COALESCE(tl.name, te.name) AS name,
          COALESCE(tl.instructions, te.instructions) AS instructions,
-         c.name AS category,
+         c.id AS category_id, c.name AS category,
          e.image_url, e.thumbnail_url, e.video_url
     FROM catalog_exercises e
     LEFT JOIN catalog_translations tl ON tl.exercise_id = e.id AND tl.language = ?
@@ -246,6 +247,16 @@ function pushName(map: Map<string, string[]>, id: string, name: string): void {
   else map.set(id, [name]);
 }
 
+/**
+ * `taxa` named in `language` and ordered by that name, compared as SQLite's default collation
+ * compares, so an English list reads in the order the tables' own `ORDER BY name` gave.
+ */
+function namedTaxa(kind: TaxonKind, taxa: readonly Taxon[], language: CatalogLanguage): readonly Taxon[] {
+  return taxa
+    .map(taxon => ({ id: taxon.id, name: taxonName(kind, taxon.id, taxon.name, language) }))
+    .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+}
+
 /** The exercise catalog in the app database: one writer, and the reads the use cases need. */
 export const CatalogRepositoryLive = Layer.effect(
   CatalogRepository,
@@ -253,7 +264,7 @@ export const CatalogRepositoryLive = Layer.effect(
     const db = yield* SqliteClient;
 
     // NOTE: muscle and equipment names for a set of rows, in two queries rather than two per row.
-    const hydrate = (rows: readonly ExerciseRow[]) =>
+    const hydrate = (rows: readonly ExerciseRow[], language: CatalogLanguage) =>
       Effect.gen(function* () {
         if (rows.length === 0) return [];
         const ids = rows.map(row => row.id);
@@ -262,7 +273,7 @@ export const CatalogRepositoryLive = Layer.effect(
           [
             trySql('read exercise muscles', () =>
               db.getAllAsync<unknown>(
-                `SELECT m.exercise_id, m.role,
+                `SELECT m.exercise_id, m.muscle_id, m.role,
                         COALESCE(NULLIF(TRIM(mu.name_en), ''), mu.name) AS name
                    FROM catalog_exercise_muscles m
                    JOIN catalog_muscles mu ON mu.id = m.muscle_id
@@ -273,7 +284,7 @@ export const CatalogRepositoryLive = Layer.effect(
             ).pipe(Effect.flatMap(decodeMuscleNames)),
             trySql('read exercise equipment', () =>
               db.getAllAsync<unknown>(
-                `SELECT q.exercise_id, eq.name
+                `SELECT q.exercise_id, q.equipment_id, eq.name
                    FROM catalog_exercise_equipment q
                    JOIN catalog_equipment eq ON eq.id = q.equipment_id
                   WHERE q.exercise_id IN (${placeholders})
@@ -288,15 +299,23 @@ export const CatalogRepositoryLive = Layer.effect(
         const primary = new Map<string, string[]>();
         const secondary = new Map<string, string[]>();
         const equipment = new Map<string, string[]>();
-        for (const row of muscleRows) pushName(row.role === 'primary' ? primary : secondary, row.exercise_id, row.name);
-        for (const row of equipmentRows) pushName(equipment, row.exercise_id, row.name);
+        for (const row of muscleRows) {
+          const name = taxonName('muscle', row.muscle_id, row.name, language);
+          pushName(row.role === 'primary' ? primary : secondary, row.exercise_id, name);
+        }
+        for (const row of equipmentRows) {
+          pushName(equipment, row.exercise_id, taxonName('equipment', row.equipment_id, row.name, language));
+        }
 
         return rows.map(
           (row): Exercise => ({
             id: row.id,
             name: row.name ?? `Exercise ${row.external_id}`,
             instructions: row.instructions,
-            category: row.category,
+            category:
+              row.category === null || row.category_id === null
+                ? row.category
+                : taxonName('category', row.category_id, row.category, language),
             primaryMuscles: primary.get(row.id) ?? [],
             secondaryMuscles: secondary.get(row.id) ?? [],
             equipment: equipment.get(row.id) ?? [],
@@ -349,7 +368,7 @@ export const CatalogRepositoryLive = Layer.effect(
             ],
             { concurrency: 'unbounded' },
           );
-          return { items: yield* hydrate(rows), total: count[0]?.n ?? 0 };
+          return { items: yield* hydrate(rows, language), total: count[0]?.n ?? 0 };
         }),
 
       byId: (externalId, language) =>
@@ -357,7 +376,7 @@ export const CatalogRepositoryLive = Layer.effect(
           db.getAllAsync<unknown>(`${SELECT_EXERCISE} WHERE e.external_id = ?`, [language, externalId]),
         ).pipe(
           Effect.flatMap(decodeExercises),
-          Effect.flatMap(rows => hydrate(rows.slice(0, 1))),
+          Effect.flatMap(rows => hydrate(rows.slice(0, 1), language)),
           Effect.map(([exercise]) => exercise),
         ),
 
@@ -372,24 +391,37 @@ export const CatalogRepositoryLive = Layer.effect(
               ${ORDER_BY_NAME}`,
             [language, externalId, externalId],
           ),
-        ).pipe(Effect.flatMap(decodeExercises), Effect.flatMap(hydrate)),
+        ).pipe(
+          Effect.flatMap(decodeExercises),
+          Effect.flatMap(rows => hydrate(rows, language)),
+        ),
 
-      taxonomy: Effect.all(
-        {
-          categories: trySql('read the categories', () =>
-            db.getAllAsync<unknown>('SELECT id, name FROM catalog_categories ORDER BY name'),
-          ).pipe(Effect.flatMap(decodeCategories)),
-          equipment: trySql('read the equipment', () =>
-            db.getAllAsync<unknown>('SELECT id, name FROM catalog_equipment ORDER BY name'),
-          ).pipe(Effect.flatMap(decodeEquipment)),
-          muscles: trySql('read the muscles', () =>
-            db.getAllAsync<unknown>(
-              `SELECT id, COALESCE(NULLIF(TRIM(name_en), ''), name) AS name FROM catalog_muscles ORDER BY 2`,
+      taxonomy: language =>
+        Effect.all(
+          {
+            categories: trySql('read the categories', () =>
+              db.getAllAsync<unknown>('SELECT id, name FROM catalog_categories'),
+            ).pipe(
+              Effect.flatMap(decodeCategories),
+              Effect.map(taxa => namedTaxa('category', taxa, language)),
             ),
-          ).pipe(Effect.flatMap(decodeMuscles)),
-        },
-        { concurrency: 'unbounded' },
-      ),
+            equipment: trySql('read the equipment', () =>
+              db.getAllAsync<unknown>('SELECT id, name FROM catalog_equipment'),
+            ).pipe(
+              Effect.flatMap(decodeEquipment),
+              Effect.map(taxa => namedTaxa('equipment', taxa, language)),
+            ),
+            muscles: trySql('read the muscles', () =>
+              db.getAllAsync<unknown>(
+                `SELECT id, COALESCE(NULLIF(TRIM(name_en), ''), name) AS name FROM catalog_muscles`,
+              ),
+            ).pipe(
+              Effect.flatMap(decodeMuscles),
+              Effect.map(taxa => namedTaxa('muscle', taxa, language)),
+            ),
+          },
+          { concurrency: 'unbounded' },
+        ),
     };
   }),
 );
