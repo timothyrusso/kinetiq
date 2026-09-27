@@ -106,6 +106,7 @@ function testLayer(
       sync: Effect.sync(() => {
         launch.syncs += 1;
       }),
+      push: unused(),
     }),
     Layer.suspend(() => logs.layer),
   );

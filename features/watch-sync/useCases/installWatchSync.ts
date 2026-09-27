@@ -53,8 +53,12 @@ export const drainNow = <R>(drain: Effect.Effect<DrainReport, never, R>) =>
 export const installWatchSync = <R>(link: WatchLink, drain: Effect.Effect<DrainReport, never, R>) =>
   Effect.gen(function* () {
     const run = Runtime.runFork(yield* Effect.runtime<R | RoutineRepository | HistoryRefresh | Logger>());
-    const changes = yield* Queue.sliding<void>(1);
+    // NOTE: the two bridge subscriptions first: they are the steps that can fail, and a failed
+    // install is run again, which must not leave a second debounced push behind.
+    yield* link.onSnapshotRequested(requestId => run(pushNow(link, { force: true, requestId })));
+    yield* link.onInboxChanged(() => run(drainNow(drain)));
 
+    const changes = yield* Queue.sliding<void>(1);
     yield* Stream.fromQueue(changes).pipe(
       Stream.debounce(PUSH_DEBOUNCE),
       Stream.runForEach(() => pushNow(link)),
@@ -72,7 +76,4 @@ export const installWatchSync = <R>(link: WatchLink, drain: Effect.Effect<DrainR
       unitSystem = next;
       Queue.unsafeOffer(changes, undefined);
     });
-
-    yield* link.onSnapshotRequested(requestId => run(pushNow(link, { force: true, requestId })));
-    yield* link.onInboxChanged(() => run(drainNow(drain)));
   });
