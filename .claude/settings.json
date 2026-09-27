@@ -1,0 +1,41 @@
+{
+  "extraKnownMarketplaces": {
+    "agentic-kit": {
+      "source": {
+        "source": "github",
+        "repo": "timothyrusso/agentic-kit"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "agentic-kit@agentic-kit": true
+  },
+  "permissions": {
+    "allow": ["Bash(agent-device *)"],
+    "deny": [
+      "Bash(git commit *--no-verify*)",
+      "Bash(git commit -n)",
+      "Bash(git commit -n *)",
+      "Bash(git commit * -n)",
+      "Bash(git commit * -n *)",
+      "Bash(git commit -n*)",
+      "Bash(git commit * -n*)",
+      "Bash(git -c core.hooksPath*)",
+      "Bash(git * -c core.hooksPath*)",
+      "Bash(git config core.hooksPath*)",
+      "Bash(git config * core.hooksPath*)",
+      "Bash(git push *--no-verify*)",
+      "Bash(git push *--force*)",
+      "Bash(git push -f *)",
+      "Bash(git push * -f)",
+      "Bash(git push * -f *)",
+      "Bash(git push * +*)",
+      "Bash(LEFTHOOK=0 *)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.npmrc)",
+      "Read(./.env)",
+      "Read(./.env.*)"
+    ]
+  }
+}
