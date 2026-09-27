@@ -74,7 +74,7 @@ export function usePressScale(min = 0.976) {
   return { style, onPressIn, onPressOut, pressed };
 }
 
-/** Breathing opacity: the dot on a live-recording pill. */
+/** Breathing opacity: the dot on the live-workout pill. */
 export function usePulse(period = 1500, min = 0.32): AnimatedStyle<ViewStyle> {
   const phase = useSharedValue(0);
   useEffect(() => {

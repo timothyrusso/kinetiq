@@ -28,4 +28,6 @@ export const errorTagToMessageKey = appErrors.assertExhaustiveMessageKeys<TKey>(
   DuplicateWorkout: 'errors.duplicateWorkout',
   SessionPersistFailed: 'errors.sessionPersistFailed',
   ActivityNotFound: 'errors.activityNotFound',
+  ImportTooLarge: 'dataTransfer.errorTooLarge',
+  ImportUnreadable: 'dataTransfer.errorUnreadable',
 });

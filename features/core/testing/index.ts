@@ -6,7 +6,7 @@ import type { FeatureTier } from '@timothyrusso/arch-rules';
  */
 export const FEATURE_TIER: FeatureTier = 0;
 
-export { itEffect, makeNodeSqliteLayer } from '@timothyrusso/effect-core/testing';
+export { advanceClock, collectLogs, itEffect, makeNodeSqliteLayer } from '@timothyrusso/effect-core/testing';
 export { makeHapticsFake } from '@/features/core/testing/hapticsFake';
 export { makeMigratedSqliteLayer } from '@/features/core/testing/sqliteTestLayer';
 export { makeTestAppLayer, makeTestRuntime } from '@/features/core/testing/testAppLayer';

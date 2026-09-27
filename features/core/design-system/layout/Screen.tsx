@@ -18,7 +18,7 @@ export function ScreenHeader({
   title: string;
   largeTitle?: boolean;
   transparent?: boolean;
-  /** `false` only for the immersive screens: the live workout and a running recording. */
+  /** `false` only for the immersive screen: the live workout. */
   shown?: boolean;
 }) {
   const theme = useAppTheme();

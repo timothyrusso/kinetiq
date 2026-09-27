@@ -6,7 +6,7 @@
  *
  * 1. There is no `window`, so `onlineManager` and `focusManager` attach nothing.
  *    Without intervention, queries would assume a connection forever and would
- *    never refetch on foreground. `src/query/adapters.ts` feeds both managers
+ *    never refetch on foreground. `adapters.ts` beside this file feeds both managers
  *    from `expo-network` and `AppState`.
  *
  * 2. wger sends no `ETag` or `Cache-Control` (checked against live responses), so
