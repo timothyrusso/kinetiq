@@ -1,0 +1,32 @@
+import { Clock, Effect } from 'effect';
+import { tr } from '@/features/core/translations';
+import type { ReminderSchedule } from '@/features/notifications/domain/entities/ReminderSchedule';
+import { Notifications } from '@/features/notifications/domain/services/Notifications';
+import { nextReminderDate } from '@/features/notifications/domain/utils/nextReminderDate';
+import { postNotification } from '@/features/notifications/useCases/postNotification';
+
+/**
+ * Makes the scheduled reminder match the settings, and succeeds with the date it scheduled, or
+ * `null` when nothing is scheduled: switched off, no day picked, or no permission, which is a
+ * normal state for a device and not a failure.
+ *
+ * The reminder is re-scheduled rather than registered with a recurrence rule: iOS gives no way
+ * to observe whether a scheduled notification fired, so a repeating trigger and a settings
+ * change can drift. Cancelling, then scheduling the next single occurrence on launch, on return
+ * to the foreground and on every settings change keeps what is scheduled equal to what the user
+ * asked for. The cancel cannot be selective, so it also sweeps an armed rest alert: the settings
+ * screen does not call this mid-workout for that reason.
+ */
+export const syncTrainingReminder = (reminder: ReminderSchedule, enabled: boolean) =>
+  Effect.gen(function* () {
+    const notifications = yield* Notifications;
+    yield* notifications.cancelAll;
+    if (!enabled) return null;
+    const next = nextReminderDate(reminder, new Date(yield* Clock.currentTimeMillis));
+    if (next === null) return null;
+    yield* postNotification({
+      content: { title: tr('push.reminderTitle'), body: tr('push.reminderBody'), badge: 1 },
+      trigger: { kind: 'at', date: next },
+    });
+    return next;
+  }).pipe(Effect.catchTag('NotificationPermissionDenied', () => Effect.succeed(null)));
