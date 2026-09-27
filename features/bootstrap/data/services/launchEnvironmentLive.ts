@@ -57,6 +57,9 @@ export const LaunchEnvironmentLive = Layer.succeed(LaunchEnvironment, {
   }),
   paintChrome: mode =>
     Effect.sync(() => {
+      // NOTE: bootstrap best effort, allow-listed: the chrome is cosmetic and `paintChrome` never
+      // fails (see `LaunchEnvironment`), so a refused colour or a status bar that throws below
+      // leaves the default chrome, the same as on a device without the native call.
       void SystemUI.setBackgroundColorAsync(themeFor(mode).brandBackground).catch(() => undefined);
       StatusBar.setStyle(mode === 'dark' ? 'light' : 'dark', true);
     }).pipe(Effect.catchAllDefect(() => Effect.void)),

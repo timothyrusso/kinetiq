@@ -5,7 +5,7 @@ import { runBootstrap } from '@/features/bootstrap/useCases/runBootstrap';
 import { AppConfig } from '@/features/core/config';
 import { SqlError, UnexpectedError } from '@/features/core/error';
 import { BackgroundSync } from '@/features/core/lifecycle';
-import { SchemaStatus } from '@/features/core/sqlite';
+import { type SchemaReport, SchemaStatus } from '@/features/core/sqlite';
 import { resetAllStores } from '@/features/core/state';
 import { advanceClock, collectLogs, itEffect } from '@/features/core/testing';
 import { ExerciseCatalog } from '@/features/exercises';
@@ -45,7 +45,7 @@ function testLayer(
 ) {
   const step = (name: string) => Effect.sync(() => void launch.steps.push(name));
   return Layer.mergeAll(
-    Layer.succeed(SchemaStatus, { fromVersion: 9, toVersion: 10, migrationError: options.migrationError ?? null }),
+    schemaStatusOf({ fromVersion: 9, toVersion: 10, migrationError: options.migrationError ?? null }),
     AppConfig.layerOf({ wgerBaseUrl: 'https://wger.de/api/v2/' }),
     Layer.succeed(LaunchEnvironment, {
       installQueryPlumbing: step('queries'),
@@ -154,11 +154,12 @@ describe('runBootstrap', () => {
   );
 
   itEffect(
-    'counts a permission the device cannot read as not granted',
+    'counts a permission the device cannot read as not granted, and logs why',
     Effect.gen(function* () {
       yield* runBootstrap(true);
 
       expect(getSettings().notificationsGranted).toBe(false);
+      expect(logs.entries.map(entry => entry.message)).toContain('notification permission read failed');
     }),
     testLayer({ granted: 'unreadable' }),
   );
@@ -265,3 +266,7 @@ describe('runBootstrap', () => {
     testLayer(),
   );
 });
+
+function schemaStatusOf(report: SchemaReport) {
+  return Layer.succeed(SchemaStatus, { current: Effect.succeed(report), remigrate: Effect.succeed(report) });
+}
