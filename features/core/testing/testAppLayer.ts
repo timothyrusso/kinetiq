@@ -26,11 +26,13 @@ export const makeTestAppLayer = () => {
   return { layer, logs, haptics: haptics.played };
 };
 
+type CoreTestServices = Layer.Layer.Success<ReturnType<typeof makeTestAppLayer>['layer']>;
+
 /**
- * A runtime over {@link makeTestAppLayer}, for facade and hook tests, with the logs and haptics
- * it records. Dispose it at the end of the test.
+ * A runtime for facade and hook tests: the given feature Layers over {@link makeTestAppLayer},
+ * with the logs and haptics it records. Dispose it at the end of the test.
  */
-export const makeTestRuntime = () => {
+export const makeTestRuntime = <R, E>(features: Layer.Layer<R, E, CoreTestServices>) => {
   const { layer, logs, haptics } = makeTestAppLayer();
-  return { runtime: makeAppRuntime(layer), logs, haptics };
+  return { runtime: makeAppRuntime(features.pipe(Layer.provideMerge(layer))), logs, haptics };
 };

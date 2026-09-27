@@ -15,4 +15,7 @@ export const errorTagToMessageKey = appErrors.assertExhaustiveMessageKeys<TKey>(
   OfflineError: 'errors.offline',
   HttpError: 'errors.http',
   DecodeError: 'errors.decode',
+  NotificationPermissionDenied: 'errors.notificationPermissionDenied',
+  NotificationScheduleFailed: 'errors.notificationScheduleFailed',
+  WatchUnavailable: 'errors.watchUnavailable',
 });

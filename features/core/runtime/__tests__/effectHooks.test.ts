@@ -2,12 +2,13 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { Clock, Effect } from 'effect';
 import { HttpError, UnexpectedError } from '@/features/core/error';
 import { useEffectMutation, useEffectQuery } from '@/features/core/query';
+import { FeaturesLive } from '@/features/core/runtime/runtime';
 import { SqliteClient } from '@/features/core/sqlite';
 import { makeTestRuntime, makeTestWrapper } from '@/features/core/testing';
 
 describe('useEffectQuery', () => {
   it('resolves with the value of the Effect it runs on the app runtime', async () => {
-    const { runtime, logs } = makeTestRuntime();
+    const { runtime, logs } = makeTestRuntime(FeaturesLive);
     const { result } = await renderHook(() => useEffectQuery({ queryKey: ['success'], queryFn: Effect.succeed(42) }), {
       wrapper: makeTestWrapper(runtime),
     });
@@ -18,7 +19,7 @@ describe('useEffectQuery', () => {
   });
 
   it('reports a tagged failure as itself and logs it once as a warning', async () => {
-    const { runtime, logs } = makeTestRuntime();
+    const { runtime, logs } = makeTestRuntime(FeaturesLive);
     const failure = new HttpError({ kind: 'server', status: 503, retryAfterSeconds: null });
     const { result } = await renderHook(() => useEffectQuery({ queryKey: ['tagged'], queryFn: Effect.fail(failure) }), {
       wrapper: makeTestWrapper(runtime),
@@ -32,7 +33,7 @@ describe('useEffectQuery', () => {
   });
 
   it('turns a defect into an UnexpectedError carrying it, logged once as an error', async () => {
-    const { runtime, logs } = makeTestRuntime();
+    const { runtime, logs } = makeTestRuntime(FeaturesLive);
     const defect = new Error('boom');
     const { result } = await renderHook(() => useEffectQuery({ queryKey: ['defect'], queryFn: Effect.die(defect) }), {
       wrapper: makeTestWrapper(runtime),
@@ -46,7 +47,7 @@ describe('useEffectQuery', () => {
   });
 
   it('runs against the core test services: the migrated database and the test clock', async () => {
-    const { runtime } = makeTestRuntime();
+    const { runtime } = makeTestRuntime(FeaturesLive);
     const { result } = await renderHook(
       () =>
         useEffectQuery({
@@ -67,7 +68,7 @@ describe('useEffectQuery', () => {
 
 describe('useEffectMutation', () => {
   it('resolves with the value and reports a tagged failure as itself', async () => {
-    const { runtime } = makeTestRuntime();
+    const { runtime } = makeTestRuntime(FeaturesLive);
     const failure = new HttpError({ kind: 'bad-request', status: 400, retryAfterSeconds: null });
     const { result } = await renderHook(
       () =>
