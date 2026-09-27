@@ -55,7 +55,7 @@ export const ExerciseBlock = memo(function ExerciseBlock(
           <View style={styles.titles}>
             <Row gap="sm" align="center">
               {isCurrent ? <View style={styles.dot} /> : null}
-              <Txt variant="subhead" weight="700" numberOfLines={2}>
+              <Txt variant="subhead" weight="700" numberOfLines={2} style={styles.name}>
                 {entry.exerciseName}
               </Txt>
             </Row>
