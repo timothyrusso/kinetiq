@@ -1,0 +1,48 @@
+{
+  "format": "kinetiq.routines",
+  "version": 1,
+  "exportedAt": "2026-09-27T17:28:43.667Z",
+  "routines": [
+    {
+      "name": "QA Upper",
+      "items": [
+        {
+          "exerciseId": "wger:538",
+          "exerciseName": "Incline Bench Press - Barbell",
+          "sets": 3,
+          "reps": "8-12",
+          "weightKg": 0,
+          "restSeconds": 90,
+          "notes": null
+        },
+        {
+          "exerciseId": "wger:73",
+          "exerciseName": "Bench Press",
+          "sets": 5,
+          "reps": "10",
+          "weightKg": 1,
+          "restSeconds": 90,
+          "notes": null
+        },
+        {
+          "exerciseId": "wger:348",
+          "exerciseName": "Lateral Raises",
+          "sets": 3,
+          "reps": "8-12",
+          "weightKg": 0,
+          "restSeconds": 90,
+          "notes": null
+        },
+        {
+          "exerciseId": "wger:1185",
+          "exerciseName": "Triceps Pushdown",
+          "sets": 3,
+          "reps": "8-12",
+          "weightKg": 0,
+          "restSeconds": 90,
+          "notes": null
+        }
+      ]
+    }
+  ]
+}

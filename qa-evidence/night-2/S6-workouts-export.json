@@ -1,0 +1,170 @@
+{
+  "format": "kinetiq.workouts",
+  "version": 1,
+  "exportedAt": "2026-09-27T17:29:11.932Z",
+  "units": {
+    "weight": "kg"
+  },
+  "workouts": [
+    {
+      "id": "session-muk2xarr",
+      "title": "QA Upper",
+      "startedAt": "2026-09-27T17:15:16.551Z",
+      "durationSeconds": 393,
+      "caloriesKcal": 40,
+      "notes": null,
+      "totalVolumeKg": 36,
+      "totalSets": 2,
+      "exercises": [
+        {
+          "exerciseId": "wger:538",
+          "exerciseName": "Incline Bench Press - Barbell",
+          "muscleGroup": null,
+          "restSeconds": 90,
+          "notes": null,
+          "sets": [
+            {
+              "index": 0,
+              "reps": 9,
+              "weightKg": 4,
+              "completed": true,
+              "rpe": null,
+              "estimated1rmKg": 5
+            },
+            {
+              "index": 1,
+              "reps": 8,
+              "weightKg": 0,
+              "completed": true,
+              "rpe": null,
+              "estimated1rmKg": null
+            },
+            {
+              "index": 2,
+              "reps": 8,
+              "weightKg": 0,
+              "completed": false,
+              "rpe": null,
+              "estimated1rmKg": null
+            }
+          ]
+        },
+        {
+          "exerciseId": "wger:73",
+          "exerciseName": "Bench Press",
+          "muscleGroup": null,
+          "restSeconds": 90,
+          "notes": null,
+          "sets": [
+            {
+              "index": 0,
+              "reps": 10,
+              "weightKg": 1,
+              "completed": false,
+              "rpe": null,
+              "estimated1rmKg": null
+            },
+            {
+              "index": 1,
+              "reps": 10,
+              "weightKg": 1,
+              "completed": false,
+              "rpe": null,
+              "estimated1rmKg": null
+            },
+            {
+              "index": 2,
+              "reps": 10,
+              "weightKg": 1,
+              "completed": false,
+              "rpe": null,
+              "estimated1rmKg": null
+            },
+            {
+              "index": 3,
+              "reps": 10,
+              "weightKg": 1,
+              "completed": false,
+              "rpe": null,
+              "estimated1rmKg": null
+            },
+            {
+              "index": 4,
+              "reps": 10,
+              "weightKg": 1,
+              "completed": false,
+              "rpe": null,
+              "estimated1rmKg": null
+            }
+          ]
+        },
+        {
+          "exerciseId": "wger:348",
+          "exerciseName": "Lateral Raises",
+          "muscleGroup": null,
+          "restSeconds": 90,
+          "notes": null,
+          "sets": [
+            {
+              "index": 0,
+              "reps": 8,
+              "weightKg": 0,
+              "completed": false,
+              "rpe": null,
+              "estimated1rmKg": null
+            },
+            {
+              "index": 1,
+              "reps": 8,
+              "weightKg": 0,
+              "completed": false,
+              "rpe": null,
+              "estimated1rmKg": null
+            },
+            {
+              "index": 2,
+              "reps": 8,
+              "weightKg": 0,
+              "completed": false,
+              "rpe": null,
+              "estimated1rmKg": null
+            }
+          ]
+        },
+        {
+          "exerciseId": "wger:1094",
+          "exerciseName": "Seated Bench Press",
+          "muscleGroup": null,
+          "restSeconds": 90,
+          "notes": null,
+          "sets": [
+            {
+              "index": 0,
+              "reps": 8,
+              "weightKg": 0,
+              "completed": false,
+              "rpe": null,
+              "estimated1rmKg": null
+            },
+            {
+              "index": 1,
+              "reps": 8,
+              "weightKg": 0,
+              "completed": false,
+              "rpe": null,
+              "estimated1rmKg": null
+            },
+            {
+              "index": 2,
+              "reps": 8,
+              "weightKg": 0,
+              "completed": false,
+              "rpe": null,
+              "estimated1rmKg": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
