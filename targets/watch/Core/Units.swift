@@ -1,6 +1,6 @@
 import Foundation
 
-/// Weight and reps as the phone shows them (`src/utils/format.ts`). Storage is always kilograms.
+/// Weight and reps as the phone shows them (`features/core/utils/format.ts`). Storage is always kilograms.
 public enum Units {
     public static let lbPerKg = 2.2046226218
 

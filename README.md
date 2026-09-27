@@ -32,6 +32,24 @@ and watch your training history grow. Everything stays on your device.
 - [FlashList](https://shopify.github.io/flash-list/) and [Reanimated](https://docs.swmansion.com/react-native-reanimated/) for smooth lists and motion
 - SwiftUI and WatchConnectivity for the Apple Watch app
 
+## Architecture
+
+Kinetiq is built on the [agentic-kit](https://github.com/timothyrusso/agentic-kit) architecture
+with [Effect](https://effect.website). Every file lives under `features/`, one folder per feature
+in tiers (a feature imports only strictly lower tiers, through its `index.ts`), and `app/` holds
+thin expo-router routes that re-export each feature's pages. Inside a feature, `domain/`, `data/`,
+`useCases/` and `di/` are Effect (Tags, Layers, Schemas, tagged errors); facades run use cases on
+the one app runtime through `useEffectQuery` and `useEffectMutation`; every view is a `.tsx` with
+a `.logic.ts` ViewModel and a `.style.ts`.
+
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): the tier table and Kinetiq's deltas from the
+  kit, its patterns and its documented exceptions.
+- [`docs/EFFECT_NOTES.md`](docs/EFFECT_NOTES.md): where each part of the kit's Effect primer
+  applies in this app.
+- `npm run check` runs every gate (Biome, ESLint with the kit rules, `tsc`, dependency-cruiser,
+  i18n parity and unused keys, knip, jest); `npm run test:coverage` adds the coverage floors;
+  `npm run arch:report` prints the feature dependency graph.
+
 ## Run it
 
 ```sh

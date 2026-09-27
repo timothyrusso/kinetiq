@@ -1,2 +1,0 @@
-# Files skipped by scripts/check-layout.js. One path per line, relative to the repo root.
-# Chart internals only: axis labels and cells placed by measured pixel offsets, not layout.

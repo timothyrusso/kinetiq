@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * The watch app's string catalog, held to the same rules as the phone's (`check-i18n.js`).
+ * The watch app's string catalog, held to the same rules as the phone's (`npm run check:i18n`).
  *
  *   node scripts/check-watch-i18n.js        (part of `npm run check:watch`)
  *
@@ -16,8 +16,8 @@
  * `String(localized:)`. A key built at runtime would read as missing, which is deliberate, as
  * on the phone: a key nobody can search for is a key nobody can safely rename.
  */
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const ROOT = path.join(__dirname, '..');
 const WATCH = path.join(ROOT, 'targets/watch');
@@ -29,7 +29,11 @@ const catalog = JSON.parse(fs.readFileSync(CATALOG, 'utf8'));
 const entries = Object.entries(catalog.strings ?? {});
 
 /** `%@`, `%lld`, `%1$@` and friends, in order, so a swapped or missing one is caught. */
-const slots = (s) => [...s.matchAll(/%(\d+\$)?[-+ #0]*\d*(\.\d+)?(ll|l|h)?[@dDuUxXoOfeEgGcCsSaAp]/g)].map((m) => m[0]).sort().join(',');
+const slots = s =>
+  [...s.matchAll(/%(\d+\$)?[-+ #0]*\d*(\.\d+)?(ll|l|h)?[@dDuUxXoOfeEgGcCsSaAp]/g)]
+    .map(m => m[0])
+    .sort()
+    .join(',');
 
 /** Each plural or plain value of one language, flattened to `[label, text]`. */
 function values(localization) {
@@ -48,7 +52,7 @@ for (const [key, entry] of entries) {
       continue;
     }
     for (const [form, unit] of list) {
-      if (!unit || unit.state !== 'translated' || !unit.value) {
+      if (unit?.state !== 'translated' || !unit.value) {
         problems.push(`${key}${form ? ` (${form})` : ''}: ${lang} is not translated`);
       }
     }
@@ -77,10 +81,10 @@ const swift = [];
  * each `\(...)` into a format specifier when it looks the key up, so the catalog holds
  * `routine.exerciseCount %lld`. `normalise` maps both spellings to the same text.
  */
-// An interpolation may hold one level of parentheses: `\(count(entry))`.
+// NOTE: an interpolation may hold one level of parentheses: `\(count(entry))`.
 const INTERPOLATION = String.raw`\\\((?:[^()]|\([^()]*\))*\)`;
 const LITERAL = String.raw`"((?:[^"\\]|${INTERPOLATION})+)"`;
-const normalise = (key) =>
+const normalise = key =>
   key.replace(new RegExp(INTERPOLATION, 'g'), '%@').replace(/%(\d+\$)?(ll|l|h)?[@dDuUxXoOfeEgGcCsSaAp]/g, '%@');
 
 /** The calls whose first string literal is a catalog key. */
@@ -97,12 +101,12 @@ const CALLS = [
   String.raw`\.confirmationDialog\(\s*`,
   String.raw`\.alert\(\s*`,
   String.raw`String\(\s*localized:\s*`,
-  // A literal typed as a key: `let title: LocalizedStringKey = "a.b"`.
+  // NOTE: a literal typed as a key: `let title: LocalizedStringKey = "a.b"`.
   String.raw`LocalizedStringKey\s*=\s*`,
   String.raw`LocalizedStringResource\s*=\s*`,
-  // A literal where a `LocalizedStringKey` is expected: `.failed("sync.unreachable")`.
+  // NOTE: a literal where a `LocalizedStringKey` is expected: `.failed("sync.unreachable")`.
   String.raw`\.(?:done|failed)\(\s*`,
-].map((prefix) => new RegExp(prefix + LITERAL, 'g'));
+].map(prefix => new RegExp(prefix + LITERAL, 'g'));
 
 const keys = new Map(entries.map(([k]) => [normalise(k), k]));
 const used = new Set();
@@ -115,13 +119,14 @@ for (const [file, text] of swift) {
       else problems.push(`${path.relative(ROOT, file)}: "${m[1]}" is not in Localizable.xcstrings`);
     }
   }
-  // A bare semantic key anywhere else in code (a table of keys, a ternary) counts as a use.
+  // NOTE: a bare semantic key anywhere else in code (a table of keys, a ternary) counts as a use.
   for (const m of code.matchAll(/"([a-z][A-Za-z0-9]*(?:\.[A-Za-z0-9]+)+)"/g)) {
     const key = keys.get(normalise(m[1]));
     if (key) used.add(key);
   }
 }
-for (const key of keys.values()) if (!used.has(key)) problems.push(`${key}: in Localizable.xcstrings but no Swift file reads it`);
+for (const key of keys.values())
+  if (!used.has(key)) problems.push(`${key}: in Localizable.xcstrings but no Swift file reads it`);
 
 if (problems.length === 0) {
   console.log(`PASS: ${keys.size} watch keys, English and Italian agree, and every key is read`);

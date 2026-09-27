@@ -1,0 +1,6 @@
+workout_id,started_at,workout,exercise_id,exercise,muscle_group,set,reps,weight_kg,completed,rpe,e1rm_kg
+session-mfv2k1a0,2026-09-22T17:30:00.000Z,Push Day,wger:73,Bench Press,Chest,1,5,100,true,8,116.7
+session-mfv2k1a0,2026-09-22T17:30:00.000Z,Push Day,wger:73,Bench Press,Chest,2,5,100,false,,
+watch-7A1D0C3E-1111-4222-8333-944455556666,2026-09-23T06:15:00.000Z,"Legs, ""heavy""",wger:111,"Squat, Back",,1,3,142.5,true,9.5,156.8
+watch-7A1D0C3E-1111-4222-8333-944455556666,2026-09-23T06:15:00.000Z,"Legs, ""heavy""",wger:111,"Squat, Back",,2,8,0,true,,
+watch-7A1D0C3E-1111-4222-8333-944455556666,2026-09-23T06:15:00.000Z,"Legs, ""heavy""",local:hip-thrust,Hip thrust,,1,12,60.25,true,,84.4

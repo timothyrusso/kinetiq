@@ -9,6 +9,8 @@
     "@expo/vector-icons": "^15.0.2",
     "@shopify/flash-list": "2.0.2",
     "@tanstack/react-query": "^5.103.1",
+    "@timothyrusso/effect-core": "^0.1.1",
+    "effect": "^3.22.2",
     "expo": "~57.0.24",
     "expo-blur": "~57.0.3",
     "expo-build-properties": "~57.0.21",
@@ -40,17 +42,29 @@
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
     "react-native-svg": "15.15.4",
-    "react-native-worklets": "0.10.1"
+    "react-native-worklets": "0.10.1",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@bacons/apple-targets": "^5.0.0",
+    "@biomejs/biome": "^2.5.14",
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
     "@react-native/jest-preset": "^0.86.3",
+    "@testing-library/react-native": "^14.0.1",
+    "@timothyrusso/arch-rules": "^0.1.1",
+    "@timothyrusso/config-presets": "^0.1.1",
+    "@timothyrusso/eslint-plugin-arch": "^0.1.1",
     "@types/jest": "^29.5.14",
     "@types/react": "~19.2.2",
+    "dependency-cruiser": "^18.4.0",
+    "eslint": "^10.11.0",
     "jest": "^29.7.0",
     "jest-expo": "~57.0.5",
     "knip": "^6.38.0",
+    "lefthook": "^2.1.14",
     "sf-symbols-typescript": "^2.2.0",
+    "test-renderer": "^1.3.0",
     "tsx": "^4.23.15",
     "typescript": "~6.0.3"
   },
@@ -61,25 +75,21 @@
     "prebuild": "expo prebuild --clean",
     "catalog:update": "tsx scripts/build-catalog.ts",
     "typecheck": "tsc --noEmit",
-    "check:dashes": "node scripts/check-dashes.js",
-    "check:i18n": "node scripts/check-i18n.js",
-    "check:jsx": "tsx scripts/jsx-comment-check.ts",
-    "check": "npm run typecheck && npm run check:jsx && npm run check:dashes && npm run check:i18n && npm run check:hooks && npm run check:layout && npm run check:unused && npm test && npm run check:watch",
-    "lint": "expo lint",
-    "check:hooks": "node scripts/check-hooks.js",
-    "check:layout": "node scripts/check-layout.js",
-    "check:unused": "knip && node scripts/check-unused-keys.js",
+    "check:i18n": "config-presets check-i18n",
+    "check": "npm run lint && npm run typecheck && npm run check:text && npm run check:arch && npm run check:i18n && npm run check:unused-keys && npm run check:hooks && npm run check:unused && npm run test",
+    "lint": "biome check . && eslint .",
+    "check:hooks": "config-presets check-hooks",
     "check:watch": "node scripts/check-watch-i18n.js && node scripts/check-watch-bounds.js && swiftlint lint --strict --quiet --config targets/.swiftlint.yml && swift test --package-path targets",
-    "test": "jest"
+    "test": "jest --passWithNoTests",
+    "test:coverage": "jest --coverage && node scripts/check-coverage.js",
+    "format": "biome check --write .",
+    "check:text": "config-presets check-text",
+    "check:arch": "config-presets check-deps",
+    "check:unused-keys": "config-presets check-unused-keys",
+    "prepare": "lefthook install",
+    "check:unused": "knip",
+    "arch": "config-presets check-deps && eslint .",
+    "arch:report": "depcruise --config .dependency-cruiser.mjs --output-type text --include-only '^features/' --collapse '^features/(core/[^/]+|[^/]+)/' features"
   },
-  "private": true,
-  "jest": {
-    "preset": "jest-expo",
-    "testMatch": [
-      "<rootDir>/src/**/__tests__/*.test.ts"
-    ],
-    "moduleNameMapper": {
-      "^@/(.*)$": "<rootDir>/src/$1"
-    }
-  }
+  "private": true
 }

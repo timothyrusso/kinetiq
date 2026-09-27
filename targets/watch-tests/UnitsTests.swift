@@ -1,7 +1,7 @@
 import XCTest
 @testable import KinetiqWatchCore
 
-/// The same answers as `src/utils/format.ts` on the phone.
+/// The same answers as `features/core/utils/format.ts` on the phone.
 final class UnitsTests: XCTestCase {
     func testRepsTargetMatchesRepsFromRange() {
         XCTAssertEqual(Reps.target("8"), 8)

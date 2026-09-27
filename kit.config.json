@@ -1,0 +1,46 @@
+{
+  "$schema": "./node_modules/@timothyrusso/config-presets/dist/kitConfig.schema.json",
+  "projectName": "Kinetiq",
+  "featuresRoot": "features",
+  "appRoot": "app",
+  "github": {
+    "projectNumber": 2,
+    "projectId": "PVT_kwHOBRsxCs4BkyPM",
+    "statusFieldId": "PVTSSF_lAHOBRsxCs4BkyPMzhjhjoc",
+    "statusOptions": {
+      "todo": "f75ad846",
+      "inProgress": "47fc9ee4",
+      "done": "98236657"
+    },
+    "labels": ["bug", "enhancement", "accessibility", "documentation", "epic", "migration"]
+  },
+  "qa": {
+    "targets": ["mobile"],
+    "simulator": "iPhone 17 Pro",
+    "metroPort": 8084
+  },
+  "lint": {
+    "allowedHooksInViews": [
+      "useAppTheme",
+      "useStyles",
+      "useT",
+      "useHaptics",
+      "useAnimatedStyle",
+      "useSharedValue",
+      "useDerivedValue",
+      "useAnimatedReaction",
+      "useAnimatedScrollHandler",
+      "useReducedMotion"
+    ],
+    "dashes": "forbid",
+    "layoutTokens": {
+      "gutterToken": "screenGutter",
+      "spacingImport": "@/features/core/theme",
+      "allowlistFile": "layout.allow"
+    }
+  },
+  "i18n": {
+    "catalogPath": "features/core/translations/catalog",
+    "languages": ["en", "it"]
+  }
+}

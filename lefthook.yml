@@ -1,0 +1,30 @@
+# NOTE: installed by the app's `prepare` script (`lefthook install`). There is no bypass: agents
+# are denied `--no-verify` in .claude/settings.json, and CI runs the same checks on every pull
+# request, so a hook skipped locally only moves the failure to the PR.
+# NOTE: relative imports are caught by ESLint (`arch/no-relative-imports`), so there is no grep.
+
+pre-commit:
+  parallel: true
+  commands:
+    biome:
+      glob: "*.{js,jsx,mjs,cjs,ts,tsx,json,jsonc}"
+      run: npx --no-install biome check --write --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
+      stage_fixed: true
+    eslint:
+      glob: "*.{js,jsx,mjs,cjs,ts,tsx}"
+      run: npx --no-install eslint --no-warn-ignored {staged_files}
+    text:
+      run: npx --no-install config-presets check-text {staged_files}
+
+commit-msg:
+  commands:
+    commitlint:
+      run: npx --no-install commitlint --edit {1}
+    issue-number:
+      run: |
+        if ! head -n 1 {1} | grep -qE '^(Merge |Revert |fixup! |squash! )|^[a-z]+\([0-9]+\)!?: .+'; then
+          echo "Commit message must be type(issue): message, e.g. feat(12): add the settings screen"
+          exit 1
+        fi
+    text:
+      run: npx --no-install config-presets check-text --message {1}

@@ -1,0 +1,7 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "extends": ["@timothyrusso/config-presets/biome"],
+  "files": {
+    "includes": ["!**/assets/brand", "!**/assets/catalog", "!features/transfer/__fixtures__/*.json"]
+  }
+}

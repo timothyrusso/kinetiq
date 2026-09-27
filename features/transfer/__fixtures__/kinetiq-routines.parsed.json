@@ -1,0 +1,52 @@
+{
+  "ok": true,
+  "routines": [
+    {
+      "name": "Legs · Heavy",
+      "items": [
+        {
+          "exerciseId": "wger:111",
+          "exerciseName": "Squat, Back",
+          "sets": 5,
+          "reps": "5",
+          "weightKg": 142.5,
+          "restSeconds": 180,
+          "notes": "Belt on top sets"
+        },
+        {
+          "exerciseId": "local:hip-thrust",
+          "exerciseName": "Hip thrust",
+          "sets": 3,
+          "reps": "10-12",
+          "weightKg": 60.25,
+          "restSeconds": 90,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Push Day",
+      "items": [
+        {
+          "exerciseId": "wger:73",
+          "exerciseName": "Bench Press",
+          "sets": 3,
+          "reps": "8-12",
+          "weightKg": 60,
+          "restSeconds": 90,
+          "notes": null
+        },
+        {
+          "exerciseId": "wger:74",
+          "exerciseName": "Overhead Press",
+          "sets": 4,
+          "reps": "6",
+          "weightKg": 40,
+          "restSeconds": 60,
+          "notes": "Brace first"
+        }
+      ]
+    }
+  ],
+  "issues": []
+}

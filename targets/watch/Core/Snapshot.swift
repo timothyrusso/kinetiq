@@ -1,6 +1,6 @@
 import Foundation
 
-/// `kinetiq.watch-routines` v1, phone to watch (issue #27). Mirrors `src/watch/format.ts`.
+/// `kinetiq.watch-routines` v1, phone to watch (issue #27). Mirrors `features/watch-bridge/domain/schemas`.
 public struct RoutinesSnapshot: Codable, Equatable, Sendable {
     public static let format = "kinetiq.watch-routines"
     public static let version = 1
