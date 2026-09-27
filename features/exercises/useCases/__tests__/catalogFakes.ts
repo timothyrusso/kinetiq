@@ -101,3 +101,7 @@ export const makeExerciseSnapshotRepositoryFake = (snapshots: readonly ExerciseS
       upsert: snapshot => Effect.sync(() => void stored.set(snapshot.exerciseId, snapshot)),
     };
   });
+
+/** What the catalog facades read: the catalog over `options`, and no stored snapshots. */
+export const makeCatalogReadsFake = (options: RepositoryFakeOptions = {}) =>
+  Layer.merge(makeCatalogRepositoryFake(options), makeExerciseSnapshotRepositoryFake());

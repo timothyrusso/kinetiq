@@ -1,4 +1,4 @@
-import { Effect, Either } from 'effect';
+import { Effect } from 'effect';
 import { itEffect } from '@/features/core/testing';
 import { aCatalogMeta, anExercise } from '@/features/exercises/__fixtures__/builders';
 import { makeCatalogRepositoryFake } from '@/features/exercises/useCases/__tests__/catalogFakes';
@@ -56,21 +56,17 @@ describe('getExercise', () => {
   );
 
   itEffect(
-    'fails with ExerciseNotFound for an id the catalog does not have',
+    'answers null, without failing, for an id the catalog does not have',
     Effect.gen(function* () {
-      const result = yield* Effect.either(getExercise('wger:999', 'en'));
-
-      expect(Either.isLeft(result) && result.left).toMatchObject({ _tag: 'ExerciseNotFound', exerciseId: 'wger:999' });
+      expect(yield* getExercise('wger:999', 'en')).toBeNull();
     }),
     catalog,
   );
 
   itEffect(
-    'fails with ExerciseNotFound for a local id, which the catalog cannot have',
+    'answers null for a local id, which the catalog cannot have',
     Effect.gen(function* () {
-      const result = yield* Effect.either(getExercise('local:bench-press', 'en'));
-
-      expect(Either.isLeft(result) && result.left._tag).toBe('ExerciseNotFound');
+      expect(yield* getExercise('local:bench-press', 'en')).toBeNull();
     }),
     catalog,
   );

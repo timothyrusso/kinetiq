@@ -41,9 +41,6 @@ export function useExercise(id: string | null) {
   const fromCatalog = catalog.data ?? null;
   const exercise = fromCatalog ?? (snapshot === null ? null : exerciseFromSnapshot(snapshot));
   const from: ExerciseSourceKind = fromCatalog !== null ? 'catalog' : snapshot !== null ? 'stored' : 'none';
-  // NOTE: a catalog with no row for the id is an answer, not a failure: the screen says it does not
-  // know the exercise.
-  const catalogError = catalog.error?._tag === 'ExerciseNotFound' ? null : catalog.error;
 
   const { refetch: refetchStored } = stored;
   const { refetch: refetchCatalog } = catalog;
@@ -64,7 +61,7 @@ export function useExercise(id: string | null) {
     isLoading:
       id !== null && exercise === null && (stored.isPending || stored.isFetching || (fetchable && catalog.isPending)),
     isFetching: catalog.isFetching,
-    error: exercise === null ? (catalogError ?? stored.error) : null,
+    error: exercise === null ? (catalog.error ?? stored.error) : null,
     // NOTE: the stored row, so the screen can date its own copy.
     stored: snapshot,
     retry,
