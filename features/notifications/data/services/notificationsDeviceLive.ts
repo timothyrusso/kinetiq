@@ -64,8 +64,11 @@ export const NotificationsDeviceLive = Layer.sync(Notifications, () => {
         ),
   );
 
+  // NOTE: `read` is called with no arguments, never passed as `try` itself: Effect.tryPromise hands
+  // an AbortSignal to a `try` that declares a parameter, `requestPermissionsAsync` would take it as
+  // the permissions to ask for, and iOS would never show the prompt.
   const readPermission = (read: typeof getPermissionsAsync) =>
-    Effect.tryPromise({ try: read, catch: cause => new NotificationPermissionDenied({ cause }) }).pipe(
+    Effect.tryPromise({ try: () => read(), catch: cause => new NotificationPermissionDenied({ cause }) }).pipe(
       Effect.map(status => ({ granted: status.granted })),
     );
 
@@ -92,7 +95,7 @@ export const NotificationsDeviceLive = Layer.sync(Notifications, () => {
             catch: cause => new NotificationScheduleFailed({ operation: 'cancel', cause }),
           }),
     cancelAll: Effect.tryPromise({
-      try: cancelAllScheduledNotificationsAsync,
+      try: () => cancelAllScheduledNotificationsAsync(),
       catch: cause => new NotificationScheduleFailed({ operation: 'cancelAll', cause }),
     }),
     installHandler: Effect.suspend(() =>

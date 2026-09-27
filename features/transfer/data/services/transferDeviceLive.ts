@@ -14,7 +14,7 @@ const MIME: Record<ExportKind, { mimeType: string; UTI: string }> = {
 };
 
 const attempt = <A>(run: () => Promise<A>): Effect.Effect<A, UnexpectedError> =>
-  Effect.tryPromise({ try: run, catch: cause => toAppError(cause) });
+  Effect.tryPromise({ try: () => run(), catch: cause => toAppError(cause) });
 
 /**
  * The share sheet, the clipboard and the file picker. An export is written to the cache
