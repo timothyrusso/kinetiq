@@ -1,3 +1,4 @@
+import type { Exercise, ExerciseSnapshot } from '@/features/exercises';
 import type { Routine, RoutineItem } from '@/features/routines';
 import { RoutineId } from '@/features/routines';
 import type { Activity, StrengthEntry } from '@/features/workouts';
@@ -21,7 +22,7 @@ const aBenchEntry = (overrides: Partial<StrengthEntry> = {}): StrengthEntry => (
 });
 
 /** A push day, 45 minutes on 22 September 2026. */
-export const anActivity = (overrides: Partial<Activity> = {}): Activity => ({
+const anActivity = (overrides: Partial<Activity> = {}): Activity => ({
   id: ActivityId.make('session-mfv2k1a0'),
   kind: 'lift',
   title: 'Push Day',
@@ -99,7 +100,7 @@ const anItem = (overrides: Partial<RoutineItem> = {}): RoutineItem => ({
 });
 
 /** A push day with two items. */
-export const aRoutine = (overrides: Partial<Routine> = {}): Routine => ({
+const aRoutine = (overrides: Partial<Routine> = {}): Routine => ({
   id: RoutineId.make('rtn_push'),
   name: 'Push Day',
   items: [
@@ -154,3 +155,36 @@ export const someRoutines = (): Routine[] => [
   }),
   aRoutine(),
 ];
+
+/** The bench press as the catalog reads it. */
+export const anExercise = (overrides: Partial<Exercise> = {}): Exercise => ({
+  id: 'wger:73',
+  name: 'Bench Press',
+  instructions: 'Lower the bar to the chest, then press.',
+  category: 'Chest',
+  primaryMuscles: ['Chest'],
+  secondaryMuscles: ['Triceps'],
+  equipment: ['Barbell'],
+  imageUrl: 'https://wger.de/media/bench.png',
+  thumbnailUrl: 'https://wger.de/media/bench-small.png',
+  videoUrl: null,
+  source: 'remote',
+  externalId: 73,
+  ...overrides,
+});
+
+/** The stored copy of the bench press. */
+export const anExerciseSnapshot = (overrides: Partial<ExerciseSnapshot> = {}): ExerciseSnapshot => ({
+  exerciseId: 'wger:73',
+  name: 'Bench Press',
+  instructions: 'Lower the bar to the chest, then press.',
+  category: 'Chest',
+  primaryMuscles: ['Chest'],
+  secondaryMuscles: ['Triceps'],
+  equipment: ['Barbell'],
+  imageUrl: 'https://wger.de/media/bench.png',
+  thumbnailUrl: 'https://wger.de/media/bench-small.png',
+  externalId: 73,
+  capturedAt: Date.UTC(2026, 8, 1, 9, 0, 0),
+  ...overrides,
+});
