@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * The routine bounds exist once, in `src/transfer/bounds.json`, and the watch app ships a copy.
+ * The routine bounds exist once, in `features/watch-bridge/assets/bounds.json`, and the watch app ships a copy.
  *
  *   node scripts/check-watch-bounds.js        (part of `npm run check:watch`)
  *
@@ -14,7 +14,7 @@ const path = require('path');
 const { isDeepStrictEqual } = require('util');
 
 const ROOT = path.join(__dirname, '..');
-const PHONE = 'src/transfer/bounds.json';
+const PHONE = 'features/watch-bridge/assets/bounds.json';
 const WATCH = 'targets/watch/bounds.json';
 
 const read = (file) => JSON.parse(fs.readFileSync(path.join(ROOT, file), 'utf8'));

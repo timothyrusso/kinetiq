@@ -61,7 +61,7 @@ import {
   useExerciseHistory,
   type ExercisePerformance,
 } from '@/queries/useExerciseHistory';
-import { useSettings } from '@/settings/hooks';
+import { useSettings } from '@/features/settings';
 import { provisionalExerciseName } from '@/domain/exerciseId';
 import { routes } from '@/navigation/nav';
 import { useAppTheme, type Theme } from '@/theme/theme';

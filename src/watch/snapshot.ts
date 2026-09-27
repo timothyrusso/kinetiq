@@ -7,10 +7,15 @@
  * older build must not cost the user every routine on their wrist.
  */
 import type { Routine } from '@/domain/types';
-import { IMPORT_LIMITS, ITEM_BOUNDS } from '@/transfer/format';
 import type { UnitSystem } from '@/utils/format';
 import { clamp } from '@/utils/functional';
-import { WATCH_FORMAT_VERSION, WATCH_ROUTINES_FORMAT, type WatchRoutinesDocument } from './format';
+import {
+  IMPORT_LIMITS,
+  ITEM_BOUNDS,
+  WATCH_FORMAT_VERSION,
+  WATCH_ROUTINES_FORMAT,
+  type WatchRoutinesDocument,
+} from '@/features/watch-bridge';
 
 const clampTo = (value: number, range: { min: number; max: number }) =>
   Number.isFinite(value) ? clamp(value, range.min, range.max) : range.min;

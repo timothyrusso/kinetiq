@@ -1,11 +1,2 @@
-export {
-  DEFAULT_SETTINGS,
-} from './types';
-export type { AccentChoice, Profile, ReminderSettings, ThemeMode } from './types';
-export { ACCENT_CHOICES } from './types';
-export {
-  getSettings,
-  hydrateSettings,
-  updateSettings,
-} from './store';
-export { useSettings, useSettingsUpdate } from './hooks';
+/** Moved to `@/features/settings`: this re-export keeps the legacy `.tsx` files building until their owning child moves them. */
+export { getSettings, hydrateSettings, type Settings, useSettings, useSettingsUpdate } from '@/features/settings';

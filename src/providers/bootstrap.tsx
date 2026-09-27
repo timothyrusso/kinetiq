@@ -50,8 +50,8 @@ import { createLocalProvider } from '@/api/local/provider';
 import { installBundledCatalogIfMissing } from '@/catalog/install';
 import { maybeRefreshCatalog, scheduleCatalogRefresh } from '@/catalog/refresh';
 import { loadAppFonts } from '@/fonts';
-import { readAllSettings, SETTING_KEYS, type DatabaseOpenResult, type SettingKey } from '@/persistence';
-import { bootDatabase } from '@/providers/database';
+import type { DatabaseOpenResult } from '@/persistence';
+import { bootDatabase, readStoredSettings } from '@/providers/database';
 import { getQueryClient, installQueryAdapters } from '@/query/client';
 import { invalidateAfterWatchWorkouts } from '@/query/invalidation';
 import { startNetworkStatus } from '@/query/networkStatus';
@@ -60,8 +60,7 @@ import {
   readNotificationPermission,
   syncTrainingReminder,
 } from '@/services/notifications';
-import { getSettings, hydrateSettings } from '@/settings';
-import { normaliseSettings, type SettingsState } from '@/settings/types';
+import { getSettings, hydrateSettings, type Settings } from '@/settings';
 import { themeFor } from '@/theme/theme';
 import { spacing } from '@/theme/tokens';
 import { handleAppState, hydrateWorkoutSession, pauseSession } from '@/workout/session';
@@ -79,7 +78,7 @@ import { installWatchSync, pushRoutineSnapshot } from '@/watch/sync';
 export type BootstrapOutcome = {
   /** What the database actually did, surfaced on the settings screen's diagnostics row. */
   database: DatabaseOpenResult;
-  settings: SettingsState;
+  settings: Settings;
   /** The theme the launch chrome was painted with. Diagnostics only: do not branch on it. */
   launchTheme: 'light' | 'dark';
   /** True when migrations reported a problem but the app is still usable. */
@@ -96,23 +95,6 @@ export type BootstrapOutcome = {
  * and then shows per-feature error states.
  */
 export const BOOTSTRAP_DEADLINE_MS = 5_000;
-
-/** The keys that make up `SettingsState`. Order is irrelevant: they are read by key. */
-const SETTINGS_KEYS = [
-  SETTING_KEYS.unitSystem,
-  SETTING_KEYS.themeMode,
-  SETTING_KEYS.accentColor,
-  SETTING_KEYS.language,
-  SETTING_KEYS.haptics,
-  SETTING_KEYS.restCountdownHaptics,
-  SETTING_KEYS.keepScreenAwake,
-  SETTING_KEYS.notifications,
-  SETTING_KEYS.defaultRestSeconds,
-  SETTING_KEYS.autoStartRest,
-  SETTING_KEYS.weeklyGoalWorkouts,
-  SETTING_KEYS.profile,
-  SETTING_KEYS.reminder,
-] as const;
 
 export function createSplashController(): { preventAutoHide: () => void; hide: () => void } {
   return {
@@ -158,43 +140,9 @@ function applyNativeChrome(resolved: 'light' | 'dark'): void {
   }
 }
 
-/**
- * One batched read of every setting, folded back into `SettingsState`.
- *
- * Ten separate key reads would be ten transactions at the worst possible moment:
- * before the first frame. Values are read positionally against a fixed list rather
- * than by `Map` iteration order, which a partial result would otherwise silently
- * misalign.
- */
-async function readSettingsSnapshot(): Promise<SettingsState> {
-  // Typed as the wide key union rather than the literal tuple so the positional
-  // lookup below is a `SettingKey` read and not `SettingKey | ''`.
-  const keys: SettingKey[] = [...SETTINGS_KEYS];
-  const values = await readAllSettings(keys);
-
-  // Read by KEY, not by position. This was `at(0)`, `at(1)`, `at(2)`, indexed into the key
-  // array, which means inserting a setting anywhere but the end silently reassigns every field
-  // after it: adding `language` in second place would have loaded the theme into
-  // `hapticsEnabled` and shifted the rest down one. Nothing would have failed to compile,
-  // because the casts were already lying about the types.
-  //
-  // `normaliseSettings` drops undefined keys, so an unset or unparseable row falls back to its
-  // default instead of becoming `undefined as boolean` in the store.
-  const settings = normaliseSettings({
-    unitSystem: values.get(SETTING_KEYS.unitSystem) as SettingsState['unitSystem'],
-    themeMode: values.get(SETTING_KEYS.themeMode) as SettingsState['themeMode'],
-    accentColor: values.get(SETTING_KEYS.accentColor) as SettingsState['accentColor'],
-    language: values.get(SETTING_KEYS.language) as SettingsState['language'],
-    hapticsEnabled: values.get(SETTING_KEYS.haptics) as boolean,
-    restCountdownHaptics: values.get(SETTING_KEYS.restCountdownHaptics) as boolean,
-    keepScreenAwake: values.get(SETTING_KEYS.keepScreenAwake) as boolean,
-    notificationsEnabled: values.get(SETTING_KEYS.notifications) as boolean,
-    defaultRestSeconds: values.get(SETTING_KEYS.defaultRestSeconds) as number,
-    autoStartRest: values.get(SETTING_KEYS.autoStartRest) as boolean,
-    weeklyGoalWorkouts: values.get(SETTING_KEYS.weeklyGoalWorkouts) as number,
-    profile: values.get(SETTING_KEYS.profile) as SettingsState['profile'],
-    reminder: values.get(SETTING_KEYS.reminder) as SettingsState['reminder'],
-  });
+/** One batched read of every setting, plus the device's own answer about notifications. */
+async function readSettingsSnapshot(migrationFailed: boolean): Promise<Settings> {
+  const settings = await readStoredSettings(migrationFailed);
 
   // Device truth, not the user's preference. Two separate flags by design: the
   // switch in Settings means "I want these", this means "the OS is letting us", and
@@ -232,7 +180,7 @@ export async function runBootstrap(systemDark: boolean): Promise<BootstrapOutcom
   // 5. Settings, into the store, before the first component reads them. The chrome is
   //    painted from the same folded value the store is about to hold, so the two can
   //    never disagree about what colour this launch was.
-  const settings = await readSettingsSnapshot();
+  const settings = await readSettingsSnapshot(database.migrationError !== undefined);
   hydrateSettings(settings);
   const launchTheme =
     settings.themeMode === 'system' ? (systemDark ? 'dark' : 'light') : settings.themeMode;

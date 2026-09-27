@@ -753,6 +753,9 @@ export const en = {
     offline: 'You are offline.',
     http: 'The server could not be reached. Please try again.',
     decode: 'Some data could not be read.',
+    notificationPermissionDenied: 'Notifications are turned off for Kinetiq in the system settings.',
+    notificationScheduleFailed: 'The notification could not be scheduled.',
+    watchUnavailable: 'The Apple Watch is not available.',
   },
 } as const;
 

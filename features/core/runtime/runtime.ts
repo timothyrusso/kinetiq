@@ -5,16 +5,21 @@ import type { AppError } from '@/features/core/error';
 import { HapticsLive } from '@/features/core/haptics';
 import { LoggerLive } from '@/features/core/logger';
 import { SqliteLive } from '@/features/core/sqlite';
+import { NotificationsLive } from '@/features/notifications';
+import { SettingsLive } from '@/features/settings';
+import { WatchBridgeLive } from '@/features/watch-bridge';
 
 /** Every Layer the core concerns provide. */
 const CoreLive = Layer.mergeAll(LoggerLive, ConfigLive, SqliteLive, HapticsLive);
 
 /**
- * Every feature's Layer, over the core ones. A feature adds its `<Feature>Live` from its
- * `index.ts` here; a Layer that needs a core service (`SqliteClient`, `AppConfig`) gets it from
- * `CoreLive`.
+ * Every feature's Layer. A feature adds its `<Feature>Live` from its `index.ts` here; a Layer that
+ * needs a core service (`SqliteClient`, `AppConfig`) gets it from `CoreLive`.
  */
-export const AppLayer = CoreLive;
+export const FeaturesLive = Layer.mergeAll(SettingsLive, NotificationsLive, WatchBridgeLive);
+
+/** Every feature's Layer, over the core ones. */
+export const AppLayer = FeaturesLive.pipe(Layer.provideMerge(CoreLive));
 
 /**
  * The app's one runtime. Only `app/_layout.tsx` (to mount the provider) and the bootstrap

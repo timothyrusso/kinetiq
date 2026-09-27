@@ -62,7 +62,7 @@ import {
   useReorderRoutine,
   useRoutine,
 } from '@/queries/useRoutines';
-import { useSettings } from '@/settings';
+import { useSettings } from '@/features/settings';
 import { useT } from '@/i18n/useT';
 import type { TKey, TVars } from '@/i18n';
 import { useStartRoutine } from '@/workout/startRoutine';

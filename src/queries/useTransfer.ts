@@ -13,7 +13,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { activityRepository, routineRepository } from '@/persistence';
 import { invalidateRoutines } from '@/query/invalidation';
 import { queryKeys } from '@/query/keys';
-import { getSettings } from '@/settings/store';
+import { getSettings } from '@/features/settings';
 import { tr } from '@/i18n/tr';
 import {
   exportFileName,

@@ -15,7 +15,7 @@ import type { PersonalRecord } from '@/domain/types';
 import { useT } from '@/i18n/useT';
 import { formatRecordValue, RECORD_LABEL } from '@/queries/useExerciseHistory';
 import { haptics } from '@/services/haptics';
-import { useSettings } from '@/settings';
+import { useSettings } from '@/features/settings';
 import { useAppTheme } from '@/theme/theme';
 import { spacing } from '@/theme/tokens';
 import { FormSheet } from '@/ui/FormSheet';

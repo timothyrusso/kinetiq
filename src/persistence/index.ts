@@ -14,13 +14,7 @@ export type { RoutineDraft } from './routineRepository';
 export { onRoutinesChanged } from './routineEvents';
 export { sessionRepository } from './sessionRepository';
 export type { SessionPatch } from './sessionRepository';
-export {
-  readAllSettings,
-  recordRepository,
-  SETTING_KEYS,
-  setSetting,
-} from './settingsRepository';
-export type { SettingKey } from './settingsRepository';
+export { recordRepository } from './settingsRepository';
 export {
   openDatabase,
   withTransaction,

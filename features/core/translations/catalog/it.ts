@@ -760,5 +760,8 @@ export const it: Copy = {
     offline: 'Sei offline.',
     http: 'Non è stato possibile raggiungere il server. Riprova.',
     decode: 'Non è stato possibile leggere alcuni dati.',
+    notificationPermissionDenied: 'Le notifiche di Kinetiq sono disattivate nelle impostazioni di sistema.',
+    notificationScheduleFailed: 'Non è stato possibile programmare la notifica.',
+    watchUnavailable: "L'Apple Watch non è disponibile.",
   },
 };

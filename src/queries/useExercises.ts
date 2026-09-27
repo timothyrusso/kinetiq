@@ -32,7 +32,7 @@ import { externalIdOf, isLocalExerciseId } from '@/domain/exerciseId';
 import { resolveLanguage } from '@/i18n';
 import { snapshotById } from '@/persistence';
 import { queryKeys } from '@/query/keys';
-import { useSettings } from '@/settings';
+import { useSettings } from '@/features/settings';
 
 const FIRST_OFFSET = 0;
 

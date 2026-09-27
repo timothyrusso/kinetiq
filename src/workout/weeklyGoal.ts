@@ -7,7 +7,7 @@
  * closed it.
  */
 import { activityRepository } from '@/persistence';
-import { getSettings } from '@/settings/store';
+import { getSettings } from '@/features/settings';
 import { startOfWeek } from '@/utils/format';
 
 export async function justReachedWeeklyGoal(now = Date.now()): Promise<boolean> {

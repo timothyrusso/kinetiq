@@ -67,7 +67,7 @@ import {
   notifyRestComplete,
 } from '@/services/notifications';
 import { routes } from '@/navigation/nav';
-import { useSettings } from '@/settings';
+import { useSettings } from '@/features/settings';
 import type { UnitSystem } from '@/utils/format';
 import {
   compactNumber,

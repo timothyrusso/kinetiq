@@ -40,7 +40,7 @@ import { HeatmapCalendar } from '@/ui/charts/HeatmapCalendar';
 import { EmptyState, ErrorState, SkeletonCard, SkeletonList, ThemedRefreshControl } from '@/ui/states';
 import { useActivityHistory, useDeleteActivity } from '@/queries/useActivities';
 import { useTrainingHeatmap, type TrainingHeatmap } from '@/queries/useProgress';
-import { useSettings } from '@/settings/hooks';
+import { useSettings } from '@/features/settings';
 import type { Activity } from '@/domain/types';
 import { routes } from '@/navigation/nav';
 import { useAppTheme, type Theme } from '@/theme/theme';

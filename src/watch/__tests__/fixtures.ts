@@ -1,5 +1,4 @@
-import type { WatchInboxEntry } from '../../../modules/watch-bridge';
-import type { WatchWorkoutDocument } from '../format';
+import type { WatchInboxEntry, WatchWorkoutDocument } from '@/features/watch-bridge';
 
 export const UUID = '7A1D0C3E-1111-4222-8333-944455556666';
 
