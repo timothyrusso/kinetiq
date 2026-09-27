@@ -15,6 +15,8 @@ export { RoutineId } from '@/features/routines/domain/schemas/RoutineId';
 export type { Routine, RoutineItem } from '@/features/routines/domain/schemas/RoutineSchema';
 export { RoutineEvents } from '@/features/routines/domain/services/RoutineEvents';
 export { defaultItemTarget } from '@/features/routines/domain/utils/itemTargets';
+/** The routines' query keys, for a higher feature that writes routines (the import). */
+export { routineQueryKeys } from '@/features/routines/facades/routineQueryKeys';
 export { useRoutine } from '@/features/routines/facades/useRoutine';
 export { useRoutineDraft } from '@/features/routines/facades/useRoutineDraft';
 export { useAddRoutineExercise } from '@/features/routines/facades/useRoutineMutations';

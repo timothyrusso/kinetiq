@@ -79,9 +79,7 @@ describe('useEffectMutation', () => {
     await act(async () => {
       expect(await result.current.mutateAsync(false)).toBe('saved');
     });
-    await act(async () => {
-      await result.current.mutateAsync(true).catch(() => undefined);
-    });
+    await act(async () => result.current.mutate(true));
 
     await waitFor(() => expect(result.current.error).toBe(failure));
     await runtime.dispose();

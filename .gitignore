@@ -42,6 +42,7 @@ yarn-error.*
 
 # build and QA output
 /artifacts/
+/coverage/
 *.log
 /out/
 

@@ -11,6 +11,7 @@ export {
   WATCH_FORMAT_VERSION,
   WATCH_ROUTINES_FORMAT,
 } from '@/features/watch-bridge/domain/entities/WatchFormat';
+export { WatchUnavailable } from '@/features/watch-bridge/domain/errors/WatchBridgeErrors';
 export type { WatchInboxEntry } from '@/features/watch-bridge/domain/schemas/WatchInboxEntrySchema';
 export type { WatchRoutinesDocument } from '@/features/watch-bridge/domain/schemas/WatchRoutinesDocumentSchema';
 export type { WatchWorkoutDocument } from '@/features/watch-bridge/domain/schemas/WatchWorkoutDocumentSchema';

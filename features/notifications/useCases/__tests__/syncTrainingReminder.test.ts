@@ -51,15 +51,39 @@ describe('syncTrainingReminder', () => {
     denied.layer,
   );
 
-  const refusing = makeNotificationsFake({ failing: true });
+  const cancelRefused = makeNotificationsFake({ refusingCancelAll: true });
   itEffect(
-    'fails with NotificationScheduleFailed when the scheduler refuses to cancel',
+    'still schedules the reminder when the scheduler refuses to cancel',
+    Effect.gen(function* () {
+      yield* Effect.either(syncTrainingReminder(reminder, true));
+
+      expect(cancelRefused.scheduled).toHaveLength(1);
+    }),
+    cancelRefused.layer,
+  );
+
+  const cancelRefusedAgain = makeNotificationsFake({ refusingCancelAll: true });
+  itEffect(
+    'fails with the cancel NotificationScheduleFailed once it has scheduled',
     Effect.gen(function* () {
       const result = yield* Effect.either(syncTrainingReminder(reminder, true));
+
       expect(Either.isLeft(result) && result.left).toMatchObject({
         _tag: 'NotificationScheduleFailed',
         operation: 'cancelAll',
       });
+    }),
+    cancelRefusedAgain.layer,
+  );
+
+  const refusing = makeNotificationsFake({ failing: true });
+  itEffect(
+    'fails with NotificationScheduleFailed and schedules nothing when the scheduler refuses everything',
+    Effect.gen(function* () {
+      const result = yield* Effect.either(syncTrainingReminder(reminder, true));
+
+      expect(Either.isLeft(result) && result.left._tag).toBe('NotificationScheduleFailed');
+      expect(refusing.scheduled).toEqual([]);
     }),
     refusing.layer,
   );

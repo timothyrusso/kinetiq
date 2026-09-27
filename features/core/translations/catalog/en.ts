@@ -757,7 +757,6 @@ export const en = {
     watchUnavailable: 'The Apple Watch is not available.',
     catalogNotInstalled: 'The exercise library could not be installed.',
     catalogFetchFailed: 'The exercise library download could not be read. Please try again later.',
-    exerciseNotFound: 'This exercise is not in the library.',
     routineNotFound: 'This routine is gone. It was deleted, most likely from another screen.',
     routineNameTaken: 'You already have a routine with this name. Choose another one.',
     sessionAlreadyActive: 'A workout is already in progress. Finish or discard it first.',

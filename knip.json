@@ -17,5 +17,5 @@
     "@/*": ["*"]
   },
   "ignoreBinaries": ["rsvg-convert", "swiftlint", "swift"],
-  "ignoreDependencies": ["expo-updates", "@commitlint/config-conventional"]
+  "ignoreDependencies": ["expo-updates", "expo-asset", "@commitlint/config-conventional"]
 }

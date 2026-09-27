@@ -18,8 +18,7 @@ export const ExerciseCatalogLive = Layer.effect(
     return {
       installBundledIfMissing: run(installBundledCatalogIfMissing),
       refreshIfStale: online => run(maybeRefreshCatalog(online)),
-      find: (id, language) =>
-        run(getExercise(id, language)).pipe(Effect.catchTag('ExerciseNotFound', () => Effect.succeed(undefined))),
+      find: (id, language) => run(getExercise(id, language)).pipe(Effect.map(exercise => exercise ?? undefined)),
       search: (name, language) =>
         run(searchExercises({ query: name, categoryId: null, equipmentId: null, muscleId: null }, language)).pipe(
           Effect.map(page => page.items),

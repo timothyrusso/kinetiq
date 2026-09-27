@@ -7,9 +7,11 @@ import * as SplashScreen from 'expo-splash-screen';
  */
 export const splash = {
   preventAutoHide: (): void => {
+    // NOTE: bootstrap best effort, allow-listed: a device with no native splash to hold carries on.
     void SplashScreen.preventAutoHideAsync().catch(() => undefined);
   },
   hide: (): void => {
+    // NOTE: bootstrap best effort, allow-listed: a splash already gone is the outcome wanted.
     void SplashScreen.hideAsync().catch(() => undefined);
   },
 };

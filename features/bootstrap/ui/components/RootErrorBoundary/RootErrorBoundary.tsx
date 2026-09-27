@@ -11,6 +11,8 @@ import { tr } from '@/features/core/translations';
 const styles = createStyles(themeFor('dark'));
 
 const openDeviceSettings = () => {
+  // NOTE: bootstrap best effort, allow-listed: above the navigator there is no Logger to report
+  // to, and a device that cannot open its settings leaves the user here with Try again.
   void Linking.openSettings().catch(() => undefined);
 };
 

@@ -105,6 +105,7 @@ function systemIsDark(): boolean {
   try {
     return Appearance.getColorScheme() === 'dark';
   } catch {
+    // NOTE: the native module missing is the failure this boundary may be showing; dark is the answer.
     return true;
   }
 }

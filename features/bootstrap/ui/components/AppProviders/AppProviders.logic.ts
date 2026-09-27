@@ -17,6 +17,14 @@ function messageOf(failure: unknown): string {
 }
 
 /**
+ * Whether the launch failed on the stored data: a migration that failed, or a read that raised
+ * `SqlError`. Only then can erasing the local data get the next launch past it.
+ */
+function isStorageFailure(failure: unknown): boolean {
+  return typeof failure === 'object' && failure !== null && '_tag' in failure && failure._tag === 'SqlError';
+}
+
+/**
  * The launch gate: runs the bootstrap once, and says which of four things to render: the launch
  * screen, the "still starting" state, the fatal state, or the app. No auto-recovery from a slow
  * start: past the deadline the launch screen offers a retry and a confirmed reset, because
@@ -48,7 +56,10 @@ export function useAppProvidersLogic() {
 
   return {
     state: { phase, systemDark },
-    derived: { failureMessage: phase === 'failed' ? messageOf(failure).slice(0, 400) : '' },
+    derived: {
+      failureMessage: phase === 'failed' ? messageOf(failure).slice(0, 400) : '',
+      canReset: phase === 'failed' && isStorageFailure(failure),
+    },
     effects: { retry, restart },
   };
 }

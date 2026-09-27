@@ -21,6 +21,8 @@ export async function prefetchMaterialIcons(names: readonly MaterialIconName[]):
   if (Platform.OS !== 'android') return;
   await Promise.all(
     [...new Set(names)].map(async name => {
+      // NOTE: a glyph that fails to render leaves its header item without an icon (see `materialIcon`)
+      // rather than failing the launch over a cosmetic image.
       const source = await MaterialIcons.getImageSource(name, SIZE, '#000000').catch(() => null);
       if (source) sources.set(name, source);
     }),

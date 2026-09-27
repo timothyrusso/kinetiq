@@ -77,12 +77,13 @@ export function usePickExercisePageLogic({ onPick, isIncluded }: PickExercisePag
     setMuscleId(null);
     setEquipmentId(null);
   }, []);
-  // NOTE: the facade reads the next page; the window widens by one page per press, so the sheet
-  // keeps rendering plain rows instead of growing a virtualiser.
+  // NOTE: the window widens by one sheet page per press, so the sheet keeps rendering plain rows
+  // instead of growing a virtualiser; the facade reads its next page only once the rows it holds
+  // run out. Its pages are larger than the sheet's, so rows already read can still be hidden.
   const loadMore = useCallback(() => {
-    loadNextPage();
+    if (shown + PAGE_ROWS > items.length) loadNextPage();
     setShown(count => count + PAGE_ROWS);
-  }, [loadNextPage]);
+  }, [items.length, loadNextPage, shown]);
   const retry = useCallback(() => void refresh(), [refresh]);
 
   return {
@@ -96,7 +97,7 @@ export function usePickExercisePageLogic({ onPick, isIncluded }: PickExercisePag
       error: search.error,
       isLoading: search.isLoading,
       isPlaceholder,
-      hasMore: search.hasMore,
+      hasMore: shown < search.items.length || search.hasMore,
       isFetchingNextPage: search.isFetchingNextPage,
       muscles: taxonomy.data?.muscles ?? [],
       equipment: taxonomy.data?.equipment ?? [],

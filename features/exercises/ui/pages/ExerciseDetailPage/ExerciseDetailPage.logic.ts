@@ -1,4 +1,3 @@
-import * as Linking from 'expo-linking';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import type { Tag } from '@/features/core/design-system';
@@ -10,6 +9,7 @@ import type { Exercise } from '@/features/exercises/domain/schemas/ExerciseSchem
 import { provisionalExerciseName } from '@/features/exercises/domain/utils/exerciseId';
 import { useExercise } from '@/features/exercises/facades/useExercise';
 import { useExerciseVariations } from '@/features/exercises/facades/useExerciseVariations';
+import { useOpenExternalPage } from '@/features/exercises/facades/useOpenExternalPage';
 
 const NO_VARIATIONS: readonly Exercise[] = [];
 
@@ -58,9 +58,10 @@ export function useExerciseDetailPageLogic() {
   );
 
   const externalUrl = useMemo(() => wgerPageUrl(exercise), [exercise]);
+  const openPage = useOpenExternalPage();
   const openExternal = useCallback(() => {
-    if (externalUrl !== null) void Linking.openURL(externalUrl).catch(() => undefined);
-  }, [externalUrl]);
+    if (externalUrl !== null) openPage(externalUrl);
+  }, [externalUrl, openPage]);
 
   const currentId = exercise?.id ?? null;
   const openVariation = useCallback(

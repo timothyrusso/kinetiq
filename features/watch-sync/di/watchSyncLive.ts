@@ -17,8 +17,8 @@ type SyncServices = RoutineRepository | RoutineEvents | WorkoutRecorder | InboxN
 
 /**
  * `BackgroundSync` for the Apple Watch, over `WatchBridge`. Without a watch bridge (Android, a
- * build without the native module) both calls do nothing. Installing twice (a launch retried after
- * a failure) subscribes once.
+ * build without the native module) every call does nothing. Installing twice (a launch retried
+ * after a failure) subscribes once; an install that failed is tried again by the next one.
  */
 export const WatchBackgroundSyncLive = Layer.effect(
   BackgroundSync,
@@ -44,11 +44,13 @@ export const WatchBackgroundSyncLive = Layer.effect(
 
     return BackgroundSync.of({
       install: Effect.gen(function* () {
-        if (!supported || (yield* Ref.getAndSet(installed, true))) return;
-        yield* installWatchSync(link, drain).pipe(logBackgroundFailure('watch sync install'));
+        if (!supported || (yield* Ref.get(installed))) return;
+        yield* installWatchSync(link, drain);
+        yield* Ref.set(installed, true);
         yield* Effect.forkDaemon(sync);
-      }).pipe(Effect.provide(services)),
+      }).pipe(logBackgroundFailure('watch sync install'), Effect.provide(services)),
       sync: supported ? sync.pipe(Effect.provide(services)) : Effect.void,
+      push: supported ? pushNow(link).pipe(Effect.provide(services)) : Effect.void,
     });
   }),
 );

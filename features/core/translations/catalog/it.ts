@@ -764,7 +764,6 @@ export const it: Copy = {
     watchUnavailable: "L'Apple Watch non è disponibile.",
     catalogNotInstalled: 'Non è stato possibile installare la libreria degli esercizi.',
     catalogFetchFailed: 'Non è stato possibile leggere il download della libreria degli esercizi. Riprova più tardi.',
-    exerciseNotFound: 'Questo esercizio non è nella libreria.',
     routineNotFound: 'Questa routine non esiste più. È stata eliminata, probabilmente da un’altra schermata.',
     routineNameTaken: 'Hai già una routine con questo nome. Scegline un altro.',
     sessionAlreadyActive: 'Un allenamento è già in corso. Terminalo o annullalo prima.',

@@ -25,7 +25,16 @@ export function AppProviders({ children }: { children: ReactNode }) {
       </>
     );
   }
-  if (state.phase === 'failed') return <FatalScreen message={derived.failureMessage} onRetry={effects.retry} />;
+  if (state.phase === 'failed') {
+    return (
+      <FatalScreen
+        message={derived.failureMessage}
+        canReset={derived.canReset}
+        onRetry={effects.retry}
+        onReset={effects.restart}
+      />
+    );
+  }
   return (
     <LaunchSurface
       dark={state.systemDark}

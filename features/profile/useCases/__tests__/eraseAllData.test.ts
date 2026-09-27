@@ -4,7 +4,7 @@ import { SqliteClient } from '@/features/core/sqlite';
 import { itEffect, makeMigratedSqliteLayer } from '@/features/core/testing';
 import { eraseAllData } from '@/features/profile/useCases/eraseAllData';
 
-const syncs = { count: 0 };
+const mirror = { pushes: 0, syncs: 0 };
 
 const testLayer = () =>
   Layer.mergeAll(
@@ -12,7 +12,10 @@ const testLayer = () =>
     Layer.succeed(BackgroundSync, {
       install: Effect.void,
       sync: Effect.sync(() => {
-        syncs.count += 1;
+        mirror.syncs += 1;
+      }),
+      push: Effect.sync(() => {
+        mirror.pushes += 1;
       }),
     }),
   );
@@ -24,12 +27,13 @@ const countOf = (table: string) =>
   ).pipe(Effect.map(row => row?.n ?? 0));
 
 beforeEach(() => {
-  syncs.count = 0;
+  mirror.pushes = 0;
+  mirror.syncs = 0;
 });
 
 describe('eraseAllData', () => {
   itEffect(
-    'empties the routines and the history and syncs the watch once',
+    'empties the routines and the history and pushes to the watch once',
     Effect.gen(function* () {
       yield* exec(`
         INSERT INTO routines (id, name, created_at, updated_at) VALUES ('r1', 'Push day', 1, 1);
@@ -40,7 +44,17 @@ describe('eraseAllData', () => {
       yield* eraseAllData;
 
       expect([yield* countOf('routines'), yield* countOf('activities')]).toEqual([0, 0]);
-      expect(syncs.count).toBe(1);
+      expect(mirror.pushes).toBe(1);
+    }),
+    testLayer(),
+  );
+
+  itEffect(
+    'never drains the watch inbox, so a pending watch workout is not saved back into the erased history',
+    Effect.gen(function* () {
+      yield* eraseAllData;
+
+      expect(mirror.syncs).toBe(0);
     }),
     testLayer(),
   );
@@ -57,7 +71,7 @@ describe('eraseAllData', () => {
 
       expect(result._tag === 'Left' && result.left._tag).toBe('SqlError');
       expect(yield* countOf('routines')).toBe(1);
-      expect(syncs.count).toBe(0);
+      expect(mirror.pushes).toBe(0);
     }),
     testLayer(),
   );

@@ -67,7 +67,7 @@ const installLifecycle = Effect.gen(function* () {
  */
 export const runBootstrap = (systemDark: boolean) =>
   Effect.gen(function* () {
-    const schema = yield* SchemaStatus;
+    const schema = yield* (yield* SchemaStatus).current;
     if (schema.migrationError !== null) return yield* schema.migrationError;
     yield* AppConfig.Config;
 
@@ -78,7 +78,11 @@ export const runBootstrap = (systemDark: boolean) =>
     yield* notifications.installHandler.pipe(logBackgroundFailure('notification handler install'));
 
     const stored = yield* (yield* SettingsRepository).load;
-    const permission = yield* notifications.permission.pipe(Effect.orElseSucceed(() => ({ granted: false })));
+    const permission = yield* notifications.permission.pipe(
+      Effect.catchAll(error =>
+        Effect.fail(error).pipe(logBackgroundFailure('notification permission read'), Effect.as({ granted: false })),
+      ),
+    );
     const settings = { ...stored, notificationsGranted: permission.granted };
     hydrateSettings(settings);
     const launchTheme = settings.themeMode === 'system' ? (systemDark ? 'dark' : 'light') : settings.themeMode;
