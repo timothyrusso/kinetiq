@@ -1,3 +1,4 @@
+import type { QueryClient } from '@tanstack/react-query';
 import type { CatalogLanguage } from '@/features/exercises/domain/schemas/CatalogLanguage';
 import type { ExerciseFilter } from '@/features/exercises/domain/schemas/ExerciseFilterSchema';
 
@@ -23,3 +24,11 @@ export const exerciseQueryKeys = {
  * bounds memory: a picker session's filters survive, last week's do not.
  */
 export const EXERCISE_GC_MS = 10 * 60_000;
+
+/** After the catalog on the device changed: every catalog read re-reads. Settles once all have. */
+export async function invalidateCatalogQueries(client: QueryClient): Promise<void> {
+  await Promise.all([
+    client.invalidateQueries({ queryKey: exerciseQueryKeys.all }),
+    client.invalidateQueries({ queryKey: exerciseQueryKeys.catalog }),
+  ]);
+}

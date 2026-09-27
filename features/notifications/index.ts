@@ -8,10 +8,10 @@ import type { FeatureTier } from '@timothyrusso/arch-rules';
 export const FEATURE_TIER: FeatureTier = 2;
 
 export { NotificationsLive } from '@/features/notifications/di/layer';
-export type { NotificationPermission } from '@/features/notifications/domain/entities/NotificationPermission';
-export type { ReminderSchedule } from '@/features/notifications/domain/entities/ReminderSchedule';
+/** The device cannot say, or says no: what reading the permission fails with. */
+export { NotificationPermissionDenied } from '@/features/notifications/domain/errors/NotificationErrors';
+/** The device's notifications, for the launch: the foreground handler and the permission read. */
+export { Notifications } from '@/features/notifications/domain/services/Notifications';
+/** The weekly reminder, reconciled by the launch and on every return to the foreground. */
+export { TrainingReminder } from '@/features/notifications/domain/services/TrainingReminder';
 export { useRestAlert } from '@/features/notifications/facades/useRestAlert';
-/** The use cases the legacy callers run through the runtime, until bootstrap moves (#54). */
-export { installNotificationHandler } from '@/features/notifications/useCases/installNotificationHandler';
-export { readNotificationPermission } from '@/features/notifications/useCases/readNotificationPermission';
-export { syncTrainingReminder } from '@/features/notifications/useCases/syncTrainingReminder';

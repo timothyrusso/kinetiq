@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffectMutation } from '@/features/core/query';
-import { exerciseQueryKeys } from '@/features/exercises/facades/exerciseQueryKeys';
+import { invalidateCatalogQueries } from '@/features/exercises/facades/exerciseQueryKeys';
 import { refreshCatalog } from '@/features/exercises/useCases/refreshCatalog';
 
 /**
@@ -12,10 +12,6 @@ export function useRefreshCatalog() {
   const queryClient = useQueryClient();
   return useEffectMutation({
     mutationFn: () => refreshCatalog,
-    onSuccess: () =>
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: exerciseQueryKeys.all }),
-        queryClient.invalidateQueries({ queryKey: exerciseQueryKeys.catalog }),
-      ]),
+    onSuccess: () => invalidateCatalogQueries(queryClient),
   });
 }

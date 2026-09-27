@@ -4,11 +4,12 @@ import type { FeatureTier } from '@timothyrusso/arch-rules';
 export const FEATURE_TIER: FeatureTier = 1;
 
 export { SettingsLive } from '@/features/settings/di/layer';
+/** The stored preferences, for the launch step that hydrates the settings store. */
+export { SettingsRepository } from '@/features/settings/domain/repositories/SettingsRepository';
 export {
   DEFAULT_SETTINGS,
   type Profile,
   type ReminderSettings,
-  type Settings,
   type ThemeMode,
 } from '@/features/settings/domain/schemas/SettingsSchema';
 export { useSettings, useSettingsUpdate } from '@/features/settings/facades/useSettings';
@@ -18,5 +19,3 @@ export {
   subscribeSettings,
   updateSettings,
 } from '@/features/settings/state/settingsStore';
-/** The boot step that reads the stored preferences; `hydrateSettings` puts them in the store. */
-export { loadSettings } from '@/features/settings/useCases/loadSettings';

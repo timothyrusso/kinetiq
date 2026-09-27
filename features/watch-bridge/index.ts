@@ -14,5 +14,5 @@ export {
 export type { WatchInboxEntry } from '@/features/watch-bridge/domain/schemas/WatchInboxEntrySchema';
 export type { WatchRoutinesDocument } from '@/features/watch-bridge/domain/schemas/WatchRoutinesDocumentSchema';
 export type { WatchWorkoutDocument } from '@/features/watch-bridge/domain/schemas/WatchWorkoutDocumentSchema';
-/** The bridge as plain calls, for the legacy watch sync until it moves onto the `WatchBridge` Tag (#54). */
-export { watchBridge } from '@/features/watch-bridge/libraries/watchBridge';
+/** The phone side of WatchConnectivity, for the tier-4 watch sync. */
+export { WatchBridge, type WatchSnapshotPush } from '@/features/watch-bridge/domain/services/WatchBridge';

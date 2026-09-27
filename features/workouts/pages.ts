@@ -1,6 +1,6 @@
 /**
- * Page pieces the routes of other screens compose in: the exercise page's history section and
- * Home's workout card (until the tier-4 home, #54, owns that screen).
+ * Page pieces the tier-4 screens compose in: the exercise page's history section and Home's
+ * workout card, besides the workouts' own pages.
  */
 export { ActivityCard } from '@/features/workouts/ui/components/ActivityCard/ActivityCard';
 export { ExerciseHistorySection } from '@/features/workouts/ui/components/ExerciseHistorySection/ExerciseHistorySection';
