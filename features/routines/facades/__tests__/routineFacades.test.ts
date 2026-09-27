@@ -70,7 +70,7 @@ describe('the routine facades', () => {
     const { result, done } = await renderWithRoutines(useRoutineScreen, null);
     await act(async () => void (await result.current.save.mutateAsync(NEW_ROUTINE)));
 
-    await act(async () => void (await result.current.save.mutateAsync(NEW_ROUTINE).catch(() => undefined)));
+    await act(async () => result.current.save.mutate(NEW_ROUTINE));
 
     await waitFor(() => expect(result.current.save.error?._tag).toBe('RoutineNameTaken'));
     expect(result.current.list.count).toBe(1);
