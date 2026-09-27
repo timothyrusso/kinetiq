@@ -30,4 +30,4 @@ export function getExerciseProvider(): ExerciseProvider {
 }
 
 export type { ExerciseProvider } from './types';
-export { ApiError, isApiError, isOfflineError } from './http';
+export { isApiError, isOfflineError } from './http';

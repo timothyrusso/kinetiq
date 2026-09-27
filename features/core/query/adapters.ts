@@ -13,18 +13,15 @@
  * allowed to disagree, and the disagreement shows up as queries refusing to run.
  */
 import { AppState, type AppStateStatus } from 'react-native';
-import { getNetworkStatus, subscribeNetworkStatus } from './networkStatus';
+import { getNetworkStatus, subscribeNetworkStatus } from '@/features/core/network';
 
 type FocusManagerLike = { setFocused: (focused?: boolean) => void };
 type OnlineManagerLike = { setOnline: (online: boolean) => void };
 
 export type QueryAdapters = { dispose: () => void };
 
-export function setupQueryAdapters(
-  focus: FocusManagerLike,
-  online: OnlineManagerLike,
-): QueryAdapters {
-  // --- focus: `active` == focused. Background and `inactive` (transition, open
+export function setupQueryAdapters(focus: FocusManagerLike, online: OnlineManagerLike): QueryAdapters {
+  // NOTE: --- focus: `active` == focused. Background and `inactive` (transition, open
   // overlay, control centre) are not, which is the same semantics the web
   // visibility API gives.
   const applyAppState = (status: AppStateStatus): void => {
@@ -33,7 +30,7 @@ export function setupQueryAdapters(
   const appStateSub = AppState.addEventListener('change', applyAppState);
   applyAppState(AppState.currentState);
 
-  // --- online. Seeded from the current snapshot, which is `true` until the probe
+  // NOTE: --- online. Seeded from the current snapshot, which is `true` until the probe
   // answers: a cold launch on a dead network then discovers the truth on the first
   // failed request rather than being told optimistically by the manager.
   const unsubscribeNetwork = subscribeNetworkStatus(() => {
@@ -45,7 +42,7 @@ export function setupQueryAdapters(
     dispose: () => {
       appStateSub.remove();
       unsubscribeNetwork();
-      // Restore the library defaults so a teardown cannot leave the app stuck
+      // NOTE: Restore the library defaults so a teardown cannot leave the app stuck
       // "offline" if adapters are ever reinstalled against a fresh client.
       focus.setFocused(true);
       online.setOnline(true);
