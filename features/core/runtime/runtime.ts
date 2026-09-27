@@ -7,6 +7,7 @@ import { LoggerLive } from '@/features/core/logger';
 import { SqliteLive } from '@/features/core/sqlite';
 import { ExercisesLive } from '@/features/exercises';
 import { NotificationsLive } from '@/features/notifications';
+import { RoutinesLive } from '@/features/routines';
 import { SettingsLive } from '@/features/settings';
 import { WatchBridgeLive } from '@/features/watch-bridge';
 
@@ -17,7 +18,13 @@ const CoreLive = Layer.mergeAll(LoggerLive, ConfigLive, SqliteLive, HapticsLive)
  * Every feature's Layer. A feature adds its `<Feature>Live` from its `index.ts` here; a Layer that
  * needs a core service (`SqliteClient`, `AppConfig`) gets it from `CoreLive`.
  */
-export const FeaturesLive = Layer.mergeAll(SettingsLive, NotificationsLive, WatchBridgeLive, ExercisesLive);
+export const FeaturesLive = Layer.mergeAll(
+  SettingsLive,
+  NotificationsLive,
+  WatchBridgeLive,
+  ExercisesLive,
+  RoutinesLive,
+);
 
 /** Every feature's Layer, over the core ones. */
 export const AppLayer = FeaturesLive.pipe(Layer.provideMerge(CoreLive));
