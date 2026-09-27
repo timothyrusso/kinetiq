@@ -643,7 +643,6 @@ export const it: Copy = {
     offlineMessage:
       'Tutto quello che hai salvato è ancora qui. Gli esercizi remoti e le immagini nuove tornano appena ti ricolleghi.',
     genericMessage: 'Questo non ha risposto. Riprovare di solito funziona.',
-    activityGone: 'Questo allenamento non è più salvato.',
     autoStartOn: 'Parte il conto alla rovescia nel momento in cui completi una serie.',
     autoStartOff: 'Il recupero lo avvii tu, così una telefonata tra le serie non ti costa nulla.',
     pickerNoMatch: 'Nessun risultato',
@@ -768,5 +767,10 @@ export const it: Copy = {
     exerciseNotFound: 'Questo esercizio non è nella libreria.',
     routineNotFound: 'Questa routine non esiste più. È stata eliminata, probabilmente da un’altra schermata.',
     routineNameTaken: 'Hai già una routine con questo nome. Scegline un altro.',
+    sessionAlreadyActive: 'Un allenamento è già in corso. Terminalo o annullalo prima.',
+    noActiveSession: 'Questo allenamento non è più in corso.',
+    duplicateWorkout: 'Questo allenamento è già nella tua cronologia.',
+    sessionPersistFailed: 'Non è stato possibile salvare il tuo allenamento su questo dispositivo.',
+    activityNotFound: 'Questo allenamento non è più salvato.',
   },
 };
