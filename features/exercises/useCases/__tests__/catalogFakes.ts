@@ -68,7 +68,7 @@ export const makeCatalogRepositoryFake = ({
           }),
     byId: externalId => Effect.sync(() => exercises.find(exercise => exercise.externalId === externalId)),
     variations: externalId => Effect.sync(() => exercises.filter(exercise => exercise.externalId !== externalId)),
-    taxonomy: Effect.succeed({ categories: [{ id: 1, name: 'Chest' }], equipment: [], muscles: [] }),
+    taxonomy: () => Effect.succeed({ categories: [{ id: 1, name: 'Chest' }], equipment: [], muscles: [] }),
   });
 };
 

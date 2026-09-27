@@ -1,4 +1,5 @@
 import { act, renderHook } from '@testing-library/react-native';
+import type { AccessibilityActionEvent } from 'react-native';
 import { tr } from '@/features/core/translations';
 import { anExerciseSnapshot, aRoutineItem } from '@/features/routines/__fixtures__/builders';
 import {
@@ -8,7 +9,14 @@ import {
 
 const renderRow = (overrides: Partial<RoutineItemRowInput> = {}) =>
   renderHook(useRoutineItemRowLogic, {
-    initialProps: { item: aRoutineItem(), snapshot: anExerciseSnapshot(), units: 'metric', index: 1, ...overrides },
+    initialProps: {
+      item: aRoutineItem(),
+      snapshot: anExerciseSnapshot(),
+      units: 'metric',
+      index: 1,
+      count: 3,
+      ...overrides,
+    },
   });
 
 describe('useRoutineItemRowLogic', () => {
@@ -57,5 +65,46 @@ describe('useRoutineItemRowLogic', () => {
       ['move', 1, 2],
       ['remove', 'rit_bench'],
     ]);
+  });
+
+  it('offers the move and remove buttons to a screen reader as the row’s actions', async () => {
+    const calls: unknown[] = [];
+    const { result } = await renderRow({
+      onMove: (from, to) => void calls.push(['move', from, to]),
+      onRemove: id => void calls.push(['remove', id]),
+    });
+
+    expect(result.current.derived.accessibilityActions).toEqual([
+      { name: 'moveUp', label: tr('routineItemA11y.moveUp', { name: 'Bench Press' }) },
+      { name: 'moveDown', label: tr('routineItemA11y.moveDown', { name: 'Bench Press' }) },
+      { name: 'remove', label: tr('routineItemA11y.remove', { name: 'Bench Press' }) },
+    ]);
+    const perform = (actionName: string) =>
+      result.current.effects.onAccessibilityAction({ nativeEvent: { actionName } } as AccessibilityActionEvent);
+    await act(async () => {
+      perform('moveUp');
+      perform('moveDown');
+      perform('remove');
+    });
+    expect(calls).toEqual([
+      ['move', 1, 0],
+      ['move', 1, 2],
+      ['remove', 'rit_bench'],
+    ]);
+  });
+
+  it('leaves out the move the first and the last row cannot make', async () => {
+    const onMove = () => undefined;
+    const first = await renderRow({ onMove, index: 0 });
+    const last = await renderRow({ onMove, index: 2 });
+
+    expect(first.result.current.derived.accessibilityActions.map(action => action.name)).toEqual(['moveDown']);
+    expect(last.result.current.derived.accessibilityActions.map(action => action.name)).toEqual(['moveUp']);
+  });
+
+  it('has no actions on a row that can only be opened', async () => {
+    const { result } = await renderRow({ onOpen: () => undefined });
+
+    expect(result.current.derived.accessibilityActions).toEqual([]);
   });
 });

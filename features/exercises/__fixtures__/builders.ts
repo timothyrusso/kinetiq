@@ -15,7 +15,7 @@ export const aCatalogExercise = (
   externalId,
   uuid: null,
   variationGroup: null,
-  categoryId: 1,
+  categoryId: 11,
   primaryMuscleIds: [],
   secondaryMuscleIds: [],
   equipmentIds: [],
@@ -29,7 +29,10 @@ export const aCatalogExercise = (
   ...overrides,
 });
 
-/** A payload over a small taxonomy: two categories, two pieces of equipment, three muscles. */
+/**
+ * A payload over a small taxonomy: two categories, two pieces of equipment, three muscles. The ids
+ * are wger's own, which the app names in its catalog, except muscle 99, which it does not.
+ */
 export const aCatalogPayload = (
   exercises: readonly CatalogExercise[] = [aCatalogExercise()],
   overrides: Partial<CatalogPayload> = {},
@@ -38,17 +41,17 @@ export const aCatalogPayload = (
   source: 'wger',
   generatedAt: 1_000,
   categories: [
-    { id: 1, name: 'Chest' },
-    { id: 2, name: 'Legs' },
+    { id: 11, name: 'Chest' },
+    { id: 9, name: 'Legs' },
   ],
   equipment: [
     { id: 1, name: 'Barbell' },
-    { id: 2, name: 'Dumbbell' },
+    { id: 3, name: 'Dumbbell' },
   ],
   muscles: [
-    { id: 1, name: 'Pectoralis major', nameEn: 'Chest', isFront: true },
-    { id: 2, name: 'Triceps brachii', nameEn: '', isFront: false },
-    { id: 3, name: 'Quadriceps femoris', nameEn: 'Quads', isFront: true },
+    { id: 4, name: 'Pectoralis major', nameEn: 'Chest', isFront: true },
+    { id: 99, name: 'Triceps brachii', nameEn: '', isFront: false },
+    { id: 10, name: 'Quadriceps femoris', nameEn: 'Quads', isFront: true },
   ],
   exercises,
   ...overrides,

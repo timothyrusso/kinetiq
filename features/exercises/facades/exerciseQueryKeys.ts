@@ -11,7 +11,7 @@ export const exerciseQueryKeys = {
   all: ['exercises'] as const,
   list: (filter: ExerciseFilter, language: CatalogLanguage, limit: number) =>
     ['exercises', 'list', language, filter, { limit }] as const,
-  taxonomy: () => ['exercises', 'taxonomy'] as const,
+  taxonomy: (language: CatalogLanguage) => ['exercises', 'taxonomy', language] as const,
   detail: (id: string, language: CatalogLanguage) => ['exercises', 'detail', language, id] as const,
   stored: (id: string) => ['exercises', 'stored', id] as const,
   variations: (id: string, language: CatalogLanguage) => ['exercises', 'variations', language, id] as const,

@@ -7,7 +7,8 @@ export function useTrainingGridLogic(heatmap: TrainingHeatmap, weeks: number, t:
   const labels = useMemo(() => {
     const trained = heatmap.days.filter(day => day.value > 0).length;
     const footer = t('heatmap.workouts', { count: heatmap.workouts, weeks });
-    return { footer, a11y: t('heatmap.a11y', { days: trained, weeks, workouts: footer }) };
+    const days = t('heatmap.days', { count: trained });
+    return { footer, a11y: t('heatmap.a11y', { days, weeks, workouts: footer }) };
   }, [heatmap, t, weeks]);
   return { derived: labels };
 }

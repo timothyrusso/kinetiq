@@ -94,7 +94,7 @@ describe('getTaxonomy and getCatalogMeta', () => {
   itEffect(
     'read the repository as it is',
     Effect.gen(function* () {
-      expect((yield* getTaxonomy).categories).toEqual([{ id: 1, name: 'Chest' }]);
+      expect((yield* getTaxonomy('en')).categories).toEqual([{ id: 1, name: 'Chest' }]);
       expect(yield* getCatalogMeta).toEqual(aCatalogMeta());
     }),
     catalog,

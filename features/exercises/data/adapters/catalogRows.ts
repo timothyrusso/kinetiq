@@ -8,6 +8,7 @@ export const ExerciseRow = Schema.Struct({
   external_id: Schema.Number,
   name: Schema.NullOr(Schema.String),
   instructions: Schema.NullOr(Schema.String),
+  category_id: Schema.NullOr(Schema.Number),
   category: Schema.NullOr(Schema.String),
   image_url: Schema.NullOr(Schema.String),
   thumbnail_url: Schema.NullOr(Schema.String),
@@ -16,9 +17,18 @@ export const ExerciseRow = Schema.Struct({
 
 export type ExerciseRow = typeof ExerciseRow.Type;
 
-export const MuscleNameRow = Schema.Struct({ exercise_id: Schema.String, role: Schema.String, name: Schema.String });
+export const MuscleNameRow = Schema.Struct({
+  exercise_id: Schema.String,
+  muscle_id: Schema.Number,
+  role: Schema.String,
+  name: Schema.String,
+});
 
-export const EquipmentNameRow = Schema.Struct({ exercise_id: Schema.String, name: Schema.String });
+export const EquipmentNameRow = Schema.Struct({
+  exercise_id: Schema.String,
+  equipment_id: Schema.Number,
+  name: Schema.String,
+});
 
 export const CountRow = Schema.Struct({ n: Schema.Number });
 

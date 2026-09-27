@@ -12,7 +12,7 @@ type CatalogReadError = SqlError | DecodeError;
 
 /**
  * The exercise catalog on the device. Every read names its rows in `language` and falls back to
- * English per row; a row with neither is left out of lists and named `Exercise <n>` when asked for
+ * English per row (categories, muscles and equipment through the app's own names for them); a row with neither is left out of lists and named `Exercise <n>` when asked for
  * by id.
  */
 export class CatalogRepository extends Context.Tag('exercises/CatalogRepository')<
@@ -48,7 +48,10 @@ export class CatalogRepository extends Context.Tag('exercises/CatalogRepository'
       externalId: number,
       language: CatalogLanguage,
     ) => Effect.Effect<readonly Exercise[], CatalogReadError>;
-    /** Categories, equipment and muscles by name, muscles by their common name where wger has one. */
-    readonly taxonomy: Effect.Effect<ExerciseTaxonomy, CatalogReadError>;
+    /**
+     * Categories, equipment and muscles, each named and ordered in `language`: by the app's name for
+     * the wger ids it knows, else by the stored name, muscles by their common name where wger has one.
+     */
+    readonly taxonomy: (language: CatalogLanguage) => Effect.Effect<ExerciseTaxonomy, CatalogReadError>;
   }
 >() {}
