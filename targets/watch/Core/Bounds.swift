@@ -1,7 +1,8 @@
 import Foundation
 
 /// The routine limits, read from `bounds.json`: the same file the phone's editor and importer
-/// use (`src/transfer/bounds.json`), shipped in the watch bundle. `check:watch` keeps the copies equal.
+/// use (`features/watch-bridge/assets/bounds.json`), shipped in the watch bundle. `check:watch`
+/// keeps the copies equal.
 public struct Bounds: Decodable, Equatable, Sendable {
     public struct Range: Decodable, Equatable, Sendable {
         public let min: Double

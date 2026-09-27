@@ -5,17 +5,9 @@
     "scripts/*.{js,ts}",
     "features/core/*/index.ts",
     "features/**/*.{ios,android}.{ts,tsx}",
-    "targets/**/expo-target.config.js",
-    "modules/*/index.ts",
-    "modules/**/*.android.ts"
+    "targets/**/expo-target.config.js"
   ],
-  "project": [
-    "app/**/*.{ts,tsx}",
-    "features/**/*.{ts,tsx}",
-    "src/**/*.{ts,tsx}",
-    "scripts/**/*.{js,ts}",
-    "modules/**/*.ts"
-  ],
+  "project": ["app/**/*.{ts,tsx}", "features/**/*.{ts,tsx}", "src/**/*.{ts,tsx}", "scripts/**/*.{js,ts}"],
   "paths": {
     "@/features/core/design-system/controls/*": [
       "features/core/design-system/controls/*/index.ios.tsx",
