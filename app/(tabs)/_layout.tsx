@@ -31,14 +31,12 @@ import { Platform } from 'react-native';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 // `Icon` and `Label` are the shared primitives, exported from the package root rather than
 // from the native-tabs subpath.
-import { Icon, Label, router } from 'expo-router';
+import { Icon, Label } from 'expo-router';
 
-import { routes } from '@/navigation/nav';
 import { useAppTheme, type Theme } from '@/theme/theme';
 import { useT } from '@/i18n/useT';
-import { ActiveWorkoutPill } from '@/ui/workout/ActiveWorkoutPill';
-import { formatDuration } from '@/utils/format';
-import { useWorkoutRunning, useWorkoutSession } from '@/workout/session';
+import { useWorkoutRunning } from '@/features/workouts';
+import { WorkoutAccessory } from '@/features/workouts/pages';
 
 export default function TabsLayout() {
   const theme = useAppTheme();
@@ -110,26 +108,3 @@ function androidBar(theme: Theme) {
   } as const;
 }
 
-/**
- * The live-workout pill, in the system's accessory slot.
- *
- * Its own component because the session republishes once a second while a workout runs; kept
- * inline, that tick would re-render the whole tab layout: and therefore the navigator: every
- * second. Split, the tick re-renders the pill and nothing else.
- */
-function WorkoutAccessory() {
-  const theme = useAppTheme();
-  const { t } = useT();
-  const { session } = useWorkoutSession();
-  if (session === null || (session.status !== 'active' && session.status !== 'paused')) return null;
-  return (
-    <ActiveWorkoutPill
-      label={session.routineName}
-      detail={session.status === 'paused' ? t('workout.paused') : formatDuration(session.elapsedSeconds, ':')}
-      onPress={() => {
-        router.push(routes.workoutSession());
-      }}
-      theme={theme}
-    />
-  );
-}

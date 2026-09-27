@@ -20,7 +20,8 @@
  * muscles, no picture and no instructions that nothing could ever refresh. The preview lists
  * what was dropped, and says when the reason is being offline rather than a bad name.
  */
-import type { Exercise, ExerciseSnapshot, RoutineItem } from '@/domain/types';
+import type { Exercise, ExerciseSnapshot } from '@/features/exercises';
+import type { RoutineItem } from '@/features/routines';
 import { isOfflineFailure } from '@/features/core/error';
 import { snapshotOf as freeze } from '@/features/exercises';
 import { catalogExercise, searchCatalog, storedExercise, storedExerciseByName } from '@/services/catalog';

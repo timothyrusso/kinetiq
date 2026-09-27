@@ -6,6 +6,8 @@ export const FEATURE_TIER: FeatureTier = 3;
 export { RoutinesLive } from '@/features/routines/di/layer';
 /** @public The change `RoutineEvents` publishes, for the tier-4 code that mirrors the routines (watch-sync, #54). */
 export type { RoutineChanged, RoutineChangeKind } from '@/features/routines/domain/entities/RoutineChanged';
+/** What the routine screen needs from the workouts; the tier-4 code that starts a workout provides it. */
+export type { WorkoutLauncher } from '@/features/routines/domain/entities/WorkoutLauncher';
 /**
  * The repository and its change events, for the higher-tier code that reads every routine or
  * mirrors them (the watch sync, the transfer).

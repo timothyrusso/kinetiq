@@ -1,8 +1,7 @@
 /**
- * The imperative catalog calls the legacy callers (bootstrap, the routine importer, the workout
- * screen) still make, run through the app runtime over the `exercises` use cases and stored
- * snapshots. Goes away when bootstrap, the importer (#54) and the workout screen (#53) move into
- * features.
+ * The imperative catalog calls the legacy callers (bootstrap, the routine importer) still make,
+ * run through the app runtime over the `exercises` use cases and stored snapshots. Goes away when
+ * bootstrap and the importer move into features (#54).
  */
 import { currentLanguage } from '@/features/core/translations';
 import { getNetworkStatus, subscribeNetworkStatus } from '@/features/core/network';
@@ -17,7 +16,6 @@ import {
   installBundledCatalogIfMissing,
   maybeRefreshCatalog as maybeRefresh,
   searchExercises,
-  snapshotOf,
 } from '@/features/exercises';
 
 /**
@@ -86,11 +84,4 @@ export async function storedExercise(id: string): Promise<ExerciseSnapshot | nul
 /** The most recently stored exercise named `name`, ignoring case, or null. */
 export async function storedExerciseByName(name: string): Promise<ExerciseSnapshot | null> {
   return (await runtime.runPromise(Effect.flatMap(ExerciseSnapshotRepository, repo => repo.byName(name)))) ?? null;
-}
-
-/** Freezes `exercise` into a stored snapshot, captured now. */
-export function storeExercise(exercise: Exercise): Promise<void> {
-  return runtime.runPromise(
-    Effect.flatMap(ExerciseSnapshotRepository, repo => repo.upsert(snapshotOf(exercise, Date.now()))),
-  );
 }

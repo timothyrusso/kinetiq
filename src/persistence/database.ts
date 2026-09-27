@@ -1,14 +1,12 @@
 /**
- * The legacy repositories' handle on the app database.
+ * The legacy open of the app database, for the launch's diagnostics and the watch paths.
  *
- * The connection, the schema and its migrations live in `features/core/sqlite`; this module
- * only keeps the synchronous `getDatabase()` the repositories below still call, on the same
- * shared connection `SqliteClient` uses. It goes away as each repository becomes a Layer.
+ * The connection, the schema and its migrations live in `features/core/sqlite`; every repository
+ * is a Layer on the same shared connection `SqliteClient` uses. This goes away with bootstrap and
+ * watch-sync (#54).
  */
 import type * as SQLite from 'expo-sqlite';
 import { openAppDatabase } from '@/features/core/sqlite';
-
-let database: SQLite.SQLiteDatabase | null = null;
 
 export type DatabaseOpenResult = {
   db: SQLite.SQLiteDatabase;
@@ -25,25 +23,12 @@ export async function readSchemaVersion(db: SQLite.SQLiteDatabase): Promise<numb
 }
 
 /**
- * Opens the shared connection, once, and makes it available to `getDatabase()`. It does not
- * migrate: the runtime's `SqliteClient` Layer does, when bootstrap boots it.
+ * Opens the shared connection, once. It does not migrate: the runtime's `SqliteClient` Layer
+ * does, when bootstrap boots it.
  */
 export async function openDatabase(): Promise<DatabaseOpenResult> {
   const db = await openAppDatabase();
-  database = db;
   const version = await readSchemaVersion(db);
   return { db, fromVersion: version, toVersion: version };
 }
 
-/**
- * Runs `task` in one transaction on the main connection: every repository call inside it is
- * part of the same all-or-nothing write, because repositories use this connection too.
- */
-export async function withTransaction(task: () => Promise<void>): Promise<void> {
-  await getDatabase().withTransactionAsync(task);
-}
-
-export function getDatabase(): SQLite.SQLiteDatabase {
-  if (!database) throw new Error('Database accessed before openDatabase() resolved');
-  return database;
-}

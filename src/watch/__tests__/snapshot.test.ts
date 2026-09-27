@@ -1,4 +1,4 @@
-import type { Routine, RoutineItem } from '@/domain/types';
+import type { Routine, RoutineItem } from '@/features/routines';
 import { RoutineId } from '@/features/routines';
 import { IMPORT_LIMITS, ITEM_BOUNDS } from '@/transfer/format';
 import { buildWatchRoutines } from '../snapshot';

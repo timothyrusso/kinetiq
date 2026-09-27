@@ -1,2 +1,2 @@
 /** Moved to `@/features/core/utils`: this re-export keeps legacy imports building until the owning child deletes it. */
-export { addDays, compactNumber, formatCalories, formatDuration, formatDurationCompact, formatTimer, formatWeight, joinMiddleDot, parseNumber, repsFromRange, splitMetric, startOfDay, startOfWeek, trimNumber, weightDisplayValue, weightFromDisplayValue, weightStep, weightUnit, weightValue, type UnitSystem } from '@/features/core/utils';
+export { formatTimer, formatWeight, parseNumber, type UnitSystem } from '@/features/core/utils';

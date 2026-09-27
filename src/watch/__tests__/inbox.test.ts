@@ -19,14 +19,14 @@ jest.mock('@/features/watch-bridge', () => {
   };
 });
 jest.mock('@/persistence', () => ({ openDatabase: jest.fn(async () => ({})) }));
-jest.mock('@/workout/commitWorkout', () => ({ commitWorkout: jest.fn() }));
+jest.mock('@/services/workouts', () => ({ commitCompletedWorkout: jest.fn() }));
 jest.mock('../inboxNotice', () => ({ reportWatchInboxProblem: jest.fn() }));
 
 const { mockInbox, watchBridge: bridge } = jest.requireMock('@/features/watch-bridge') as {
   mockInbox: WatchInboxEntry[];
   watchBridge: { listInbox: jest.Mock; ackInbox: jest.Mock; rejectInbox: jest.Mock };
 };
-const { commitWorkout } = jest.requireMock('@/workout/commitWorkout') as { commitWorkout: jest.Mock };
+const { commitCompletedWorkout: commitWorkout } = jest.requireMock('@/services/workouts') as { commitCompletedWorkout: jest.Mock };
 const { reportWatchInboxProblem } = jest.requireMock('../inboxNotice') as { reportWatchInboxProblem: jest.Mock };
 
 beforeEach(() => {

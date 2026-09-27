@@ -50,7 +50,7 @@ import type { Language } from '@/i18n';
 import { ProgressRing } from '@/ui/charts/ProgressRing';
 import { Txt } from '@/ui/Text';
 import { Stack } from '@/ui/layout';
-import { useTrainingSummary } from '@/queries/useProgress';
+import { useTrainingSummary } from '@/features/workouts';
 import { useSettings, useSettingsUpdate } from '@/features/settings';
 import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';

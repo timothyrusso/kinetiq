@@ -9,7 +9,7 @@
  */
 import { watchBridge, type WatchInboxEntry } from '@/features/watch-bridge';
 import { openDatabase } from '@/persistence';
-import { commitWorkout } from '@/workout/commitWorkout';
+import { commitCompletedWorkout } from '@/services/workouts';
 import { reportWatchInboxProblem } from './inboxNotice';
 import { parseWatchWorkout } from './parseWorkout';
 
@@ -63,7 +63,7 @@ async function processEntry(entry: WatchInboxEntry): Promise<string | null> {
     return null;
   }
   try {
-    const result = await commitWorkout(parsed.workout);
+    const result = await commitCompletedWorkout(parsed.workout);
     // Saved now, or saved by an earlier delivery of the same workout: either way it is done.
     await watchBridge.ackInbox(entry.id);
     return result === null ? null : result.activity.id;

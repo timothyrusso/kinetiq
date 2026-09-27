@@ -22,7 +22,7 @@
  *
  * ## The count reads the history cache, not SQL
  *
- * `useActivityHistory` is the same query Home draws, so counting it here costs one pass over
+ * `useActivities` is the same query Home draws, so counting it here costs one pass over
  * data the app is already holding. A second query for "how many workouts" would be a second
  * source of truth for one number, and the only thing that buys is a way for two screens to
  * disagree.
@@ -44,7 +44,7 @@ import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
 import { CATALOG_PROVIDER } from '@/features/exercises';
 import { clearAllUserData } from '@/providers/database';
 import { DEFAULT_SETTINGS, updateSettings } from '@/features/settings';
-import { useActivityHistory } from '@/queries/useActivities';
+import { useActivities } from '@/features/workouts';
 import { useRoutines } from '@/features/routines';
 import { haptics } from '@/services/haptics';
 import { useT } from '@/i18n/useT';
@@ -58,7 +58,7 @@ export default function SettingsAboutScreen() {
   const appId = config?.ios?.bundleIdentifier ?? config?.android?.package ?? config?.slug ?? null;
 
   // Home's own query, so this renders from a cache the app has already filled. See the header.
-  const history = useActivityHistory();
+  const history = useActivities();
   const { routines, isLoading: routinesLoading } = useRoutines();
 
   const [confirming, setConfirming] = useState(false);

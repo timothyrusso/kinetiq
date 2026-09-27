@@ -1,24 +1,16 @@
 /**
- * The imperative routine calls the legacy callers (the workout commit, the watch sync, the
- * transfer) still make, run through the app runtime over the `routines` repository. Goes away
- * when those callers move into features: workouts (#53), watch-sync and transfer (#54).
+ * The imperative routine calls the legacy callers (the watch sync, the transfer) still make, run
+ * through the app runtime over the `routines` repository. Goes away when those callers move into
+ * features: watch-sync and transfer (#54).
  */
 import { Effect, Stream } from 'effect';
 import { runtime } from '@/features/core/runtime';
 import { type ExerciseSnapshot, ExerciseSnapshotRepository } from '@/features/exercises';
-import { type Routine, RoutineEvents, RoutineId, type RoutineItem, RoutineRepository } from '@/features/routines';
+import { type Routine, RoutineEvents, type RoutineItem, RoutineRepository } from '@/features/routines';
 
 /** Every routine, most recently changed first. */
 export function listAllRoutines(): Promise<readonly Routine[]> {
   return runtime.runPromise(Effect.flatMap(RoutineRepository, repo => repo.list));
-}
-
-/**
- * Counts a recorded workout against routine `id`. On the shared connection, so inside the
- * workout commit's transaction it is part of the same all-or-nothing write.
- */
-export function markRoutineUsed(id: string, performedAt: number): Promise<void> {
-  return runtime.runPromise(Effect.flatMap(RoutineRepository, repo => repo.markUsed(RoutineId.make(id), performedAt)));
 }
 
 /**

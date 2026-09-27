@@ -10,7 +10,6 @@
     "types": ["node", "react", "jest"],
     "forceConsistentCasingInFileNames": true,
     "exactOptionalPropertyTypes": false,
-    "verbatimModuleSyntax": false,
     "moduleSuffixes": [".ios", ""],
     "paths": {
       "@/*": ["./src/*", "./*"]

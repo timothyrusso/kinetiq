@@ -10,8 +10,8 @@
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { activityRepository } from '@/persistence';
 import { listAllRoutines } from '@/services/routines';
+import { listAllActivities } from '@/services/workouts';
 import { invalidateRoutines } from '@/query/invalidation';
 import { queryKeys } from '@/query/keys';
 import { getSettings } from '@/features/settings';
@@ -31,12 +31,12 @@ export type ExportTarget = 'workoutsJson' | 'setsCsv' | 'routinesJson';
 async function runExport(target: ExportTarget): Promise<void> {
   switch (target) {
     case 'workoutsJson': {
-      const activities = await activityRepository.list({ order: 'asc' });
+      const activities = await listAllActivities();
       const body = JSON.stringify(workoutsDocument(activities), null, 2);
       return shareFile(exportFileName('workouts', 'json'), body, 'json');
     }
     case 'setsCsv': {
-      const activities = await activityRepository.list({ order: 'asc' });
+      const activities = await listAllActivities();
       return shareFile(exportFileName('sets', 'csv'), setsCsv(activities), 'csv');
     }
     case 'routinesJson': {

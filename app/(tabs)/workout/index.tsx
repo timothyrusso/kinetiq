@@ -51,16 +51,14 @@ import { EmptyState, ErrorState, SkeletonCard } from '@/ui/states';
 import { ProgressRing } from '@/ui/charts/ProgressRing';
 import { useRoutines } from '@/features/routines';
 import { routes } from '@/navigation/nav';
-import type { Routine } from '@/domain/types';
+import type { Routine } from '@/features/routines';
 import { useAppTheme, type Theme } from '@/theme/theme';
 import { useT } from '@/i18n/useT';
 import type { TKey, TVars } from '@/i18n';
 import { spacing, screenGutter } from '@/theme/tokens';
 import { formatTimer } from '@/utils/format';
-import { useSettings } from '@/features/settings';
 import { haptics } from '@/services/haptics';
-import { useStartEmptyWorkout } from '@/workout/startRoutine';
-import { useWorkoutRunning, useWorkoutSession } from '@/workout/session';
+import { useActiveSession, useStartSession, useWorkoutRunning } from '@/features/workouts';
 import { formatAgoLocalized } from '@/utils/relativeTime';
 
 type Order = 'recent' | 'name';
@@ -190,7 +188,7 @@ export default function WorkoutScreen() {
  * re-renders this card and nothing above it.
  */
 function LiveResumeCard({ onPress }: { onPress: () => void }) {
-  const { session } = useWorkoutSession();
+  const { session } = useActiveSession();
   if (session === null || (session.status !== 'active' && session.status !== 'paused')) return null;
   let completed = 0;
   let total = 0;
@@ -277,18 +275,18 @@ function ResumeCard({
 
 /**
  * A session with nothing in it yet: exercises are added from inside the player, which offers
- * the picker while its list is empty. Starting is a navigation, not a mutation: the session
- * store is synchronous and persists on its own, so there is nothing to wait for.
+ * the picker while its list is empty. The session is built and handed to the store, which
+ * persists it on its own; the player opens once it is live.
  */
 function StartEmptyWorkout({ onStarted }: { onStarted: () => void }) {
   const { t } = useT();
-  const defaultRest = useSettings((s) => s.defaultRestSeconds);
-  const start = useStartEmptyWorkout();
+  const { start } = useStartSession();
   const press = useCallback(() => {
-    start({ name: t('workoutTab.emptyWorkoutName'), defaultRestSeconds: defaultRest });
-    haptics.success();
-    onStarted();
-  }, [defaultRest, onStarted, start, t]);
+    start({ routineId: null, name: t('workoutTab.emptyWorkoutName'), items: [] }, () => {
+      haptics.success();
+      onStarted();
+    });
+  }, [onStarted, start, t]);
   return (
     <View style={styles.section}>
       <SectionHeader title={t('workoutTab.quickStart')} />

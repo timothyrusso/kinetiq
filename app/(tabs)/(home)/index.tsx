@@ -33,15 +33,20 @@ import { FlashList } from '@shopify/flash-list';
 
 import { useTabContentBottom } from '@/ui/insets';
 import { SCROLL_INSETS, ScreenHeader } from '@/ui/Screen';
-import { ActivityCard, SectionHeader } from '@/ui/display';
+import { SectionHeader } from '@/ui/display';
+import { ActivityCard } from '@/features/workouts/pages';
 import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
 import { Card } from '@/ui/layout';
 import { HeatmapCalendar } from '@/ui/charts/HeatmapCalendar';
 import { EmptyState, ErrorState, SkeletonCard, SkeletonList, ThemedRefreshControl } from '@/ui/states';
-import { useActivityHistory, useDeleteActivity } from '@/queries/useActivities';
-import { useTrainingHeatmap, type TrainingHeatmap } from '@/queries/useProgress';
+import {
+  type Activity,
+  type TrainingHeatmap,
+  useActivities,
+  useDeleteActivity,
+  useTrainingHeatmap,
+} from '@/features/workouts';
 import { useSettings } from '@/features/settings';
-import type { Activity } from '@/domain/types';
 import { routes } from '@/navigation/nav';
 import { useAppTheme, type Theme } from '@/theme/theme';
 import { spacing, screenGutter } from '@/theme/tokens';
@@ -68,7 +73,7 @@ export default function HomeScreen() {
   const units = useSettings((s) => s.unitSystem);
 
   const summaryQuery = useTrainingHeatmap(GRID_WEEKS);
-  const history = useActivityHistory();
+  const history = useActivities();
   const removeActivity = useDeleteActivity();
   const [pendingId, setPendingId] = useState<string | null>(null);
 
@@ -209,9 +214,7 @@ export default function HomeScreen() {
           title={t('activity.deleteTitle')}
           message={
             removeActivity.isError
-              ? removeActivity.error instanceof Error
-                ? removeActivity.error.message
-                : t('activity.deleteFailed')
+              ? t('activity.deleteFailed')
               : t('activity.deleteMessage', { name: pendingDelete.title })
           }
           confirmLabel={t('activity.deleteConfirm')}

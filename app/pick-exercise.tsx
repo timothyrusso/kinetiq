@@ -25,8 +25,7 @@ import {
 } from '@/features/routines';
 import { haptics } from '@/services/haptics';
 import { useSettings } from '@/features/settings';
-import { useWorkoutSession } from '@/workout/session';
-import { addExerciseToSession } from '@/workout/sessionExercises';
+import { useActiveSession, useAddSessionExercise } from '@/features/workouts';
 
 type Target = 'draft' | 'routine' | 'session';
 
@@ -79,18 +78,18 @@ function IntoRoutine({ routineId }: { routineId: RoutineId }) {
 function IntoSession() {
   const { t } = useT();
   const defaultRest = useSettings((s) => s.defaultRestSeconds);
-  const { session } = useWorkoutSession();
+  const { session } = useActiveSession();
+  const { add } = useAddSessionExercise();
   const [error, setError] = useState<string | null>(null);
-  const ids = useMemo(() => (session?.entries ?? []).map((entry) => entry.exerciseId), [session]);
+  const entries = session?.entries;
+  const ids = useMemo(() => (entries ?? []).map((entry) => entry.exerciseId), [entries]);
   const isIncluded = useCallback((exerciseId: string) => ids.includes(exerciseId), [ids]);
   const pick = useCallback(
     (exercise: Exercise) => {
       setError(null);
-      addExerciseToSession({
-        exercise,
-        defaultRestSeconds: defaultRest,
-        isDuplicate: ids.includes(exercise.id),
-      })
+      // The opening targets come from `defaultItemTarget`, the routines' own, so an exercise
+      // added mid-workout starts out like one added to a routine: the rest is the user's default.
+      add(exercise, defaultItemTarget(defaultRest), ids.includes(exercise.id))
         .then((added) => {
           if (added) {
             haptics.success();
@@ -106,7 +105,7 @@ function IntoSession() {
           haptics.warning();
         });
     },
-    [defaultRest, ids, t],
+    [add, defaultRest, ids, t],
   );
   return <PickExercisePage isIncluded={isIncluded} onPick={pick} error={error} />;
 }
