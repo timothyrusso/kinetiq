@@ -14,18 +14,18 @@ const ALL: ExerciseFilter = { query: '', categoryId: null, equipmentId: null, mu
 const BENCH = aCatalogExercise(
   10,
   { en: 'Bench Press', it: 'Panca piana' },
-  { primaryMuscleIds: [1], secondaryMuscleIds: [2], equipmentIds: [1], variationGroup: 'press', imageUrl: 'big.png' },
+  { primaryMuscleIds: [4], secondaryMuscleIds: [99], equipmentIds: [1], variationGroup: 'press', imageUrl: 'big.png' },
 );
 const DUMBBELL_BENCH = aCatalogExercise(
   11,
   { en: 'Dumbbell Bench Press', it: 'Distensioni su panca' },
-  { primaryMuscleIds: [1], equipmentIds: [2], variationGroup: 'press' },
+  { primaryMuscleIds: [4], equipmentIds: [3], variationGroup: 'press' },
 );
-const DIP = aCatalogExercise(12, { en: 'Dips' }, { primaryMuscleIds: [2], secondaryMuscleIds: [1] });
+const DIP = aCatalogExercise(12, { en: 'Dips' }, { primaryMuscleIds: [99], secondaryMuscleIds: [4] });
 const SQUAT = aCatalogExercise(
   13,
   { en: 'Squat', it: 'Squat con bilanciere' },
-  { categoryId: 2, primaryMuscleIds: [3], equipmentIds: [1] },
+  { categoryId: 9, primaryMuscleIds: [10], equipmentIds: [1] },
 );
 const GERMAN_ONLY = aCatalogExercise(14, {});
 const PERCENT = aCatalogExercise(15, { en: '100% effort row' });
@@ -111,7 +111,7 @@ describe('CatalogRepositoryLive.replaceCatalog', () => {
         aCatalogExercise(
           1_000 + i,
           { en: `Move ${i}`, it: `Mossa ${i}` },
-          { primaryMuscleIds: [1, 3], equipmentIds: [1] },
+          { primaryMuscleIds: [4, 10], equipmentIds: [1] },
         ),
       );
 
@@ -126,7 +126,7 @@ describe('CatalogRepositoryLive.replaceCatalog', () => {
   itEffect(
     'writes a muscle listed twice in one role once',
     Effect.gen(function* () {
-      yield* replaceWith(aCatalogPayload([aCatalogExercise(10, { en: 'Bench Press' }, { primaryMuscleIds: [1, 1] })]));
+      yield* replaceWith(aCatalogPayload([aCatalogExercise(10, { en: 'Bench Press' }, { primaryMuscleIds: [4, 4] })]));
 
       expect(yield* count('catalog_exercise_muscles')).toBe(1);
     }),
@@ -234,10 +234,10 @@ describe('CatalogRepositoryLive.page', () => {
     Effect.gen(function* () {
       const repository = yield* seeded;
 
-      const legs = yield* repository.page({ ...ALL, categoryId: 2 }, 'en', 0, 50);
+      const legs = yield* repository.page({ ...ALL, categoryId: 9 }, 'en', 0, 50);
       const barbell = yield* repository.page({ ...ALL, equipmentId: 1 }, 'en', 0, 50);
       // NOTE: dips work the chest only as a secondary muscle, so the chest filter leaves them out.
-      const chest = yield* repository.page({ ...ALL, muscleId: 1 }, 'en', 0, 50);
+      const chest = yield* repository.page({ ...ALL, muscleId: 4 }, 'en', 0, 50);
 
       expect(legs.items.map(e => e.externalId)).toEqual([13]);
       expect(barbell.items.map(e => e.externalId)).toEqual([10, 13]);
@@ -264,7 +264,7 @@ describe('CatalogRepositoryLive.page', () => {
 
 describe('CatalogRepositoryLive.byId', () => {
   itEffect(
-    'returns the full row with muscle and equipment names',
+    'returns the full row with its category, muscles and equipment named in the render language',
     Effect.gen(function* () {
       const repository = yield* seeded;
 
@@ -272,16 +272,30 @@ describe('CatalogRepositoryLive.byId', () => {
         id: 'wger:10',
         name: 'Panca piana',
         instructions: 'Panca piana, come',
-        category: 'Chest',
-        primaryMuscles: ['Chest'],
-        // NOTE: no common name for this muscle, so the Latin one stands.
+        category: 'Petto',
+        primaryMuscles: ['Petto'],
+        // NOTE: a muscle the app does not name, with no common name, so the Latin one stands.
         secondaryMuscles: ['Triceps brachii'],
-        equipment: ['Barbell'],
+        equipment: ['Bilanciere'],
         imageUrl: 'big.png',
         thumbnailUrl: 'big.png',
         videoUrl: null,
         source: 'remote',
         externalId: 10,
+      });
+    }),
+    layer(),
+  );
+
+  itEffect(
+    'names the category, muscles and equipment in English for an English read',
+    Effect.gen(function* () {
+      const repository = yield* seeded;
+
+      expect(yield* repository.byId(11, 'en')).toMatchObject({
+        category: 'Chest',
+        primaryMuscles: ['Chest'],
+        equipment: ['Dumbbell'],
       });
     }),
     layer(),
@@ -336,19 +350,43 @@ describe('CatalogRepositoryLive.taxonomy', () => {
     Effect.gen(function* () {
       const repository = yield* seeded;
 
-      expect(yield* repository.taxonomy).toEqual({
+      expect(yield* repository.taxonomy('en')).toEqual({
         categories: [
-          { id: 1, name: 'Chest' },
-          { id: 2, name: 'Legs' },
+          { id: 11, name: 'Chest' },
+          { id: 9, name: 'Legs' },
         ],
         equipment: [
           { id: 1, name: 'Barbell' },
-          { id: 2, name: 'Dumbbell' },
+          { id: 3, name: 'Dumbbell' },
         ],
         muscles: [
-          { id: 1, name: 'Chest' },
-          { id: 3, name: 'Quads' },
-          { id: 2, name: 'Triceps brachii' },
+          { id: 4, name: 'Chest' },
+          { id: 10, name: 'Quads' },
+          { id: 99, name: 'Triceps brachii' },
+        ],
+      });
+    }),
+    layer(),
+  );
+
+  itEffect(
+    'names and orders each table in the render language, keeping the stored name for an id the app does not name',
+    Effect.gen(function* () {
+      const repository = yield* seeded;
+
+      expect(yield* repository.taxonomy('it')).toEqual({
+        categories: [
+          { id: 9, name: 'Gambe' },
+          { id: 11, name: 'Petto' },
+        ],
+        equipment: [
+          { id: 1, name: 'Bilanciere' },
+          { id: 3, name: 'Manubrio' },
+        ],
+        muscles: [
+          { id: 4, name: 'Petto' },
+          { id: 10, name: 'Quadricipiti' },
+          { id: 99, name: 'Triceps brachii' },
         ],
       });
     }),

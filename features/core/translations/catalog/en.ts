@@ -56,7 +56,9 @@ export const en = {
     eyebrow: 'Minutes per day · last {count} weeks',
     workouts_one: '{count} workout in {weeks} weeks',
     workouts_other: '{count} workouts in {weeks} weeks',
-    a11y: 'Training days: you trained on {days} days in the last {weeks} weeks, {workouts}',
+    days_one: '{count} day',
+    days_other: '{count} days',
+    a11y: 'Training days: you trained on {days} in the last {weeks} weeks, {workouts}',
     less: 'Less',
     more: 'More',
   },
@@ -592,6 +594,52 @@ export const en = {
     unreachable: 'The library could not be read',
     loadMore: 'Load more',
     done: 'Done',
+  },
+
+  // NOTE: wger's categories, muscles and equipment, by the ids `exercises/data/adapters/taxonNames.ts`
+  // maps. The English names are the ones wger gives, muscles by their common name where it has one.
+  exerciseCategories: {
+    arms: 'Arms',
+    legs: 'Legs',
+    abs: 'Abs',
+    chest: 'Chest',
+    back: 'Back',
+    shoulders: 'Shoulders',
+    calves: 'Calves',
+    cardio: 'Cardio',
+  },
+
+  exerciseMuscles: {
+    biceps: 'Biceps',
+    shoulders: 'Shoulders',
+    serratus: 'Serratus anterior',
+    chest: 'Chest',
+    triceps: 'Triceps',
+    abs: 'Abs',
+    calves: 'Calves',
+    glutes: 'Glutes',
+    trapezius: 'Trapezius',
+    quads: 'Quads',
+    hamstrings: 'Hamstrings',
+    lats: 'Lats',
+    brachialis: 'Brachialis',
+    obliques: 'Obliquus externus abdominis',
+    soleus: 'Soleus',
+  },
+
+  exerciseEquipment: {
+    barbell: 'Barbell',
+    szBar: 'SZ-Bar',
+    dumbbell: 'Dumbbell',
+    gymMat: 'Gym mat',
+    swissBall: 'Swiss Ball',
+    pullUpBar: 'Pull-up bar',
+    bodyweight: 'none (bodyweight exercise)',
+    bench: 'Bench',
+    inclineBench: 'Incline bench',
+    kettlebell: 'Kettlebell',
+    resistanceBand: 'Resistance band',
+    cableMachine: 'Cable machine',
   },
 
   misc: {
