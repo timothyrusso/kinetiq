@@ -33,7 +33,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Linking, StyleSheet, Text, View } from 'react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
 
-import { clearAllUserData } from '@/persistence';
+import { clearAllUserData } from '@/providers/database';
 import { getQueryClient } from '@/query/client';
 import { haptics } from '@/services/haptics';
 import { themeFor, useAppTheme } from '@/theme/theme';

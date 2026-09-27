@@ -50,7 +50,8 @@ import { createLocalProvider } from '@/api/local/provider';
 import { installBundledCatalogIfMissing } from '@/catalog/install';
 import { maybeRefreshCatalog, scheduleCatalogRefresh } from '@/catalog/refresh';
 import { loadAppFonts } from '@/fonts';
-import { openDatabase, readAllSettings, SETTING_KEYS, type DatabaseOpenResult, type SettingKey } from '@/persistence';
+import { readAllSettings, SETTING_KEYS, type DatabaseOpenResult, type SettingKey } from '@/persistence';
+import { bootDatabase } from '@/providers/database';
 import { getQueryClient, installQueryAdapters } from '@/query/client';
 import { invalidateAfterWatchWorkouts } from '@/query/invalidation';
 import { startNetworkStatus } from '@/query/networkStatus';
@@ -212,7 +213,7 @@ async function readSettingsSnapshot(): Promise<SettingsState> {
 export async function runBootstrap(systemDark: boolean): Promise<BootstrapOutcome> {
   // 1. Storage. If this fails there is nothing to build on and the caller shows the
   //    fatal screen.
-  const database = await openDatabase();
+  const database = await bootDatabase();
 
   // 2. The exercise provider: the local catalog, which reads the database opened above and
   //    the in-app language from the settings store at call time.

@@ -42,7 +42,7 @@ import { ScreenHeader } from '@/ui/Screen';
 import { SettingsList, type SettingsSection } from '@/ui/controls/SettingsList';
 import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
 import { getExerciseProvider } from '@/api';
-import { clearAllUserData } from '@/persistence';
+import { clearAllUserData } from '@/providers/database';
 import { DEFAULT_SETTINGS, updateSettings } from '@/settings';
 import { useActivityHistory } from '@/queries/useActivities';
 import { useRoutines } from '@/queries/useRoutines';
