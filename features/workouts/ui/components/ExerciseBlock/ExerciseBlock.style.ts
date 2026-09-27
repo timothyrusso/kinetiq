@@ -13,6 +13,7 @@ export const createStyles = (theme: Theme) =>
     head: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
     headPressed: { opacity: 0.85 },
     titles: { flex: 1, minWidth: 0 },
+    name: { flexShrink: 1 },
     dot: { width: 7, height: 7, borderRadius: radius.pill, backgroundColor: theme.colors.accent },
     previous: { marginTop: spacing.xs },
     count: { fontVariant: ['tabular-nums'] },
