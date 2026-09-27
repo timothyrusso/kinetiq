@@ -3,22 +3,26 @@
   "entry": [
     "app/**/*.{ts,tsx}",
     "scripts/*.{js,ts}",
-    "src/**/*.android.{ts,tsx}",
+    "features/core/*/index.ts",
+    "features/**/*.{ios,android}.{ts,tsx}",
     "targets/**/expo-target.config.js",
     "modules/*/index.ts",
     "modules/**/*.android.ts"
   ],
-  "project": ["app/**/*.{ts,tsx}", "src/**/*.{ts,tsx}", "scripts/**/*.{js,ts}", "modules/**/*.ts"],
+  "project": [
+    "app/**/*.{ts,tsx}",
+    "features/**/*.{ts,tsx}",
+    "src/**/*.{ts,tsx}",
+    "scripts/**/*.{js,ts}",
+    "modules/**/*.ts"
+  ],
   "paths": {
-    "@/ui/controls/*": ["src/ui/controls/*/index.ios.tsx", "src/ui/controls/*/index.tsx"],
-    "@/*": ["src/*"]
+    "@/features/core/design-system/controls/*": [
+      "features/core/design-system/controls/*/index.ios.tsx",
+      "features/core/design-system/controls/*/index.tsx"
+    ],
+    "@/*": ["src/*", "*"]
   },
   "ignoreBinaries": ["rsvg-convert", "swiftlint", "swift"],
-  "ignoreDependencies": [
-    "expo-updates",
-    "@commitlint/config-conventional",
-    "@timothyrusso/effect-core",
-    "effect",
-    "zustand"
-  ]
+  "ignoreDependencies": ["expo-updates", "@commitlint/config-conventional"]
 }

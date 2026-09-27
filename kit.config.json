@@ -22,6 +22,7 @@
   "lint": {
     "allowedHooksInViews": [
       "useAppTheme",
+      "useStyles",
       "useT",
       "useHaptics",
       "useAnimatedStyle",
@@ -34,12 +35,12 @@
     "dashes": "forbid",
     "layoutTokens": {
       "gutterToken": "screenGutter",
-      "spacingImport": "@/theme/tokens",
+      "spacingImport": "@/features/core/theme",
       "allowlistFile": "layout.allow"
     }
   },
   "i18n": {
-    "catalogPath": "src/i18n",
+    "catalogPath": "features/core/translations/catalog",
     "languages": ["en", "it"]
   }
 }

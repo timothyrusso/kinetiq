@@ -1,4 +1,4 @@
-import { createDependencyCruiserConfig } from '@timothyrusso/arch-rules';
+import { createDependencyCruiserConfig, DEFAULT_TSX_PUBLIC_API_EXCEPTIONS } from '@timothyrusso/arch-rules';
 import { loadKitConfig } from '@timothyrusso/config-presets';
 
 /** Code that predates the kit architecture, as a dependency-cruiser path pattern. */
@@ -24,8 +24,22 @@ function warnOnLegacy(rule) {
   ];
 }
 
+/**
+ * Core concerns a `.tsx` may import at runtime besides the kit defaults: the sources of the hooks
+ * `lint.allowedHooksInViews` lets a view call (`useAppTheme`, `useT`, `useHaptics`), and the pure
+ * formatters the design system draws with.
+ */
+const TSX_PUBLIC_API_EXCEPTIONS = [
+  ...DEFAULT_TSX_PUBLIC_API_EXCEPTIONS,
+  'core/theme',
+  'core/translations',
+  'core/haptics',
+  'core/utils',
+];
+
 const config = createDependencyCruiserConfig(loadKitConfig({ cwd: import.meta.dirname }), {
   rootDir: import.meta.dirname,
+  tsxPublicApiExceptions: TSX_PUBLIC_API_EXCEPTIONS,
 });
 
 /**
