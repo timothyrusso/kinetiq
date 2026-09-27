@@ -8,6 +8,7 @@ import { RecordRepository } from '@/features/workouts/domain/repositories/Record
 import type { ActivityId } from '@/features/workouts/domain/schemas/ActivityId';
 import type { CompletedWorkout } from '@/features/workouts/domain/schemas/CompletedWorkoutSchema';
 import type { PersonalRecord } from '@/features/workouts/domain/schemas/PersonalRecordSchema';
+import { ScreenWake } from '@/features/workouts/domain/services/ScreenWake';
 
 /** A test runtime over `WorkoutsTestLayer`, as `renderWithLayer` hands it back. */
 interface TestRuntime {
@@ -79,4 +80,26 @@ export const makeRestAlertTestLayer = () => {
     installHandler: Effect.void,
   });
   return { layer: Layer.merge(WorkoutsTestLayer, notifications), scheduled: scheduled as ReadonlyMap<string, Request> };
+};
+
+/**
+ * {@link makeRestAlertTestLayer} with a `ScreenWake` that holds whether the screen is kept on, for
+ * the live workout screen. `screen.awake` is what the test reads; make one per test.
+ */
+export const makeSessionScreenTestLayer = () => {
+  const rest = makeRestAlertTestLayer();
+  const screen = { awake: false };
+  const wake = Layer.succeed(ScreenWake, {
+    keepOn: Effect.sync(() => {
+      screen.awake = true;
+    }),
+    release: Effect.sync(() => {
+      screen.awake = false;
+    }),
+  });
+  return {
+    layer: Layer.merge(rest.layer, wake),
+    scheduled: rest.scheduled,
+    screen: screen as { readonly awake: boolean },
+  };
 };

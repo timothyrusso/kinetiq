@@ -2,6 +2,7 @@ import { Layer } from 'effect';
 import { ActivityRepositoryLive } from '@/features/workouts/data/repositories/activityRepositoryLive';
 import { RecordRepositoryLive } from '@/features/workouts/data/repositories/recordRepositoryLive';
 import { SessionRepositoryLive } from '@/features/workouts/data/repositories/sessionRepositoryLive';
+import { ScreenWakeLive } from '@/features/workouts/data/services/screenWakeLive';
 import { SessionEngineLive } from '@/features/workouts/data/services/sessionEngineLive';
 import { WorkoutTransactionLive } from '@/features/workouts/data/services/workoutTransactionLive';
 import { WorkoutRecorderLive } from '@/features/workouts/di/workoutRecorderLive';
@@ -16,10 +17,12 @@ const StorageLive = Layer.mergeAll(
 
 /**
  * Every Layer `workouts` provides: the three repositories, the transaction they share, the engine
- * that persists the session store and runs its clock, and the recorder the watch sync writes
- * through. `RoutineUsage` is left open: the tier-4 home provides it over the routines.
+ * that persists the session store and runs its clock, the recorder the watch sync writes
+ * through, and the screen wake the live workout holds. `RoutineUsage` is left open: the tier-4
+ * home provides it over the routines.
  */
 export const WorkoutsLive = Layer.mergeAll(
   WorkoutRecorderLive,
+  ScreenWakeLive,
   SessionEngineLive.pipe(Layer.provide(SessionRepositoryLive)),
 ).pipe(Layer.provideMerge(StorageLive));

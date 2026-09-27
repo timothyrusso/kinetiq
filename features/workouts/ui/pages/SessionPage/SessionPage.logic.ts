@@ -1,4 +1,3 @@
-import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
@@ -21,11 +20,10 @@ import type { StrengthEntry } from '@/features/workouts/domain/schemas/StrengthE
 import { sessionActions, useActiveSession } from '@/features/workouts/facades/useActiveSession';
 import { useDiscardSession } from '@/features/workouts/facades/useDiscardSession';
 import { useFinishSession } from '@/features/workouts/facades/useFinishSession';
+import { useKeepScreenAwake } from '@/features/workouts/facades/useKeepScreenAwake';
 import { usePreviousPerformance } from '@/features/workouts/facades/usePreviousPerformance';
 import { useRestTimer } from '@/features/workouts/facades/useRestTimer';
 import { useSessionProgress } from '@/features/workouts/hooks/useSessionProgress';
-
-const KEEP_AWAKE_TAG = 'kinetiq.workout';
 
 /** A background stint longer than this is worth saying out loud. */
 const AWAY_NOTICE_SECONDS = 30;
@@ -122,14 +120,7 @@ export function useSessionPageLogic() {
 
   // NOTE: "keep screen on" holds while this screen is open, so the rest timer is still there when
   // the phone is picked up between sets; released on leave.
-  const hasSession = session !== null;
-  useEffect(() => {
-    if (!keepScreenAwake || !hasSession) return undefined;
-    void activateKeepAwakeAsync(KEEP_AWAKE_TAG).catch(() => undefined);
-    return () => {
-      void deactivateKeepAwake(KEEP_AWAKE_TAG).catch(() => undefined);
-    };
-  }, [keepScreenAwake, hasSession]);
+  useKeepScreenAwake(keepScreenAwake && session !== null);
 
   useEffect(() => {
     if (awayNoticeSeconds > 0) hapticsApi.warning();
