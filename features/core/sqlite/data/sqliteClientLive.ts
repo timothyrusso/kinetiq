@@ -37,7 +37,7 @@ export const migrateReporting = (db: SqliteDatabase, steps: readonly Migration[]
 export const SqliteClientLive = Layer.effectContext(
   Effect.gen(function* () {
     const db = yield* Effect.tryPromise({
-      try: openAppDatabase,
+      try: () => openAppDatabase(),
       catch: cause => new SqlError({ message: 'open the app database', cause }),
     });
     const last = yield* Ref.make(yield* migrateReporting(db));
