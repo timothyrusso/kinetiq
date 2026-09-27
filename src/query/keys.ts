@@ -28,11 +28,9 @@ export const queryKeys = {
     heatmap: (weeks: number) => ['progress', 'heatmap', { weeks }] as const,
   },
 
+  /** The routines' own keys are `routineQueryKeys` in `features/routines`, all under this prefix. */
   routines: {
     all: ['routines'] as const,
-    list: () => ['routines', 'list'] as const,
-    detail: (id: string) => ['routines', 'detail', id] as const,
-    snapshots: (id: string) => ['routines', 'snapshots', id] as const,
   },
 
   session: {

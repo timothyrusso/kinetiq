@@ -4,14 +4,6 @@
  * to move around.
  */
 export { activityRepository } from './activityRepository';
-export {
-  routineRepository,
-  snapshotById,
-  snapshotByName,
-  snapshotOf,
-} from './routineRepository';
-export type { RoutineDraft } from './routineRepository';
-export { onRoutinesChanged } from './routineEvents';
 export { sessionRepository } from './sessionRepository';
 export type { SessionPatch } from './sessionRepository';
 export { recordRepository } from './settingsRepository';

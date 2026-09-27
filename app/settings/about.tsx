@@ -45,7 +45,7 @@ import { CATALOG_PROVIDER } from '@/features/exercises';
 import { clearAllUserData } from '@/providers/database';
 import { DEFAULT_SETTINGS, updateSettings } from '@/features/settings';
 import { useActivityHistory } from '@/queries/useActivities';
-import { useRoutines } from '@/queries/useRoutines';
+import { useRoutines } from '@/features/routines';
 import { haptics } from '@/services/haptics';
 import { useT } from '@/i18n/useT';
 

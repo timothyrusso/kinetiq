@@ -12,7 +12,7 @@
  *
  * ## The freeze is not optional
  *
- * `upsertSnapshot` is the whole reason a completed workout is still readable in five years.
+ * `storeExercise` is the whole reason a completed workout is still readable in five years.
  * The activity recorded at finish time stores `exerciseId` plus the name; the details screen
  * resolves id → snapshot. Freeze nothing, and a mid-workout addition becomes a row that can
  * never be looked up once the provider's cache is gone: with nothing stored to repair it
@@ -29,9 +29,10 @@
  * appeared but its details are gone forever" are different failures, and only the second one
  * is silent.
  */
+import { defaultItemTarget } from '@/features/routines';
 import { entriesFromItems } from '@/queries/useRoutines';
-import { snapshotOf, upsertSnapshot } from '@/persistence/routineRepository';
-import { defaultItemTarget, toDraftItem } from '@/routines/draft';
+import { storeExercise } from '@/services/catalog';
+import { localId } from '@/utils/functional';
 import { addExercise, getActiveSession, setActiveIndex } from '@/workout/session';
 import type { Exercise } from '@/domain/types';
 
@@ -61,7 +62,7 @@ export async function addExerciseToSession(
   if (input.isDuplicate === true) return false;
   if (getActiveSession() === null) return false;
 
-  await upsertSnapshot(snapshotOf(input.exercise));
+  await storeExercise(input.exercise);
 
   // Re-checked after the await: the sheet stays open over the session screen, so the workout
   // can have been discarded or finished while that write was in flight. `addExercise` guards
@@ -73,11 +74,12 @@ export async function addExerciseToSession(
   // One item through the same builder a real workout starts from, so a row added mid-session
   // cannot come out shaped differently from one the routine would have produced: same rep
   // parsing, same 1RM pass, same set numbering.
-  const item = toDraftItem(
-    input.exercise.id,
-    input.exercise.name,
-    defaultItemTarget(input.defaultRestSeconds),
-  );
+  const item = {
+    id: localId('rit'),
+    exerciseId: input.exercise.id,
+    exerciseName: input.exercise.name,
+    ...defaultItemTarget(input.defaultRestSeconds),
+  };
   const [entry] = entriesFromItems([item]);
   if (!entry) return false;
 

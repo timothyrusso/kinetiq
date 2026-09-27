@@ -1,2 +1,2 @@
 /** Moved to `@/features/core/design-system`: this re-export keeps legacy imports building until the owning child deletes it. */
-export type { MetaItem, Tag } from '@/features/core/design-system';
+export type { MetaItem } from '@/features/core/design-system';

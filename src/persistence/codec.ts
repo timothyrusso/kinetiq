@@ -2,15 +2,8 @@
  * Row <-> domain codecs. Every JSON column parses defensively: one corrupt row
  * must degrade to a missing field, never blank an entire screen.
  */
-import type {
-  Activity,
-  ExerciseSnapshot,
-  Routine,
-  StrengthEntry,
-  WorkoutSession,
-  WorkoutSessionStatus,
-} from '@/domain/types';
-import type { ActivityRow, ExerciseRow, RoutineItemRow, RoutineRow, SessionRow } from './rows';
+import type { Activity, StrengthEntry, WorkoutSession, WorkoutSessionStatus } from '@/domain/types';
+import type { ActivityRow, SessionRow } from './rows';
 
 function parseJsonArray<T>(raw: string | null | undefined): T[] {
   if (!raw) return [];
@@ -20,11 +13,6 @@ function parseJsonArray<T>(raw: string | null | undefined): T[] {
   } catch {
     return [];
   }
-}
-
-function parseStringArray(raw: string | null | undefined): string[] {
-  const parsed = parseJsonArray<unknown>(raw);
-  return parsed.filter((v): v is string => typeof v === 'string');
 }
 
 export function stringify(value: unknown): string {
@@ -60,59 +48,6 @@ export function rowToActivity(row: ActivityRow): Activity {
           personalRecords: [],
         }
       : null,
-  };
-}
-
-export function rowToExerciseSnapshot(row: ExerciseRow): ExerciseSnapshot {
-  return {
-    exerciseId: row.id,
-    name: row.name,
-    instructions: row.instructions,
-    category: row.category,
-    primaryMuscles: parseStringArray(row.primary_muscles),
-    secondaryMuscles: parseStringArray(row.secondary_muscles),
-    equipment: parseStringArray(row.equipment),
-    imageUrl: row.image_url,
-    // Lists must never render an empty box: fall back to whatever art exists.
-    thumbnailUrl: row.thumbnail_url ?? row.image_url,
-    externalId: row.external_id,
-    capturedAt: row.captured_at,
-  };
-}
-
-/**
- * Joins routine rows with their items. Items are already ordered by the caller's
- * `ORDER BY position`; we sort again defensively because a caller might pass an
- * unordered bucket.
- *
- * `exercise_name` on the item is authoritative: the row stores its own name copy
- * so a routine still reads correctly even if the exercise snapshot is gone.
- * `snapshots` is only a fallback for rows written before that column existed.
- */
-export function rowToRoutine(
-  row: RoutineRow,
-  items: readonly RoutineItemRow[],
-  snapshots?: ReadonlyMap<string, ExerciseSnapshot>,
-): Routine {
-  const sorted = [...items].sort((a, b) => a.position - b.position);
-  return {
-    id: row.id,
-    name: row.name,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-    timesCompleted: row.times_completed,
-    lastPerformedAt: row.last_performed_at,
-    items: sorted.map((item) => ({
-      id: item.id,
-      exerciseId: item.exercise_id,
-      exerciseName:
-        item.exercise_name || snapshots?.get(item.exercise_id)?.name || 'Unknown exercise',
-      sets: item.sets,
-      reps: item.reps,
-      weightKg: item.weight_kg,
-      restSeconds: item.rest_seconds,
-      notes: item.notes,
-    })),
   };
 }
 

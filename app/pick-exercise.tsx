@@ -16,9 +16,13 @@ import { useLocalSearchParams } from 'expo-router';
 import type { Exercise } from '@/features/exercises';
 import { PickExercisePage } from '@/features/exercises/pages';
 import { useT } from '@/i18n/useT';
-import { useAddRoutineExercise, useRoutine } from '@/queries/useRoutines';
-import { defaultItemTarget } from '@/routines/draft';
-import { addDraftExercise, containsExercise, useRoutineDraft } from '@/routines/draftStore';
+import {
+  defaultItemTarget,
+  RoutineId,
+  useAddRoutineExercise,
+  useRoutine,
+  useRoutineDraft,
+} from '@/features/routines';
 import { haptics } from '@/services/haptics';
 import { useSettings } from '@/features/settings';
 import { useWorkoutSession } from '@/workout/session';
@@ -28,22 +32,25 @@ type Target = 'draft' | 'routine' | 'session';
 
 export default function PickExerciseSheet() {
   const { target, id } = useLocalSearchParams<{ target?: Target; id?: string }>();
-  if (target === 'routine' && id) return <IntoRoutine routineId={id} />;
+  if (target === 'routine' && id) return <IntoRoutine routineId={RoutineId.make(id)} />;
   if (target === 'session') return <IntoSession />;
   return <IntoDraft />;
 }
 
 function IntoDraft() {
   // Subscribed so the included marks update as exercises are added.
-  useRoutineDraft();
-  const pick = useCallback((exercise: Exercise) => {
-    addDraftExercise(exercise);
-    haptics.success();
-  }, []);
-  return <PickExercisePage isIncluded={containsExercise} onPick={pick} error={null} />;
+  const { actions } = useRoutineDraft();
+  const pick = useCallback(
+    (exercise: Exercise) => {
+      actions.addExercise(exercise);
+      haptics.success();
+    },
+    [actions],
+  );
+  return <PickExercisePage isIncluded={actions.containsExercise} onPick={pick} error={null} />;
 }
 
-function IntoRoutine({ routineId }: { routineId: string }) {
+function IntoRoutine({ routineId }: { routineId: RoutineId }) {
   const { t } = useT();
   const defaultRest = useSettings((s) => s.defaultRestSeconds);
   const { routine } = useRoutine(routineId);

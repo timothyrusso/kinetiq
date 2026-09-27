@@ -20,16 +20,11 @@
  * muscles, no picture and no instructions that nothing could ever refresh. The preview lists
  * what was dropped, and says when the reason is being offline rather than a bad name.
  */
-import type { ExerciseSnapshot, RoutineItem } from '@/domain/types';
+import type { Exercise, ExerciseSnapshot, RoutineItem } from '@/domain/types';
 import { isOfflineFailure } from '@/features/core/error';
-import { catalogExercise, searchCatalog } from '@/services/catalog';
-import {
-  routineRepository,
-  snapshotById,
-  snapshotByName,
-  snapshotOf,
-  type RoutineDraft,
-} from '@/persistence';
+import { snapshotOf as freeze } from '@/features/exercises';
+import { catalogExercise, searchCatalog, storedExercise, storedExerciseByName } from '@/services/catalog';
+import { saveImportedRoutine } from '@/services/routines';
 import { localId } from '@/utils/functional';
 import type { ParsedItem, ParsedRoutine } from './parseRoutines';
 
@@ -39,6 +34,11 @@ type Match =
 
 export type ResolvedItem = ParsedItem & { match: Match };
 export type ResolvedRoutine = Omit<ParsedRoutine, 'items'> & { items: ResolvedItem[] };
+
+/** A catalog row as the snapshot an imported item stores, captured now. */
+function snapshotOf(exercise: Exercise): ExerciseSnapshot {
+  return freeze(exercise, Date.now());
+}
 
 function normalise(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
@@ -72,7 +72,7 @@ async function matchItem(item: ParsedItem): Promise<Match> {
   };
 
   if (item.exerciseId !== null) {
-    const stored = await snapshotById(item.exerciseId);
+    const stored = await storedExercise(item.exerciseId);
     if (stored) return { status: 'stored', snapshot: stored };
     if (!offline) {
       const remote = await attempt(() => byCatalogId(item.exerciseId!));
@@ -80,7 +80,7 @@ async function matchItem(item: ParsedItem): Promise<Match> {
     }
   }
   if (item.exerciseName !== '') {
-    const stored = await snapshotByName(item.exerciseName);
+    const stored = await storedExerciseByName(item.exerciseName);
     if (stored) return { status: 'stored', snapshot: stored };
     if (!offline) {
       const found = await attempt(() => byCatalogName(item.exerciseName));
@@ -149,12 +149,7 @@ export async function saveImported(
         notes: item.notes,
       });
     }
-    const draft: RoutineDraft = {
-      name: routine.name ?? names.fallback(index + 1),
-      items,
-      snapshots,
-    };
-    await routineRepository.save(draft);
+    await saveImportedRoutine({ name: routine.name ?? names.fallback(index + 1), items, snapshots });
     saved += 1;
   }
   return saved;

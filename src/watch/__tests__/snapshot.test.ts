@@ -1,4 +1,5 @@
 import type { Routine, RoutineItem } from '@/domain/types';
+import { RoutineId } from '@/features/routines';
 import { IMPORT_LIMITS, ITEM_BOUNDS } from '@/transfer/format';
 import { buildWatchRoutines } from '../snapshot';
 
@@ -15,7 +16,7 @@ const item = (overrides: Partial<RoutineItem> = {}): RoutineItem => ({
 });
 
 const routine = (overrides: Partial<Routine> = {}): Routine => ({
-  id: 'rtn_1',
+  id: RoutineId.make('rtn_1'),
   name: 'Push',
   items: [item()],
   createdAt: 0,
@@ -84,7 +85,7 @@ describe('buildWatchRoutines', () => {
   it('cuts the lists to IMPORT_LIMITS', () => {
     const many = Array.from({ length: IMPORT_LIMITS.routines + 5 }, (_, i) =>
       routine({
-        id: `rtn_${i}`,
+        id: RoutineId.make(`rtn_${i}`),
         items: Array.from({ length: IMPORT_LIMITS.itemsPerRoutine + 3 }, (_, j) => item({ id: `rit_${j}` })),
       }),
     );
