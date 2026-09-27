@@ -1,20 +1,13 @@
 #!/usr/bin/env npx tsx
-/**
- * Generates every branded raster asset (app icons, adaptive icon layers, splash
- * images, favicon) from one parametric vector mark, so the icon, the splash
- * screen and the in-app wordmark can never drift apart.
- *
- *   npx tsx scripts/brand.ts
- */
-import { mkdirSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 const ROOT = path.resolve(__dirname, '..');
 const OUT = path.join(ROOT, 'assets');
 const BRAND = path.join(OUT, 'brand');
 
-/** Brand ramp: must stay in sync with src/theme/tokens.ts */
+/** Brand ramp: must stay in sync with `palette` in `features/core/theme/tokens.ts`. */
 const C = {
   ink: '#07090F',
   inkAlt: '#0D1220',
@@ -29,12 +22,24 @@ const C = {
  * centred on (50, 50) so any box it is dropped into reads as centred.
  */
 const MARK_STROKES: readonly (readonly (readonly [number, number])[])[] = [
-  // stem
-  [[22, 15], [22, 85]],
-  // upper arm, springing off the stem
-  [[22, 56], [72, 20]],
-  // lower leg, drawn as a heart-rate pulse
-  [[22, 57], [42, 71], [52, 50], [62, 83], [78, 61]],
+  // NOTE: the stem.
+  [
+    [22, 15],
+    [22, 85],
+  ],
+  // NOTE: the upper arm, springing off the stem.
+  [
+    [22, 56],
+    [72, 20],
+  ],
+  // NOTE: the lower leg, drawn as a heart-rate pulse.
+  [
+    [22, 57],
+    [42, 71],
+    [52, 50],
+    [62, 83],
+    [78, 61],
+  ],
 ];
 
 /**
@@ -59,16 +64,14 @@ function markGeometry(opts: {
 }): string {
   const { stroke, width, scale, translate, opacity = 1 } = opts;
   const [tx, ty] = translate;
-  const paths = MARK_STROKES.map((points) => {
+  const paths = MARK_STROKES.map(points => {
     const d = points.map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x} ${y}`).join(' ');
     return `<path d="${d}" />`;
   }).join('\n      ');
   return `
     <g transform="translate(${tx.toFixed(2)} ${ty.toFixed(2)}) scale(${scale.toFixed(4)})"
        fill="none" stroke="${stroke}" stroke-width="${width}"
-       stroke-linecap="round" stroke-linejoin="round"${
-         opacity < 1 ? ` opacity="${opacity}"` : ''
-       }>
+       stroke-linecap="round" stroke-linejoin="round"${opacity < 1 ? ` opacity="${opacity}"` : ''}>
       ${paths}
     </g>`;
 }
@@ -118,15 +121,13 @@ function iconSvg(size: number, opts: { rounded?: boolean } = {}): string {
     <rect width="${size}" height="${size}" fill="url(#bg)"/>
     <rect width="${size}" height="${size}" fill="url(#glow)"/>
     <rect width="${size}" height="${size}" fill="url(#glow2)"/>
-    ${
-      /* faint 24px grid: the "training grid" motif used across the dashboard */
-      gridLines(size)
-    }
+    ${gridLines(size)}
     ${markGeometry({ stroke: 'url(#mark)', width: 10, ...mark })}
   </g>
 </svg>`;
 }
 
+/** A faint grid: the "training grid" motif used across the dashboard. */
 function gridLines(size: number, step = size / 12, ink = '#FFFFFF', opacity = 0.035): string {
   const lines: string[] = [];
   for (let i = 1; i < 12; i += 1) {
@@ -189,10 +190,7 @@ function adaptiveMonochrome(size: number): string {
  */
 function splashImage(size: number, appearance: 'dark' | 'light'): string {
   const mark = markPlacement(size, 0.62);
-  const ramp =
-    appearance === 'dark'
-      ? { from: C.volt, to: C.spark }
-      : { from: '#5E8C0B', to: '#0E9A78' };
+  const ramp = appearance === 'dark' ? { from: C.volt, to: C.spark } : { from: '#5E8C0B', to: '#0E9A78' };
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
   <defs>
     <linearGradient id="mark" gradientUnits="userSpaceOnUse" x1="12" y1="88" x2="88" y2="12">
@@ -228,23 +226,28 @@ function render(svg: string, file: string, size: number) {
   console.log(`  ${path.relative(ROOT, file)}  (${size}x${size})`);
 }
 
+/**
+ * Generates every branded raster asset (app icons, adaptive icon layers, splash images, favicon)
+ * from one parametric vector mark, so the icon, the splash screen and the in-app wordmark can never
+ * drift apart. Run with `npx tsx scripts/brand.ts`.
+ */
 function main() {
   mkdirSync(OUT, { recursive: true });
   mkdirSync(BRAND, { recursive: true });
 
   console.log('branding:');
-  // iOS + Play Store store icon: 1024, opaque, no alpha.
+  // NOTE: the iOS and Play Store icon: 1024, opaque, no alpha.
   render(iconSvg(1024), path.join(OUT, 'icon.png'), 1024);
-  // Icon without the squircle clip, for surfaces that apply their own mask.
+  // NOTE: the icon without the squircle clip, for surfaces that apply their own mask.
   render(iconSvg(1024, { rounded: false }), path.join(BRAND, 'icon-square.png'), 1024);
 
-  // Android adaptive icon (432px == 108dp @ xxhdpi).
+  // NOTE: the Android adaptive icon (432 px is 108 dp at xxhdpi).
   render(adaptiveForeground(432), path.join(OUT, 'android-icon-foreground.png'), 432);
   render(adaptiveBackground(432), path.join(OUT, 'android-icon-background.png'), 432);
   render(adaptiveMonochrome(432), path.join(OUT, 'android-icon-monochrome.png'), 432);
 
-  // Splash: native launch screens use a mark centred on a solid field, one
-  // appearance per theme so the launch never flashes the wrong colours.
+  // NOTE: the native launch screens use a mark centred on a solid field, one appearance per
+  // theme, so the launch never flashes the wrong colours.
   render(splashImage(512, 'dark'), path.join(OUT, 'splash-icon.png'), 512);
   render(splashImage(512, 'light'), path.join(OUT, 'splash-icon-light.png'), 512);
   render(fieldImage(512, 'dark'), path.join(OUT, 'splash-background-dark.png'), 512);

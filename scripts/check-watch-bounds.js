@@ -9,15 +9,15 @@
  * bundle resource, so the watch target holds `targets/watch/bounds.json`; this fails when the
  * two copies are not the same document.
  */
-const fs = require('fs');
-const path = require('path');
-const { isDeepStrictEqual } = require('util');
+const fs = require('node:fs');
+const path = require('node:path');
+const { isDeepStrictEqual } = require('node:util');
 
 const ROOT = path.join(__dirname, '..');
 const PHONE = 'features/watch-bridge/assets/bounds.json';
 const WATCH = 'targets/watch/bounds.json';
 
-const read = (file) => JSON.parse(fs.readFileSync(path.join(ROOT, file), 'utf8'));
+const read = file => JSON.parse(fs.readFileSync(path.join(ROOT, file), 'utf8'));
 if (isDeepStrictEqual(read(PHONE), read(WATCH))) {
   console.log(`PASS: ${WATCH} matches ${PHONE}`);
   process.exit(0);

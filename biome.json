@@ -2,35 +2,6 @@
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "extends": ["@timothyrusso/config-presets/biome"],
   "files": {
-    "includes": ["!**/assets/brand", "!**/assets/catalog"]
-  },
-  "overrides": [
-    {
-      "includes": ["src/**", "app/**", "modules/**", "scripts/**", "targets/**", "metro.config.js"],
-      "formatter": {
-        "enabled": false
-      },
-      "assist": {
-        "actions": {
-          "source": {
-            "organizeImports": "off"
-          }
-        }
-      },
-      "linter": {
-        "rules": {
-          "a11y": {
-            "useValidAriaRole": "warn"
-          },
-          "style": {
-            "useImportType": "warn"
-          },
-          "suspicious": {
-            "noArrayIndexKey": "warn",
-            "noConsole": "warn"
-          }
-        }
-      }
-    }
-  ]
+    "includes": ["!**/assets/brand", "!**/assets/catalog", "!features/transfer/__fixtures__/*.json"]
+  }
 }

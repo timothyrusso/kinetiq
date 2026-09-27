@@ -7,7 +7,7 @@ import type { Theme } from '@/features/core/theme';
  *
  * SwiftUI's own `ContentUnavailableView` on iOS 17 and later, the Material empty-state layout
  * (tonal icon, headline, body, filled then outlined button) everywhere else. For a state INSIDE
- * a screen or a list, use `EmptyState` and `ErrorState` from `src/ui/states.tsx`: a native host
+ * a screen or a list, use `EmptyState` and `ErrorState` from `states/states.tsx` in the design system: a native host
  * does not belong in a list.
  *
  * The theme is a prop, never read from the store, because the error boundary renders this when

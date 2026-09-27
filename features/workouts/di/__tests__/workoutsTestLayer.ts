@@ -10,8 +10,11 @@ export const routinesUsed: string[] = [];
  * The workouts with the exercises they store snapshots in, both real, on `makeTestRuntime`'s
  * migrated in-memory database; the routines' port records what it was asked to count.
  */
-export const WorkoutsTestLayer = Layer.mergeAll(
-  WorkoutsLive,
-  ExercisesLive,
-  Layer.succeed(RoutineUsage, { markUsed: routineId => Effect.sync(() => void routinesUsed.push(routineId)) }),
+export const WorkoutsTestLayer = WorkoutsLive.pipe(
+  Layer.provideMerge(
+    Layer.mergeAll(
+      ExercisesLive,
+      Layer.succeed(RoutineUsage, { markUsed: routineId => Effect.sync(() => void routinesUsed.push(routineId)) }),
+    ),
+  ),
 );

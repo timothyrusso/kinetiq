@@ -1,9 +1,8 @@
 /**
  * `t()` outside React.
  *
- * Services produce user-facing sentences too: the location recorder explains why distance is
- * being estimated, the notification scheduler writes a body, the persistence layer names a
- * failure. None of them can call a hook, and passing a translator down through a singleton's
+ * Services produce user-facing sentences too: the notification scheduler writes a title and a
+ * body, the routine importer names a routine the file left unnamed. None of them can call a hook, and passing a translator down through a singleton's
  * constructor would mean the language could not change after it was built.
  *
  * So the language is read at call time from the language store, which is the same source

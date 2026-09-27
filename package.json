@@ -87,7 +87,8 @@
     "check:unused-keys": "config-presets check-unused-keys",
     "prepare": "lefthook install",
     "check:unused": "knip",
-    "arch": "config-presets check-deps && eslint ."
+    "arch": "config-presets check-deps && eslint .",
+    "arch:report": "depcruise --config .dependency-cruiser.mjs --output-type text --include-only '^features/' --collapse '^features/(core/[^/]+|[^/]+)/' features"
   },
   "private": true
 }

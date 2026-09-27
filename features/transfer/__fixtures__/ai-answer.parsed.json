@@ -1,0 +1,80 @@
+{
+  "ok": true,
+  "routines": [
+    {
+      "name": "Upper",
+      "items": [
+        {
+          "exerciseId": "wger:73",
+          "exerciseName": "Bench Press",
+          "sets": 20,
+          "reps": "8-12",
+          "weightKg": 61.25,
+          "restSeconds": 600,
+          "notes": null
+        },
+        {
+          "exerciseId": null,
+          "exerciseName": "Row",
+          "sets": 3,
+          "reps": "8-12",
+          "weightKg": 0,
+          "restSeconds": null,
+          "notes": null
+        },
+        {
+          "exerciseId": "local:band-pull",
+          "exerciseName": "Band pull-apart",
+          "sets": 3,
+          "reps": "15",
+          "weightKg": 0,
+          "restSeconds": null,
+          "notes": "Slow"
+        }
+      ]
+    },
+    {
+      "name": null,
+      "items": [
+        {
+          "exerciseId": null,
+          "exerciseName": "Plank",
+          "sets": 3,
+          "reps": "60",
+          "weightKg": 0,
+          "restSeconds": null,
+          "notes": null
+        }
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "key": "dataTransfer.issueDefaults",
+      "vars": {
+        "routine": 1,
+        "item": 2
+      }
+    },
+    {
+      "key": "dataTransfer.issueItemSkipped",
+      "vars": {
+        "routine": 1,
+        "item": 4
+      }
+    },
+    {
+      "key": "dataTransfer.issueItemSkipped",
+      "vars": {
+        "routine": 1,
+        "item": 5
+      }
+    },
+    {
+      "key": "dataTransfer.issueRoutineSkipped",
+      "vars": {
+        "routine": 2
+      }
+    }
+  ]
+}

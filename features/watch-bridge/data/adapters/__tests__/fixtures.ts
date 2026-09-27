@@ -1,7 +1,7 @@
 import type { WatchInboxEntry } from '@/features/watch-bridge/domain/schemas/WatchInboxEntrySchema';
 import type { WatchWorkoutDocument } from '@/features/watch-bridge/domain/schemas/WatchWorkoutDocumentSchema';
 
-/** The fixtures of the phone's `parseWorkout` tests (`src/watch/__tests__/fixtures.ts`), as they are. */
+/** A `kinetiq.watch-workout` document and its inbox entry, as the watch sends them. */
 export const UUID = '7A1D0C3E-1111-4222-8333-944455556666';
 
 /** A valid document; overrides may break it on purpose, but only under the format's own keys. */

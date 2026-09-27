@@ -1,6 +1,6 @@
 import Foundation
 
-/// `kinetiq.watch-workout` v1, watch to phone (issue #27). Mirrors `src/watch/format.ts`:
+/// `kinetiq.watch-workout` v1, watch to phone (issue #27). Mirrors `features/watch-bridge/domain/schemas`:
 /// `CompletedWorkout` minus everything the phone computes (duration, calories, volume, set
 /// count, estimated 1RM, records).
 ///
