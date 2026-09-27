@@ -75,33 +75,8 @@ export type { Exercise, ExerciseSnapshot } from '@/features/exercises';
 
 /* --------------------------------------------------------------- routine -- */
 
-export type Routine = {
-  id: string;
-  name: string;
-  items: RoutineItem[];
-  createdAt: number;
-  updatedAt: number;
-  /** How many times this routine has been completed. */
-  timesCompleted: number;
-  lastPerformedAt: number | null;
-};
-
-export type RoutineItem = {
-  id: string;
-  exerciseId: string;
-  /**
-   * Display name carried on the item itself, so a routine still reads correctly
-   * if its exercise snapshot row is ever lost. Written from the snapshot at save
-   * time.
-   */
-  exerciseName: string;
-  sets: number;
-  reps: string;
-  /** Kilograms. */
-  weightKg: number;
-  restSeconds: number;
-  notes: string | null;
-};
+/** Moved to `@/features/routines`: this re-export keeps legacy imports building until the owning child deletes it. */
+export type { Routine, RoutineItem } from '@/features/routines';
 
 /* ---------------------------------------------------------------- session -- */
 

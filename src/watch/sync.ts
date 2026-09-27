@@ -10,7 +10,8 @@
  * watch is a mirror and the phone's own data is the thing that matters.
  */
 import { encodeWatchRoutines, watchBridge } from '@/features/watch-bridge';
-import { onRoutinesChanged, openDatabase, routineRepository } from '@/persistence';
+import { openDatabase } from '@/persistence';
+import { listAllRoutines, onRoutinesChanged } from '@/services/routines';
 import { getSettings, subscribeSettings } from '@/features/settings';
 import { buildWatchRoutines } from './snapshot';
 
@@ -45,7 +46,7 @@ export async function pushRoutineSnapshot(
     // A watch request can reach a JS runtime that is still starting (the watch woke the app, or
     // a reload): wait for the shared open rather than read a database that is not there yet.
     await openDatabase();
-    const routines = await routineRepository.list();
+    const routines = await listAllRoutines();
     const now = new Date();
     const document = buildWatchRoutines(routines, getSettings().unitSystem, now);
     const { exportedAt: _exportedAt, ...content } = document;

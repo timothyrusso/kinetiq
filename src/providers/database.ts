@@ -11,7 +11,7 @@ import { runtime } from '@/features/core/runtime';
 import { clearAllUserData as clearAllUserDataEffect } from '@/features/core/sqlite';
 import { DEFAULT_SETTINGS, loadSettings, type Settings } from '@/features/settings';
 import { openDatabase, readSchemaVersion, type DatabaseOpenResult } from '@/persistence/database';
-import { notifyRoutinesChanged } from '@/persistence/routineEvents';
+import { notifyRoutinesChanged } from '@/services/routines';
 
 /** Opens the database and boots the runtime, which brings the schema to the last version. */
 export async function bootDatabase(): Promise<DatabaseOpenResult> {

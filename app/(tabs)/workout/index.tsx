@@ -49,7 +49,7 @@ import { SegmentedControl } from '@/ui/controls/SegmentedControl';
 import { Txt } from '@/ui/Text';
 import { EmptyState, ErrorState, SkeletonCard } from '@/ui/states';
 import { ProgressRing } from '@/ui/charts/ProgressRing';
-import { useRoutines } from '@/queries/useRoutines';
+import { useRoutines } from '@/features/routines';
 import { routes } from '@/navigation/nav';
 import type { Routine } from '@/domain/types';
 import { useAppTheme, type Theme } from '@/theme/theme';

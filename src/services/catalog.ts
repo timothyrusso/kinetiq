@@ -1,18 +1,23 @@
 /**
- * The imperative catalog calls the legacy callers (bootstrap, the routine importer) still make,
- * run through the app runtime over the `exercises` use cases. Goes away when bootstrap and the
- * importer move into features (#54).
+ * The imperative catalog calls the legacy callers (bootstrap, the routine importer, the workout
+ * screen) still make, run through the app runtime over the `exercises` use cases and stored
+ * snapshots. Goes away when bootstrap, the importer (#54) and the workout screen (#53) move into
+ * features.
  */
 import { currentLanguage } from '@/features/core/translations';
 import { getNetworkStatus, subscribeNetworkStatus } from '@/features/core/network';
 import { getQueryClient } from '@/features/core/query';
 import { runtime } from '@/features/core/runtime';
+import { Effect } from 'effect';
 import {
   type Exercise,
+  type ExerciseSnapshot,
+  ExerciseSnapshotRepository,
   getExercise,
   installBundledCatalogIfMissing,
   maybeRefreshCatalog as maybeRefresh,
   searchExercises,
+  snapshotOf,
 } from '@/features/exercises';
 
 /**
@@ -71,4 +76,21 @@ export async function searchCatalog(name: string): Promise<readonly Exercise[]> 
     searchExercises({ query: name, categoryId: null, equipmentId: null, muscleId: null }, currentLanguage()),
   );
   return page.items;
+}
+
+/** The stored copy of exercise `id`, or null when nothing has stored it. */
+export async function storedExercise(id: string): Promise<ExerciseSnapshot | null> {
+  return (await runtime.runPromise(Effect.flatMap(ExerciseSnapshotRepository, repo => repo.byId(id)))) ?? null;
+}
+
+/** The most recently stored exercise named `name`, ignoring case, or null. */
+export async function storedExerciseByName(name: string): Promise<ExerciseSnapshot | null> {
+  return (await runtime.runPromise(Effect.flatMap(ExerciseSnapshotRepository, repo => repo.byName(name)))) ?? null;
+}
+
+/** Freezes `exercise` into a stored snapshot, captured now. */
+export function storeExercise(exercise: Exercise): Promise<void> {
+  return runtime.runPromise(
+    Effect.flatMap(ExerciseSnapshotRepository, repo => repo.upsert(snapshotOf(exercise, Date.now()))),
+  );
 }

@@ -1,6 +1,5 @@
 import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import type { Routine } from '@/domain/types';
 import { MetaLine } from '@/features/core/design-system/display/MetaLine';
 import type { MetaItem } from '@/features/core/design-system/display/types';
 import { Icon, IconTile } from '@/features/core/design-system/icons/icons';
@@ -18,7 +17,7 @@ export const RoutineRow = memo(function RoutineRow({
   trailing,
   topDivider = true,
 }: {
-  routine: Routine;
+  routine: { readonly name: string };
   theme: Theme;
   onPress: () => void;
   onLongPress?: () => void;

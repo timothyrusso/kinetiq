@@ -3,6 +3,7 @@ import { SqliteClient } from '@/features/core/sqlite';
 import { itEffect, makeMigratedSqliteLayer } from '@/features/core/testing';
 import { ExerciseSnapshotRepositoryLive } from '@/features/exercises/data/repositories/exerciseSnapshotRepositoryLive';
 import { ExerciseSnapshotRepository } from '@/features/exercises/domain/repositories/ExerciseSnapshotRepository';
+import type { ExerciseSnapshot } from '@/features/exercises/domain/schemas/ExerciseSnapshotSchema';
 
 const layer = () => ExerciseSnapshotRepositoryLive.pipe(Layer.provideMerge(makeMigratedSqliteLayer()));
 
@@ -87,4 +88,116 @@ describe('ExerciseSnapshotRepositoryLive', () => {
     }),
     layer(),
   );
+
+  itEffect(
+    'reads several stored exercises by id and leaves out the ones nothing has stored',
+    Effect.gen(function* () {
+      yield* store(BENCH_ROW);
+      yield* store({ ...BENCH_ROW, id: 'local:hip-thrust', external_id: null, name: 'Hip Thrust', source: 'local' });
+
+      const found = yield* (yield* ExerciseSnapshotRepository).byIds(['wger:10', 'local:hip-thrust', 'wger:99']);
+
+      expect([...found.keys()].sort()).toEqual(['local:hip-thrust', 'wger:10']);
+      expect(found.get('local:hip-thrust')?.name).toBe('Hip Thrust');
+    }),
+    layer(),
+  );
+
+  itEffect(
+    'reads nothing for an empty list of ids',
+    Effect.gen(function* () {
+      yield* store(BENCH_ROW);
+
+      expect((yield* (yield* ExerciseSnapshotRepository).byIds([])).size).toBe(0);
+    }),
+    layer(),
+  );
+
+  itEffect(
+    'finds the most recently stored exercise with a name, ignoring case and surrounding spaces',
+    Effect.gen(function* () {
+      yield* store(BENCH_ROW);
+      yield* store({ ...BENCH_ROW, id: 'local:bench', external_id: null, captured_at: 1_800_000_000_000 });
+
+      const found = yield* (yield* ExerciseSnapshotRepository).byName('  bench PRESS ');
+
+      expect(found?.exerciseId).toBe('local:bench');
+    }),
+    layer(),
+  );
+
+  itEffect(
+    'returns undefined for a name nothing has stored',
+    Effect.gen(function* () {
+      yield* store(BENCH_ROW);
+
+      expect(yield* (yield* ExerciseSnapshotRepository).byName('Squat')).toBeUndefined();
+    }),
+    layer(),
+  );
+
+  itEffect(
+    'stores a snapshot and reads it back unchanged',
+    Effect.gen(function* () {
+      const repo = yield* ExerciseSnapshotRepository;
+
+      yield* repo.upsert(aSnapshot());
+
+      expect(yield* repo.byId('wger:10')).toEqual(aSnapshot());
+    }),
+    layer(),
+  );
+
+  itEffect(
+    'labels a snapshot with no wger id as local and one with an id as remote',
+    Effect.gen(function* () {
+      const repo = yield* ExerciseSnapshotRepository;
+
+      yield* repo.upsert(aSnapshot());
+      yield* repo.upsert(aSnapshot({ exerciseId: 'local:hip-thrust', externalId: null }));
+
+      const db = yield* SqliteClient;
+      const rows = yield* Effect.promise(() =>
+        db.getAllAsync<{ id: string; source: string }>('SELECT id, source FROM exercises ORDER BY id'),
+      );
+      expect(rows).toEqual([
+        { id: 'local:hip-thrust', source: 'local' },
+        { id: 'wger:10', source: 'remote' },
+      ]);
+    }),
+    layer(),
+  );
+
+  itEffect(
+    'replaces a stored copy but keeps its images when the new copy has none',
+    Effect.gen(function* () {
+      const repo = yield* ExerciseSnapshotRepository;
+      yield* repo.upsert(aSnapshot({ imageUrl: 'big.png', thumbnailUrl: 'small.png' }));
+
+      yield* repo.upsert(aSnapshot({ name: 'Barbell Bench Press', imageUrl: null, thumbnailUrl: null, capturedAt: 2 }));
+
+      expect(yield* repo.byId('wger:10')).toMatchObject({
+        name: 'Barbell Bench Press',
+        imageUrl: 'big.png',
+        thumbnailUrl: 'small.png',
+        capturedAt: 2,
+      });
+    }),
+    layer(),
+  );
+});
+
+const aSnapshot = (overrides: Partial<ExerciseSnapshot> = {}): ExerciseSnapshot => ({
+  exerciseId: 'wger:10',
+  name: 'Bench Press',
+  instructions: 'Lower the bar to the chest.',
+  category: 'Chest',
+  primaryMuscles: ['Chest'],
+  secondaryMuscles: ['Triceps brachii'],
+  equipment: ['Barbell'],
+  imageUrl: 'big.png',
+  thumbnailUrl: 'small.png',
+  externalId: 10,
+  capturedAt: 1_700_000_000_000,
+  ...overrides,
 });

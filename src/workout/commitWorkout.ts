@@ -9,12 +9,8 @@
  * nothing is written and PR detection does not run again, because a replay would compare the
  * workout against a history that already contains it.
  */
-import {
-  activityRepository,
-  recordRepository,
-  routineRepository,
-  withTransaction,
-} from '@/persistence';
+import { activityRepository, recordRepository, withTransaction } from '@/persistence';
+import { markRoutineUsed } from '@/services/routines';
 import { detectPersonalRecords } from '@/domain/logic';
 import type { Activity, CompletedWorkout, PersonalRecord } from '@/domain/types';
 
@@ -42,7 +38,7 @@ export async function commitWorkout(workout: CompletedWorkout): Promise<CommitRe
     // Phone and watch alike. The duplicate check above is what keeps a replayed workout from
     // counting twice. A routine deleted since the workout started simply matches no row.
     if (workout.routineId !== null) {
-      await routineRepository.markPerformed(workout.routineId, workout.endedAt);
+      await markRoutineUsed(workout.routineId, workout.endedAt);
     }
     result = { activity, personalRecords };
   });

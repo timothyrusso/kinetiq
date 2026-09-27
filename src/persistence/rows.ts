@@ -15,43 +15,6 @@ export type ActivityRow = {
   created_at: number;
 };
 
-export type RoutineRow = {
-  id: string;
-  name: string;
-  created_at: number;
-  updated_at: number;
-  times_completed: number;
-  last_performed_at: number | null;
-};
-
-export type RoutineItemRow = {
-  id: string;
-  routine_id: string;
-  exercise_id: string;
-  exercise_name: string;
-  position: number;
-  sets: number;
-  reps: string;
-  weight_kg: number;
-  rest_seconds: number;
-  notes: string | null;
-};
-
-export type ExerciseRow = {
-  id: string;
-  external_id: number | null;
-  name: string;
-  instructions: string | null;
-  category: string | null;
-  primary_muscles: string;
-  secondary_muscles: string;
-  equipment: string;
-  image_url: string | null;
-  thumbnail_url: string | null;
-  source: string;
-  captured_at: number;
-};
-
 export type SessionRow = {
   id: string;
   routine_id: string | null;
