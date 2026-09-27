@@ -8,27 +8,17 @@
     "modules/*/index.ts",
     "modules/**/*.android.ts"
   ],
-  "project": [
-    "app/**/*.{ts,tsx}",
-    "src/**/*.{ts,tsx}",
-    "scripts/**/*.{js,ts}",
-    "modules/**/*.ts"
-  ],
+  "project": ["app/**/*.{ts,tsx}", "src/**/*.{ts,tsx}", "scripts/**/*.{js,ts}", "modules/**/*.ts"],
   "paths": {
-    "@/ui/controls/*": [
-      "src/ui/controls/*/index.ios.tsx",
-      "src/ui/controls/*/index.tsx"
-    ],
-    "@/*": [
-      "src/*"
-    ]
+    "@/ui/controls/*": ["src/ui/controls/*/index.ios.tsx", "src/ui/controls/*/index.tsx"],
+    "@/*": ["src/*"]
   },
-  "ignoreBinaries": [
-    "rsvg-convert",
-    "swiftlint",
-    "swift"
-  ],
+  "ignoreBinaries": ["rsvg-convert", "swiftlint", "swift"],
   "ignoreDependencies": [
-    "expo-updates"
+    "expo-updates",
+    "@commitlint/config-conventional",
+    "@timothyrusso/effect-core",
+    "effect",
+    "zustand"
   ]
 }
