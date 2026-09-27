@@ -128,7 +128,9 @@ One deliberate exception: the product name.
 
 `npm run check` before every commit: Biome, ESLint with the kit plugin, `tsc`, the text check,
 dependency-cruiser (`check:arch`), i18n parity, unused keys, the hooks check, knip and jest.
-`npx expo export --platform ios` for a change that touches the bundle. `npm run check:watch`
+`npm run test:coverage` (jest with the kit's global floors and 80 percent of the lines of
+`useCases/` and `data/`) runs after it in CI. `npx expo export --platform ios` for a change that
+touches the bundle. `npm run check:watch`
 (the watch app's Swift core, its copy and its bounds) runs when `targets/` or `modules/` change,
 and in CI on a path-filtered macOS job.
 
