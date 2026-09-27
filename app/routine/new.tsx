@@ -41,7 +41,7 @@ import { SectionHeader } from '@/ui/display';
 import { Txt } from '@/ui/Text';
 import { Icon, ICON_SIZE } from '@/ui/icons';
 import { EmptyState } from '@/ui/states';
-import { RoutineItemRow } from '@/ui/routineItems';
+import { RoutineItemRow } from '@/ui/routineItems/RoutineItemRow';
 import { estimateMinutes, plannedVolumeKg } from '@/domain/logic';
 import { useSaveRoutine } from '@/queries/useRoutines';
 import { useSettings } from '@/settings';

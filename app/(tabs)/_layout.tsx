@@ -36,7 +36,7 @@ import { Icon, Label, router } from 'expo-router';
 import { routes } from '@/navigation/nav';
 import { useAppTheme, type Theme } from '@/theme/theme';
 import { useT } from '@/i18n/useT';
-import { ActiveWorkoutPill } from '@/ui/workout';
+import { ActiveWorkoutPill } from '@/ui/workout/ActiveWorkoutPill';
 import { formatDuration } from '@/utils/format';
 import { useWorkoutRunning, useWorkoutSession } from '@/workout/session';
 

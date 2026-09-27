@@ -1,0 +1,95 @@
+/**
+ * An icon that is itself the control: remove a set, skip, pause. A 44 pt target whatever the
+ * glyph's size, with haptics owned by the control. Content icons are Ionicons, like every
+ * other icon drawn in React Native.
+ */
+import { memo, useCallback } from 'react';
+import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
+import { AnimatedPressable, usePressScale } from '@/features/core/design-system/animation/animation';
+import { Icon, type IconName } from '@/features/core/design-system/icons/icons';
+import { haptics } from '@/features/core/haptics';
+import { radius, touchTarget, useAppTheme } from '@/features/core/theme';
+
+const HIT = { top: 8, bottom: 8, left: 8, right: 8 };
+
+type IconButtonProps = {
+  name: IconName;
+  onPress: (e: GestureResponderEvent) => void;
+  /** Required: an icon-only control has nothing else to be read as. */
+  accessibilityLabel: string;
+  variant?: 'plain' | 'surface' | 'accent' | 'danger';
+  size?: number;
+  disabled?: boolean;
+  /** Fires `heavy`: for destructive or committing actions. */
+  weighty?: boolean;
+  /** No haptic from the control: the caller plays its own, because what it means depends on
+   * the outcome (a set ticked is a signature moment; un-ticking it is not). */
+  silent?: boolean;
+  style?: StyleProp<ViewStyle>;
+  accessibilityHint?: string;
+};
+
+export const IconButton = memo(function IconButton({
+  name,
+  onPress,
+  accessibilityLabel,
+  variant = 'plain',
+  size = 22,
+  disabled = false,
+  weighty = false,
+  silent = false,
+  style,
+  accessibilityHint,
+}: IconButtonProps) {
+  const theme = useAppTheme();
+  const scale = usePressScale(0.9);
+  const fg =
+    variant === 'danger' ? theme.colors.danger : variant === 'accent' ? theme.colors.onAccent : theme.colors.text;
+
+  const handlePress = useCallback(
+    (e: GestureResponderEvent) => {
+      if (disabled) return;
+      if (silent) {
+        // NOTE: The caller's haptic.
+      } else if (weighty) haptics.heavy();
+      else haptics.light();
+      onPress(e);
+    },
+    [disabled, onPress, silent, weighty],
+  );
+
+  return (
+    <AnimatedPressable
+      onPress={handlePress}
+      onPressIn={scale.onPressIn}
+      onPressOut={scale.onPressOut}
+      disabled={disabled}
+      hitSlop={HIT}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ disabled }}
+      {...(accessibilityHint ? { accessibilityHint } : null)}
+      style={[
+        {
+          width: touchTarget,
+          height: touchTarget,
+          borderRadius: radius.pill,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor:
+            variant === 'surface'
+              ? theme.colors.surfaceRaised
+              : variant === 'accent'
+                ? theme.colors.accent
+                : variant === 'danger'
+                  ? theme.colors.dangerSoft
+                  : 'transparent',
+        },
+        scale.style,
+        style,
+      ]}
+    >
+      <Icon name={name} size={size} color={fg} />
+    </AnimatedPressable>
+  );
+});

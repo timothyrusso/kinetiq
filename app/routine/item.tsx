@@ -16,7 +16,7 @@ import { removeDraftItem, updateDraftItem, useRoutineDraft } from '@/routines/dr
 import { haptics } from '@/services/haptics';
 import { useSettings } from '@/settings';
 import { FormSheet, closeSheet } from '@/ui/FormSheet';
-import { ItemEditorForm } from '@/ui/routineItems';
+import { ItemEditorForm } from '@/ui/routineItems/ItemEditorForm';
 
 export default function RoutineItemSheet() {
   const { target, id, item } = useLocalSearchParams<{ target?: string; id?: string; item: string }>();
