@@ -11,6 +11,9 @@
  * Writes are optimistic and persisted behind a debounce, so a rapid sequence of
  * unit toggles costs one write rather than N transactions.
  */
+import { setHapticsPreferences } from '@/features/core/haptics';
+import { setAppearancePreferences } from '@/features/core/theme';
+import { setLanguagePreference } from '@/features/core/translations';
 import { SETTING_KEYS, setSetting } from '@/persistence';
 import { DEFAULT_SETTINGS, normaliseSettings, type SettingsState } from './types';
 
@@ -22,7 +25,19 @@ let flushTimer: ReturnType<typeof setTimeout> | null = null;
 
 const PERSIST_DEBOUNCE_MS = 250;
 
+/**
+ * The core modules below settings (translations, theme, haptics) keep their own copy of the
+ * preferences they need, so they depend on nothing above them. Mirroring before the listeners
+ * run means a render never sees the two disagree.
+ */
+function mirrorIntoCore(next: SettingsState): void {
+  setLanguagePreference(next.language);
+  setAppearancePreferences({ themePreference: next.themeMode, accentColor: next.accentColor });
+  setHapticsPreferences({ enabled: next.hapticsEnabled, restCountdown: next.restCountdownHaptics });
+}
+
 function emit(): void {
+  mirrorIntoCore(state);
   for (const listener of listeners) listener();
 }
 

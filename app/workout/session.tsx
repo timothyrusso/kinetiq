@@ -89,12 +89,10 @@ import { Chip } from '@/ui/controls/Chip';
 import { Txt } from '@/ui/Text';
 import { EmptyState, SkeletonCard } from '@/ui/states';
 import { Icon } from '@/ui/icons';
-import {
-  ExerciseBlock,
-  RestDock,
-  RemoveExerciseDialog,
-  SessionProgressBar,
-} from '@/ui/workout';
+import { ExerciseBlock } from '@/ui/workout/ExerciseBlock';
+import { RemoveExerciseDialog } from '@/ui/workout/RemoveExerciseDialog';
+import { RestDock } from '@/ui/workout/RestDock';
+import { SessionProgressBar } from '@/ui/workout/SessionProgressBar';
 
 const KEEP_AWAKE_TAG = 'kinetiq.workout';
 

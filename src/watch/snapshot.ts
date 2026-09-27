@@ -9,10 +9,11 @@
 import type { Routine } from '@/domain/types';
 import { IMPORT_LIMITS, ITEM_BOUNDS } from '@/transfer/format';
 import type { UnitSystem } from '@/utils/format';
+import { clamp } from '@/utils/functional';
 import { WATCH_FORMAT_VERSION, WATCH_ROUTINES_FORMAT, type WatchRoutinesDocument } from './format';
 
-const clamp = (value: number, range: { min: number; max: number }) =>
-  Number.isFinite(value) ? Math.min(range.max, Math.max(range.min, value)) : range.min;
+const clampTo = (value: number, range: { min: number; max: number }) =>
+  Number.isFinite(value) ? clamp(value, range.min, range.max) : range.min;
 
 export function buildWatchRoutines(
   routines: readonly Routine[],
@@ -31,10 +32,10 @@ export function buildWatchRoutines(
         id: item.id,
         exerciseId: item.exerciseId,
         exerciseName: item.exerciseName,
-        sets: Math.round(clamp(item.sets, ITEM_BOUNDS.sets)),
+        sets: Math.round(clampTo(item.sets, ITEM_BOUNDS.sets)),
         reps: item.reps.slice(0, ITEM_BOUNDS.repsLength),
-        weightKg: clamp(item.weightKg, ITEM_BOUNDS.weightKg),
-        restSeconds: Math.round(clamp(item.restSeconds, ITEM_BOUNDS.restSeconds)),
+        weightKg: clampTo(item.weightKg, ITEM_BOUNDS.weightKg),
+        restSeconds: Math.round(clampTo(item.restSeconds, ITEM_BOUNDS.restSeconds)),
         notes: item.notes === null ? null : item.notes.slice(0, ITEM_BOUNDS.notesLength),
       })),
     })),

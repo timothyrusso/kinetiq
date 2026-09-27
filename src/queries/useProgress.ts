@@ -16,6 +16,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { activityRepository } from '@/persistence';
+import { clamp } from '@/utils/functional';
 import type { Activity } from '@/domain/types';
 import type { HeatmapDay } from '@/ui/charts/HeatmapCalendar';
 import { queryKeys } from '@/query/keys';
@@ -122,7 +123,7 @@ export function useTrainingSummary(rangeWeeks: number) {
         },
         activeDays,
         bestStreak: longestStreak(activities),
-        consistency: clamp01(activeDays / elapsedDays),
+        consistency: clamp(activeDays / elapsedDays, 0, 1),
         hasAnyHistory: totalRows > 0,
       };
     },
@@ -149,10 +150,6 @@ function longestStreak(activities: readonly Activity[]): number {
     if (run > best) best = run;
   }
   return best;
-}
-
-function clamp01(value: number): number {
-  return value < 0 ? 0 : value > 1 ? 1 : value;
 }
 
 function formatWeekLabel(weekStart: number): string {

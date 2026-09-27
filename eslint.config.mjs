@@ -2,12 +2,15 @@ import { loadKitConfig } from '@timothyrusso/config-presets';
 import arch, { DEFAULT_RELATIVE_IMPORT_ALLOW } from '@timothyrusso/eslint-plugin-arch';
 
 const kitConfig = loadKitConfig({ cwd: import.meta.dirname });
-const { gutterToken, spacingImport, allowlistFile } = kitConfig.lint.layoutTokens;
+const { gutterToken, allowlistFile } = kitConfig.lint.layoutTokens;
 
 /**
  * Code that predates the kit architecture. Each child of #47 moves a folder into `features/` and
  * drops it from this list, so the moved code is checked at `error`.
  */
+/** Where legacy files import the spacing scale from: the re-export of `spacingImport`. */
+const LEGACY_SPACING_IMPORT = '@/theme/tokens';
+
 const LEGACY = ['src/**', 'app/**', 'modules/**', 'scripts/**', 'targets/**', 'metro.config.js'];
 
 /**
@@ -29,12 +32,16 @@ export default [
     ],
   },
   ...arch.configs.recommended(kitConfig),
-  // NOTE: the recommended config checks the gutter in `app/` and `features/core/design-system/`;
-  // the design system still lives in `src/ui/` until #49 moves it.
+  // NOTE: the recommended config checks the gutter in `app/` and `features/core/design-system/`
+  // against `spacingImport`; legacy files still import the scale through the `@/theme/tokens`
+  // re-export, and the feature components left in `src/ui/` keep the check they had, until the
+  // children of #47 move them.
   {
-    name: 'kinetiq/legacy-design-system-gutter',
-    files: ['src/ui/**/*.{ts,tsx}'],
-    rules: { 'arch/no-literal-gutter': ['error', { gutterToken, spacingImport, allowlistFile }] },
+    name: 'kinetiq/legacy-gutter',
+    files: ['app/**/*.{ts,tsx}', 'src/ui/**/*.{ts,tsx}'],
+    rules: {
+      'arch/no-literal-gutter': ['error', { gutterToken, spacingImport: LEGACY_SPACING_IMPORT, allowlistFile }],
+    },
   },
   // NOTE: legacy code fails these two until it moves; later children of #47 flip them to error
   // by removing the folder from LEGACY.

@@ -1,7 +1,11 @@
+import { ACCENT_CHOICES, type AccentChoice, type ThemePreference } from '@/features/core/theme';
 import type { Language } from '@/i18n';
+import { clamp } from '@/utils/functional';
 import type { UnitSystem } from '@/utils/format';
 
-export type ThemeMode = 'system' | 'light' | 'dark';
+export { ACCENT_CHOICES, type AccentChoice };
+
+export type ThemeMode = ThemePreference;
 
 export type Profile = { name: string; heightCm: number; birthYear: number };
 
@@ -23,14 +27,6 @@ const DEFAULT_REMINDER: ReminderSettings = {
  * Everything the user can change. Kept flat and small on purpose: it is read by
  * render code, so a nested shape would mean a new subscription per section.
  */
-/**
- * Accent colours offered on Android. `system` is Material You (the wallpaper palette, Android
- * 12+); the named ones are seed colours the Material 3 generator turns into a full light and dark
- * palette, so each keeps its contrast in both modes.
- */
-export const ACCENT_CHOICES = ['kinetiq', 'system', 'ocean', 'sunset', 'berry', 'ruby'] as const;
-export type AccentChoice = (typeof ACCENT_CHOICES)[number];
-
 export type SettingsState = {
   unitSystem: UnitSystem;
   themeMode: ThemeMode;
@@ -106,20 +102,20 @@ export function normaliseSettings(
   previous?: SettingsState,
 ): SettingsState {
   const s = input ?? {};
-  const clamp = (value: number | undefined, min: number, max: number, fallback: number) =>
+  const clampOr = (value: number | undefined, min: number, max: number, fallback: number) =>
     typeof value === 'number' && Number.isFinite(value)
-      ? Math.min(max, Math.max(min, Math.round(value)))
+      ? clamp(Math.round(value), min, max)
       : fallback;
 
   const candidateProfile: Profile = {
     name: s.profile?.name?.trim() || DEFAULT_SETTINGS.profile.name,
-    heightCm: clamp(s.profile?.heightCm, 100, 230, DEFAULT_SETTINGS.profile.heightCm),
-    birthYear: clamp(s.profile?.birthYear, 1930, 2020, DEFAULT_SETTINGS.profile.birthYear),
+    heightCm: clampOr(s.profile?.heightCm, 100, 230, DEFAULT_SETTINGS.profile.heightCm),
+    birthYear: clampOr(s.profile?.birthYear, 1930, 2020, DEFAULT_SETTINGS.profile.birthYear),
   };
 
   const candidateReminder: ReminderSettings = {
     enabled: s.reminder?.enabled ?? DEFAULT_REMINDER.enabled,
-    minuteOfDay: clamp(s.reminder?.minuteOfDay, 0, 1439, DEFAULT_REMINDER.minuteOfDay),
+    minuteOfDay: clampOr(s.reminder?.minuteOfDay, 0, 1439, DEFAULT_REMINDER.minuteOfDay),
     days:
       s.reminder?.days && s.reminder.days.length > 0
         ? [...new Set(s.reminder.days.filter((d) => d >= 1 && d <= 7))].sort((a, b) => a - b)
@@ -141,9 +137,9 @@ export function normaliseSettings(
     keepScreenAwake: s.keepScreenAwake ?? DEFAULT_SETTINGS.keepScreenAwake,
     notificationsEnabled: s.notificationsEnabled ?? DEFAULT_SETTINGS.notificationsEnabled,
     notificationsGranted: s.notificationsGranted ?? DEFAULT_SETTINGS.notificationsGranted,
-    defaultRestSeconds: clamp(s.defaultRestSeconds, 15, 600, DEFAULT_SETTINGS.defaultRestSeconds),
+    defaultRestSeconds: clampOr(s.defaultRestSeconds, 15, 600, DEFAULT_SETTINGS.defaultRestSeconds),
     autoStartRest: s.autoStartRest ?? DEFAULT_SETTINGS.autoStartRest,
-    weeklyGoalWorkouts: clamp(
+    weeklyGoalWorkouts: clampOr(
       s.weeklyGoalWorkouts,
       1,
       14,

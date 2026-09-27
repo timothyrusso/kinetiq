@@ -20,6 +20,12 @@
  * from `themeFor`, so React Navigation's theme context is compared by identity and does
  * not re-theme every navigator on every render.
  *
+ * ## The Effect runtime
+ *
+ * `EffectRuntimeProvider` is outermost: it only hands the one runtime to `useEffectQuery` and
+ * `useEffectMutation`, and building it is lazy. Bootstrap boots it (which migrates the
+ * database) before anything below can run a query.
+ *
  * ## Error boundaries
  *
  * Two, at different heights. expo-router wraps every route element in its own boundary and
@@ -31,9 +37,11 @@ import { Appearance } from 'react-native';
 import { router, Stack, ThemeProvider, type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { EffectRuntimeProvider } from '@timothyrusso/effect-core/react';
 
 import { formSheet, useHeaderOptions } from '@/navigation/headerOptions';
 import { NAV_DARK_THEME, NAV_LIGHT_THEME } from '@/navigation/theme';
+import { runtime } from '@/features/core/runtime';
 import { AppProviders } from '@/providers/AppProviders';
 import { GestureRoot } from '@/providers/bootstrap';
 import { RootErrorBoundary } from '@/providers/RootErrorBoundary';
@@ -42,13 +50,15 @@ import { RouteErrorScreen } from '@/ui/RouteErrorScreen';
 
 export default function RootLayout() {
   return (
-    <AppProviders>
-      {/* Above `ThemedRoot` on purpose: if a provider itself throws, the themed tree is
-          exactly what cannot be trusted to render the report. */}
-      <RootErrorBoundary>
-        <ThemedRoot />
-      </RootErrorBoundary>
-    </AppProviders>
+    <EffectRuntimeProvider runtime={runtime}>
+      <AppProviders>
+        {/* Above `ThemedRoot` on purpose: if a provider itself throws, the themed tree is
+            exactly what cannot be trusted to render the report. */}
+        <RootErrorBoundary>
+          <ThemedRoot />
+        </RootErrorBoundary>
+      </AppProviders>
+    </EffectRuntimeProvider>
   );
 }
 

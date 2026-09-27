@@ -53,7 +53,7 @@ import { SectionHeader } from '@/ui/display';
 import { Txt } from '@/ui/Text';
 import { Icon, ICON_SIZE } from '@/ui/icons';
 import { EmptyState, ErrorState, SkeletonList } from '@/ui/states';
-import { RoutineItemRow } from '@/ui/routineItems';
+import { RoutineItemRow } from '@/ui/routineItems/RoutineItemRow';
 import { useScreenContentBottom } from '@/ui/insets';
 import {
   useDeleteRoutine,
