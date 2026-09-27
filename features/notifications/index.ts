@@ -10,9 +10,8 @@ export const FEATURE_TIER: FeatureTier = 2;
 export { NotificationsLive } from '@/features/notifications/di/layer';
 export type { NotificationPermission } from '@/features/notifications/domain/entities/NotificationPermission';
 export type { ReminderSchedule } from '@/features/notifications/domain/entities/ReminderSchedule';
-/** The use cases the legacy callers run through the runtime, until bootstrap and the workout screen move. */
-export { armRestAlert } from '@/features/notifications/useCases/armRestAlert';
-export { cancelNotification } from '@/features/notifications/useCases/cancelNotification';
+export { useRestAlert } from '@/features/notifications/facades/useRestAlert';
+/** The use cases the legacy callers run through the runtime, until bootstrap moves (#54). */
 export { installNotificationHandler } from '@/features/notifications/useCases/installNotificationHandler';
 export { readNotificationPermission } from '@/features/notifications/useCases/readNotificationPermission';
 export { syncTrainingReminder } from '@/features/notifications/useCases/syncTrainingReminder';

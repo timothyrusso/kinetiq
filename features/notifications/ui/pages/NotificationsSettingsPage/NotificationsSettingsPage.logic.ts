@@ -1,13 +1,13 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { SettingsSection } from '@/features/core/design-system';
 import { haptics } from '@/features/core/haptics';
+import { isSessionInProgress } from '@/features/core/state';
 import { useT } from '@/features/core/translations';
 import { formatClock } from '@/features/core/utils';
 import { useNotificationPermission } from '@/features/notifications/facades/useNotificationPermission';
 import { useReminderSchedule } from '@/features/notifications/facades/useReminderSchedule';
 import { dayName, describeDays, ISO_DAYS, reminderHint } from '@/features/notifications/mappers/describeReminder';
 import { type ReminderSettings, useSettings, useSettingsUpdate } from '@/features/settings';
-import { getSessionSnapshot } from '@/workout/session';
 
 /** A quarter-hour grid: nobody wants 18:07, and finer steps make the stepper pointless. */
 const REMINDER_STEP_MINUTES = 15;
@@ -51,7 +51,7 @@ export function useNotificationsSettingsPageLogic() {
     (patch: Partial<ReminderSettings>) => {
       const nextReminder = { ...reminder, ...patch };
       update({ reminder: nextReminder });
-      if (getSessionSnapshot().session !== null) {
+      if (isSessionInProgress()) {
         setDeferred(true);
         return;
       }

@@ -4,3 +4,8 @@ export const FEATURE_TIER: FeatureTier = 0;
 
 export { createSelectors, type WithSelectors } from '@/features/core/state/createSelectors';
 export { createStore, resetAllStores } from '@/features/core/state/createStore';
+export {
+  isSessionInProgress,
+  setSessionInProgress,
+  useSessionInProgress,
+} from '@/features/core/state/sessionPresenceStore';
