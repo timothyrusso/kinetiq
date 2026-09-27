@@ -34,8 +34,8 @@ import { useRouter } from 'expo-router';
 import { ScreenHeader } from '@/ui/Screen';
 import { SettingsList, type SettingsRow, type SettingsSection } from '@/ui/controls/SettingsList';
 import { routes } from '@/navigation/nav';
-import { isOfflineError } from '@/api';
-import { useCatalogMeta, useRefreshCatalog } from '@/queries/useCatalog';
+import { isOfflineFailure } from '@/features/core/error';
+import { useCatalogMeta, useRefreshCatalog } from '@/features/exercises';
 import { useExport, type ExportTarget } from '@/queries/useTransfer';
 import { parseRoutines, type ParseIssue } from '@/transfer/parseRoutines';
 import { copyToClipboard, ImportTooLargeError, pickImportFile, readClipboard } from '@/transfer/importSource';
@@ -172,7 +172,7 @@ export default function SettingsDataScreen() {
         kind: 'info',
         key: 'catalogError',
         title: t('dataTransfer.catalogFailed'),
-        subtitle: t(isOfflineError(refreshError) ? 'dataTransfer.catalogFailedOffline' : 'dataTransfer.catalogFailedOther'),
+        subtitle: t(isOfflineFailure(refreshError) ? 'dataTransfer.catalogFailedOffline' : 'dataTransfer.catalogFailedOther'),
       });
     }
 

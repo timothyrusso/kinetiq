@@ -19,7 +19,7 @@
  * for reasons (offline) that have nothing to do with whether the file is well formed.
  */
 import type { TKey, TVars } from '@/i18n';
-import { externalIdOf, isLocalExerciseId } from '@/domain/exerciseId';
+import { externalIdOf, isLocalExerciseId } from '@/features/exercises';
 import { clamp } from '@/utils/functional';
 import { IMPORT_LIMITS, ITEM_BOUNDS } from './format';
 

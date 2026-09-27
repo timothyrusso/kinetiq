@@ -41,7 +41,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ScreenHeader } from '@/ui/Screen';
 import { SettingsList, type SettingsSection } from '@/ui/controls/SettingsList';
 import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
-import { getExerciseProvider } from '@/api';
+import { CATALOG_PROVIDER } from '@/features/exercises';
 import { clearAllUserData } from '@/providers/database';
 import { DEFAULT_SETTINGS, updateSettings } from '@/features/settings';
 import { useActivityHistory } from '@/queries/useActivities';
@@ -53,7 +53,6 @@ export default function SettingsAboutScreen() {
   const { t } = useT();
   const queryClient = useQueryClient();
 
-  const provider = getExerciseProvider();
   const config = Constants.expoConfig;
   const version = config?.version ?? null;
   const appId = config?.ios?.bundleIdentifier ?? config?.android?.package ?? config?.slug ?? null;
@@ -112,7 +111,7 @@ export default function SettingsAboutScreen() {
           {
             kind: 'info',
             key: 'provider',
-            title: LABELLED_PROVIDERS[provider.name] ?? provider.name,
+            title: LABELLED_PROVIDERS[CATALOG_PROVIDER] ?? CATALOG_PROVIDER,
             subtitle: t('about.catalogLicence'),
           },
         ],
@@ -154,7 +153,7 @@ export default function SettingsAboutScreen() {
       ],
     });
     return list;
-  }, [activityCount, history.isLoading, appId, provider, routines.length, routinesLoading, t, version]);
+  }, [activityCount, history.isLoading, appId, routines.length, routinesLoading, t, version]);
 
   return (
     <>
@@ -182,9 +181,8 @@ export default function SettingsAboutScreen() {
 /* ----------------------------------------------------------------- helpers -- */
 
 /**
- * The provider's own `name` is a machine identifier ('wger'): right for a query key, wrong
- * for a sentence. Mapped here rather than changed at the source: human labels are not the API
- * layer's job, and the identifier namespaces its cache.
+ * `CATALOG_PROVIDER` is a machine identifier ('wger'): right for data, wrong for a sentence.
+ * Mapped here rather than changed at the source: human labels are not the catalog's job.
  */
 const LABELLED_PROVIDERS: Record<string, string> = {
   wger: 'wger Workout Manager',

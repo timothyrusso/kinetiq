@@ -12,9 +12,6 @@
  *   (`invalidateActivities`) rather than a list of keys that drifts out of date
  *   as filters are added.
  */
-import type { CatalogLanguage } from '@/catalog/types';
-import type { ExerciseFilter } from '@/domain/types';
-
 export const queryKeys = {
   activities: {
     all: ['activities'] as const,
@@ -45,25 +42,12 @@ export const queryKeys = {
       ['session', 'previous', routineId] as const,
   },
 
+  /**
+   * The exercise catalog's own keys are `exerciseQueryKeys` in `features/exercises`; the history
+   * and record reads here sit under the same prefix, so a catalog refresh reaches them too.
+   */
   exercises: {
     all: ['exercises'] as const,
-    taxonomy: () => ['exercises', 'taxonomy'] as const,
-    /**
-     * The render language is an input: the provider names each row in it. Without it in the
-     * key, switching the app to Italian would keep showing the cached English page.
-     */
-    list: (filter: ExerciseFilter, language: CatalogLanguage) =>
-      ['exercises', 'list', language, filter] as const,
-    detail: (id: string, language: CatalogLanguage) =>
-      ['exercises', 'detail', language, id] as const,
-    variations: (id: string, language: CatalogLanguage) =>
-      ['exercises', 'variations', language, id] as const,
-  },
-
-  catalog: {
-    all: ['catalog'] as const,
-    /** What `catalog_meta` says: exercise count and dates, for the Your data row. */
-    meta: () => ['catalog', 'meta'] as const,
   },
 
   transfer: {
