@@ -1,5 +1,5 @@
 {
-  "extends": "expo/tsconfig.base",
+  "extends": "@timothyrusso/config-presets/tsconfig/expo.json",
   "compilerOptions": {
     "strict": true,
     "noUncheckedIndexedAccess": true,
@@ -10,6 +10,7 @@
     "types": ["node", "react", "jest"],
     "forceConsistentCasingInFileNames": true,
     "exactOptionalPropertyTypes": false,
+    "verbatimModuleSyntax": false,
     "moduleSuffixes": [".ios", ""],
     "paths": {
       "@/*": ["./src/*"]

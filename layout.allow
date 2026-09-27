@@ -1,0 +1,2 @@
+# Files arch/no-literal-gutter skips, one path or glob per line, relative to the app root.
+# Chart internals only: axis labels and cells placed by measured pixel offsets, not layout.

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * The watch app's string catalog, held to the same rules as the phone's (`check-i18n.js`).
+ * The watch app's string catalog, held to the same rules as the phone's (`npm run check:i18n`).
  *
  *   node scripts/check-watch-i18n.js        (part of `npm run check:watch`)
  *
