@@ -9,6 +9,7 @@
 import { SqlError } from '@/features/core/error';
 import { runtime } from '@/features/core/runtime';
 import { clearAllUserData as clearAllUserDataEffect } from '@/features/core/sqlite';
+import { DEFAULT_SETTINGS, loadSettings, type Settings } from '@/features/settings';
 import { openDatabase, readSchemaVersion, type DatabaseOpenResult } from '@/persistence/database';
 import { notifyRoutinesChanged } from '@/persistence/routineEvents';
 
@@ -31,4 +32,19 @@ export async function bootDatabase(): Promise<DatabaseOpenResult> {
 export async function clearAllUserData(): Promise<void> {
   await runtime.runPromise(clearAllUserDataEffect);
   notifyRoutinesChanged();
+}
+
+/**
+ * Every stored setting, decoded by the settings Schema: an unset or unparseable row falls back to
+ * its default instead of becoming `undefined` in the store.
+ *
+ * After a failed migration the runtime cannot build, so the launch carries on with the defaults:
+ * the app stays usable on the schema it has, as `bootDatabase` promises. Any other failure is
+ * still fatal.
+ */
+export async function readStoredSettings(migrationFailed: boolean): Promise<Settings> {
+  return runtime.runPromise(loadSettings).catch((error: unknown) => {
+    if (migrationFailed) return DEFAULT_SETTINGS;
+    throw error;
+  });
 }

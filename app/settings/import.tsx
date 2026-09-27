@@ -23,7 +23,7 @@ import { routes } from '@/navigation/nav';
 import { useImportRoutines, useResolvedImport } from '@/queries/useTransfer';
 import { importable, type ResolvedItem } from '@/transfer/resolveRoutines';
 import { clearStagedImport, stagedImport } from '@/transfer/stagedImport';
-import { useSettings } from '@/settings';
+import { useSettings } from '@/features/settings';
 import { formatWeight } from '@/utils/format';
 import { haptics } from '@/services/haptics';
 import { useT } from '@/i18n/useT';

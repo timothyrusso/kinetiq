@@ -9,9 +9,9 @@
  * Nothing here can fail a routine save or the launch: every step catches in place, because the
  * watch is a mirror and the phone's own data is the thing that matters.
  */
-import { watchBridge } from '../../modules/watch-bridge';
+import { encodeWatchRoutines, watchBridge } from '@/features/watch-bridge';
 import { onRoutinesChanged, openDatabase, routineRepository } from '@/persistence';
-import { getSettings, subscribeSettings } from '@/settings/store';
+import { getSettings, subscribeSettings } from '@/features/settings';
 import { buildWatchRoutines } from './snapshot';
 
 const PUSH_DEBOUNCE_MS = 500;
@@ -51,7 +51,7 @@ export async function pushRoutineSnapshot(
     const { exportedAt: _exportedAt, ...content } = document;
     watchBridge.pushSnapshot(
       `snap-${now.getTime().toString(36)}`,
-      JSON.stringify(document),
+      encodeWatchRoutines(document),
       contentKey(JSON.stringify(content)),
       options.force ?? false,
       options.requestId ?? null,

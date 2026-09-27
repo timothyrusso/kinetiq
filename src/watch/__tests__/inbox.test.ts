@@ -1,14 +1,15 @@
-import type { WatchInboxEntry } from '../../../modules/watch-bridge';
+import type { WatchInboxEntry } from '@/features/watch-bridge';
 import { drainWatchInbox } from '../inbox';
 import { document, entry, UUID } from './fixtures';
 
-jest.mock('../../../modules/watch-bridge', () => {
+jest.mock('@/features/watch-bridge', () => {
   const entries: WatchInboxEntry[] = [];
   const remove = async (id: string) => {
     const index = entries.findIndex((e) => e.id === id);
     if (index >= 0) entries.splice(index, 1);
   };
   return {
+    ...jest.requireActual('@/features/watch-bridge'),
     mockInbox: entries,
     watchBridge: {
       listInbox: jest.fn(async () => [...entries]),
@@ -21,7 +22,7 @@ jest.mock('@/persistence', () => ({ openDatabase: jest.fn(async () => ({})) }));
 jest.mock('@/workout/commitWorkout', () => ({ commitWorkout: jest.fn() }));
 jest.mock('../inboxNotice', () => ({ reportWatchInboxProblem: jest.fn() }));
 
-const { mockInbox, watchBridge: bridge } = jest.requireMock('../../../modules/watch-bridge') as {
+const { mockInbox, watchBridge: bridge } = jest.requireMock('@/features/watch-bridge') as {
   mockInbox: WatchInboxEntry[];
   watchBridge: { listInbox: jest.Mock; ackInbox: jest.Mock; rejectInbox: jest.Mock };
 };

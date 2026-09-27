@@ -10,7 +10,7 @@ import { useCallback } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 
 import { useT } from '@/i18n/useT';
-import { useSettings } from '@/settings';
+import { useSettings } from '@/features/settings';
 import { FormSheet, closeSheet } from '@/ui/FormSheet';
 import { SetEditorForm } from '@/ui/workout/SetEditorForm';
 import { removeSet, updateSet, useWorkoutSession } from '@/workout/session';

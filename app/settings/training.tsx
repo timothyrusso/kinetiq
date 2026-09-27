@@ -29,7 +29,7 @@ import { useCallback, useMemo } from 'react';
 
 import { ScreenHeader } from '@/ui/Screen';
 import { SettingsList, type SettingsSection } from '@/ui/controls/SettingsList';
-import { useSettings, useSettingsUpdate } from '@/settings';
+import { useSettings, useSettingsUpdate } from '@/features/settings';
 import { useT } from '@/i18n/useT';
 
 /** The same bounds the store clamps to: see the module header. */

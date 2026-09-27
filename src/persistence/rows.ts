@@ -74,9 +74,3 @@ export type RecordRow = {
   value: number;
   achieved_at: number;
 };
-
-export type SettingsRow = {
-  key: string;
-  value_json: string;
-  updated_at: number;
-};

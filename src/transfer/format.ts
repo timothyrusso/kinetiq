@@ -14,23 +14,17 @@
  * an AI cannot know them, and a file that asks for them is a file nobody can author by hand.
  * The importer mints ids, keeps the order of the list, and looks the exercise up.
  */
-import bounds from './bounds.json';
+import { IMPORT_LIMITS, ITEM_BOUNDS } from '@/features/watch-bridge';
 
 export const ROUTINES_FORMAT = 'kinetiq.routines';
 export const WORKOUTS_FORMAT = 'kinetiq.workouts';
 export const FORMAT_VERSION = 1;
 
 /**
- * The same bounds the routine item editor's steppers use (`src/ui/routineItems.tsx`).
- *
- * They live in `bounds.json` because the Apple Watch app enforces them too: its target ships a
- * copy of that file as a bundle resource, and `check:watch` fails if the two drift apart.
- * `notesLength` is the same limit as the item editor's note field.
+ * The same bounds the routine item editor's steppers use, and the Apple Watch enforces: they live
+ * in `features/watch-bridge/assets/bounds.json`, which the watch target ships a copy of.
  */
-export const ITEM_BOUNDS = bounds.itemBounds;
-
-/** Beyond this a file is not a routine collection anyone meant to import. */
-export const IMPORT_LIMITS = bounds.importLimits;
+export { IMPORT_LIMITS, ITEM_BOUNDS };
 
 type RoutineFileItem = {
   /** `wger:<id>` from the public catalog, or a `local:` id from an export. Optional. */

@@ -7,7 +7,7 @@
  * never be read (`rejectInbox`, which keeps the file). A save that fails, or a document from a
  * newer watch app, stays for the next drain: nothing is ever dropped.
  */
-import { watchBridge, type WatchInboxEntry } from '../../modules/watch-bridge';
+import { watchBridge, type WatchInboxEntry } from '@/features/watch-bridge';
 import { openDatabase } from '@/persistence';
 import { commitWorkout } from '@/workout/commitWorkout';
 import { reportWatchInboxProblem } from './inboxNotice';

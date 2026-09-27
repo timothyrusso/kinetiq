@@ -24,8 +24,8 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { useT } from '@/i18n/useT';
 import { tr } from '@/i18n/tr';
-import { useSettings, useSettingsUpdate } from '@/settings';
-import type { Profile } from '@/settings';
+import { useSettings, useSettingsUpdate } from '@/features/settings';
+import type { Profile } from '@/features/settings';
 import { haptics } from '@/services/haptics';
 import { FormSheet, closeSheet } from '@/ui/FormSheet';
 import { Txt } from '@/ui/Text';
@@ -61,7 +61,7 @@ export default function EditProfileSheet() {
       haptics.warning();
       return;
     }
-    const patch: Partial<Profile> = {};
+    const patch: { -readonly [K in keyof Profile]?: Profile[K] } = {};
     if (draft.name.trim() !== profile.name) patch.name = draft.name.trim();
     if (draft.heightCm !== `${profile.heightCm}`) patch.heightCm = parseNumber(draft.heightCm) ?? profile.heightCm;
     if (draft.birthYear !== `${profile.birthYear}`) {

@@ -14,7 +14,7 @@ import { useRemoveRoutineItem, useRoutine, useSetRoutineItem } from '@/queries/u
 import type { ItemTarget } from '@/routines/draft';
 import { removeDraftItem, updateDraftItem, useRoutineDraft } from '@/routines/draftStore';
 import { haptics } from '@/services/haptics';
-import { useSettings } from '@/settings';
+import { useSettings } from '@/features/settings';
 import { FormSheet, closeSheet } from '@/ui/FormSheet';
 import { ItemEditorForm } from '@/ui/routineItems/ItemEditorForm';
 

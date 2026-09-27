@@ -44,7 +44,7 @@ import { EmptyState } from '@/ui/states';
 import { RoutineItemRow } from '@/ui/routineItems/RoutineItemRow';
 import { estimateMinutes, plannedVolumeKg } from '@/domain/logic';
 import { useSaveRoutine } from '@/queries/useRoutines';
-import { useSettings } from '@/settings';
+import { useSettings } from '@/features/settings';
 import { routes } from '@/navigation/nav';
 import { useAppTheme } from '@/theme/theme';
 import { spacing, screenGutter } from '@/theme/tokens';

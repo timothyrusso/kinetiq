@@ -19,7 +19,7 @@ import { useAddRoutineExercise, useRoutine } from '@/queries/useRoutines';
 import { defaultItemTarget } from '@/routines/draft';
 import { addDraftExercise, containsExercise, useRoutineDraft } from '@/routines/draftStore';
 import { haptics } from '@/services/haptics';
-import { useSettings } from '@/settings';
+import { useSettings } from '@/features/settings';
 import { ExercisePicker } from '@/ui/exercisePicker';
 import { useWorkoutSession } from '@/workout/session';
 import { addExerciseToSession } from '@/workout/sessionExercises';

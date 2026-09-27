@@ -38,7 +38,7 @@ import {
 // Record wording lives next to the record query, so this screen and the exercise detail
 // cannot drift into calling the same record two different things.
 import { RECORD_LABEL, formatRecordValue } from '@/queries/useExerciseHistory';
-import { useSettings } from '@/settings/hooks';
+import { useSettings } from '@/features/settings';
 import { useT } from '@/i18n/useT';
 import { activityDisplay } from '@/domain/display';
 import { estimatedOneRepMax } from '@/domain/logic';

@@ -1,64 +1,9 @@
 /**
- * Settings, personal records and app bookkeeping.
- *
- * Settings are one typed key per row rather than a blob: a single malformed row
- * then degrades one preference instead of resetting everything, and a future
- * schema migration only has to know about the keys it cares about.
+ * Personal records. The settings half moved to `features/settings`.
  */
 import { getDatabase } from './database';
-import { stringify } from './codec';
-import type { RecordRow, SettingsRow } from './rows';
+import type { RecordRow } from './rows';
 import type { PersonalRecord, PersonalRecordKind } from '@/domain/types';
-
-export const SETTING_KEYS = {
-  unitSystem: 'settings.units',
-  themeMode: 'settings.theme',
-  accentColor: 'settings.accentColor',
-  language: 'settings.language',
-  haptics: 'settings.haptics',
-  restCountdownHaptics: 'settings.restCountdownHaptics',
-  keepScreenAwake: 'settings.keepScreenAwake',
-  notifications: 'settings.notifications',
-  defaultRestSeconds: 'settings.defaultRestSeconds',
-  weeklyGoalWorkouts: 'settings.weeklyGoalWorkouts',
-  autoStartRest: 'settings.autoStartRest',
-  profile: 'settings.profile',
-  reminder: 'settings.reminder',
-} as const;
-
-export type SettingKey = (typeof SETTING_KEYS)[keyof typeof SETTING_KEYS];
-
-export async function setSetting<T>(key: SettingKey, value: T): Promise<void> {
-  await getDatabase().runAsync(
-    `INSERT INTO settings (key, value_json, updated_at) VALUES (?, ?, ?)
-     ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json,
-                                    updated_at = excluded.updated_at`,
-    key,
-    stringify(value),
-    Date.now(),
-  );
-}
-
-/** Bulk read for the bootstrap, which loads every preference in one round trip. */
-export async function readAllSettings(
-  keys: readonly SettingKey[],
-): Promise<Map<SettingKey, unknown>> {
-  if (keys.length === 0) return new Map();
-  const rows = await getDatabase().getAllAsync<SettingsRow>(
-    `SELECT key, value_json, updated_at FROM settings
-     WHERE key IN (${keys.map(() => '?').join(', ')})`,
-    ...keys,
-  );
-  const out = new Map<SettingKey, unknown>();
-  for (const row of rows) {
-    try {
-      out.set(row.key as SettingKey, JSON.parse(row.value_json) as unknown);
-    } catch {
-      /* unparseable row: treated as unset, so the default applies */
-    }
-  }
-  return out;
-}
 
 /* --------------------------------------------------------------- records -- */
 

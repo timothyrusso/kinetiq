@@ -43,7 +43,7 @@ import { SettingsList, type SettingsSection } from '@/ui/controls/SettingsList';
 import { ConfirmDialog } from '@/ui/controls/ConfirmDialog';
 import { getExerciseProvider } from '@/api';
 import { clearAllUserData } from '@/providers/database';
-import { DEFAULT_SETTINGS, updateSettings } from '@/settings';
+import { DEFAULT_SETTINGS, updateSettings } from '@/features/settings';
 import { useActivityHistory } from '@/queries/useActivities';
 import { useRoutines } from '@/queries/useRoutines';
 import { haptics } from '@/services/haptics';

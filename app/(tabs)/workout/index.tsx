@@ -57,7 +57,7 @@ import { useT } from '@/i18n/useT';
 import type { TKey, TVars } from '@/i18n';
 import { spacing, screenGutter } from '@/theme/tokens';
 import { formatTimer } from '@/utils/format';
-import { useSettings } from '@/settings';
+import { useSettings } from '@/features/settings';
 import { haptics } from '@/services/haptics';
 import { useStartEmptyWorkout } from '@/workout/startRoutine';
 import { useWorkoutRunning, useWorkoutSession } from '@/workout/session';

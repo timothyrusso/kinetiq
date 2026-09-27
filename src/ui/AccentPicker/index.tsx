@@ -11,7 +11,8 @@ import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { useT } from '@/i18n/useT';
 import type { TKey } from '@/i18n';
-import { ACCENT_CHOICES, useSettings, useSettingsUpdate, type AccentChoice } from '@/settings';
+import { ACCENT_CHOICES, type AccentChoice } from '@/features/core/theme';
+import { useSettings, useSettingsUpdate } from '@/settings';
 import { useAccentSwatches } from '@/theme/accent';
 import { useAppTheme, type Theme } from '@/theme/theme';
 import { spacing, touchTarget } from '@/theme/tokens';
