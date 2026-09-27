@@ -13,6 +13,8 @@ interface FakeOptions {
   readonly requestAnswer?: boolean;
   /** The scheduler refuses every call. */
   readonly failing?: boolean;
+  /** The scheduler refuses only to cancel everything. */
+  readonly refusingCancelAll?: boolean;
 }
 
 /** A `Notifications` that records what it was asked to do instead of posting anything. */
@@ -20,6 +22,7 @@ export const makeNotificationsFake = ({
   permission = true,
   requestAnswer = true,
   failing = false,
+  refusingCancelAll = false,
 }: FakeOptions = {}) => {
   const scheduled: NotificationRequest[] = [];
   const calls: string[] = [];
@@ -39,7 +42,7 @@ export const makeNotificationsFake = ({
             return `id-${scheduled.length}`;
           }),
     cancel: identifier => (failing ? refuse('cancel') : Effect.sync(() => void calls.push(`cancel ${identifier}`))),
-    cancelAll: failing ? refuse('cancelAll') : Effect.sync(() => void calls.push('cancelAll')),
+    cancelAll: failing || refusingCancelAll ? refuse('cancelAll') : Effect.sync(() => void calls.push('cancelAll')),
     installHandler: failing ? refuse('installHandler') : Effect.sync(() => void calls.push('installHandler')),
   });
   return { layer, scheduled: scheduled as readonly NotificationRequest[], calls: calls as readonly string[] };
