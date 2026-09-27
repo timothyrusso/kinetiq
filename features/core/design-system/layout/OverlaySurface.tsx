@@ -97,6 +97,7 @@ function liquidGlass(): boolean {
     try {
       liquidGlassCache = isLiquidGlassAvailable();
     } catch {
+      // NOTE: a device that cannot say gets the blur fallback, which every iOS version draws.
       liquidGlassCache = false;
     }
   }

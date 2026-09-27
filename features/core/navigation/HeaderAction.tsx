@@ -37,7 +37,7 @@ export function prefetchHeaderIcons(): Promise<void> {
 
 /**
  * `Stack.Toolbar` under a name that cannot collide with the `Stack` layout primitive most
- * screens already import from `@/ui/layout`. Same component, so `HeaderToolbar.Menu` and
+ * screens already import from `@/features/core/design-system`. Same component, so `HeaderToolbar.Menu` and
  * `HeaderToolbar.MenuAction` are the router's own.
  */
 export const HeaderToolbar = Stack.Toolbar;

@@ -41,6 +41,8 @@ export function startNetworkStatus(): () => void {
       publish({ online: state.isInternetReachable !== false, known: true });
     })
     .catch(() => {
+      // NOTE: a probe that cannot answer is treated as online, the optimistic default: a request
+      // then fails on its own terms, with its own typed error, rather than never being sent.
       publish({ online: true, known: true });
     });
 
