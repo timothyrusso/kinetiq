@@ -13,12 +13,18 @@ const NO_ROUTINE = RoutineId.make('none');
  * Routine `id` and the stored snapshots its items name, read together so a screen never draws
  * rows without their pictures. `missing` is true once the read settled and found no routine,
  * which is neither loading nor a failure.
+ *
+ * It refetches on mount once invalidated, against the app's `refetchOnMount: false`: a finished
+ * workout invalidates every routine while no routine screen may be open, and the next opening
+ * would otherwise show the trained count read before it. A detail nothing invalidated is not
+ * read again.
  */
 export function useRoutine(id: RoutineId | null) {
   const query = useEffectQuery({
     queryKey: routineQueryKeys.detail(id ?? 'none'),
     queryFn: getRoutineDetail(id ?? NO_ROUTINE),
     enabled: id !== null,
+    refetchOnMount: query => query.state.isInvalidated,
   });
   return {
     routine: query.data?.routine ?? null,
