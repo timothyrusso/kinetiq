@@ -1,14 +1,6 @@
 /**
- * Repository barrel. Screens and hooks import from here and never from a
- * specific repository file, which keeps the persistence module's internals free
- * to move around.
+ * The legacy handle on the app database. The repositories moved into features; what is left is
+ * the shared connection the launch and the watch paths open. Goes away with them (#54).
  */
-export { activityRepository } from './activityRepository';
-export { sessionRepository } from './sessionRepository';
-export type { SessionPatch } from './sessionRepository';
-export { recordRepository } from './settingsRepository';
-export {
-  openDatabase,
-  withTransaction,
-} from './database';
+export { openDatabase } from './database';
 export type { DatabaseOpenResult } from './database';

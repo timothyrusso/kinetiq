@@ -636,7 +636,6 @@ export const en = {
     offlineMessage:
       'Anything you have saved is still here. Remote exercises and new images will come back as soon as you reconnect.',
     genericMessage: 'This one did not respond. Trying again usually works.',
-    activityGone: 'That workout is no longer stored.',
     autoStartOn: 'Counting down the moment you complete a set.',
     autoStartOff: 'You tap to begin resting, so a phone call between sets costs you nothing.',
     pickerNoMatch: 'Nothing matches that',
@@ -761,6 +760,11 @@ export const en = {
     exerciseNotFound: 'This exercise is not in the library.',
     routineNotFound: 'This routine is gone. It was deleted, most likely from another screen.',
     routineNameTaken: 'You already have a routine with this name. Choose another one.',
+    sessionAlreadyActive: 'A workout is already in progress. Finish or discard it first.',
+    noActiveSession: 'This workout is no longer in progress.',
+    duplicateWorkout: 'This workout is already in your history.',
+    sessionPersistFailed: 'Your workout could not be saved to this device.',
+    activityNotFound: 'That workout is no longer stored.',
   },
 } as const;
 

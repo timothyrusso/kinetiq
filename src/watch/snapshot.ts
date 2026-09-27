@@ -6,7 +6,7 @@
  * rejects a snapshot that breaks them (Stability rule 3): one out-of-range row written by an
  * older build must not cost the user every routine on their wrist.
  */
-import type { Routine } from '@/domain/types';
+import type { Routine } from '@/features/routines';
 import type { UnitSystem } from '@/utils/format';
 import { clamp } from '@/utils/functional';
 import {

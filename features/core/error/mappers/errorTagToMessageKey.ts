@@ -23,4 +23,9 @@ export const errorTagToMessageKey = appErrors.assertExhaustiveMessageKeys<TKey>(
   ExerciseNotFound: 'errors.exerciseNotFound',
   RoutineNotFound: 'errors.routineNotFound',
   RoutineNameTaken: 'errors.routineNameTaken',
+  SessionAlreadyActive: 'errors.sessionAlreadyActive',
+  NoActiveSession: 'errors.noActiveSession',
+  DuplicateWorkout: 'errors.duplicateWorkout',
+  SessionPersistFailed: 'errors.sessionPersistFailed',
+  ActivityNotFound: 'errors.activityNotFound',
 });

@@ -5,6 +5,7 @@ import { haptics } from '@/features/core/haptics';
 import { type HeaderMenuItem, routes } from '@/features/core/navigation';
 import { useT } from '@/features/core/translations';
 import { agoLabel, moveItem } from '@/features/core/utils';
+import type { WorkoutLauncher } from '@/features/routines/domain/entities/WorkoutLauncher';
 import { routineIdOf } from '@/features/routines/domain/utils/routineId';
 import { estimateMinutes, plannedVolumeKg } from '@/features/routines/domain/utils/routinePlan';
 import { useRoutine } from '@/features/routines/facades/useRoutine';
@@ -15,8 +16,6 @@ import {
   useReorderRoutine,
 } from '@/features/routines/facades/useRoutineMutations';
 import { useSettings } from '@/features/settings';
-import { useWorkoutSession } from '@/workout/session';
-import { useStartRoutine } from '@/workout/startRoutine';
 
 /**
  * A saved routine: the plan, and the controls around it.
@@ -29,17 +28,18 @@ import { useStartRoutine } from '@/workout/startRoutine';
  * Previous performance is not shown here: it is on the session screen, where the set is entered,
  * and computing it scans the recent workouts. `timesCompleted` and `lastPerformedAt` are columns on
  * the routine itself.
+ *
+ * Starting a workout goes through `launcher`, which the route hands in: the workouts are a peer
+ * feature this one may not import.
  */
-export function useRoutinePageLogic() {
+export function useRoutinePageLogic(launcher: WorkoutLauncher) {
   const { t } = useT();
   const bottom = useScreenContentBottom();
   const params = useLocalSearchParams<{ id: string }>();
   const id = routineIdOf(params.id);
 
   const units = useSettings(settings => settings.unitSystem);
-  const defaultRest = useSettings(settings => settings.defaultRestSeconds);
   const { routine, snapshots, missing, isLoading, error, refresh } = useRoutine(id);
-  const { session } = useWorkoutSession();
 
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
@@ -48,7 +48,7 @@ export function useRoutinePageLogic() {
   const removeItem = useRemoveRoutineItem();
   const duplicate = useDuplicateRoutine();
   const destroy = useDeleteRoutine();
-  const { start, busy: starting } = useStartRoutine();
+  const { start, starting, running } = launcher;
 
   const items = useMemo(() => routine?.items ?? [], [routine]);
   const volumeKg = useMemo(() => plannedVolumeKg(items), [items]);
@@ -56,8 +56,8 @@ export function useRoutinePageLogic() {
 
   // NOTE: any running session, not only this routine's: the store holds one, so starting a second
   // would silently replace a workout the user is in the middle of.
-  const liveSession = session !== null && (session.status === 'active' || session.status === 'paused');
-  const liveName = session?.routineName;
+  const liveSession = running !== null;
+  const liveName = running?.name;
 
   const warn = useCallback((message: string) => {
     setFailed(message);
@@ -66,21 +66,15 @@ export function useRoutinePageLogic() {
 
   const begin = useCallback(() => {
     if (routine === null) return;
-    start({
-      routineId: routine.id,
-      routineName: routine.name,
-      items: routine.items,
-      defaultRestSeconds: defaultRest,
-      onResult: started => {
-        if (!started) {
-          warn(t('routine.noExercisesYet'));
-          return;
-        }
-        haptics.success();
-        router.push(routes.workoutSession());
-      },
+    start(routine, started => {
+      if (!started) {
+        warn(t('routine.noExercisesYet'));
+        return;
+      }
+      haptics.success();
+      router.push(routes.workoutSession());
     });
-  }, [defaultRest, routine, start, t, warn]);
+  }, [routine, start, t, warn]);
 
   const routineId = routine?.id ?? null;
   const { mutate: reorderItems } = reorder;

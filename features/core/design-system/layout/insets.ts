@@ -21,8 +21,8 @@
 import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useSessionInProgress } from '@/features/core/state';
 import { spacing } from '@/features/core/theme';
-import { useWorkoutRunning } from '@/workout/session';
 
 /**
  * The navigator's own compact header, excluding the top safe area.
@@ -56,12 +56,12 @@ const WORKOUT_PILL_SPACE = 44 + spacing.sm;
 /**
  * Bottom padding for a scroll view on one of the five TAB screens.
  *
- * Reserves the pill's space only while a workout is actually running, `useWorkoutRunning`
+ * Reserves the pill's space only while a workout is actually running. `useSessionInProgress`
  * is a boolean store, so this re-renders on the transition and not on the per-second tick
  * that drives the pill's own timer.
  */
 export function useTabContentBottom(extra = 0): number {
-  const running = useWorkoutRunning();
+  const running = useSessionInProgress();
   // NOTE: The bar itself is covered by the system: a tab's list uses automatic content insets, which
   // include the tab bar and the home indicator. What is left is the bottom accessory while a
   // workout runs (the system does not account for it) and breathing room, so the last row is

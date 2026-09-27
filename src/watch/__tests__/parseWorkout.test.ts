@@ -1,4 +1,4 @@
-import { estimateCalories } from '@/domain/logic';
+import { estimateCalories } from '@/features/workouts';
 import { parseWatchWorkout } from '../parseWorkout';
 import { document, entry, UUID } from './fixtures';
 

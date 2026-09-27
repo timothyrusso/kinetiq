@@ -7,12 +7,14 @@
  * session, except duration, which for a watch workout is wall clock.
  */
 import {
+  ActivityId,
+  type CompletedWorkout,
   completedSetCount,
   estimateCalories,
   estimatedOneRepMax,
+  type StrengthEntry,
   totalVolumeKg,
-} from '@/domain/logic';
-import type { CompletedWorkout, StrengthEntry } from '@/domain/types';
+} from '@/features/workouts';
 import { readWatchWorkout, type WatchInboxEntry, type WatchWorkoutDocument } from '@/features/watch-bridge';
 
 export type ParsedWorkout =
@@ -21,7 +23,7 @@ export type ParsedWorkout =
   | { ok: false; reason: 'version' | 'invalid' };
 
 /** Activity ids of watch workouts, so history can tell them from `session-` ones. */
-const watchActivityId = (uuid: string) => `watch-${uuid}`;
+const watchActivityId = (uuid: string) => ActivityId.make(`watch-${uuid}`);
 
 export function parseWatchWorkout(entry: WatchInboxEntry): ParsedWorkout {
   const read = readWatchWorkout(entry);

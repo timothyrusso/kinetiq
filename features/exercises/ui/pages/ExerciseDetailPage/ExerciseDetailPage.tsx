@@ -1,4 +1,5 @@
 import { Stack } from 'expo-router';
+import type { ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
 import {
   ActionRow,
@@ -19,7 +20,6 @@ import {
 import { useAppTheme } from '@/features/core/theme';
 import { useT } from '@/features/core/translations';
 import { ExerciseHero } from '@/features/exercises/ui/components/ExerciseHero/ExerciseHero';
-import { ExerciseHistorySection } from '@/features/exercises/ui/components/ExerciseHistorySection/ExerciseHistorySection';
 import { ExerciseProvenance } from '@/features/exercises/ui/components/ExerciseProvenance/ExerciseProvenance';
 import { ExerciseVariationRow } from '@/features/exercises/ui/components/ExerciseVariationRow/ExerciseVariationRow';
 import { TaxonomyTagGroup } from '@/features/exercises/ui/components/TaxonomyTagGroup/TaxonomyTagGroup';
@@ -37,8 +37,11 @@ const SCREEN_OPTIONS = { animation: 'fade_from_bottom' } as const;
  * user goes looking for one. Nothing is inferred to fill a gap: a missing description is a named
  * silence, missing art a designed composition. Muscle and equipment chips are labels and go
  * nowhere: the library is reached only to pick an exercise.
+ *
+ * What the user has done with the exercise belongs to the workouts, a feature above this one, so
+ * the route hands that section in as `renderHistory`, drawn between the how-to and the variations.
  */
-export function ExerciseDetailPage() {
+export function ExerciseDetailPage({ renderHistory }: { renderHistory?: (exerciseId: string | null) => ReactNode }) {
   const { state, derived, effects } = useExerciseDetailPageLogic();
   const { t } = useT();
   const theme = useAppTheme();
@@ -119,7 +122,7 @@ export function ExerciseDetailPage() {
               )}
             </Column>
 
-            <ExerciseHistorySection exerciseId={state.exerciseId} />
+            {renderHistory?.(state.exerciseId)}
 
             {state.variations.length > 0 ? (
               <>

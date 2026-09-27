@@ -21,6 +21,7 @@ import { HeaderToolbar, headerAction, headerMenu } from '@/features/core/navigat
 import { useAppTheme } from '@/features/core/theme';
 import { useT } from '@/features/core/translations';
 import { compactNumber, weightUnit, weightValue } from '@/features/core/utils';
+import type { WorkoutLauncher } from '@/features/routines/domain/entities/WorkoutLauncher';
 import { RoutineItemRow } from '@/features/routines/ui/components/RoutineItemRow/RoutineItemRow';
 import { useRoutinePageLogic } from '@/features/routines/ui/pages/RoutinePage/RoutinePage.logic';
 import { createStyles } from '@/features/routines/ui/pages/RoutinePage/RoutinePage.style';
@@ -29,8 +30,8 @@ import { createStyles } from '@/features/routines/ui/pages/RoutinePage/RoutinePa
  * A saved routine: what is in it, when it last ran, and the way into a workout from it. Reached
  * from the Workout tab and the pickers, and in place of the builder that just created it.
  */
-export function RoutinePage() {
-  const { state, derived, effects } = useRoutinePageLogic();
+export function RoutinePage({ launcher }: { launcher: WorkoutLauncher }) {
+  const { state, derived, effects } = useRoutinePageLogic(launcher);
   const { t } = useT();
   const theme = useAppTheme();
   const styles = useStyles(createStyles);

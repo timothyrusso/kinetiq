@@ -1,0 +1,77 @@
+import { useCallback, useMemo } from 'react';
+import type { PressableStateCallbackType, StyleProp, ViewStyle } from 'react-native';
+import { type MetaItem, useStyles } from '@/features/core/design-system';
+import type { StrengthEntry } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
+import { createStyles } from '@/features/workouts/ui/components/ExerciseBlock/ExerciseBlock.style';
+
+export interface ExerciseBlockInput {
+  readonly entry: StrengthEntry;
+  readonly entryIndex: number;
+  /**
+   * Rendered verbatim. The caller decides between "Last time 82.5 kg × 5", "No previous sessions
+   * yet" and nothing, because only it knows whether the history read has answered.
+   */
+  readonly previousLabel: string | null;
+  /** When that was ("3w ago"), or `null` when there is no previous workout to date. */
+  readonly previousWhen: string | null;
+  readonly onAddSet: (entryIndex: number) => void;
+  readonly onSkip: (entryIndex: number) => void;
+  readonly onRequestRemove: (entryIndex: number) => void;
+  readonly onFocus: (entryIndex: number) => void;
+}
+
+/**
+ * The block's counts, its previous-performance items and its presses. The items are built here
+ * from the two strings, not handed in as a list: the screen re-renders every second for its
+ * clock, and a fresh list per tick would defeat the block's `memo`.
+ */
+export function useExerciseBlockLogic({
+  entry,
+  entryIndex,
+  previousLabel,
+  previousWhen,
+  onAddSet,
+  onSkip,
+  onRequestRemove,
+  onFocus,
+}: ExerciseBlockInput) {
+  const styles = useStyles(createStyles);
+  const done = entry.sets.filter(set => set.completed).length;
+  const previous = useMemo<MetaItem[]>(() => {
+    if (previousLabel === null) return [];
+    if (previousWhen === null) return [{ icon: 'info', label: previousLabel }];
+    return [
+      { icon: 'dumbbell', label: previousLabel },
+      { icon: 'calendar', label: previousWhen },
+    ];
+  }, [previousLabel, previousWhen]);
+  const headStyle = useCallback(
+    ({ pressed }: PressableStateCallbackType): StyleProp<ViewStyle> => [
+      styles.head,
+      pressed ? styles.headPressed : null,
+    ],
+    [styles],
+  );
+  const textActionStyle = useCallback(
+    ({ pressed }: PressableStateCallbackType): StyleProp<ViewStyle> => [
+      styles.textAction,
+      pressed ? styles.textActionPressed : null,
+    ],
+    [styles],
+  );
+  const focus = useCallback(() => onFocus(entryIndex), [onFocus, entryIndex]);
+  const addSet = useCallback(() => onAddSet(entryIndex), [onAddSet, entryIndex]);
+  const skip = useCallback(() => onSkip(entryIndex), [onSkip, entryIndex]);
+  const remove = useCallback(() => onRequestRemove(entryIndex), [onRequestRemove, entryIndex]);
+  return {
+    derived: {
+      done,
+      allDone: done === entry.sets.length && entry.sets.length > 0,
+      hasCue: entry.notes !== null && entry.notes.length > 0,
+      previous,
+      headStyle,
+      textActionStyle,
+    },
+    effects: { focus, addSet, skip, remove },
+  };
+}

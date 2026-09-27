@@ -17,7 +17,8 @@
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
-import type { Activity, Routine } from '@/domain/types';
+import type { Routine } from '@/features/routines';
+import type { Activity } from '@/features/workouts';
 import {
   FORMAT_VERSION,
   ROUTINES_FORMAT,

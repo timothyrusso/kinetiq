@@ -49,7 +49,6 @@ import { loadAppFonts } from '@/fonts';
 import type { DatabaseOpenResult } from '@/persistence';
 import { bootDatabase, readStoredSettings } from '@/providers/database';
 import { getQueryClient, installQueryAdapters } from '@/query/client';
-import { invalidateAfterWatchWorkouts } from '@/query/invalidation';
 import { startNetworkStatus } from '@/query/networkStatus';
 import {
   installNotificationHandler,
@@ -59,7 +58,12 @@ import {
 import { getSettings, hydrateSettings, type Settings } from '@/settings';
 import { themeFor } from '@/theme/theme';
 import { spacing } from '@/theme/tokens';
-import { handleAppState, hydrateWorkoutSession, pauseSession } from '@/workout/session';
+import {
+  handleAppState,
+  hydrateWorkoutSession,
+  invalidateAfterWatchWorkouts,
+  pauseSession,
+} from '@/services/workouts';
 import { prefetchHeaderIcons } from '@/navigation/HeaderAction';
 import { drainWatchInbox } from '@/watch/inbox';
 import { installWatchSync, pushRoutineSnapshot } from '@/watch/sync';
