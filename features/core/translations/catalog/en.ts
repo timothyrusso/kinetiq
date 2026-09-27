@@ -756,6 +756,9 @@ export const en = {
     notificationPermissionDenied: 'Notifications are turned off for Kinetiq in the system settings.',
     notificationScheduleFailed: 'The notification could not be scheduled.',
     watchUnavailable: 'The Apple Watch is not available.',
+    catalogNotInstalled: 'The exercise library could not be installed.',
+    catalogFetchFailed: 'The exercise library download could not be read. Please try again later.',
+    exerciseNotFound: 'This exercise is not in the library.',
   },
 } as const;
 
