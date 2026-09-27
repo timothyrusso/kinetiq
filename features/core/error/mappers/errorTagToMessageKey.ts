@@ -18,4 +18,7 @@ export const errorTagToMessageKey = appErrors.assertExhaustiveMessageKeys<TKey>(
   NotificationPermissionDenied: 'errors.notificationPermissionDenied',
   NotificationScheduleFailed: 'errors.notificationScheduleFailed',
   WatchUnavailable: 'errors.watchUnavailable',
+  CatalogNotInstalled: 'errors.catalogNotInstalled',
+  CatalogFetchFailed: 'errors.catalogFetchFailed',
+  ExerciseNotFound: 'errors.exerciseNotFound',
 });

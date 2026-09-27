@@ -30,8 +30,9 @@ function warnOnLegacy(rule) {
 
 /**
  * Core concerns a `.tsx` may import at runtime besides the kit defaults: the sources of the hooks
- * `lint.allowedHooksInViews` lets a view call (`useAppTheme`, `useT`, `useHaptics`), and the pure
- * formatters the design system draws with.
+ * `lint.allowedHooksInViews` lets a view call (`useAppTheme`, `useT`, `useHaptics`), the pure
+ * formatters the design system draws with, and `core/error`, whose `isOfflineFailure` the design
+ * system's `ErrorState` reads the error it is handed with.
  */
 const TSX_PUBLIC_API_EXCEPTIONS = [
   ...DEFAULT_TSX_PUBLIC_API_EXCEPTIONS,
@@ -39,6 +40,7 @@ const TSX_PUBLIC_API_EXCEPTIONS = [
   'core/translations',
   'core/haptics',
   'core/utils',
+  'core/error',
 ];
 
 /**
