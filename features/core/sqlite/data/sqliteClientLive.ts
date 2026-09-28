@@ -29,6 +29,19 @@ export const migrateReporting = (db: SqliteDatabase, steps: readonly Migration[]
   });
 
 /**
+ * Migrates `db` to the last version of `steps` and returns the `SchemaStatus` of that run, whose
+ * `remigrate` runs the steps again and becomes the new `current`.
+ */
+export const makeSchemaStatus = (db: SqliteDatabase, steps: readonly Migration[] = migrations) =>
+  Effect.gen(function* () {
+    const last = yield* Ref.make(yield* migrateReporting(db, steps));
+    return SchemaStatus.of({
+      current: Ref.get(last),
+      remigrate: migrateReporting(db, steps).pipe(Effect.tap(report => Ref.set(last, report))),
+    });
+  });
+
+/**
  * The app database, brought to the last schema version when the runtime boots, and the
  * `SchemaStatus` of that launch. Only a database that cannot be opened fails the boot: a failed
  * migration is the bootstrap's to show, over a connection that can still erase the data and run
@@ -40,11 +53,7 @@ export const SqliteClientLive = Layer.effectContext(
       try: () => openAppDatabase(),
       catch: cause => new SqlError({ message: 'open the app database', cause }),
     });
-    const last = yield* Ref.make(yield* migrateReporting(db));
-    const status = SchemaStatus.of({
-      current: Ref.get(last),
-      remigrate: migrateReporting(db).pipe(Effect.tap(report => Ref.set(last, report))),
-    });
+    const status = yield* makeSchemaStatus(db);
     return Context.make(SqliteClient, db).pipe(Context.add(SchemaStatus, status));
   }),
 );
