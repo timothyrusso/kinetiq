@@ -23,6 +23,13 @@ function number(value: unknown): number | null {
   return null;
 }
 
+/**
+ * A line only the app's own AI instructions carry, in every language: the wger search they tell the
+ * AI to use. A routines document never contains it, so text that does is the instructions pasted
+ * back (by mistake, or echoed by the AI), and the example routine inside them is not an answer.
+ */
+const AI_PROMPT_SIGNATURE = 'wger.de/api/v2/exerciseinfo/?name__search=';
+
 /** The JSON inside a code fence or a sentence, or the text itself. */
 function jsonSlice(raw: string): string {
   const start = raw.search(/[[{]/);
@@ -105,12 +112,16 @@ function parseItem(
  * out-of-range one is clamped to the editor's bounds, and an item with neither an exercise id
  * nor a name is dropped and reported.
  *
+ * The app's own AI instructions are refused before any of that (`AI_PROMPT_SIGNATURE`): they
+ * hold an example routine that would otherwise read as one to import.
+ *
  * Pure and total: it never throws and never touches the database. Matching items to real
  * exercises is `resolveExercisesByName`.
  */
 export function parseRoutines(raw: string, rules: ImportRules): ParseResult {
   if (raw.length > rules.limits.bytes) return { ok: false, issue: { key: 'dataTransfer.errorTooLarge' } };
   if (raw.trim() === '') return { ok: false, issue: { key: 'dataTransfer.errorEmpty' } };
+  if (raw.includes(AI_PROMPT_SIGNATURE)) return { ok: false, issue: { key: 'dataTransfer.errorIsPrompt' } };
 
   let doc: unknown;
   try {

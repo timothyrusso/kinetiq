@@ -776,6 +776,8 @@ export const it: Copy = {
     errorEmpty: 'Gli appunti sono vuoti.',
     errorNotJson: "Questo non è un file di schede. Chiedi all'IA di rispondere solo con il JSON, poi copialo di nuovo.",
     errorNoRoutines: 'Non contiene schede con esercizi.',
+    errorIsPrompt:
+      "Queste sono le istruzioni per l'IA, non una risposta. Incollale in una chat con un'IA, poi copia la sua risposta.",
     errorTooLarge: 'Il file è troppo grande per essere un file di schede.',
     errorUnreadable: 'Non è stato possibile leggere il file.',
     issueTooMany: 'Vengono mostrate solo le prime {count} schede.',

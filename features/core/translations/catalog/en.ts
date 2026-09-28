@@ -771,6 +771,7 @@ export const en = {
     errorEmpty: 'The clipboard is empty.',
     errorNotJson: 'This is not a routines file. Ask the AI to reply with the JSON only, then copy it again.',
     errorNoRoutines: 'No routines with exercises were found in it.',
+    errorIsPrompt: 'These are the AI instructions, not an answer. Paste them into an AI chat, then copy its reply.',
     errorTooLarge: 'The file is too large to be a routines file.',
     errorUnreadable: 'The file could not be read.',
     issueTooMany: 'Only the first {count} routines are shown.',

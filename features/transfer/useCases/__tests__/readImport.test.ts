@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { Effect } from 'effect';
 import { itEffect } from '@/features/core/testing';
+import { en } from '@/features/core/translations/catalog/en';
+import { it as italian } from '@/features/core/translations/catalog/it';
 import { TransferDeviceFake } from '@/features/transfer/useCases/__tests__/transferFakes';
 import { readImport } from '@/features/transfer/useCases/readImport';
 
@@ -101,6 +103,24 @@ describe('readImport', () => {
     }),
     TransferDeviceFake({ clipboard: '{"routines": [{"name": "Empty", "items": []}]}' }),
   );
+
+  for (const [language, prompt] of [
+    ['English', en.dataTransfer.aiPrompt],
+    ['Italian', italian.dataTransfer.aiPrompt],
+  ]) {
+    itEffect(
+      `refuses the app's own ${language} AI instructions instead of offering their example routine`,
+      Effect.gen(function* () {
+        const result = yield* Effect.either(readImport('clipboard'));
+
+        expect(result._tag === 'Left' && result.left).toMatchObject({
+          _tag: 'ImportUnreadable',
+          issue: { key: 'dataTransfer.errorIsPrompt' },
+        });
+      }),
+      TransferDeviceFake({ clipboard: prompt }),
+    );
+  }
 
   itEffect(
     'fails with ImportUnreadable saying the text could not be read when the clipboard fails',
