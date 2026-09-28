@@ -54,9 +54,10 @@ export const installWatchSync = <R>(link: WatchLink, drain: Effect.Effect<DrainR
   Effect.gen(function* () {
     const run = Runtime.runFork(yield* Effect.runtime<R | RoutineRepository | HistoryRefresh | Logger>());
     // NOTE: the two bridge subscriptions first: they are the steps that can fail, and a failed
-    // install is run again, which must not leave a second debounced push behind.
-    yield* link.onSnapshotRequested(requestId => run(pushNow(link, { force: true, requestId })));
-    yield* link.onInboxChanged(() => run(drainNow(drain)));
+    // install is run again, which must not leave a second debounced push or a second snapshot
+    // listener behind.
+    const requests = yield* link.onSnapshotRequested(requestId => run(pushNow(link, { force: true, requestId })));
+    yield* link.onInboxChanged(() => run(drainNow(drain))).pipe(Effect.onError(() => Effect.sync(requests.remove)));
 
     const changes = yield* Queue.sliding<void>(1);
     yield* Stream.fromQueue(changes).pipe(
