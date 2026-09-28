@@ -713,6 +713,10 @@ export const it: Copy = {
     done: 'Fine',
     cancel: 'Annulla',
   },
+  settingsList: {
+    decrease: 'Diminuisci {title}',
+    increase: 'Aumenta {title}',
+  },
   textInput: {
     clear: 'Cancella {label}',
   },

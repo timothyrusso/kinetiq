@@ -708,6 +708,10 @@ export const en = {
     done: 'Done',
     cancel: 'Cancel',
   },
+  settingsList: {
+    decrease: 'Decrease {title}',
+    increase: 'Increase {title}',
+  },
   textInput: {
     clear: 'Clear {label}',
   },
