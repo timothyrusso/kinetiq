@@ -19,6 +19,10 @@ const renderTimer = async (notificationsOn = true) => {
   return { ...(await renderWithLayer(layer, useTimer, undefined)), scheduled };
 };
 
+const NOW = Date.UTC(2026, 0, 5, 18, 0, 0);
+
+afterEach(() => jest.useRealTimers());
+
 beforeEach(() => {
   resetAllStores();
   sessionLifecycle.restore(aSession());
@@ -26,12 +30,12 @@ beforeEach(() => {
 
 describe('useRestTimer', () => {
   it('counts down from the stored deadline', async () => {
-    sessionLifecycle.restore(aSession({ restEndsAt: Date.now() + 30_000, restDurationSeconds: 90 }));
+    jest.useFakeTimers({ now: NOW });
+    sessionLifecycle.restore(aSession({ restEndsAt: NOW + 30_000, restDurationSeconds: 90 }));
 
     const { result, done } = await renderTimer();
 
-    expect(result.current.timer.remaining).toBeGreaterThanOrEqual(29);
-    expect(result.current.timer.remaining).toBeLessThanOrEqual(30);
+    expect(result.current.timer.remaining).toBe(30);
     expect(result.current.timer.total).toBe(90);
     await done();
   });
