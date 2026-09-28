@@ -48,6 +48,7 @@ import {
 } from '@expo/ui/jetpack-compose/modifiers';
 import { memo, useEffect, useRef } from 'react';
 import { StyleSheet } from 'react-native';
+import { stepperLabels } from '@/features/core/design-system/controls/SettingsList/stepperLabels';
 import type {
   SettingsListProps,
   SettingsRow,
@@ -232,6 +233,7 @@ const Row = memo(function Row({
         haptics.selection();
         row.onChange(next);
       };
+      const labels = stepperLabels(row.title, t);
       return (
         <ListItem colors={item} modifiers={shape}>
           <ListItem.HeadlineContent>
@@ -245,11 +247,11 @@ const Row = memo(function Row({
           <ListItem.TrailingContent>
             <ComposeRow verticalAlignment="center" horizontalArrangement={{ spacedBy: spacing.xs }}>
               <IconButton onClick={() => move(-row.step)} enabled={row.value > row.min}>
-                <Glyph name="remove" label={t('settingsList.decrease', { title: row.title })} />
+                <Glyph name="remove" label={labels.decrease} />
               </IconButton>
               <Text>{row.format(row.value)}</Text>
               <IconButton onClick={() => move(row.step)} enabled={row.value < row.max}>
-                <Glyph name="add" label={t('settingsList.increase', { title: row.title })} />
+                <Glyph name="add" label={labels.increase} />
               </IconButton>
             </ComposeRow>
           </ListItem.TrailingContent>
