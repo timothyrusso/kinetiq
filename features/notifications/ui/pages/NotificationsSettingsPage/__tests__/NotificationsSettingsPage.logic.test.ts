@@ -66,8 +66,10 @@ describe('useNotificationsSettingsPageLogic without permission', () => {
 
     await act(async () => press(rowOf(result.current.derived.sections, 'system', 'ask')));
 
-    await waitFor(() => expect(reminders()).toHaveLength(1));
-    expect(rowOf(result.current.derived.sections, 'system', 'ask')).toBeUndefined();
+    await waitFor(() => {
+      expect(reminders()).toHaveLength(1);
+      expect(rowOf(result.current.derived.sections, 'system', 'ask')).toBeUndefined();
+    });
     await done();
   });
 
