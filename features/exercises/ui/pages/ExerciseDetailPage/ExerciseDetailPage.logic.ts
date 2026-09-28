@@ -1,5 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo } from 'react';
+import { Platform } from 'react-native';
 import type { Tag } from '@/features/core/design-system';
 import { useScreenContentBottom, useTransparentHeaderInset } from '@/features/core/design-system';
 import { routes } from '@/features/core/navigation';
@@ -72,7 +73,10 @@ export function useExerciseDetailPageLogic() {
     [currentId],
   );
 
-  const transparent = exercise?.imageUrl != null;
+  // NOTE: iOS only. The bar floats over the art because the system blurs what scrolls under it;
+  // Android's top app bar has no blur, so a transparent one let the text scroll under the title
+  // and the status bar. There it stays the opaque surface every other screen has.
+  const transparent = Platform.OS === 'ios' && exercise?.imageUrl != null;
   const topInset = transparent ? transparentInset : 0;
   const contentStyle = useMemo(() => ({ paddingBottom: bottom }), [bottom]);
   const statusStyle = useMemo(() => ({ paddingTop: topInset + spacing.xl }), [topInset]);
