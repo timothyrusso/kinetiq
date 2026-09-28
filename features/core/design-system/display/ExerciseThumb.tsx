@@ -1,6 +1,7 @@
 import { Image } from 'expo-image';
 import { memo, useState } from 'react';
 import { View } from 'react-native';
+import { exerciseThumbTile } from '@/features/core/design-system/display/exerciseThumbTile';
 import { EXERCISE_IMAGE_CACHE } from '@/features/core/design-system/display/imageCache';
 import { CellText } from '@/features/core/design-system/text/CellText';
 import { radius, type Theme } from '@/features/core/theme';
@@ -26,11 +27,12 @@ export const ExerciseThumb = memo(function ExerciseThumb({
   rounded?: number;
 }) {
   const [failed, setFailed] = useState(false);
+  const showsArt = Boolean(uri) && !failed;
   const shared = {
     width: size,
     height: size,
     borderRadius: rounded,
-    backgroundColor: theme.colors.placeholder,
+    backgroundColor: exerciseThumbTile(theme, showsArt),
   } as const;
   if (!uri || failed) {
     return (
