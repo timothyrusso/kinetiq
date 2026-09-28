@@ -76,7 +76,11 @@ describe('formatDurationCompact', () => {
   });
 
   it('shows minutes alone under an hour', () => {
-    expect(formatDurationCompact(2920)).toBe('49m');
+    expect(formatDurationCompact(2920)).toBe('48m');
+  });
+
+  it('counts only whole minutes, so it agrees with the ticking clock', () => {
+    expect([36, 304, 3570, 7170].map(formatDurationCompact)).toEqual(['36s', '5m', '59m', '1h 59m']);
   });
 
   it('shows seconds under a minute', () => {
