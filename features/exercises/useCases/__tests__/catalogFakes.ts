@@ -102,6 +102,8 @@ export const makeExerciseSnapshotRepositoryFake = (snapshots: readonly ExerciseS
     };
   });
 
-/** What the catalog facades read: the catalog over `options`, and no stored snapshots. */
-export const makeCatalogReadsFake = (options: RepositoryFakeOptions = {}) =>
-  Layer.merge(makeCatalogRepositoryFake(options), makeExerciseSnapshotRepositoryFake());
+/** What the catalog facades read: the catalog over `options`, and the stored `snapshots`. */
+export const makeCatalogReadsFake = (
+  options: RepositoryFakeOptions = {},
+  snapshots: readonly ExerciseSnapshot[] = [],
+) => Layer.merge(makeCatalogRepositoryFake(options), makeExerciseSnapshotRepositoryFake(snapshots));

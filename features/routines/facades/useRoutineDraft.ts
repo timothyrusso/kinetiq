@@ -1,5 +1,12 @@
+import { useMemo } from 'react';
 import { clamp, localId, moveItem } from '@/features/core/utils';
-import { type Exercise, type ExerciseSnapshot, snapshotOf } from '@/features/exercises';
+import {
+  type Exercise,
+  type ExerciseSnapshot,
+  snapshotInLanguage,
+  snapshotOf,
+  useCatalogLanguage,
+} from '@/features/exercises';
 import type { ItemTarget } from '@/features/routines/domain/entities/ItemTarget';
 import { defaultItemTarget } from '@/features/routines/domain/utils/itemTargets';
 import { EMPTY_DRAFT, type RoutineDraft, useRoutineDraftStore } from '@/features/routines/state/routineDraftStore';
@@ -118,13 +125,19 @@ const actions = {
 
 type RoutineDraftActions = typeof actions;
 
-/** The new-routine draft, re-rendering on every change, and the actions that write it. */
+/**
+ * The new-routine draft, re-rendering on every change, and the actions that write it. The
+ * snapshots read with their muscles and equipment in the app's language; the draft keeps them as
+ * picked, which is what a save stores.
+ */
 export function useRoutineDraft(): { readonly draft: RoutineDraft; readonly actions: RoutineDraftActions } {
+  const language = useCatalogLanguage();
   const status = store.use.status();
   const touched = store.use.touched();
   const name = store.use.name();
   const items = store.use.items();
-  const snapshots = store.use.snapshots();
+  const picked = store.use.snapshots();
+  const snapshots = useMemo(() => picked.map(snapshot => snapshotInLanguage(snapshot, language)), [picked, language]);
   const defaultRestSeconds = store.use.defaultRestSeconds();
   return { draft: { status, touched, name, items, snapshots, defaultRestSeconds }, actions };
 }

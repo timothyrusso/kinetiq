@@ -15,6 +15,8 @@ export { ExerciseCatalog } from '@/features/exercises/domain/services/ExerciseCa
 export { externalIdOf, isLocalExerciseId } from '@/features/exercises/domain/utils/exerciseId';
 export { snapshotOf } from '@/features/exercises/domain/utils/snapshotOf';
 export { invalidateCatalogQueries } from '@/features/exercises/facades/exerciseQueryKeys';
+export { useCatalogLanguage } from '@/features/exercises/facades/useCatalogLanguage';
 export { useCatalogMeta } from '@/features/exercises/facades/useCatalogMeta';
 export { useExercise } from '@/features/exercises/facades/useExercise';
 export { useRefreshCatalog } from '@/features/exercises/facades/useRefreshCatalog';
+export { snapshotInLanguage } from '@/features/exercises/mappers/snapshotInLanguage';

@@ -11,8 +11,9 @@ import {
   metaFromRows,
 } from '@/features/exercises/data/adapters/catalogRows';
 import { toSearchKey } from '@/features/exercises/data/adapters/searchKey';
-import { type TaxonKind, taxonName } from '@/features/exercises/data/adapters/taxonNames';
+import { taxonName } from '@/features/exercises/data/adapters/taxonNames';
 import type { CatalogWriteKind } from '@/features/exercises/domain/entities/CatalogMeta';
+import type { TaxonKind } from '@/features/exercises/domain/entities/taxonKeys';
 import { CatalogRepository } from '@/features/exercises/domain/repositories/CatalogRepository';
 import { CATALOG_LANGUAGES, type CatalogLanguage } from '@/features/exercises/domain/schemas/CatalogLanguage';
 import type { CatalogPayload } from '@/features/exercises/domain/schemas/CatalogPayloadSchema';

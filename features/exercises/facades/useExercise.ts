@@ -1,10 +1,11 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useEffectQuery } from '@/features/core/query';
 import type { ExerciseSourceKind } from '@/features/exercises/domain/entities/ExerciseSourceKind';
 import { exerciseFromSnapshot } from '@/features/exercises/domain/utils/exerciseFromSnapshot';
 import { externalIdOf, isLocalExerciseId } from '@/features/exercises/domain/utils/exerciseId';
 import { EXERCISE_GC_MS, exerciseQueryKeys } from '@/features/exercises/facades/exerciseQueryKeys';
 import { useCatalogLanguage } from '@/features/exercises/facades/useCatalogLanguage';
+import { snapshotInLanguage } from '@/features/exercises/mappers/snapshotInLanguage';
 import { getExercise } from '@/features/exercises/useCases/getExercise';
 import { getStoredExercise } from '@/features/exercises/useCases/getStoredExercise';
 
@@ -37,7 +38,10 @@ export function useExercise(id: string | null) {
     gcTime: EXERCISE_GC_MS,
   });
 
-  const snapshot = stored.data ?? null;
+  const snapshot = useMemo(
+    () => (stored.data == null ? null : snapshotInLanguage(stored.data, language)),
+    [stored.data, language],
+  );
   const fromCatalog = catalog.data ?? null;
   const exercise = fromCatalog ?? (snapshot === null ? null : exerciseFromSnapshot(snapshot));
   const from: ExerciseSourceKind = fromCatalog !== null ? 'catalog' : snapshot !== null ? 'stored' : 'none';

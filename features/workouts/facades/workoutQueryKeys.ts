@@ -44,7 +44,8 @@ export function invalidateAfterWorkout(client: QueryClient, routineId: string | 
 
 /**
  * After workouts arrived from the Apple Watch: the same as a finished workout, for every routine
- * at once, since the drain reports ids rather than routines.
+ * at once, since the drain reports ids rather than routines. The `session` prefix reaches each
+ * routine's `previousPerformance`, so the "Last time" hint of every routine re-reads.
  */
 export function invalidateAfterWatchWorkouts(client: QueryClient): void {
   invalidateAfterWorkout(client, null);
