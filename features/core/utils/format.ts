@@ -48,14 +48,17 @@ export function formatDuration(totalSeconds: number, separator: ':' | "'" = ':')
   return separator === "'" ? `${m}'${pad(sec)}` : `${pad(m)}:${pad(sec)}`;
 }
 
-/** 3661 -> "1h 01m" · 2920 -> "48m": for compact chips. */
+/**
+ * 3661 -> "1h 1m" · 2920 -> "48m": for compact chips. Minutes are whole minutes (floored),
+ * so the chip never runs ahead of the ticking clock beside it: 0:36 is "36s", not "1m".
+ */
 export function formatDurationCompact(totalSeconds: number): string {
   const s = Math.max(0, Math.round(totalSeconds));
   const h = Math.floor(s / 3600);
-  const m = Math.round((s % 3600) / 60);
+  const m = Math.floor((s % 3600) / 60);
   if (h > 0) return m > 0 ? `${h}h ${m}m` : `${h}h`;
   if (m > 0) return `${m}m`;
-  return `${Math.round(s % 60)}s`;
+  return `${s % 60}s`;
 }
 
 /** Ticking clock for the rest timer: 95 -> "1:35" */

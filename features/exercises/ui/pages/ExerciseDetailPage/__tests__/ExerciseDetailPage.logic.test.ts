@@ -1,4 +1,5 @@
 import { act, waitFor } from '@testing-library/react-native';
+import { Platform } from 'react-native';
 import { routes } from '@/features/core/navigation';
 import { routerFake } from '@/features/core/testing';
 import { tr } from '@/features/core/translations';
@@ -8,9 +9,11 @@ import { useExerciseDetailPageLogic } from '@/features/exercises/ui/pages/Exerci
 
 const BENCH = anExercise();
 
-const renderDetail = (id?: string) => {
+const PICTURED = anExercise({ imageUrl: 'https://wger.de/media/bench.png' });
+
+const renderDetail = (id?: string, exercise = BENCH) => {
   if (id !== undefined) routerFake.setParams({ id });
-  return renderWithCatalog(useExerciseDetailPageLogic, { exercises: [BENCH] }, undefined);
+  return renderWithCatalog(useExerciseDetailPageLogic, { exercises: [exercise] }, undefined);
 };
 
 describe('useExerciseDetailPageLogic', () => {
@@ -49,6 +52,26 @@ describe('useExerciseDetailPageLogic', () => {
     await act(async () => result.current.effects.goBack());
 
     expect(routerFake.history).toEqual([{ verb: 'replace', href: routes.home() }]);
+    await done();
+  });
+
+  it('floats the header over the art on iOS, where the bar blurs what scrolls under it', async () => {
+    jest.replaceProperty(Platform, 'OS', 'ios');
+    const { result, done } = await renderDetail(PICTURED.id, PICTURED);
+
+    await waitFor(() => expect(result.current.state.exercise).toEqual(PICTURED));
+    expect(result.current.derived.transparent).toBe(true);
+    expect(result.current.derived.topInset).toBeGreaterThan(0);
+    await done();
+  });
+
+  it('keeps the opaque header on Android, which has no blur for the content to scroll under', async () => {
+    jest.replaceProperty(Platform, 'OS', 'android');
+    const { result, done } = await renderDetail(PICTURED.id, PICTURED);
+
+    await waitFor(() => expect(result.current.state.exercise).toEqual(PICTURED));
+    expect(result.current.derived.transparent).toBe(false);
+    expect(result.current.derived.topInset).toBe(0);
     await done();
   });
 });

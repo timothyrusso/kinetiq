@@ -8,6 +8,7 @@ export interface ParseIssue {
     | 'dataTransfer.errorEmpty'
     | 'dataTransfer.errorNotJson'
     | 'dataTransfer.errorNoRoutines'
+    | 'dataTransfer.errorIsPrompt'
     | 'dataTransfer.errorUnreadable'
     | 'dataTransfer.issueItemSkipped'
     | 'dataTransfer.issueDefaults'

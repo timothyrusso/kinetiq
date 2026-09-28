@@ -48,6 +48,7 @@ import {
 } from '@expo/ui/jetpack-compose/modifiers';
 import { memo, useEffect, useRef } from 'react';
 import { StyleSheet } from 'react-native';
+import { stepperLabels } from '@/features/core/design-system/controls/SettingsList/stepperLabels';
 import type {
   SettingsListProps,
   SettingsRow,
@@ -57,6 +58,7 @@ import { materialIcon } from '@/features/core/design-system/icons/materialIcons'
 import { useScreenContentBottom } from '@/features/core/design-system/layout/insets';
 import { haptics } from '@/features/core/haptics';
 import { disabledContentAlpha, screenGutter, spacing, useAppTheme } from '@/features/core/theme';
+import { useT } from '@/features/core/translations';
 
 export type {
   SettingsListProps,
@@ -145,9 +147,15 @@ function Section({ section, colors, danger }: { section: SettingsSection; colors
   );
 }
 
-function Glyph({ name }: { name: 'chevron-right' | 'remove' | 'add' | 'check' }) {
+/**
+ * A trailing glyph. One that is the whole content of a button takes `label`: Compose names an
+ * icon button after the icon inside it, so without one TalkBack announces "Button" and nothing
+ * else. A decorative glyph (the chevron, the check beside a title) stays unnamed.
+ */
+function Glyph({ name, label }: { name: 'chevron-right' | 'remove' | 'add' | 'check'; label?: string }) {
   const source = materialIcon(name);
-  return source ? <Icon source={source} size={24} /> : null;
+  if (!source) return null;
+  return <Icon source={source} size={24} {...(label === undefined ? {} : { contentDescription: label })} />;
 }
 
 type Modifiers = NonNullable<Parameters<typeof ListItem>[0]['modifiers']>;
@@ -174,6 +182,7 @@ const Row = memo(function Row({
   /** Width and the position-aware clip, from the section. */
   shape: Modifiers;
 }) {
+  const { t } = useT();
   const item = { containerColor: colors.surfaceContainer };
   switch (row.kind) {
     case 'nav':
@@ -224,6 +233,7 @@ const Row = memo(function Row({
         haptics.selection();
         row.onChange(next);
       };
+      const labels = stepperLabels(row.title, t);
       return (
         <ListItem colors={item} modifiers={shape}>
           <ListItem.HeadlineContent>
@@ -237,11 +247,11 @@ const Row = memo(function Row({
           <ListItem.TrailingContent>
             <ComposeRow verticalAlignment="center" horizontalArrangement={{ spacedBy: spacing.xs }}>
               <IconButton onClick={() => move(-row.step)} enabled={row.value > row.min}>
-                <Glyph name="remove" />
+                <Glyph name="remove" label={labels.decrease} />
               </IconButton>
               <Text>{row.format(row.value)}</Text>
               <IconButton onClick={() => move(row.step)} enabled={row.value < row.max}>
-                <Glyph name="add" />
+                <Glyph name="add" label={labels.increase} />
               </IconButton>
             </ComposeRow>
           </ListItem.TrailingContent>
