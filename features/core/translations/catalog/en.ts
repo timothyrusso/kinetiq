@@ -712,6 +712,11 @@ export const en = {
     decrease: 'Decrease {title}',
     increase: 'Increase {title}',
   },
+  chip: {
+    results_one: '{label}, {count} result',
+    results_other: '{label}, {count} results',
+    remove: 'Remove {label} filter',
+  },
   textInput: {
     clear: 'Clear {label}',
   },

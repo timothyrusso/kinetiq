@@ -717,6 +717,11 @@ export const it: Copy = {
     decrease: 'Diminuisci {title}',
     increase: 'Aumenta {title}',
   },
+  chip: {
+    results_one: '{label}, {count} risultato',
+    results_other: '{label}, {count} risultati',
+    remove: 'Rimuovi il filtro {label}',
+  },
   textInput: {
     clear: 'Cancella {label}',
   },

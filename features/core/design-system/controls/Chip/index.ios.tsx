@@ -5,11 +5,13 @@
 import { memo } from 'react';
 import { Pressable } from 'react-native';
 import { AnimatedPressable, usePressScale } from '@/features/core/design-system/animation/animation';
+import { chipLabels } from '@/features/core/design-system/controls/Chip/chipLabels';
 import type { ChipProps } from '@/features/core/design-system/controls/Chip/types';
 import { Icon } from '@/features/core/design-system/icons/icons';
 import { Txt } from '@/features/core/design-system/text/Text';
 import { haptics } from '@/features/core/haptics';
 import { radius, spacing, useAppTheme } from '@/features/core/theme';
+import { useT } from '@/features/core/translations';
 
 export type { ChipProps } from '@/features/core/design-system/controls/Chip/types';
 
@@ -24,6 +26,8 @@ export const Chip = memo(function Chip({
   style,
 }: ChipProps) {
   const theme = useAppTheme();
+  const { t } = useT();
+  const labels = chipLabels(label, count, t);
   const scale = usePressScale(0.96);
   const fg = selected ? theme.colors.onAccent : theme.colors.text;
   const height = size === 'sm' ? 30 : 38;
@@ -35,7 +39,7 @@ export const Chip = memo(function Chip({
         onPress();
       }}
       accessibilityRole="button"
-      accessibilityLabel={count === undefined ? label : `${label}, ${count} results`}
+      accessibilityLabel={labels.chip}
       accessibilityState={{ selected }}
       style={[
         {
@@ -70,7 +74,7 @@ export const Chip = memo(function Chip({
           }}
           hitSlop={10}
           accessibilityRole="button"
-          accessibilityLabel={`Remove ${label} filter`}
+          accessibilityLabel={labels.remove}
           style={{ marginLeft: spacing.xxs, opacity: 0.7 }}
         >
           <Icon name="close" size={13} color={fg} />
