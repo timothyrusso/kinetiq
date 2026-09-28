@@ -36,13 +36,17 @@ describe('snapshotInLanguage', () => {
     });
   });
 
-  it('keeps the exercise name as picked, and a taxon the app does not name as stored', () => {
-    const stored = { ...PICKED_IN_ITALIAN, primaryMuscles: ['Musculus mysterius'], category: null };
+  it('keeps the exercise name in the language it was picked in', () => {
+    expect(snapshotInLanguage(PICKED_IN_ITALIAN, 'en').name).toBe('Panca piana');
+  });
 
-    expect(snapshotInLanguage(stored, 'en')).toMatchObject({
-      name: 'Panca piana',
-      category: null,
-      primaryMuscles: ['Musculus mysterius'],
-    });
+  it('keeps a taxon the app does not name as stored', () => {
+    const stored = { ...PICKED_IN_ITALIAN, primaryMuscles: ['Musculus mysterius'] };
+
+    expect(snapshotInLanguage(stored, 'en').primaryMuscles).toEqual(['Musculus mysterius']);
+  });
+
+  it('leaves a snapshot with no category without one', () => {
+    expect(snapshotInLanguage({ ...PICKED_IN_ITALIAN, category: null }, 'en').category).toBeNull();
   });
 });

@@ -140,6 +140,15 @@ describe('useRoutineDraft', () => {
         equipment: ['Barbell'],
       }),
     ]);
+  });
+
+  it('hands the save the muscles as picked, whatever the language on screen', async () => {
+    updateSettings({ language: 'it' });
+    const { result } = await renderDraft();
+    await act(async () => result.current.actions.addExercise(anExercise({ primaryMuscles: ['Petto'] })));
+
+    await act(async () => updateSettings({ language: 'en' }));
+
     expect(result.current.actions.toNewRoutine().snapshots[0]?.primaryMuscles).toEqual(['Petto']);
   });
 });
