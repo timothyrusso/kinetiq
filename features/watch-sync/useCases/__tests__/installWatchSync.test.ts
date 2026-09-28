@@ -2,6 +2,7 @@ import { Effect, Layer, PubSub } from 'effect';
 import { advanceClock, collectLogs, itEffect } from '@/features/core/testing';
 import { type Routine, RoutineEvents, RoutineId } from '@/features/routines';
 import { updateSettings } from '@/features/settings';
+import { WatchUnavailable } from '@/features/watch-bridge';
 import { aRoutine } from '@/features/watch-sync/__fixtures__/routines';
 import type { DrainReport } from '@/features/watch-sync/domain/entities/DrainReport';
 import type { SnapshotPush } from '@/features/watch-sync/domain/entities/SnapshotPush';
@@ -88,6 +89,25 @@ describe('installWatchSync', () => {
     }),
     testLayer(),
   );
+  itEffect(
+    'subscribes once to each watch event when an install retried after a partial failure succeeds',
+    Effect.gen(function* () {
+      const watch = aWatch({ inboxFailures: 1 });
+      const drain = aDrain({ saved: ['watch-w1'], failures: [] });
+      const first = yield* Effect.either(installWatchSync(watch.link, drain));
+      yield* installWatchSync(watch.link, drain);
+
+      watch.requestSnapshot('req-8');
+      watch.inboxChanged();
+      yield* advanceClock('1 millis');
+
+      expect(first._tag).toBe('Left');
+      expect(watch.listeners()).toEqual({ inbox: 1, request: 1 });
+      expect(watch.pushes).toHaveLength(1);
+      expect(refreshes.count).toBe(1);
+    }),
+    testLayer(),
+  );
 });
 
 const refreshes = { count: 0 };
@@ -113,22 +133,35 @@ function aDrain(report: DrainReport) {
   return Effect.succeed(report);
 }
 
-function aWatch() {
+function aWatch({ inboxFailures = 0 } = {}) {
   const pushes: SnapshotPush<Routine>[] = [];
-  let onInbox: () => void = () => undefined;
-  let onRequest: (requestId: string) => void = () => undefined;
+  const onInbox = new Set<() => void>();
+  const onRequest = new Set<(requestId: string) => void>();
+  let failuresLeft = inboxFailures;
+  const subscribe = <L>(listeners: Set<L>, listener: L) =>
+    Effect.sync(() => {
+      listeners.add(listener);
+      return { remove: () => void listeners.delete(listener) };
+    });
   const link: WatchLink = {
     send: push => Effect.sync(() => void pushes.push(push)),
     onInboxChanged: listener =>
-      Effect.sync(() => {
-        onInbox = listener;
-        return { remove: () => undefined };
+      Effect.suspend(() => {
+        if (failuresLeft === 0) return subscribe(onInbox, listener);
+        failuresLeft -= 1;
+        return Effect.fail(new WatchUnavailable());
       }),
-    onSnapshotRequested: listener =>
-      Effect.sync(() => {
-        onRequest = listener;
-        return { remove: () => undefined };
-      }),
+    onSnapshotRequested: listener => subscribe(onRequest, listener),
   };
-  return { link, pushes, inboxChanged: () => onInbox(), requestSnapshot: (id: string) => onRequest(id) };
+  return {
+    link,
+    pushes,
+    inboxChanged: () => {
+      for (const listener of onInbox) listener();
+    },
+    requestSnapshot: (id: string) => {
+      for (const listener of onRequest) listener(id);
+    },
+    listeners: () => ({ inbox: onInbox.size, request: onRequest.size }),
+  };
 }
