@@ -5,7 +5,7 @@ import { aCompletedWorkout } from '@/features/workouts/__fixtures__/builders';
 import { recordHistory } from '@/features/workouts/di/__tests__/workoutsTestData';
 import { WorkoutsTestLayer } from '@/features/workouts/di/__tests__/workoutsTestLayer';
 import { usePreviousPerformance } from '@/features/workouts/facades/usePreviousPerformance';
-import { invalidateAfterWorkout } from '@/features/workouts/facades/workoutQueryKeys';
+import { invalidateAfterWatchWorkouts, invalidateAfterWorkout } from '@/features/workouts/facades/workoutQueryKeys';
 
 const BENCH = ['wger:73'];
 
@@ -33,6 +33,27 @@ describe('usePreviousPerformance', () => {
     await act(async () => rerender({ routineId: null }));
     await recordHistory(runtime, [aCompletedWorkout()]);
     invalidateAfterWorkout(client, 'rtn_push');
+    opening += 1;
+    await act(async () => rerender({ routineId: 'rtn_push' }));
+
+    await waitFor(() => expect(result.current.get('wger:73')?.sets).toHaveLength(2));
+    await done();
+  });
+
+  it('reads a workout drained from the watch when the session screen opens again', async () => {
+    const { result, rerender, runtime, client, done } = await renderWithLayer(
+      WorkoutsTestLayer,
+      ({ routineId }: { readonly routineId: string | null }) => usePreviousPerformance(routineId, BENCH),
+      { routineId: 'rtn_push' },
+      asScreen,
+    );
+    client.setDefaultOptions({ queries: { ...client.getDefaultOptions().queries, refetchOnMount: false } });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.get('wger:73')).toBeUndefined();
+
+    await act(async () => rerender({ routineId: null }));
+    await recordHistory(runtime, [aCompletedWorkout()]);
+    invalidateAfterWatchWorkouts(client);
     opening += 1;
     await act(async () => rerender({ routineId: 'rtn_push' }));
 
