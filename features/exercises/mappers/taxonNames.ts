@@ -1,5 +1,5 @@
 import { type TKey, translate } from '@/features/core/translations';
-import type { CatalogLanguage } from '@/features/exercises/domain/schemas/CatalogLanguage';
+import { CATALOG_LANGUAGES, type CatalogLanguage } from '@/features/exercises/domain/schemas/CatalogLanguage';
 
 /** One of wger's three taxonomies. */
 export type TaxonKind = 'category' | 'equipment' | 'muscle';
@@ -60,4 +60,26 @@ const KEYS: Record<TaxonKind, ReadonlyMap<number, TKey>> = {
 export function taxonName(kind: TaxonKind, id: number, stored: string, language: CatalogLanguage): string {
   const key = KEYS[kind].get(id);
   return key === undefined ? stored : translate(language, key);
+}
+
+/**
+ * The wger id of the taxon `name` names, in any catalog language, or `undefined` for a name the
+ * app does not know. A stored snapshot keeps names, not ids, and each name came either from
+ * `taxonName` in the language of the day or, before the app named the taxonomy, from wger's
+ * English, which the English catalog keeps word for word.
+ */
+function taxonIdOf(kind: TaxonKind, name: string): number | undefined {
+  for (const [id, key] of KEYS[kind]) {
+    if (CATALOG_LANGUAGES.some(language => translate(language, key) === name)) return id;
+  }
+  return undefined;
+}
+
+/**
+ * The taxon stored as `stored`, whatever language it was stored in, named in `language`. A name
+ * the app does not know is kept as stored.
+ */
+export function storedTaxonName(kind: TaxonKind, stored: string, language: CatalogLanguage): string {
+  const id = taxonIdOf(kind, stored);
+  return id === undefined ? stored : taxonName(kind, id, stored, language);
 }

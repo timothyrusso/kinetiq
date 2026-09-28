@@ -1,9 +1,12 @@
 import { act, renderHook } from '@testing-library/react-native';
 import { anExercise } from '@/features/routines/__fixtures__/builders';
 import { useRoutineDraft } from '@/features/routines/facades/useRoutineDraft';
+import { updateSettings } from '@/features/settings';
 
 const BENCH = anExercise();
 const DIPS = anExercise({ id: 'wger:75', name: 'Dips', externalId: 75 });
+
+afterEach(() => updateSettings({ language: 'system' }));
 
 const renderDraft = async () => {
   const rendered = await renderHook(useRoutineDraft);
@@ -114,5 +117,29 @@ describe('useRoutineDraft', () => {
     expect(routine.name).toBe('Chest');
     expect(routine.items.map(item => item.exerciseId)).toEqual(['wger:73']);
     expect(routine.snapshots.map(snapshot => snapshot.exerciseId)).toEqual(['wger:73']);
+  });
+
+  it('names the muscles and equipment of an exercise picked in Italian in English after a switch', async () => {
+    updateSettings({ language: 'it' });
+    const { result } = await renderDraft();
+    const panca = anExercise({
+      name: 'Panca piana',
+      category: 'Petto',
+      primaryMuscles: ['Petto'],
+      equipment: ['Bilanciere'],
+    });
+    await act(async () => result.current.actions.addExercise(panca));
+
+    await act(async () => updateSettings({ language: 'en' }));
+
+    expect(result.current.draft.snapshots).toEqual([
+      expect.objectContaining({
+        name: 'Panca piana',
+        category: 'Chest',
+        primaryMuscles: ['Chest'],
+        equipment: ['Barbell'],
+      }),
+    ]);
+    expect(result.current.actions.toNewRoutine().snapshots[0]?.primaryMuscles).toEqual(['Petto']);
   });
 });

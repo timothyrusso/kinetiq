@@ -596,7 +596,7 @@ export const en = {
     done: 'Done',
   },
 
-  // NOTE: wger's categories, muscles and equipment, by the ids `exercises/data/adapters/taxonNames.ts`
+  // NOTE: wger's categories, muscles and equipment, by the ids `exercises/mappers/taxonNames.ts`
   // maps. The English names are the ones wger gives, muscles by their common name where it has one.
   exerciseCategories: {
     arms: 'Arms',

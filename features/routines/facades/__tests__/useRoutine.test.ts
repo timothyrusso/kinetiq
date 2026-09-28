@@ -8,6 +8,7 @@ import { RoutineId } from '@/features/routines/domain/schemas/RoutineId';
 import { routineQueryKeys } from '@/features/routines/facades/routineQueryKeys';
 import { useRoutine } from '@/features/routines/facades/useRoutine';
 import { useSaveRoutine } from '@/features/routines/facades/useSaveRoutine';
+import { updateSettings } from '@/features/settings';
 
 /** Which opening of the routine screen this is: a new one mounts the hook afresh. */
 let opening = 0;
@@ -16,6 +17,8 @@ const asScreen = (children: ReactNode) => createElement(Fragment, { key: `openin
 beforeEach(() => {
   opening = 0;
 });
+
+afterEach(() => updateSettings({ language: 'system' }));
 
 const PUSH_DAY = { name: 'Push Day', items: [aRoutineItem()], snapshots: [anExerciseSnapshot()] };
 
@@ -46,6 +49,36 @@ describe('useRoutine', () => {
     await act(async () => rerender(id));
 
     await waitFor(() => expect(result.current.detail.routine?.timesCompleted).toBe(1));
+    await done();
+  });
+
+  it('names the stored muscles and equipment of an item picked in Italian in the language of the app', async () => {
+    updateSettings({ language: 'en' });
+    const { result, rerender, done } = await renderWithLayer(
+      RoutinesTestLayer,
+      useRoutineScreen,
+      null as RoutineId | null,
+    );
+    const picked = anExerciseSnapshot({
+      category: 'Petto',
+      primaryMuscles: ['Petto'],
+      secondaryMuscles: [],
+      equipment: ['Panca'],
+    });
+    let id = RoutineId.make('none');
+    await act(async () => {
+      id = (await result.current.save.mutateAsync({ ...PUSH_DAY, snapshots: [picked] })).id;
+    });
+
+    await act(async () => rerender(id));
+
+    await waitFor(() =>
+      expect(result.current.detail.snapshots.get('wger:73')).toMatchObject({
+        category: 'Chest',
+        primaryMuscles: ['Chest'],
+        equipment: ['Bench'],
+      }),
+    );
     await done();
   });
 });
