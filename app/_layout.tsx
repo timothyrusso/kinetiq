@@ -6,7 +6,13 @@ import { Appearance } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppProviders, GestureRoot, RootErrorBoundary } from '@/features/bootstrap/pages';
 import { RouteErrorScreen } from '@/features/core/design-system';
-import { formSheet, NAV_DARK_THEME, NAV_LIGHT_THEME, useHeaderOptions } from '@/features/core/navigation';
+import {
+  formSheet,
+  NAV_DARK_THEME,
+  NAV_LIGHT_THEME,
+  useHeaderOptions,
+  useTabsScreenOptions,
+} from '@/features/core/navigation';
 import { getQueryClient } from '@/features/core/query';
 import { runtime } from '@/features/core/runtime';
 import { statusBarStyle, themeFor, useAppTheme } from '@/features/core/theme';
@@ -52,13 +58,14 @@ export default function RootLayout() {
 function ThemedRoot() {
   const theme = useAppTheme();
   const headerOptions = useHeaderOptions();
+  const tabsOptions = useTabsScreenOptions();
   return (
     <SafeAreaProvider>
       <GestureRoot>
         <ThemeProvider value={theme.mode === 'dark' ? NAV_DARK_THEME : NAV_LIGHT_THEME}>
           <StatusBar style={statusBarStyle(theme.mode)} animated />
           <Stack screenOptions={headerOptions}>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Kinetiq' }} />
+            <Stack.Screen name="(tabs)" options={tabsOptions} />
             <Stack.Screen name="workout/session" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
             <Stack.Screen name="routine/new" options={{ presentation: 'modal' }} />
             <Stack.Screen name="pick-exercise" options={formSheet('picker')} />

@@ -28,6 +28,7 @@ export { Badge } from '@/features/core/design-system/display/Badge';
 export { ExerciseRow } from '@/features/core/design-system/display/ExerciseRow';
 export { ExerciseThumb } from '@/features/core/design-system/display/ExerciseThumb';
 export { exerciseTags } from '@/features/core/design-system/display/exerciseTags';
+export { illustrationBackdrop } from '@/features/core/design-system/display/exerciseThumbTile';
 export { EXERCISE_IMAGE_CACHE } from '@/features/core/design-system/display/imageCache';
 export { ListRow } from '@/features/core/design-system/display/ListRow';
 export { MetaLine } from '@/features/core/design-system/display/MetaLine';

@@ -11,9 +11,12 @@
  */
 
 import type { NativeStackNavigationOptions } from 'expo-router/native-stack';
-import { useMemo } from 'react';
+import { getFocusedRouteNameFromRoute, type ParamListBase, type RouteProp } from 'expo-router/react-navigation';
+import { useCallback, useMemo } from 'react';
 import { Platform } from 'react-native';
+import { tabTitleKey } from '@/features/core/navigation/nav';
 import { radius, useAppTheme } from '@/features/core/theme';
+import { useT } from '@/features/core/translations';
 
 export function useHeaderOptions(): NativeStackNavigationOptions {
   const theme = useAppTheme();
@@ -38,6 +41,25 @@ export function useHeaderOptions(): NativeStackNavigationOptions {
       headerBackButtonDisplayMode: 'minimal',
     }),
     [theme],
+  );
+}
+
+/**
+ * The root stack's entry for the tabs: no header of its own, titled after the tab on show.
+ *
+ * The bar is hidden, so the title is never seen; it is what a screen pushed over the tabs names
+ * as the way back. iOS speaks the back button as the previous screen's title even in the
+ * chevron-only style, and a fixed "Kinetiq" had VoiceOver read the product name on every back
+ * button. The tab's own name, from the catalog, is what the chevron actually returns to.
+ */
+export function useTabsScreenOptions() {
+  const { t } = useT();
+  return useCallback(
+    ({ route }: { route: RouteProp<ParamListBase> }): NativeStackNavigationOptions => ({
+      headerShown: false,
+      title: t(tabTitleKey(getFocusedRouteNameFromRoute(route))),
+    }),
+    [t],
   );
 }
 

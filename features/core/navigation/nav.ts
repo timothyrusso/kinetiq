@@ -51,6 +51,15 @@ export const TAB_LABELS: Record<TabKey, TKey> = {
   profile: 'tabs.profile',
 };
 
+/**
+ * The catalog key naming the tab a navigation state has on show: `undefined` (a state not yet
+ * built, which is the initial tab) and anything unknown read as Home.
+ */
+export function tabTitleKey(focused: string | undefined): TKey {
+  const key = TAB_ROUTES.find(tab => tab === focused) ?? '(home)';
+  return TAB_LABELS[key];
+}
+
 export function tabHref(index: number): Href {
   const key = TAB_ROUTES[index] ?? '(home)';
   return TAB_HREFS[key];

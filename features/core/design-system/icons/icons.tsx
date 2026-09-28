@@ -29,6 +29,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { memo } from 'react';
 import { type StyleProp, type TextStyle, View, type ViewStyle } from 'react-native';
 
+import { iconAccessibility } from '@/features/core/design-system/icons/iconAccessibility';
 import { radius } from '@/features/core/theme';
 
 /**
@@ -149,9 +150,7 @@ export const Icon = memo(function Icon({
       style={style as StyleProp<TextStyle>}
       // NOTE: Unlabelled icons stay out of the accessibility tree entirely, which is what makes them
       // decoration rather than a second reading of the label they sit beside.
-      {...(accessibilityLabel
-        ? { accessible: true, accessibilityRole: 'image' as const, accessibilityLabel }
-        : { accessible: false, importantForAccessibility: 'no' as const })}
+      {...iconAccessibility(accessibilityLabel)}
     />
   );
 });

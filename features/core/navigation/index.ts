@@ -9,7 +9,7 @@ export {
   headerMenu,
   prefetchHeaderIcons,
 } from '@/features/core/navigation/HeaderAction';
-export { formSheet, useHeaderOptions } from '@/features/core/navigation/headerOptions';
-export { routes, TAB_LABELS, TAB_ROUTES, tabHref } from '@/features/core/navigation/nav';
+export { formSheet, useHeaderOptions, useTabsScreenOptions } from '@/features/core/navigation/headerOptions';
+export { routes, TAB_LABELS, TAB_ROUTES, tabHref, tabTitleKey } from '@/features/core/navigation/nav';
 export { TabStack } from '@/features/core/navigation/TabStack';
 export { NAV_DARK_THEME, NAV_LIGHT_THEME } from '@/features/core/navigation/theme';
