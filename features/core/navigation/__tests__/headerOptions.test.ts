@@ -1,8 +1,9 @@
 import { renderHook } from '@testing-library/react-native';
-import { formSheet, useHeaderOptions } from '@/features/core/navigation';
+import { formSheet, useHeaderOptions, useTabsScreenOptions } from '@/features/core/navigation';
 import { useLargeTitleOptions } from '@/features/core/navigation/headerOptions';
 import { resetAllStores } from '@/features/core/state';
 import { radius, setAppearancePreferences, themeFor } from '@/features/core/theme';
+import { setLanguagePreference } from '@/features/core/translations';
 
 beforeEach(() => {
   resetAllStores();
@@ -21,6 +22,35 @@ describe('useHeaderOptions', () => {
     const { result } = await renderHook(useHeaderOptions);
 
     expect(result.current.headerBackButtonDisplayMode).toBe('minimal');
+  });
+});
+
+describe('useTabsScreenOptions', () => {
+  const onTab = (name: string) => ({
+    key: 'tabs',
+    name: '(tabs)',
+    state: { index: 0, routes: [{ key: name, name }] },
+  });
+
+  it('names the way back after the tab on show, not the product', async () => {
+    setLanguagePreference('en');
+    const { result } = await renderHook(useTabsScreenOptions);
+
+    expect(result.current({ route: onTab('workout') })).toEqual({ headerShown: false, title: 'Workout' });
+  });
+
+  it('names it in Italian too', async () => {
+    setLanguagePreference('it');
+    const { result } = await renderHook(useTabsScreenOptions);
+
+    expect(result.current({ route: onTab('profile') }).title).toBe('Profilo');
+  });
+
+  it('reads the initial tab, before the tabs have a state, as Home', async () => {
+    setLanguagePreference('en');
+    const { result } = await renderHook(useTabsScreenOptions);
+
+    expect(result.current({ route: { key: 'tabs', name: '(tabs)' } }).title).toBe('Home');
   });
 });
 
