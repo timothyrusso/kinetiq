@@ -1,4 +1,4 @@
-import { exerciseThumbTile } from '@/features/core/design-system/display/exerciseThumbTile';
+import { exerciseThumbTile, illustrationBackdrop } from '@/features/core/design-system/display/exerciseThumbTile';
 import { themeFor } from '@/features/core/theme';
 
 /** WCAG relative luminance of a `#RRGGBB` colour. */
@@ -22,5 +22,15 @@ describe('exerciseThumbTile', () => {
 
   it('keeps the initials on the theme placeholder', () => {
     expect(exerciseThumbTile(themeFor('dark'), false)).toBe(themeFor('dark').colors.placeholder);
+  });
+});
+
+describe('illustrationBackdrop', () => {
+  it('draws full-size art on a tile black line art reads on, in dark mode', () => {
+    expect(contrastWithBlack(illustrationBackdrop(themeFor('dark')))).toBeGreaterThanOrEqual(7);
+  });
+
+  it('keeps light-mode art on the page', () => {
+    expect(illustrationBackdrop(themeFor('light'))).toBe(themeFor('light').colors.background);
   });
 });
