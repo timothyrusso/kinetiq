@@ -11,14 +11,15 @@ import {
   metaFromRows,
 } from '@/features/exercises/data/adapters/catalogRows';
 import { toSearchKey } from '@/features/exercises/data/adapters/searchKey';
+import { taxonName } from '@/features/exercises/data/adapters/taxonNames';
 import type { CatalogWriteKind } from '@/features/exercises/domain/entities/CatalogMeta';
+import type { TaxonKind } from '@/features/exercises/domain/entities/taxonKeys';
 import { CatalogRepository } from '@/features/exercises/domain/repositories/CatalogRepository';
 import { CATALOG_LANGUAGES, type CatalogLanguage } from '@/features/exercises/domain/schemas/CatalogLanguage';
 import type { CatalogPayload } from '@/features/exercises/domain/schemas/CatalogPayloadSchema';
 import type { ExerciseFilter } from '@/features/exercises/domain/schemas/ExerciseFilterSchema';
 import type { Exercise } from '@/features/exercises/domain/schemas/ExerciseSchema';
 import { type Taxon, TaxonSchema } from '@/features/exercises/domain/schemas/ExerciseTaxonomySchema';
-import { type TaxonKind, taxonName } from '@/features/exercises/mappers/taxonNames';
 
 /**
  * Bound parameters per statement. SQLite builds before 3.32 cap a statement at 999, and a batch

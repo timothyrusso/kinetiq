@@ -1,6 +1,7 @@
 import { Effect, Layer, Schema } from 'effect';
 import { itEffect, makeMigratedSqliteLayer } from '@/features/core/testing';
 import legacyReads from '@/features/exercises/__fixtures__/bundledCatalogReads.json';
+import { taxonName } from '@/features/exercises/data/adapters/taxonNames';
 import { CatalogRepositoryLive } from '@/features/exercises/data/repositories/catalogRepositoryLive';
 import { BundledCatalogSourceLive } from '@/features/exercises/data/services/bundledCatalogSourceLive';
 import { CatalogRepository } from '@/features/exercises/domain/repositories/CatalogRepository';
@@ -8,7 +9,6 @@ import { CatalogLanguage } from '@/features/exercises/domain/schemas/CatalogLang
 import type { CatalogPayload } from '@/features/exercises/domain/schemas/CatalogPayloadSchema';
 import type { Exercise } from '@/features/exercises/domain/schemas/ExerciseSchema';
 import { BundledCatalog } from '@/features/exercises/domain/services/BundledCatalog';
-import { taxonName } from '@/features/exercises/mappers/taxonNames';
 
 /**
  * The reads of the legacy repository over the bundled catalog, recorded before the migration
