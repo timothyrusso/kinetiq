@@ -11,7 +11,8 @@
  * miss: iOS's number pad has no return key, and a value that only lands on blur is a value lost
  * when the sheet is swiped away. What the field SHOWS while focused is what was typed, so
  * clearing "12" to type "8" does not flash the minimum in between. On blur it shows the value
- * that was kept.
+ * that was kept, and so it does the moment − or + moves the value away from what was typed: Android
+ * can hand this field focus as a sheet opens, and a press the field did not show looked ignored.
  *
  * Typed values are clamped but not snapped to the step: the step is the size of a nudge, not
  * the set of legal answers, and 75 s of rest is a real choice.
@@ -22,6 +23,11 @@
  */
 import { memo, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
+import {
+  type StepperDraft,
+  stepperText,
+  typedDraft,
+} from '@/features/core/design-system/controls/Stepper/stepperDraft';
 import { formatStepperValue } from '@/features/core/design-system/controls/Stepper/types';
 import { fontFamilyOf, fontSizeOf, Txt, type TxtVariant } from '@/features/core/design-system/text/Text';
 import { useAppTheme } from '@/features/core/theme';
@@ -38,11 +44,6 @@ type Props = {
   align: 'left' | 'center';
 };
 
-function parse(text: string): number | null {
-  const n = Number(text.replace(',', '.'));
-  return text.trim() === '' || !Number.isFinite(n) ? null : n;
-}
-
 export const StepperValue = memo(function StepperValue({
   value,
   onChange,
@@ -55,19 +56,17 @@ export const StepperValue = memo(function StepperValue({
   align,
 }: Props) {
   const theme = useAppTheme();
-  const [draft, setDraft] = useState<string | null>(null);
+  const [draft, setDraft] = useState<StepperDraft | null>(null);
   const variant: TxtVariant = compact ? 'numeralSm' : 'numeral';
-  const text = draft ?? formatStepperValue(value);
+  const text = stepperText(draft, value);
   // NOTE: A text field does not size to its text the way a label does, so it is given the width of
   // what it holds: display numerals run about 0.62 em, plus room for the caret.
   const width = Math.ceil(Math.max(text.length, 1) * fontSizeOf(variant) * 0.62) + 4;
 
   const onChangeText = (typed: string) => {
-    setDraft(typed);
-    const n = parse(typed);
-    if (n === null) return;
-    const kept = Math.min(max, Math.max(min, decimal ? Math.round(n * 100) / 100 : Math.round(n)));
-    if (kept !== value) onChange(kept);
+    const next = typedDraft(typed, value, { min, max, decimal });
+    setDraft(next);
+    if (next.value !== value) onChange(next.value);
   };
 
   return (
@@ -75,7 +74,7 @@ export const StepperValue = memo(function StepperValue({
       <TextInput
         value={text}
         onChangeText={onChangeText}
-        onFocus={() => setDraft(formatStepperValue(value))}
+        onFocus={() => setDraft({ text: formatStepperValue(value), value })}
         onBlur={() => setDraft(null)}
         selectTextOnFocus
         keyboardType={decimal ? 'decimal-pad' : 'number-pad'}
