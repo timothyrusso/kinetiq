@@ -116,6 +116,7 @@ export const routes = {
       params: routineId ? { target, item: itemId, id: routineId } : { target, item: itemId },
     }) as Href,
   renameRoutine: (id: string) => ({ pathname: '/routine/rename', params: { id } }) as Href,
+  sessionFinish: () => '/workout/finish' as Href,
   sessionSet: (entryIndex: number, setIndex: number) =>
     ({ pathname: '/workout/set', params: { entry: String(entryIndex), set: String(setIndex) } }) as Href,
   // NOTE: the records a finish set go to the sheet as JSON, and the sheet decodes them.

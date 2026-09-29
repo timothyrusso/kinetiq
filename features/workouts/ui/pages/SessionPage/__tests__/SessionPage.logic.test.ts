@@ -4,7 +4,7 @@ import { resetAllStores } from '@/features/core/state';
 import { renderWithLayer, routerFake } from '@/features/core/testing';
 import { updateSettings } from '@/features/settings';
 import { aSession } from '@/features/workouts/__fixtures__/builders';
-import { makeSessionScreenTestLayer, storedActivity } from '@/features/workouts/di/__tests__/workoutsTestData';
+import { makeSessionScreenTestLayer } from '@/features/workouts/di/__tests__/workoutsTestData';
 import { sessionLifecycle } from '@/features/workouts/facades/useActiveSession';
 import { useSessionPageLogic } from '@/features/workouts/ui/pages/SessionPage/SessionPage.logic';
 
@@ -89,13 +89,13 @@ describe('useSessionPageLogic', () => {
     await done();
   });
 
-  it('finishes the workout into history and goes Home', async () => {
-    const { result, runtime, done } = await renderScreen();
+  it('asks to finish in the finish sheet', async () => {
+    const { result, done } = await renderScreen();
 
-    await act(async () => result.current.effects.finish());
+    await act(async () => result.current.effects.askFinish());
 
-    await waitFor(() => expect(routerFake.history[0]).toEqual({ verb: 'dismissTo', href: routes.home() }));
-    expect((await storedActivity(runtime, aSession().id))?.title).toBe('Push Day');
+    expect(routerFake.history).toEqual([{ verb: 'push', href: routes.sessionFinish() }]);
+    expect(result.current.state.session).not.toBeNull();
     await done();
   });
 });

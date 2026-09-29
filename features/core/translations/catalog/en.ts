@@ -351,6 +351,9 @@ export const en = {
       '{left} of {planned} {word} left un-ticked. Un-ticked work is not recorded: the workout saves what you completed.',
     finishAll: 'All {planned} sets are done. This becomes a workout in your history.',
     finishConfirm: 'Finish and save',
+    finishUpdateRoutine: "Update routine with today's values",
+    finishUpdateRoutineHint:
+      "Done sets become the routine's targets, with the exercises you added or removed. Skipped work, rest and notes stay as they are.",
     thisExercise: 'This exercise',
     recordOne: 'Personal record',
     recordMany: '{count} personal records',

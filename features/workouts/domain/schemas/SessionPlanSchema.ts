@@ -11,6 +11,8 @@ const SessionPlanSetSchema = Schema.Struct({
 
 /** One exercise of a plan, with the targets its sets open with. */
 const SessionPlanItemSchema = Schema.Struct({
+  // NOTE: the routine item this is, so a finish can write the workout back into it.
+  itemId: Schema.optional(Schema.String),
   exerciseId: Schema.String,
   exerciseName: Schema.String,
   // NOTE: in order, one per set the entry opens with.

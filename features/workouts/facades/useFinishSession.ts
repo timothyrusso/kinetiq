@@ -6,24 +6,33 @@ import { invalidateAfterWorkout } from '@/features/workouts/facades/workoutQuery
 import { useSessionStore } from '@/features/workouts/state/sessionStore';
 import { finishSession } from '@/features/workouts/useCases/finishSession';
 
+/** What the finish sheet records: the workout, and whether it writes today's values back. */
+interface FinishRequest {
+  readonly id: ActivityId;
+  readonly routineId: string | null;
+  /** "Update routine with today's values": only a workout from a routine offers it. */
+  readonly updateRoutine: boolean;
+}
+
 /**
  * Records the workout in progress. The clock stops as the finish begins; once it is recorded the
- * store lets the session go and every read that shows it refreshes. A workout already in history
- * (`DuplicateWorkout`) wrote nothing but is finished all the same, so it lets go too; any other
- * failure keeps the session on screen to try again.
+ * store lets the session go and every read that shows it refreshes, the routines' included. A
+ * workout already in history (`DuplicateWorkout`) wrote nothing but is finished all the same, so
+ * it lets go too; any other failure keeps the session on screen to try again.
  */
 export function useFinishSession() {
   const client = useQueryClient();
   const weeklyGoal = useSettings(settings => settings.weeklyGoalWorkouts);
   return useEffectMutation({
-    mutationFn: ({ id }: { readonly id: ActivityId; readonly routineId: string | null }) =>
-      finishSession(id, useSessionStore.getState().session, weeklyGoal),
+    mutationFn: ({ id, updateRoutine }: FinishRequest) =>
+      finishSession(id, useSessionStore.getState().session, weeklyGoal, updateRoutine),
     onMutate: () => useSessionStore.getState().beginFinish(),
     onSuccess: (_result, { id, routineId }) => {
       invalidateAfterWorkout(client, routineId);
       useSessionStore.getState().ended(id);
     },
     onError: (error, { id, routineId }) => {
+      useSessionStore.getState().finishFailed();
       if (error._tag !== 'DuplicateWorkout' && error._tag !== 'NoActiveSession') return;
       invalidateAfterWorkout(client, routineId);
       if (error._tag === 'DuplicateWorkout') useSessionStore.getState().ended(id);

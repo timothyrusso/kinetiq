@@ -359,6 +359,9 @@ export const it: Copy = {
       "{left} di {planned} {word} non spuntate. Il lavoro non spuntato non viene registrato: l'allenamento salva ciò che hai completato.",
     finishAll: 'Tutte le {planned} serie sono fatte. Diventa un allenamento nella tua cronologia.',
     finishConfirm: 'Completa e salva',
+    finishUpdateRoutine: 'Aggiorna la scheda con i valori di oggi',
+    finishUpdateRoutineHint:
+      'Le serie fatte diventano gli obiettivi della scheda, con gli esercizi aggiunti o tolti. Il lavoro saltato, il recupero e le note restano come sono.',
     thisExercise: 'Questo esercizio',
     recordOne: 'Record personale',
     recordMany: '{count} record personali',

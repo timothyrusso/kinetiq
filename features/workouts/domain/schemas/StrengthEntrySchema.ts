@@ -9,6 +9,8 @@ export const StrengthSetSchema = Schema.Struct({
   // NOTE: Epley, computed when the set is written; null when the set does not support it.
   estimated1rm: Schema.NullOr(Schema.Number),
   rpe: Schema.NullOr(Schema.Number),
+  // NOTE: the routine set row this set was planned from; absent for a set added mid-workout.
+  routineSetIndex: Schema.optional(Schema.Number),
 });
 
 export type StrengthSet = typeof StrengthSetSchema.Type;
@@ -25,6 +27,9 @@ export const StrengthEntrySchema = Schema.Struct({
   notes: Schema.NullOr(Schema.String),
   // NOTE: the rest captured when the session started, in seconds.
   restSeconds: Schema.Number,
+  // NOTE: the routine item the entry was planned from; absent for an exercise added mid-workout
+  // and on every recorded workout.
+  routineItemId: Schema.optional(Schema.String),
 });
 
 export type StrengthEntry = typeof StrengthEntrySchema.Type;

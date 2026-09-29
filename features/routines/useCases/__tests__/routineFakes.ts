@@ -60,6 +60,7 @@ export const makeRoutineRepositoryFake = (routines: readonly Routine[] = [], fai
       removeItem: (id, itemId) =>
         update(id, routine => ({ ...routine, items: routine.items.filter(item => item.id !== itemId) })),
       markUsed: id => update(id, routine => ({ ...routine, timesCompleted: routine.timesCompleted + 1 })),
+      replaceItems: (id, items) => update(id, routine => ({ ...routine, items })),
     };
     if (failing === undefined) return service;
     const failure = Effect.fail(new SqlError({ message: `fake ${failing} failed` }));

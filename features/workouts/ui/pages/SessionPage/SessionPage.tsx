@@ -256,18 +256,6 @@ export function SessionPage() {
         />
       ) : null}
 
-      {state.confirmFinish ? (
-        <ConfirmDialog
-          visible={!state.finishing}
-          title={t('session.finishTitle')}
-          message={derived.finishMessage}
-          confirmLabel={t('session.finishConfirm')}
-          cancelLabel={t('common.cancel')}
-          onConfirm={effects.finish}
-          onCancel={effects.cancelFinish}
-        />
-      ) : null}
-
       {state.removing !== null ? (
         <RemoveExerciseDialog
           exerciseName={derived.removingName}

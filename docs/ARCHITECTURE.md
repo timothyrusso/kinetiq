@@ -29,9 +29,12 @@ Every feature declares `FEATURE_TIER` in its `index.ts`; `npm run arch` checks t
 
 `workouts` never imports `routines` (they are peers). The two meet in `home`:
 
-- `workouts` declares the `RoutineUsage` port (count a finished workout against its routine);
-  `home` fills it over `RoutineRepository` (`home/data/services/routineUsageLive.ts`), and
-  `core/runtime` provides `HomeLive` under `WorkoutsLive`.
+- `workouts` declares the `RoutineUsage` port (count a finished workout against its routine,
+  and write it back into the routine when the finish's switch is on); `home` fills it over
+  `RoutineRepository` and its `applyWorkoutToRoutine` use case (`home/di/routineUsageLive.ts`),
+  and `core/runtime` provides `HomeLive` under `WorkoutsLive`. Both run inside the workout's own
+  transaction, so the write-back uses `RoutineRepository.replaceItems`, which has no transaction
+  of its own.
 - `routines` declares `WorkoutLauncher` (what the routine screen needs to start a workout);
   `home` maps a `Routine` to the `SessionPlan` owned by `workouts`
   (`home/facades/useStartWorkoutFromRoutine.ts`) and hands it to the routine page.
@@ -79,6 +82,17 @@ Every feature declares `FEATURE_TIER` in its `index.ts`; `npm run arch` checks t
   fills in `di/` over its own use cases, never by importing the use cases (they are not public
   API): `ExerciseCatalog` (install, refresh, find, search), `TrainingReminder`, `WorkoutRecorder`.
   The runBootstrap and watch-sync tests fake the Tag.
+- **Writing a finished workout back into its routine.** Matching is by identity, never by
+  exercise id: `planFromRoutine` puts each item's id on the plan, the entry it opens carries it as
+  `routineItemId` and each set its row as `routineSetIndex`; an exercise or set added during the
+  workout carries neither. The session keeps `routineItemIds`, the items it started with, so the
+  write-back tells the cases apart: an item in that list and not in the workout was removed with
+  the remove action; an item in neither was added to the routine meanwhile and is kept; an entry
+  whose item is gone from the routine is not brought back; an entry with no completed set was
+  skipped and leaves its item alone. A session from a routine stores `entries_json` as
+  `{ entries, routineItemIds }` (no migration); every other session, and history, stores the
+  plain list as before, and the recorded workout drops both markers. A session started before
+  this build has no `routineItemIds` and offers no switch.
 - **`BackgroundSync` port.** `core/lifecycle` declares `install`, `sync` (push and inbox drain)
   and `push` (push only). The bootstrap installs it after the migrations and syncs on every return
   to the foreground; `watch-sync` provides it over `WatchBridge` (a no-op without a watch bridge).

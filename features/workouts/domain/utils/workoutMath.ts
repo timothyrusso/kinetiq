@@ -69,6 +69,11 @@ export function sessionProgress(session: Pick<WorkoutSession, 'entries'>): Sessi
   return { completed, planned, ratio: planned === 0 ? 0 : completed / planned };
 }
 
+/** An entry as history keeps it: without the routine item and set rows it was planned from. */
+function recordedEntry({ routineItemId: _item, ...entry }: StrengthEntry): StrengthEntry {
+  return { ...entry, sets: entry.sets.map(({ routineSetIndex: _row, ...set }) => set) };
+}
+
 /** The shape a finished session is recorded as. Its duration is the counted time, not the wall. */
 export function toCompletedWorkout(session: WorkoutSession, endedAt: number): CompletedWorkout {
   const durationSeconds = session.elapsedSeconds;
@@ -79,7 +84,7 @@ export function toCompletedWorkout(session: WorkoutSession, endedAt: number): Co
     startedAt: session.startedAt,
     endedAt,
     durationSeconds,
-    entries: session.entries,
+    entries: session.entries.map(recordedEntry),
     totalVolumeKg: totalVolumeKg(session.entries),
     totalSets: completedSetCount(session.entries),
     notes: session.notes,

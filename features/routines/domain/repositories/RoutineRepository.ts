@@ -43,5 +43,11 @@ export class RoutineRepository extends Context.Tag('routines/RoutineRepository')
     readonly removeItem: (id: RoutineId, itemId: string) => Effect.Effect<void, RoutineReadError>;
     /** Counts one more workout from the routine, keeping the latest `performedAt` as the last one. */
     readonly markUsed: (id: RoutineId, performedAt: number) => Effect.Effect<void, SqlError>;
+    /**
+     * Replaces the routine's items and their sets with `items`, in order, keeping its name. Unlike
+     * `save` it runs on the shared connection with no transaction of its own, so it can join the
+     * caller's: a finished workout writes itself back into its routine inside the workout's.
+     */
+    readonly replaceItems: (id: RoutineId, items: readonly RoutineItem[]) => Effect.Effect<void, SqlError>;
   }
 >() {}

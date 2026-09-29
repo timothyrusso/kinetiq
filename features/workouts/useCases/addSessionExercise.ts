@@ -4,7 +4,7 @@ import type { SessionPlanItem } from '@/features/workouts/domain/schemas/Session
 import { entryFromPlanItem } from '@/features/workouts/domain/utils/sessionPlan';
 
 /** The targets an exercise added mid-workout opens with. */
-export type ExerciseTarget = Omit<SessionPlanItem, 'exerciseId' | 'exerciseName'>;
+export type ExerciseTarget = Omit<SessionPlanItem, 'itemId' | 'exerciseId' | 'exerciseName'>;
 
 /**
  * The entry for `exercise`, added to a workout in progress, after freezing the exercise into the

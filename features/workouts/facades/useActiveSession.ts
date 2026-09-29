@@ -40,6 +40,7 @@ export function useActiveSession() {
     hydrated: useSessionStore.use.hydrated(),
     persistFailed: useSessionStore.use.persistFailed(),
     awayNoticeSeconds: useSessionStore.use.awayNoticeSeconds(),
+    finishing: useSessionStore.use.finishing(),
   };
 }
 

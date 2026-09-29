@@ -27,6 +27,10 @@ export const WorkoutSessionSchema = Schema.Struct({
   restDurationSeconds: Schema.NullOr(Schema.Number),
   notes: Schema.NullOr(Schema.String),
   updatedAt: Schema.Number,
+  // NOTE: the routine items the workout started with, which tells an exercise removed during it
+  // from one added to the routine meanwhile; absent when it did not start from a routine, and on
+  // a session started before the finish could update its routine.
+  routineItemIds: Schema.optional(Schema.Array(Schema.String)),
 });
 
 export type WorkoutSession = typeof WorkoutSessionSchema.Type;
