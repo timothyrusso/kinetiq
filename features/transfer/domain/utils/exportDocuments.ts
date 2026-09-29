@@ -19,7 +19,7 @@ const encodeWorkouts = Schema.encodeSync(WorkoutsFileSchema);
 const encodeRoutines = Schema.encodeSync(RoutinesFileSchema);
 const encodeRow = Schema.encodeSync(SetsCsvRowSchema);
 
-/** `kinetiq.workouts` v1 for `activities`, oldest first, as indented JSON. */
+/** `kinetiq.workouts` v2 for `activities`, oldest first, as indented JSON. */
 export function workoutsJson(activities: readonly ExportableWorkout[], now: number): string {
   const document = encodeWorkouts({
     format: WORKOUTS_FORMAT,
@@ -54,10 +54,7 @@ export function workoutsJson(activities: readonly ExportableWorkout[], now: numb
   return JSON.stringify(document, null, 2);
 }
 
-/**
- * `kinetiq.routines` v1 for `routines`, as indented JSON. v1 has one target per item, so an item
- * goes out as its set count with its first set's reps and weight.
- */
+/** `kinetiq.routines` v2 for `routines`, as indented JSON: every planned set of every item. */
 export function routinesJson(routines: readonly ExportableRoutine[], now: number): string {
   const document = encodeRoutines({
     format: ROUTINES_FORMAT,
@@ -68,11 +65,9 @@ export function routinesJson(routines: readonly ExportableRoutine[], now: number
       items: routine.items.map(item => ({
         exerciseId: item.exerciseId,
         exerciseName: item.exerciseName,
-        sets: item.sets.length,
-        reps: `${item.sets[0]?.reps ?? 8}`,
-        weightKg: item.sets[0]?.weightKg ?? 0,
         restSeconds: item.restSeconds,
         notes: item.notes,
+        sets: item.sets.map(set => ({ reps: set.reps, weightKg: set.weightKg, targetRpe: set.targetRpe })),
       })),
     })),
   });

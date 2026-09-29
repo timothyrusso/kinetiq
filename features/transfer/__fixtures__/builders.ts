@@ -120,7 +120,10 @@ const aRoutine = (overrides: Partial<Routine> = {}): Routine => ({
   ...overrides,
 });
 
-/** Two routines, most recently changed first, one with a local exercise and a quarter-kilo weight. */
+/**
+ * Two routines, most recently changed first, one with a local exercise, a quarter-kilo weight and
+ * a squat that ramps up to its top sets, with a target RPE on each of them.
+ */
 export const someRoutines = (): Routine[] => [
   aRoutine({
     id: RoutineId.make('rtn_legs'),
@@ -130,7 +133,13 @@ export const someRoutines = (): Routine[] => [
         id: 'rit_squat',
         exerciseId: 'wger:111',
         exerciseName: 'Squat, Back',
-        sets: setsOf(5, 5, 142.5),
+        sets: [
+          { index: 0, reps: 5, weightKg: 130, targetRpe: null },
+          { index: 1, reps: 5, weightKg: 137.5, targetRpe: null },
+          { index: 2, reps: 5, weightKg: 142.5, targetRpe: 8 },
+          { index: 3, reps: 5, weightKg: 142.5, targetRpe: 8 },
+          { index: 4, reps: 3, weightKg: 142.5, targetRpe: 9 },
+        ],
         restSeconds: 180,
         notes: 'Belt on top sets',
       }),

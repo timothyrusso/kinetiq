@@ -15,9 +15,7 @@ import { useImportPageLogic } from '@/features/transfer/ui/pages/ImportPage/Impo
 const anItem = (overrides: Partial<ParsedItem> = {}): ParsedItem => ({
   exerciseId: 'wger:73',
   exerciseName: 'Bench Press',
-  sets: 4,
-  reps: '8-10',
-  weightKg: 60,
+  sets: [10, 10, 8, 8].map(reps => ({ reps, weightKg: 60, targetRpe: null })),
   restSeconds: 120,
   notes: null,
   ...overrides,

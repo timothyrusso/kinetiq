@@ -4,10 +4,11 @@ import { parseRoutines } from '@/features/transfer/domain/utils/parseRoutines';
 const rules: ImportRules = {
   limits: { bytes: 1000, routines: 2, itemsPerRoutine: 2 },
   bounds: {
-    sets: { min: 1, max: 20 },
+    sets: { min: 1, max: 3 },
+    reps: { min: 1, max: 100 },
     weightKg: { min: 0, max: 450 },
+    targetRpe: { min: 0, max: 10 },
     restSeconds: { min: 0, max: 600 },
-    repsLength: 20,
     notesLength: 10,
   },
   isExerciseId: id => id.startsWith('wger:') || id.startsWith('local:'),
@@ -39,7 +40,40 @@ describe('parseRoutines', () => {
   it('rounds the weight to a quarter kilo and clamps it to the bounds', () => {
     const { routines } = routinesOf('[{"items": [{"name": "A", "weightKg": 61.3}, {"name": "B", "weightKg": 999}]}]');
 
-    expect(routines[0]?.items.map(item => item.weightKg)).toEqual([61.25, 450]);
+    expect(routines[0]?.items.map(item => item.sets[0]?.weightKg)).toEqual([61.25, 450]);
+  });
+
+  it('reads v2 rows as they are and keeps only as many as an item holds', () => {
+    const { routines, issues } = routinesOf(
+      JSON.stringify([
+        {
+          items: [
+            {
+              name: 'A',
+              sets: [1, 2, 3, 4].map(n => ({ reps: n, weightKg: n * 10, targetRpe: n === 1 ? null : n + 5 })),
+            },
+          ],
+        },
+      ]),
+    );
+
+    expect(routines[0]?.items[0]?.sets).toEqual([
+      { reps: 1, weightKg: 10, targetRpe: null },
+      { reps: 2, weightKg: 20, targetRpe: 7 },
+      { reps: 3, weightKg: 30, targetRpe: 8 },
+    ]);
+    expect(issues).toEqual([]);
+  });
+
+  it('turns a v1 count and range into identical sets on the bottom of the range, whatever version it claims', () => {
+    const { routines } = routinesOf(
+      '{"version": 2, "routines": [{"items": [{"name": "A", "sets": 2, "reps": "8\u201312", "weightKg": 50}]}]}',
+    );
+
+    expect(routines[0]?.items[0]?.sets).toEqual([
+      { reps: 8, weightKg: 50, targetRpe: null },
+      { reps: 8, weightKg: 50, targetRpe: null },
+    ]);
   });
 
   it('cuts notes to the bound', () => {

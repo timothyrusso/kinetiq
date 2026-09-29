@@ -38,6 +38,7 @@ export interface ExportableRoutine {
     readonly sets: readonly {
       readonly reps: number;
       readonly weightKg: number;
+      readonly targetRpe: number | null;
     }[];
     readonly restSeconds: number;
     readonly notes: string | null;
