@@ -366,7 +366,6 @@ export const it: Copy = {
     thisExercise: 'Questo esercizio',
     recordOne: 'Record personale',
     recordMany: '{count} record personali',
-    seeInHistory: 'Vedila nella cronologia',
     elapsed: 'Trascorso',
     sets: 'Serie',
     volumeIn: 'Volume ({unit})',

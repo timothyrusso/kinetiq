@@ -357,7 +357,6 @@ export const en = {
     thisExercise: 'This exercise',
     recordOne: 'Personal record',
     recordMany: '{count} personal records',
-    seeInHistory: 'See it in history',
     elapsed: 'Elapsed',
     sets: 'Sets',
     volumeIn: 'Volume ({unit})',
