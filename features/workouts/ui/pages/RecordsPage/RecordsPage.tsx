@@ -6,15 +6,14 @@ import { createStyles } from '@/features/workouts/ui/pages/RecordsPage/RecordsPa
 
 /**
  * What you just did better than you have ever done it, presented over Home once a workout is
- * saved. The sheet cannot be swiped away (`gestureEnabled: false` on the route); its one action
- * closes it onto Home, where the workout now tops the history.
+ * saved. Its one action, like a swipe, closes it onto Home, where the workout now tops the history.
  */
 export function RecordsPage() {
   const { derived } = useRecordsPageLogic();
   const theme = useAppTheme();
   const styles = useStyles(createStyles);
   return (
-    <FormSheet title={derived.title} doneLabel="session.seeInHistory">
+    <FormSheet title={derived.title}>
       <View style={styles.list}>
         {derived.rows.map(row => (
           <View key={row.key} style={styles.record}>
