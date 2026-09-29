@@ -9,6 +9,8 @@ import type { FeatureTier } from '@timothyrusso/arch-rules';
 export const FEATURE_TIER: FeatureTier = 3;
 
 export { WorkoutsLive } from '@/features/workouts/di/layer';
+/** What a finished workout writes back into its routine, through `RoutineUsage`. */
+export type { RoutineUpdate } from '@/features/workouts/domain/entities/RoutineUpdate';
 export type { TrainingHeatmap } from '@/features/workouts/domain/entities/TrainingSummary';
 /** A workout already in history: what recording one twice fails with. */
 export { DuplicateWorkout } from '@/features/workouts/domain/errors/WorkoutsErrors';

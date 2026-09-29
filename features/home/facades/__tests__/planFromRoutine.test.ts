@@ -2,7 +2,7 @@ import { planFromRoutine } from '@/features/home/facades/planFromRoutine';
 import { RoutineId } from '@/features/routines';
 
 describe('planFromRoutine', () => {
-  it('starts from the routine, named after it, with its exercises in order and each set from its own row', () => {
+  it('starts from the routine, named after it, with its exercises in order and each naming its item and each set from its own row', () => {
     const plan = planFromRoutine({
       id: RoutineId.make('rtn_push'),
       name: 'Push Day',
@@ -38,6 +38,7 @@ describe('planFromRoutine', () => {
       name: 'Push Day',
       items: [
         {
+          itemId: 'rit_bench',
           exerciseId: 'wger:73',
           exerciseName: 'Bench Press',
           sets: [
@@ -48,6 +49,7 @@ describe('planFromRoutine', () => {
           notes: null,
         },
         {
+          itemId: 'rit_press',
           exerciseId: 'wger:74',
           exerciseName: 'Overhead Press',
           sets: [{ reps: 6, weightKg: 40, targetRpe: 9 }],

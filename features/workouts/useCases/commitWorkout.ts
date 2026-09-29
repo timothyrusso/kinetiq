@@ -1,4 +1,5 @@
 import { Effect } from 'effect';
+import type { RoutineUpdate } from '@/features/workouts/domain/entities/RoutineUpdate';
 import { DuplicateWorkout } from '@/features/workouts/domain/errors/WorkoutsErrors';
 import { ActivityRepository } from '@/features/workouts/domain/repositories/ActivityRepository';
 import type { Activity } from '@/features/workouts/domain/schemas/ActivitySchema';
@@ -21,13 +22,14 @@ const HISTORY_WINDOW = 400;
 /**
  * Writes a finished workout to history: the one path for a phone session and a workout from the
  * Apple Watch. All or nothing: the duplicate check, the history read, record detection, the
- * insert, the records and the routine's trained count run in one transaction, so a crash cannot
- * leave a workout without its records, or a routine counted for a workout never saved.
+ * insert, the records, the routine's trained count and, when `routineUpdate` is given, today's
+ * values written back into the routine run in one transaction, so a crash cannot leave a workout
+ * without its records, or a routine counted or changed for a workout never saved.
  *
  * Idempotent: a workout whose id is already in history fails with `DuplicateWorkout` and writes
  * nothing, because a replay would be compared against a history that already contains it.
  */
-export const commitWorkout = (workout: CompletedWorkout) =>
+export const commitWorkout = (workout: CompletedWorkout, routineUpdate: RoutineUpdate | null = null) =>
   Effect.flatMap(WorkoutTransaction, transaction =>
     transaction.atomically(
       Effect.gen(function* () {
@@ -43,6 +45,7 @@ export const commitWorkout = (workout: CompletedWorkout) =>
         const { routineId } = workout;
         if (routineId !== null)
           yield* Effect.flatMap(RoutineUsage, usage => usage.markUsed(routineId, workout.endedAt));
+        if (routineUpdate !== null) yield* Effect.flatMap(RoutineUsage, usage => usage.applyWorkout(routineUpdate));
         const result: CommitResult = { activity, personalRecords };
         return result;
       }),
