@@ -91,15 +91,16 @@ export function useRestTimer(session: WorkoutSession | null) {
   }, [retract]);
 
   // NOTE: an adjustment restarts the deadline rather than nudging a label, which would snap back
-  // on the next tick; below the timer's floor it clears the rest instead.
+  // on the next tick, and arms the alert for that new deadline; below the timer's floor it clears
+  // the rest instead.
   const adjust = useCallback(
     (seconds: number) => {
       retract();
       if (seconds < MIN_REST_SECONDS) sessionActions.clearRest();
-      else sessionActions.setRest(seconds);
+      else start(seconds);
       haptics.selection();
     },
-    [retract],
+    [retract, start],
   );
 
   return {
