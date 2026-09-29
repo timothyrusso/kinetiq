@@ -1,6 +1,6 @@
 {
   "format": "kinetiq.workouts",
-  "version": 1,
+  "version": 2,
   "exportedAt": "2026-09-25T10:00:00.000Z",
   "units": {
     "weight": "kg"

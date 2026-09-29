@@ -1,8 +1,9 @@
 import { readFileSync } from 'node:fs';
-import { Effect, Layer } from 'effect';
+import { Effect, Layer, Schema } from 'effect';
 import { advanceClock, itEffect } from '@/features/core/testing';
 import { EXPORTED_AT, someActivities, someRoutines } from '@/features/transfer/__fixtures__/builders';
 import type { ExportFile } from '@/features/transfer/domain/entities/TransferFormat';
+import { WorkoutsFileSchema } from '@/features/transfer/domain/schemas/WorkoutsFileSchema';
 import {
   ActivityRepositoryFake,
   RoutineRepositoryFake,
@@ -23,7 +24,7 @@ const layer = (shared: ExportFile[] = []) =>
 
 describe('buildExport', () => {
   itEffect(
-    'writes kinetiq.workouts v1 byte for byte as the app always has',
+    'writes kinetiq.workouts v2 byte for byte: v1 without the energy figure',
     Effect.gen(function* () {
       yield* atExportTime;
 
@@ -51,7 +52,7 @@ describe('buildExport', () => {
   );
 
   itEffect(
-    'writes kinetiq.routines v1 byte for byte as the app always has',
+    'writes kinetiq.routines v2 byte for byte, one row per planned set',
     Effect.gen(function* () {
       yield* atExportTime;
 
@@ -65,6 +66,15 @@ describe('buildExport', () => {
     }),
     layer(),
   );
+});
+
+describe('kinetiq.workouts v2', () => {
+  it('decodes and encodes back byte for byte', () => {
+    const file = fixture('kinetiq-workouts.json');
+    const decoded = Schema.decodeUnknownSync(WorkoutsFileSchema)(JSON.parse(file));
+
+    expect(JSON.stringify(Schema.encodeSync(WorkoutsFileSchema)(decoded), null, 2)).toBe(file);
+  });
 });
 
 describe('exportData', () => {

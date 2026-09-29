@@ -2,11 +2,12 @@
  * The file formats Kinetiq writes and reads. Workouts go out for analysis (a spreadsheet, a
  * notebook, an AI chat); routines go out and come back in, which is what lets an AI edit them.
  * Both carry `format` and `version`, so a file says what it is and a later app can read an older
- * file instead of guessing from its shape.
+ * file instead of guessing from its shape. v2 has one row per planned set and no energy figure;
+ * a v1 routines file still imports.
  */
 export const ROUTINES_FORMAT = 'kinetiq.routines';
 export const WORKOUTS_FORMAT = 'kinetiq.workouts';
-export const FORMAT_VERSION = 1;
+export const FORMAT_VERSION = 2;
 
 /** The three exports the data screen offers. */
 export type ExportTarget = 'workoutsJson' | 'setsCsv' | 'routinesJson';

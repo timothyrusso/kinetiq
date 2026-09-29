@@ -31,9 +31,10 @@ const WorkoutFileWorkoutSchema = Schema.Struct({
 });
 
 /**
- * `kinetiq.workouts` v1: nested (workout, exercise, set) because that is what the data is. The
+ * `kinetiq.workouts` v2: nested (workout, exercise, set) because that is what the data is. The
  * field order is the file's key order. History only goes out: importing it twice would double
- * every chart and could mint a personal record that was never lifted.
+ * every chart and could mint a personal record that was never lifted. v2 is v1 without the
+ * estimated energy of each workout.
  */
 export const WorkoutsFileSchema = Schema.Struct({
   format: Schema.Literal(WORKOUTS_FORMAT),
