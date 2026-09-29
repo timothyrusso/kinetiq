@@ -63,6 +63,28 @@ describe('useActivityExerciseCardLogic', () => {
     expect(result.current.derived.sets[0]?.oneRepMax).not.toBe('-');
   });
 
+  it('shows the RPE noted on a set and nothing on a set noted as 0', async () => {
+    const { result } = await renderCard(anEntry({ sets: [aSet({ rpe: 8 }), aSet({ index: 1, rpe: 0 })] }));
+
+    expect(result.current.derived.hasRpe).toBe(true);
+    expect(result.current.derived.sets.map(set => set.rpe)).toEqual(['8', '']);
+    expect(result.current.derived.sets[0]?.accessibilityLabel).toContain(tr('activity.rpeValue', { value: '8' }));
+    expect(result.current.derived.sets[1]?.accessibilityLabel).not.toContain(tr('activity.colRpe'));
+  });
+
+  it('leaves out the RPE column when no set has one noted', async () => {
+    const { result } = await renderCard(anEntry({ sets: [aSet(), aSet({ index: 1, rpe: 0 })] }));
+
+    expect(result.current.derived.hasRpe).toBe(false);
+  });
+
+  it('shows no RPE on a set not done, whose value is only the target', async () => {
+    const { result } = await renderCard(anEntry({ sets: [anOpenSet({ rpe: 7 })] }));
+
+    expect(result.current.derived.hasRpe).toBe(false);
+    expect(result.current.derived.sets[0]?.rpe).toBe('');
+  });
+
   it('speaks an open set as not done', async () => {
     const { result } = await renderCard(anEntry({ sets: [anOpenSet()] }));
 

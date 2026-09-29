@@ -77,6 +77,11 @@ export const ActivityExerciseCard = memo(function ActivityExerciseCard({
               <Txt variant="micro" tone="faint" style={styles.cell}>
                 {t('activity.colReps')}
               </Txt>
+              {derived.hasRpe ? (
+                <Txt variant="micro" tone="faint" align="right" style={styles.narrow}>
+                  {t('activity.colRpe')}
+                </Txt>
+              ) : null}
               <Txt variant="micro" tone="faint" align="right" style={styles.wide}>
                 {t('activity.colE1rm')}
               </Txt>
@@ -99,6 +104,11 @@ export const ActivityExerciseCard = memo(function ActivityExerciseCard({
                   <Txt variant="body" style={styles.cell}>
                     {set.reps}
                   </Txt>
+                  {derived.hasRpe ? (
+                    <Txt variant="body" align="right" style={styles.narrow}>
+                      {set.rpe}
+                    </Txt>
+                  ) : null}
                   <Txt variant="caption" tone="muted" align="right" style={styles.wide}>
                     {set.oneRepMax}
                   </Txt>
