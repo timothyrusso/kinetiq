@@ -47,7 +47,12 @@ const tickAndFinish = async (current: { current: Screens }) => {
   const session = current.current.live.session;
   if (session === null) throw new Error('no session to finish');
   await act(
-    async () => void (await current.current.finish.mutateAsync({ id: session.id, routineId: session.routineId })),
+    async () =>
+      void (await current.current.finish.mutateAsync({
+        id: session.id,
+        routineId: session.routineId,
+        updateRoutine: false,
+      })),
   );
 };
 

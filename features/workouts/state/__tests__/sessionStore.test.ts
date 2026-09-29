@@ -175,6 +175,23 @@ describe('the session store ending a workout', () => {
     expect(store().session).not.toBeNull();
   });
 
+  it('says a finish is under way until it fails, so the live workout knows it is leaving', () => {
+    store().beginFinish();
+    const during = store().finishing;
+    store().ended(aSession().id);
+    const after = store().finishing;
+    store().finishFailed();
+
+    expect([during, after, store().finishing]).toEqual([true, true, false]);
+  });
+
+  it('starts the next workout with no finish under way', () => {
+    store().beginFinish();
+    store().start(aSession(), NOW);
+
+    expect(store().finishing).toBe(false);
+  });
+
   it('lets the session go once it was recorded or discarded', () => {
     store().markPersistFailed();
 
