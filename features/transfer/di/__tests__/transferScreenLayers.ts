@@ -86,6 +86,7 @@ export const importScreenLayer = (
           addItem: unused,
           removeItem: unused,
           markUsed: unused,
+          replaceItems: unused,
         })
       : RoutineRepositoryFake(saved),
     options.snapshotsFail

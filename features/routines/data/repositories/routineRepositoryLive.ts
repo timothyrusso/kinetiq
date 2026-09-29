@@ -278,6 +278,22 @@ export const RoutineRepositoryLive = Layer.effect(
             [performedAt, id],
           ),
         ).pipe(Effect.zipRight(announce(id, 'used'))),
+
+      replaceItems: (id, items) =>
+        Effect.gen(function* () {
+          const now = yield* Clock.currentTimeMillis;
+          yield* trySql('replace a routine’s items', async () => {
+            await db.runAsync(DELETE_ROUTINE_SETS, [id]);
+            await db.runAsync('DELETE FROM routine_items WHERE routine_id = ?', [id]);
+            let position = 0;
+            for (const item of items) {
+              await db.runAsync(INSERT_ITEM, itemValues(id, item, position++));
+              await insertSets(db, item.id, item.sets);
+            }
+            await db.runAsync(TOUCH_ROUTINE, [now, id]);
+          });
+          yield* announce(id, 'itemsChanged');
+        }),
     };
   }),
 );

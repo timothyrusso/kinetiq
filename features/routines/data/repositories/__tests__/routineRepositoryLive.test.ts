@@ -369,6 +369,60 @@ describe('RoutineRepositoryLive edits', () => {
   );
 });
 
+describe('RoutineRepositoryLive replaceItems', () => {
+  itEffect(
+    'replaces the items and their sets in order, keeping the name and the trained count',
+    Effect.gen(function* () {
+      yield* savePushDay;
+      const repo = yield* RoutineRepository;
+      yield* repo.markUsed(PUSH, NOW);
+      yield* TestClock.setTime(NOW + 60_000);
+      const press = anotherRoutineItem({ sets: [{ index: 0, reps: 5, weightKg: 45, targetRpe: 8 }] });
+
+      yield* repo.replaceItems(PUSH, [press, DIPS]);
+
+      const routine = yield* repo.byId(PUSH);
+      expect(routine?.name).toBe('Push Day');
+      expect(routine?.timesCompleted).toBe(1);
+      expect(routine?.updatedAt).toBe(NOW + 60_000);
+      expect(routine?.items).toEqual([press, DIPS]);
+      const orphans = yield* rows<{ n: number }>(
+        "SELECT COUNT(*) AS n FROM routine_item_sets WHERE item_id = 'rit_bench'",
+      );
+      expect(orphans[0]?.n).toBe(0);
+    }),
+    layer(),
+  );
+
+  itEffect(
+    'joins a transaction the caller holds, so a rollback undoes it',
+    Effect.gen(function* () {
+      const before = yield* savePushDay;
+      const repo = yield* RoutineRepository;
+
+      yield* run('BEGIN');
+      yield* repo.replaceItems(PUSH, [DIPS]);
+      yield* run('ROLLBACK');
+
+      expect((yield* repo.byId(PUSH))?.items).toEqual(before.items);
+    }),
+    layer(),
+  );
+
+  itEffect(
+    'announces the change',
+    Effect.gen(function* () {
+      yield* savePushDay;
+      const repo = yield* RoutineRepository;
+
+      const events = yield* published(repo.replaceItems(PUSH, [DIPS]));
+
+      expect(events).toEqual([{ routineId: PUSH, kind: 'itemsChanged' }]);
+    }),
+    layer(),
+  );
+});
+
 describe('RoutineRepositoryLive change events', () => {
   itEffect(
     'publishes RoutineChanged on save, rename, delete and reorder',
