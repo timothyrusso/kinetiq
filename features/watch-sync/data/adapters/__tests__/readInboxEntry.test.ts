@@ -50,8 +50,15 @@ describe('readInboxEntry', () => {
     expect(workout.entries[0]?.sets[0]?.rpe).toBeNull();
   });
 
+  it('still saves a v1 workout from a watch app not yet updated', () => {
+    const workout = workoutOf(anInboxEntry(aWatchDocument({ version: 1 }), { version: 1 }));
+
+    expect(workout.id).toBe(`watch-${UUID}`);
+    expect(workout.totalSets).toBe(1);
+  });
+
   it('reads a document from a newer watch app as version, apart from bad data', () => {
-    expect(readInboxEntry(anInboxEntry(aWatchDocument(), { version: 2 })).read).toEqual({
+    expect(readInboxEntry(anInboxEntry(aWatchDocument(), { version: 3 })).read).toEqual({
       ok: false,
       reason: 'version',
     });

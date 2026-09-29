@@ -11,19 +11,34 @@ enum Fixtures {
         return (try? Data(contentsOf: url)).flatMap(Bounds.decode) ?? .fallback
     }()
 
+    /// One planned set on the wire.
+    static func set(_ overrides: [String: Any] = [:]) -> [String: Any] {
+        var set: [String: Any] = ["reps": 8, "weightKg": 60, "targetRpe": NSNull()]
+        set.merge(overrides) { _, new in new }
+        return set
+    }
+
+    /// Bench press on the wire: a pyramid of three sets, the last two with a target RPE.
     static func item(_ overrides: [String: Any] = [:]) -> [String: Any] {
         var item: [String: Any] = [
             "id": "rit_1",
             "exerciseId": "wger:73",
             "exerciseName": "Bench Press",
-            "sets": 4,
-            "reps": "8-10",
-            "weightKg": 60,
+            "sets": [
+                set(["reps": 10, "weightKg": 60]),
+                set(["reps": 8, "weightKg": 65, "targetRpe": 8]),
+                set(["reps": 6, "weightKg": 70, "targetRpe": 9.5])
+            ],
             "restSeconds": 120,
             "notes": NSNull()
         ]
         item.merge(overrides) { _, new in new }
         return item
+    }
+
+    /// `count` planned sets of `reps` at `weightKg`, with no target RPE.
+    static func sets(_ count: Int, reps: Int, weightKg: Double) -> [RoutineSet] {
+        Array(repeating: RoutineSet(reps: reps, weightKg: weightKg, targetRpe: nil), count: count)
     }
 
     static func snapshot(
@@ -33,7 +48,7 @@ enum Fixtures {
     ) -> Data {
         var document: [String: Any] = [
             "format": "kinetiq.watch-routines",
-            "version": 1,
+            "version": 2,
             "exportedAt": "2026-09-25T10:00:00.000Z",
             "unitSystem": "metric",
             "routines": (0..<count).map { index in

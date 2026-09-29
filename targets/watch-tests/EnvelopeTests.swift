@@ -6,7 +6,7 @@ final class EnvelopeTests: XCTestCase {
         try (data as NSData).compressed(using: .zlib) as Data
     }
 
-    private func envelope(_ document: Data, version: Int = 1) throws -> Envelope {
+    private func envelope(_ document: Data, version: Int = 2) throws -> Envelope {
         Envelope(
             format: "kinetiq.watch-routines", version: version, id: "snap-1", encoding: "zlib",
             payload: try zlib(document)
@@ -44,9 +44,11 @@ final class EnvelopeTests: XCTestCase {
 
     func testStoreRejectsAnUnknownVersionOrAnUnknownEncoding() throws {
         let store = SnapshotStore(files: Fixtures.temporaryStore())
-        let future = try envelope(Fixtures.snapshot(), version: 2)
-        XCTAssertEqual(store.receive(future, bounds: Fixtures.bounds).map(\.id), .failure(.unsupportedVersion(2)))
-        let brotli = Envelope(format: "kinetiq.watch-routines", version: 1, id: "x", encoding: "br", payload: Data([1]))
+        let future = try envelope(Fixtures.snapshot(), version: 3)
+        XCTAssertEqual(store.receive(future, bounds: Fixtures.bounds).map(\.id), .failure(.unsupportedVersion(3)))
+        let older = try envelope(Fixtures.snapshot(), version: 1)
+        XCTAssertEqual(store.receive(older, bounds: Fixtures.bounds).map(\.id), .failure(.unsupportedVersion(1)))
+        let brotli = Envelope(format: "kinetiq.watch-routines", version: 2, id: "x", encoding: "br", payload: Data([1]))
         XCTAssertEqual(store.receive(brotli, bounds: Fixtures.bounds).map(\.id), .failure(.unreadable))
         XCTAssertNil(store.load())
     }

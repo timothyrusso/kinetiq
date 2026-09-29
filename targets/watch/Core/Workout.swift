@@ -32,8 +32,8 @@ public struct Workout: Codable, Equatable, Sendable {
     }
 
     /// Starts a workout from a routine, copying it in: a Sync mid-workout cannot change what is
-    /// being trained. The same rule as the phone's `entriesFromItems`: one entry per item,
-    /// `max(1, sets)` sets, reps from `repsFromRange`, the item's weight, nothing completed.
+    /// being trained. The same rule as the phone's `entriesFromItems`: one entry per item, one set
+    /// per planned row with that row's reps and weight, nothing completed, no RPE.
     public static func start(routine: Routine, unitSystem: UnitSystem, id: String, now: Date) -> Workout {
         Workout(
             version: fileVersion,
@@ -48,9 +48,9 @@ public struct Workout: Codable, Equatable, Sendable {
                     exerciseName: item.exerciseName,
                     restSeconds: item.restSeconds,
                     notes: item.notes,
-                    sets: (0..<max(1, item.sets)).map { index in
+                    sets: item.sets.enumerated().map { index, planned in
                         WorkoutSet(
-                            index: index, reps: Reps.target(item.reps), weightKg: item.weightKg,
+                            index: index, reps: planned.reps, weightKg: planned.weightKg,
                             completed: false, rpe: nil
                         )
                     }

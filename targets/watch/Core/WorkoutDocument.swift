@@ -1,14 +1,14 @@
 import Foundation
 
-/// `kinetiq.watch-workout` v1, watch to phone (issue #27). Mirrors `features/watch-bridge/domain/schemas`:
-/// `CompletedWorkout` minus everything the phone computes (duration, calories, volume, set
-/// count, estimated 1RM, records).
+/// `kinetiq.watch-workout` v2, watch to phone (issues #27 and #108). Mirrors
+/// `features/watch-bridge/domain/schemas`: `CompletedWorkout` minus everything the phone computes
+/// (duration, volume, set count, estimated 1RM, records). The phone still reads v1, the same shape.
 ///
 /// Encoded by hand so an absent value is written as `null` rather than left out, which is the
 /// shape the phone's parser documents.
 public struct WorkoutDocument: Encodable, Equatable, Sendable {
     public static let format = "kinetiq.watch-workout"
-    public static let version = 1
+    public static let version = 2
 
     public let id: String
     public let routineId: String?

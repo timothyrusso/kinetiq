@@ -19,9 +19,10 @@ public struct Bounds: Decodable, Equatable, Sendable {
 
     public struct ItemBounds: Decodable, Equatable, Sendable {
         public let sets: Range
+        public let reps: Range
         public let weightKg: Range
+        public let rpe: Range
         public let restSeconds: Range
-        public let repsLength: Int
         public let notesLength: Int
     }
 
@@ -43,9 +44,10 @@ public struct Bounds: Decodable, Equatable, Sendable {
     public static let fallback = Bounds(
         itemBounds: ItemBounds(
             sets: Range(min: 1, max: 20),
+            reps: Range(min: 1, max: 100),
             weightKg: Range(min: 0, max: 450),
+            rpe: Range(min: 0, max: 10),
             restSeconds: Range(min: 0, max: 600),
-            repsLength: 20,
             notesLength: 200
         ),
         importLimits: ImportLimits(routines: 50, itemsPerRoutine: 50, bytes: 1_000_000)

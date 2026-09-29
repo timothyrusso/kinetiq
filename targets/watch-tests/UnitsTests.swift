@@ -3,18 +3,6 @@ import XCTest
 
 /// The same answers as `features/core/utils/format.ts` on the phone.
 final class UnitsTests: XCTestCase {
-    func testRepsTargetMatchesRepsFromRange() {
-        XCTAssertEqual(Reps.target("8"), 8)
-        XCTAssertEqual(Reps.target("8-12"), 8)
-        XCTAssertEqual(Reps.target("5-8"), 5)
-        XCTAssertEqual(Reps.target("1+"), 1)
-        XCTAssertEqual(Reps.target("AMRAP"), 8)
-        XCTAssertEqual(Reps.target("0"), 8)
-        XCTAssertEqual(Reps.target("1000"), 8)
-        XCTAssertEqual(Reps.target("100"), 100)
-        XCTAssertEqual(Reps.target(""), 8)
-    }
-
     func testFormatMatchesFormatWeight() {
         XCTAssertEqual(Units.format(kilograms: 60, system: .metric), "60 kg")
         XCTAssertEqual(Units.format(kilograms: 62.5, system: .metric), "62.5 kg")
@@ -51,8 +39,8 @@ final class UnitsDisplayTests: XCTestCase {
         let now = Date(timeIntervalSince1970: 0)
         let routine = Routine(id: "r", name: "R", items: [
             RoutineItem(
-                id: "i", exerciseId: "e", exerciseName: "E", sets: 2, reps: "5",
-                weightKg: 0, restSeconds: 30, notes: nil
+                id: "i", exerciseId: "e", exerciseName: "E",
+                sets: Fixtures.sets(2, reps: 5, weightKg: 0), restSeconds: 30, notes: nil
             )
         ])
         var workout = Workout.start(routine: routine, unitSystem: .metric, id: "w", now: now)
