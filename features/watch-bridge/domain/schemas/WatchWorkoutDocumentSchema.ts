@@ -1,13 +1,13 @@
 import { Schema } from 'effect';
 import { IMPORT_LIMITS, ITEM_BOUNDS } from '@/features/watch-bridge/domain/entities/WatchBounds';
-import { WATCH_FORMAT_VERSION, WATCH_WORKOUT_FORMAT } from '@/features/watch-bridge/domain/entities/WatchFormat';
+import { WATCH_WORKOUT_FORMAT, WATCH_WORKOUT_VERSIONS } from '@/features/watch-bridge/domain/entities/WatchFormat';
 
 /** The longest title or exercise name a watch workout may carry. */
 const MAX_TITLE = 200;
 /** No set a person logs is longer than this; a longer "workout" is a clock gone wrong. */
 const MAX_DURATION_SECONDS = 24 * 60 * 60;
-const REPS = { min: 0, max: 100 };
-const RPE = { min: 0, max: 10 };
+/** A logged set may have no reps, unlike a planned one. */
+const REPS = { min: 0, max: ITEM_BOUNDS.reps.max };
 
 const within = (range: { readonly min: number; readonly max: number }) =>
   Schema.Number.pipe(Schema.finite(), Schema.between(range.min, range.max));
@@ -27,7 +27,7 @@ const WatchWorkoutSet = Schema.Struct({
   reps: wholeWithin(REPS),
   weightKg: within(ITEM_BOUNDS.weightKg),
   completed: Schema.Boolean,
-  rpe: nullable(within(RPE)),
+  rpe: nullable(within(ITEM_BOUNDS.rpe)),
 });
 
 const WatchWorkoutEntry = Schema.Struct({
@@ -39,13 +39,13 @@ const WatchWorkoutEntry = Schema.Struct({
 });
 
 /**
- * `kinetiq.watch-workout` v1, watch to phone: one finished workout, checked against the same
+ * `kinetiq.watch-workout` v2 (v1 reads the same), watch to phone: one finished workout, checked against the same
  * bounds the routine editor enforces. It is the phone's `CompletedWorkout` minus everything the
  * phone computes (duration, volume, set count, estimated 1RM, records).
  */
 export const WatchWorkoutDocumentSchema = Schema.Struct({
   format: Schema.Literal(WATCH_WORKOUT_FORMAT),
-  version: Schema.Literal(WATCH_FORMAT_VERSION),
+  version: Schema.Literal(...WATCH_WORKOUT_VERSIONS),
   // NOTE: a UUID minted on the watch. The activity id is `watch-<id>`, which makes a replay a no-op.
   id: Schema.String.pipe(Schema.pattern(/^[A-Za-z0-9-]{1,80}$/)),
   routineId: nullable(Schema.String),

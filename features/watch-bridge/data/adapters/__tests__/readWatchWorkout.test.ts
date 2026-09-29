@@ -32,9 +32,24 @@ describe('readWatchWorkout', () => {
     }
   });
 
+  it('still reads a v1 workout from a watch app not yet updated, in the envelope and in the document', () => {
+    expect(readWatchWorkout(entry(document({ version: 1 }), { version: 1 }))).toEqual({
+      ok: true,
+      document: document({ version: 1 }),
+    });
+    expect(readWatchWorkout(entry(document({ version: 1 }))).ok).toBe(true);
+    expect(readWatchWorkout(entry(document(), { version: 1 })).ok).toBe(true);
+  });
+
+  it('ignores a calories field a watch document may still carry', () => {
+    const read = readWatchWorkout(entry({ ...document(), caloriesKcal: 300 }));
+    expect(read.ok).toBe(true);
+    if (read.ok) expect(read.document).not.toHaveProperty('caloriesKcal');
+  });
+
   it('keeps an unknown version apart from bad data, in the envelope and in the document', () => {
-    expect(readWatchWorkout(entry(document(), { version: 2 }))).toEqual({ ok: false, reason: 'version' });
-    expect(readWatchWorkout(entry(document({ version: 2, entries: 'new shape' })))).toEqual({
+    expect(readWatchWorkout(entry(document(), { version: 3 }))).toEqual({ ok: false, reason: 'version' });
+    expect(readWatchWorkout(entry(document({ version: 3, entries: 'new shape' })))).toEqual({
       ok: false,
       reason: 'version',
     });
