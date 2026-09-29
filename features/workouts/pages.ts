@@ -5,6 +5,7 @@
 export { ActivityCard } from '@/features/workouts/ui/components/ActivityCard/ActivityCard';
 export { ExerciseHistorySection } from '@/features/workouts/ui/components/ExerciseHistorySection/ExerciseHistorySection';
 export { ActivityPage } from '@/features/workouts/ui/pages/ActivityPage/ActivityPage';
+export { FinishPage } from '@/features/workouts/ui/pages/FinishPage/FinishPage';
 export { RecordsPage } from '@/features/workouts/ui/pages/RecordsPage/RecordsPage';
 export { SessionPage } from '@/features/workouts/ui/pages/SessionPage/SessionPage';
 export { SetPage } from '@/features/workouts/ui/pages/SetPage/SetPage';
