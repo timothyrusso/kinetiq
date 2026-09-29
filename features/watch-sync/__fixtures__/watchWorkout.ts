@@ -9,7 +9,7 @@ export function aWatchDocument(
 ): Record<string, unknown> {
   const valid: WatchWorkoutDocument = {
     format: 'kinetiq.watch-workout',
-    version: 1,
+    version: 2,
     id: UUID,
     routineId: 'rtn_1',
     title: 'Push',
@@ -40,7 +40,7 @@ export function anInboxEntry(
   return {
     id: UUID,
     format: 'kinetiq.watch-workout',
-    version: 1,
+    version: 2,
     payload: typeof doc === 'string' ? doc : JSON.stringify(doc),
     ...overrides,
   };
