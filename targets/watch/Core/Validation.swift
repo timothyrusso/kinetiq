@@ -13,8 +13,8 @@ public enum SnapshotError: Error, Equatable, Sendable {
 public enum SnapshotValidator {
     public static func validate(_ data: Data, bounds: Bounds) -> Result<RoutinesSnapshot, SnapshotError> {
         guard data.count <= bounds.importLimits.bytes else { return .failure(.tooLarge) }
-        // Format and version first, from a minimal header, so a v2 document with a different
-        // shape reads as "unsupported version" rather than as garbage.
+        // Format and version first, from a minimal header, so a document of another version, with
+        // a different shape, reads as "unsupported version" rather than as garbage.
         guard let header = try? JSONDecoder().decode(Header.self, from: data) else {
             return .failure(.unreadable)
         }
@@ -38,13 +38,18 @@ public enum SnapshotValidator {
                 && routine.items.allSatisfy { row in
                     !row.id.isEmpty
                         && !row.exerciseId.isEmpty
-                        && item.sets.contains(Double(row.sets))
-                        && item.weightKg.contains(row.weightKg)
+                        && item.sets.contains(Double(row.sets.count))
+                        && row.sets.allSatisfy { isWithinBounds($0, item: item) }
                         && item.restSeconds.contains(Double(row.restSeconds))
-                        && row.reps.count <= item.repsLength
                         && (row.notes?.count ?? 0) <= item.notesLength
                 }
         }
+    }
+
+    static func isWithinBounds(_ set: RoutineSet, item: Bounds.ItemBounds) -> Bool {
+        item.reps.contains(Double(set.reps))
+            && item.weightKg.contains(set.weightKg)
+            && (set.targetRpe.map(item.rpe.contains) ?? true)
     }
 
     private struct Header: Decodable {

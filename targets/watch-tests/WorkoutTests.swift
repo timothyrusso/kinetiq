@@ -8,11 +8,11 @@ final class WorkoutTests: XCTestCase {
         Routine(id: "rtn_1", name: "Push", items: [
             RoutineItem(
                 id: "rit_1", exerciseId: "wger:73", exerciseName: "Bench Press",
-                sets: 3, reps: "8-10", weightKg: 60, restSeconds: 90, notes: "Pause"
+                sets: Fixtures.sets(3, reps: 8, weightKg: 60), restSeconds: 90, notes: "Pause"
             ),
             RoutineItem(
                 id: "rit_2", exerciseId: "local:dips", exerciseName: "Dips",
-                sets: 0, reps: "AMRAP", weightKg: 0, restSeconds: 0, notes: nil
+                sets: Fixtures.sets(1, reps: 12, weightKg: 0), restSeconds: 0, notes: nil
             )
         ])
     }
@@ -27,10 +27,26 @@ final class WorkoutTests: XCTestCase {
         XCTAssertEqual(workout.entries.first?.sets.count, 3)
         XCTAssertEqual(workout.entries.first?.sets.first?.reps, 8)
         XCTAssertEqual(workout.entries.first?.sets.first?.weightKg, 60)
-        XCTAssertEqual(workout.entries.last?.sets.count, 1, "max(1, sets)")
-        XCTAssertEqual(workout.entries.last?.sets.first?.reps, 8, "AMRAP reads as 8")
+        XCTAssertEqual(workout.entries.last?.sets.count, 1)
+        XCTAssertEqual(workout.entries.last?.sets.first?.reps, 12)
         XCTAssertEqual(workout.plannedSets, 4)
         XCTAssertEqual(workout.completedSets, 0)
+    }
+
+    func testStartPlansEachSetFromItsOwnRowWithNoRPE() {
+        let pyramid = [
+            RoutineSet(reps: 10, weightKg: 60, targetRpe: nil),
+            RoutineSet(reps: 8, weightKg: 65, targetRpe: 8),
+            RoutineSet(reps: 6, weightKg: 70, targetRpe: 9.5)
+        ]
+        let routine = Routine(id: "r", name: "Push", items: [
+            RoutineItem(id: "i", exerciseId: "e", exerciseName: "E", sets: pyramid, restSeconds: 90, notes: nil)
+        ])
+        let sets = Workout.start(routine: routine, unitSystem: .metric, id: "w", now: start).entries.first?.sets
+        XCTAssertEqual(sets?.map(\.index), [0, 1, 2])
+        XCTAssertEqual(sets?.map(\.reps), [10, 8, 6])
+        XCTAssertEqual(sets?.map(\.weightKg), [60, 65, 70])
+        XCTAssertEqual(sets?.map(\.rpe), [nil, nil, nil])
     }
 
     func testCompletingASetStartsItsRest() {
@@ -88,7 +104,7 @@ final class WorkoutTests: XCTestCase {
         let data = try XCTUnwrap(workout.document(endedAt: start.addingTimeInterval(1800)).json())
         let json = try XCTUnwrap(try JSONSerialization.jsonObject(with: data) as? [String: Any])
         XCTAssertEqual(json["format"] as? String, "kinetiq.watch-workout")
-        XCTAssertEqual(json["version"] as? Int, 1)
+        XCTAssertEqual(json["version"] as? Int, 2)
         XCTAssertEqual(json["id"] as? String, "0F2C-UUID")
         XCTAssertEqual(json["routineId"] as? String, "rtn_1")
         XCTAssertTrue(json["notes"] is NSNull)
@@ -99,6 +115,19 @@ final class WorkoutTests: XCTestCase {
         XCTAssertEqual(sets.first?["completed"] as? Bool, true)
         XCTAssertTrue(sets.first?["rpe"] is NSNull)
         XCTAssertTrue(entries.last?["notes"] is NSNull)
+    }
+
+    func testTheWireDocumentCarriesExactlyTheSchemaKeys() throws {
+        let data = try XCTUnwrap(workout().document(endedAt: start).json())
+        let json = try XCTUnwrap(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        XCTAssertEqual(
+            Set(json.keys),
+            ["format", "version", "id", "routineId", "title", "startedAt", "endedAt", "entries", "notes"]
+        )
+        let entry = try XCTUnwrap((json["entries"] as? [[String: Any]])?.first)
+        XCTAssertEqual(Set(entry.keys), ["exerciseId", "exerciseName", "restSeconds", "notes", "sets"])
+        let set = try XCTUnwrap((entry["sets"] as? [[String: Any]])?.first)
+        XCTAssertEqual(Set(set.keys), ["index", "reps", "weightKg", "completed", "rpe"])
     }
 
     func testResumesFromDiskExactly() {
@@ -141,11 +170,11 @@ final class WorkoutOverviewTests: XCTestCase {
         let routine = Routine(id: "r", name: "Push", items: [
             RoutineItem(
                 id: "a", exerciseId: "bench", exerciseName: "Bench",
-                sets: 3, reps: "8", weightKg: 60, restSeconds: 90, notes: nil
+                sets: Fixtures.sets(3, reps: 8, weightKg: 60), restSeconds: 90, notes: nil
             ),
             RoutineItem(
                 id: "b", exerciseId: "dips", exerciseName: "Dips",
-                sets: 2, reps: "10", weightKg: 0, restSeconds: 60, notes: nil
+                sets: Fixtures.sets(2, reps: 10, weightKg: 0), restSeconds: 60, notes: nil
             )
         ])
         return Workout.start(routine: routine, unitSystem: .metric, id: "w", now: now)
