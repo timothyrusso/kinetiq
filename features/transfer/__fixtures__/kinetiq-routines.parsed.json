@@ -7,18 +7,56 @@
         {
           "exerciseId": "wger:111",
           "exerciseName": "Squat, Back",
-          "sets": 5,
-          "reps": "5",
-          "weightKg": 142.5,
+          "sets": [
+            {
+              "reps": 5,
+              "weightKg": 130,
+              "targetRpe": null
+            },
+            {
+              "reps": 5,
+              "weightKg": 137.5,
+              "targetRpe": null
+            },
+            {
+              "reps": 5,
+              "weightKg": 142.5,
+              "targetRpe": 8
+            },
+            {
+              "reps": 5,
+              "weightKg": 142.5,
+              "targetRpe": 8
+            },
+            {
+              "reps": 3,
+              "weightKg": 142.5,
+              "targetRpe": 9
+            }
+          ],
           "restSeconds": 180,
           "notes": "Belt on top sets"
         },
         {
           "exerciseId": "local:hip-thrust",
           "exerciseName": "Hip thrust",
-          "sets": 3,
-          "reps": "10",
-          "weightKg": 60.25,
+          "sets": [
+            {
+              "reps": 10,
+              "weightKg": 60.25,
+              "targetRpe": null
+            },
+            {
+              "reps": 10,
+              "weightKg": 60.25,
+              "targetRpe": null
+            },
+            {
+              "reps": 10,
+              "weightKg": 60.25,
+              "targetRpe": null
+            }
+          ],
           "restSeconds": 90,
           "notes": null
         }
@@ -30,18 +68,51 @@
         {
           "exerciseId": "wger:73",
           "exerciseName": "Bench Press",
-          "sets": 3,
-          "reps": "8",
-          "weightKg": 60,
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 60,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 60,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 60,
+              "targetRpe": null
+            }
+          ],
           "restSeconds": 90,
           "notes": null
         },
         {
           "exerciseId": "wger:74",
           "exerciseName": "Overhead Press",
-          "sets": 4,
-          "reps": "6",
-          "weightKg": 40,
+          "sets": [
+            {
+              "reps": 6,
+              "weightKg": 40,
+              "targetRpe": null
+            },
+            {
+              "reps": 6,
+              "weightKg": 40,
+              "targetRpe": null
+            },
+            {
+              "reps": 6,
+              "weightKg": 40,
+              "targetRpe": null
+            },
+            {
+              "reps": 6,
+              "weightKg": 40,
+              "targetRpe": null
+            }
+          ],
           "restSeconds": 60,
           "notes": "Brace first"
         }

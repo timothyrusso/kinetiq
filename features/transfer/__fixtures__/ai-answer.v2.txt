@@ -1,0 +1,25 @@
+Sure! Here is a push day with a ramp on the bench:
+
+```json
+{
+  "format": "kinetiq.routines",
+  "version": 2,
+  "routines": [
+    {
+      "name": "Push",
+      "items": [
+        {"exerciseId": "wger:73", "exerciseName": "Bench Press", "restSeconds": 150, "notes": "Pause on the chest", "sets": [
+          {"reps": 10, "weightKg": 50, "targetRpe": null},
+          {"reps": 8, "weightKg": 61.3, "targetRpe": 7},
+          {"reps": "6-8", "weightKg": 70, "targetRpe": 8.6},
+          {"reps": 250, "weightKg": 999, "targetRpe": 14},
+          {"weightKg": 40},
+          "not a set"
+        ]},
+        {"exerciseName": "Dips", "restSeconds": 90, "sets": [{"reps": 12, "weightKg": 0, "targetRpe": null}]},
+        {"exerciseName": "Push-up", "sets": []}
+      ]
+    }
+  ]
+}
+```

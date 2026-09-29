@@ -13,9 +13,10 @@ export interface ImportRules {
   readonly limits: { readonly bytes: number; readonly routines: number; readonly itemsPerRoutine: number };
   readonly bounds: {
     readonly sets: Bounds;
+    readonly reps: Bounds;
     readonly weightKg: Bounds;
+    readonly targetRpe: Bounds;
     readonly restSeconds: Bounds;
-    readonly repsLength: number;
     readonly notesLength: number;
   };
   /** A `wger:` or a `local:` id, as the app stores them. */

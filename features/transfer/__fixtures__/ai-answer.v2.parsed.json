@@ -1,0 +1,95 @@
+{
+  "ok": true,
+  "routines": [
+    {
+      "name": "Push",
+      "items": [
+        {
+          "exerciseId": "wger:73",
+          "exerciseName": "Bench Press",
+          "sets": [
+            {
+              "reps": 10,
+              "weightKg": 50,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 61.25,
+              "targetRpe": 7
+            },
+            {
+              "reps": 6,
+              "weightKg": 70,
+              "targetRpe": 9
+            },
+            {
+              "reps": 100,
+              "weightKg": 450,
+              "targetRpe": 10
+            },
+            {
+              "reps": 8,
+              "weightKg": 40,
+              "targetRpe": null
+            }
+          ],
+          "restSeconds": 150,
+          "notes": "Pause on the chest"
+        },
+        {
+          "exerciseId": null,
+          "exerciseName": "Dips",
+          "sets": [
+            {
+              "reps": 12,
+              "weightKg": 0,
+              "targetRpe": null
+            }
+          ],
+          "restSeconds": 90,
+          "notes": null
+        },
+        {
+          "exerciseId": null,
+          "exerciseName": "Push-up",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 0,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 0,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 0,
+              "targetRpe": null
+            }
+          ],
+          "restSeconds": null,
+          "notes": null
+        }
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "key": "dataTransfer.issueDefaults",
+      "vars": {
+        "routine": 1,
+        "item": 1
+      }
+    },
+    {
+      "key": "dataTransfer.issueDefaults",
+      "vars": {
+        "routine": 1,
+        "item": 3
+      }
+    }
+  ]
+}

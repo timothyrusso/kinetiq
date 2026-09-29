@@ -1,6 +1,11 @@
 import { clamp } from '@/features/core/utils';
 import type { ImportRules } from '@/features/transfer/domain/entities/ImportRules';
-import type { ParsedItem, ParsedRoutine, ParseIssue } from '@/features/transfer/domain/entities/ParsedImport';
+import type {
+  ParsedItem,
+  ParsedRoutine,
+  ParsedSet,
+  ParseIssue,
+} from '@/features/transfer/domain/entities/ParsedImport';
 
 /** A routines file read: the routines and what changed on the way in, or why there are none. */
 export type ParseResult =
@@ -55,16 +60,59 @@ function exerciseIdOf(item: Json, rules: ImportRules): string | null {
   return rules.isExerciseId(id) ? id : null;
 }
 
-/** Reps as the editor stores them: digits and one hyphen. AIs like en and em dashes, and "x". */
-function repsOf(value: unknown, rules: ImportRules): string | null {
-  const raw = typeof value === 'number' ? String(Math.round(value)) : text(value);
+/** A v1 rep text: digits and one hyphen. AIs like en and em dashes, and "x". */
+function repsTextOf(value: unknown): string | null {
+  const raw = text(value);
   if (raw === null) return null;
   const cleaned = raw.replace(/[\u2013\u2014]/g, '-').replace(/\s+/g, '');
-  return /^\d{1,3}(-\d{1,3})?$/.test(cleaned) ? cleaned.slice(0, rules.bounds.repsLength) : null;
+  return /^\d{1,3}(-\d{1,3})?$/.test(cleaned) ? cleaned : null;
 }
 
 function bounded(value: number | null, bounds: { min: number; max: number }): number | null {
   return value === null ? null : clamp(Math.round(value), bounds.min, bounds.max);
+}
+
+/** A rep target: a number, or the number a range starts with (`8-12` is 8), clamped. */
+function repsOf(value: unknown, rules: ImportRules): number | null {
+  const range = repsTextOf(value);
+  return bounded(number(value) ?? (range === null ? null : Number.parseInt(range, 10)), rules.bounds.reps);
+}
+
+/** Rounded to a quarter kilo, the editor's finest step, and clamped; missing is bodyweight. */
+function weightOf(value: unknown, rules: ImportRules): number {
+  const { min, max } = rules.bounds.weightKg;
+  return clamp(Math.round((number(value) ?? 0) * 4) / 4, min, max);
+}
+
+/** What an item without a usable count or rep target gets: the editor's defaults. */
+const DEFAULT_SET_COUNT = 3;
+const DEFAULT_REPS = 8;
+
+/**
+ * An item's planned sets, and whether a default filled a gap. A v2 item lists them as rows
+ * (`sets: [{ reps, weightKg, targetRpe }]`), cut to the most sets an item holds. A v1 item gives a
+ * count, one rep text and one weight: it becomes that many identical sets on the number the reps
+ * start with, with no target RPE. The shape decides, not `version`: an AI often keeps the number
+ * of the example it was shown.
+ */
+function plannedSets(item: Json, rules: ImportRules): { sets: ParsedSet[]; defaulted: boolean } {
+  const rows = Array.isArray(item.sets) ? item.sets.filter(isObject).slice(0, rules.bounds.sets.max) : [];
+  if (rows.length > 0) {
+    const reps = rows.map(row => repsOf(row.reps, rules));
+    const sets = rows.map((row, index) => ({
+      reps: reps[index] ?? DEFAULT_REPS,
+      weightKg: weightOf(row.weightKg, rules),
+      targetRpe: bounded(number(row.targetRpe), rules.bounds.targetRpe),
+    }));
+    return { sets, defaulted: reps.includes(null) };
+  }
+  const count = bounded(number(item.sets), rules.bounds.sets);
+  const reps = repsOf(item.reps, rules);
+  const set: ParsedSet = { reps: reps ?? DEFAULT_REPS, weightKg: weightOf(item.weightKg, rules), targetRpe: null };
+  return {
+    sets: Array.from({ length: count ?? DEFAULT_SET_COUNT }, () => set),
+    defaulted: count === null || reps === null,
+  };
 }
 
 function parseItem(
@@ -86,17 +134,13 @@ function parseItem(
     return null;
   }
 
-  const sets = bounded(number(raw.sets), rules.bounds.sets);
-  const reps = repsOf(raw.reps, rules);
-  if (sets === null || reps === null) issues.push({ key: 'dataTransfer.issueDefaults', vars: where });
-  const weightKg = number(raw.weightKg) ?? 0;
+  const { sets, defaulted } = plannedSets(raw, rules);
+  if (defaulted) issues.push({ key: 'dataTransfer.issueDefaults', vars: where });
 
   return {
     exerciseId,
     exerciseName: exerciseName ?? '',
-    sets: sets ?? 3,
-    reps: reps ?? '8-12',
-    weightKg: clamp(Math.round(weightKg * 4) / 4, rules.bounds.weightKg.min, rules.bounds.weightKg.max),
+    sets,
     restSeconds: bounded(number(raw.restSeconds), rules.bounds.restSeconds),
     notes: text(raw.notes)?.slice(0, rules.bounds.notesLength) ?? null,
   };
@@ -107,10 +151,10 @@ function parseItem(
  *
  * Strict about meaning, lenient about wrapping. An AI asked for JSON often wraps it in a code
  * fence or a sentence, so the text between the first `{` or `[` and the last `}` or `]` is what
- * gets parsed; the document may be the full file, a bare array of routines, or one routine. What
- * is not guessed is a value: a missing `sets` gets the editor's default and is reported, an
- * out-of-range one is clamped to the editor's bounds, and an item with neither an exercise id
- * nor a name is dropped and reported.
+ * gets parsed; the document may be the full file, a bare array of routines, or one routine, in
+ * v2 or in v1 (`plannedSets`). What is not guessed is a value: a missing `sets` gets the editor's
+ * default and is reported, an out-of-range one is clamped to the editor's bounds, and an item
+ * with neither an exercise id nor a name is dropped and reported.
  *
  * The app's own AI instructions are refused before any of that (`AI_PROMPT_SIGNATURE`): they
  * hold an example routine that would otherwise read as one to import.

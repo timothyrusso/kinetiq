@@ -17,13 +17,19 @@ export interface ParseIssue {
   readonly vars?: Readonly<Record<string, number>>;
 }
 
+/** One planned set as the file gave it, clamped to the editor's bounds. */
+export interface ParsedSet {
+  readonly reps: number;
+  readonly weightKg: number;
+  readonly targetRpe: number | null;
+}
+
 /** One routine item as the file gave it, clamped to the editor's bounds. */
 export interface ParsedItem {
   readonly exerciseId: string | null;
   readonly exerciseName: string;
-  readonly sets: number;
-  readonly reps: string;
-  readonly weightKg: number;
+  /** In the order they are performed; never empty. */
+  readonly sets: readonly ParsedSet[];
   /** Null means "use the user's default rest", decided at import time. */
   readonly restSeconds: number | null;
   readonly notes: string | null;
