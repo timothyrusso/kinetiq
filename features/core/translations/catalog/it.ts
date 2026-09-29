@@ -341,7 +341,8 @@ export const it: Copy = {
     running: 'In corso',
     paused: 'In pausa',
     finishA11y: 'Completa e salva questo allenamento',
-    awayNotice: "Via per {time}. L'orologio conta solo mentre l'app è aperta, e il recupero è ripreso da dove era.",
+    awayNotice:
+      "Via per {time}. Il tempo dell'allenamento ha continuato a scorrere mentre eri via, e anche l'eventuale recupero.",
     exercises: 'Esercizi',
     emptyTitle: 'Nessun esercizio in questo allenamento',
     emptyMessage: 'Aggiungi un esercizio dalla libreria e viene salvato subito sul dispositivo.',

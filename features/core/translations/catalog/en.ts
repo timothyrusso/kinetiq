@@ -333,7 +333,7 @@ export const en = {
     running: 'Running',
     paused: 'Paused',
     finishA11y: 'Finish and save this workout',
-    awayNotice: 'Away for {time}. The clock only counts while the app is open, and rest resumed from where it was.',
+    awayNotice: 'Away for {time}. The workout clock kept counting while you were away, and so did any rest.',
     exercises: 'Exercises',
     emptyTitle: 'No exercises in this workout',
     emptyMessage: 'Add one from the library and it is stored on the device straight away.',
