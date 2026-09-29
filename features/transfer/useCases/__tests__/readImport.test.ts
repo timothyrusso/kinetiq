@@ -21,12 +21,51 @@ describe('readImport', () => {
   );
 
   itEffect(
-    "reads an AI's answer in a code fence, clamping, defaulting and reporting as the app always has",
+    'reads a v1 export from before per-set routines, each item as its count of identical sets',
+    Effect.gen(function* () {
+      const read = yield* readImport('clipboard');
+
+      expect(read?.issues).toEqual([]);
+      expect(read?.routines.flatMap(routine => routine.items.map(item => [item.exerciseName, item.sets]))).toEqual([
+        ['Squat, Back', Array(5).fill({ reps: 5, weightKg: 142.5, targetRpe: null })],
+        ['Hip thrust', Array(3).fill({ reps: 10, weightKg: 60.25, targetRpe: null })],
+        ['Bench Press', Array(3).fill({ reps: 8, weightKg: 60, targetRpe: null })],
+        ['Overhead Press', Array(4).fill({ reps: 6, weightKg: 40, targetRpe: null })],
+      ]);
+    }),
+    TransferDeviceFake({ clipboard: fixture('kinetiq-routines.v1.json') }),
+  );
+
+  itEffect(
+    "reads an AI's v2 answer row by row, clamping, defaulting and reporting",
+    Effect.gen(function* () {
+      expect(yield* readImport('clipboard')).toEqual(parsedFixture('ai-answer.v2.parsed.json'));
+    }),
+    TransferDeviceFake({ clipboard: fixture('ai-answer.v2.txt') }),
+  );
+
+  itEffect(
+    "reads an AI's v1 answer in a code fence, clamping, defaulting and reporting as the app always has",
     Effect.gen(function* () {
       expect(yield* readImport('clipboard')).toEqual(parsedFixture('ai-answer.parsed.json'));
     }),
     TransferDeviceFake({ clipboard: fixture('ai-answer.txt') }),
   );
+
+  for (const file of ['kinetiq-workouts.json', 'kinetiq-workouts.v1.json']) {
+    itEffect(
+      `refuses a workout history file (${file}) as holding no routines, as the app always has`,
+      Effect.gen(function* () {
+        const result = yield* Effect.either(readImport('clipboard'));
+
+        expect(result._tag === 'Left' && result.left).toMatchObject({
+          _tag: 'ImportUnreadable',
+          issue: { key: 'dataTransfer.errorNoRoutines' },
+        });
+      }),
+      TransferDeviceFake({ clipboard: fixture(file) }),
+    );
+  }
 
   itEffect(
     'reads a picked file the same way as the clipboard',
@@ -121,6 +160,21 @@ describe('readImport', () => {
         });
       }),
       TransferDeviceFake({ clipboard: prompt }),
+    );
+
+    itEffect(
+      `reads the example in the ${language} AI instructions as a v2 routine, one row per set`,
+      Effect.gen(function* () {
+        const read = yield* readImport('clipboard');
+
+        expect(read?.issues).toEqual([]);
+        expect(read?.routines[0]?.items[0]?.sets).toEqual([
+          { reps: 10, weightKg: 50, targetRpe: null },
+          { reps: 8, weightKg: 60, targetRpe: 7 },
+          { reps: 8, weightKg: 60, targetRpe: 8 },
+        ]);
+      }),
+      TransferDeviceFake({ clipboard: prompt.slice(prompt.indexOf('{'), prompt.indexOf('\n\n', prompt.indexOf('{'))) }),
     );
   }
 
