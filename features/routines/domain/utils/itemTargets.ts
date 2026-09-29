@@ -18,9 +18,19 @@ export function resizeSets(sets: readonly RoutineSet[], count: number): RoutineS
   return Array.from({ length: target }, (_, index) => ({ ...(sets[index] ?? last), index }));
 }
 
-/** Every set of `sets` with `patch` applied. */
-export function withEverySet(sets: readonly RoutineSet[], patch: Partial<Omit<RoutineSet, 'index'>>): RoutineSet[] {
-  return sets.map(set => ({ ...set, ...patch }));
+/** `sets` with `patch` applied to the set at `index` only. */
+export function withSet(
+  sets: readonly RoutineSet[],
+  index: number,
+  patch: Partial<Omit<RoutineSet, 'index'>>,
+): RoutineSet[] {
+  return sets.map(set => (set.index === index ? { ...set, ...patch } : set));
+}
+
+/** `sets` without the set at `index`, renumbered from 0; the last set stays. */
+export function removeSet(sets: readonly RoutineSet[], index: number): RoutineSet[] {
+  if (sets.length <= 1) return [...sets];
+  return sets.filter(set => set.index !== index).map((set, at) => (set.index === at ? set : { ...set, index: at }));
 }
 
 /**
