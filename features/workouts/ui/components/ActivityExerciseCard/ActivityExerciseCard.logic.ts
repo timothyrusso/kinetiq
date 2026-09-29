@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import type { PressableStateCallbackType, StyleProp, ViewStyle } from 'react-native';
 import { type MetaItem, type Tag, useStyles } from '@/features/core/design-system';
 import { type TKey, useT } from '@/features/core/translations';
-import { formatWeight, joinMiddleDot, type UnitSystem } from '@/features/core/utils';
+import { formatWeight, joinMiddleDot, trimNumber, type UnitSystem } from '@/features/core/utils';
 import type { StrengthEntry, StrengthSet } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 import { estimatedOneRepMax } from '@/features/workouts/domain/utils/workoutMath';
 import { createStyles } from '@/features/workouts/ui/components/ActivityExerciseCard/ActivityExerciseCard.style';
@@ -33,6 +33,14 @@ function oneRepMaxLabel(set: StrengthSet, units: UnitSystem): string {
   if (!set.completed) return '-';
   const max = set.estimated1rm ?? estimatedOneRepMax(set.weightKg, set.reps);
   return max === null ? '-' : formatWeight(max, units);
+}
+
+/**
+ * The effort noted on a completed set, or `null`: the set sheet stores 0 as null, and a set not
+ * done carries only the routine's target, which is not what was felt.
+ */
+function notedRpe(set: StrengthSet): number | null {
+  return set.completed && set.rpe !== null && set.rpe > 0 ? set.rpe : null;
 }
 
 /** One exercise's badge, facts and set rows, and the press that opens the exercise. */
@@ -69,23 +77,30 @@ export function useActivityExerciseCardLogic(
   );
   const sets = useMemo(
     () =>
-      entry.sets.map((set, index) => ({
-        key: `${set.index}-${index}`,
-        number: index + 1,
-        completed: set.completed,
-        weight: set.weightKg === 0 ? t('activity.bodyweightShort') : formatWeight(set.weightKg, units),
-        reps: set.reps,
-        oneRepMax: oneRepMaxLabel(set, units),
-        accessibilityLabel: set.completed
-          ? joinMiddleDot([
-              t('activity.setNumber', { n: index + 1 }),
-              set.weightKg === 0 ? t('activity.bodyweight') : formatWeight(set.weightKg, units),
-              `${set.reps} ${t('activity.repWord', { count: set.reps })}`,
-            ])
-          : t('activity.setNotDone', { n: index + 1 }),
-      })),
+      entry.sets.map((set, index) => {
+        const noted = notedRpe(set);
+        const rpe = noted === null ? '' : trimNumber(noted, 1);
+        return {
+          key: `${set.index}-${index}`,
+          number: index + 1,
+          completed: set.completed,
+          weight: set.weightKg === 0 ? t('activity.bodyweightShort') : formatWeight(set.weightKg, units),
+          reps: set.reps,
+          rpe,
+          oneRepMax: oneRepMaxLabel(set, units),
+          accessibilityLabel: set.completed
+            ? joinMiddleDot([
+                t('activity.setNumber', { n: index + 1 }),
+                set.weightKg === 0 ? t('activity.bodyweight') : formatWeight(set.weightKg, units),
+                `${set.reps} ${t('activity.repWord', { count: set.reps })}`,
+                ...(rpe === '' ? [] : [t('activity.rpeValue', { value: rpe })]),
+              ])
+            : t('activity.setNotDone', { n: index + 1 }),
+        };
+      }),
     [entry.sets, t, units],
   );
+  const hasRpe = useMemo(() => entry.sets.some(set => notedRpe(set) !== null), [entry.sets]);
   const badge = useMemo(
     () =>
       done === 0
@@ -102,7 +117,7 @@ export function useActivityExerciseCardLogic(
   const open = useCallback(() => onOpen(entry.exerciseId), [onOpen, entry.exerciseId]);
   const weightColumn: TKey = units === 'metric' ? 'activity.colKg' : 'activity.colLb';
   return {
-    derived: { meta, tags, sets, badge, headStyle, weightColumn, hasSets: planned > 0 },
+    derived: { meta, tags, sets, badge, headStyle, weightColumn, hasSets: planned > 0, hasRpe },
     effects: { open },
   };
 }
