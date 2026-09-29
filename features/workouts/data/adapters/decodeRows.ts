@@ -25,6 +25,7 @@ const StoredSetSchema = Schema.Struct({
   completed: Schema.optionalWith(Schema.Boolean, { default: () => false }),
   estimated1rm: orNull(Schema.Number),
   rpe: orNull(Schema.Number),
+  routineSetIndex: Schema.optional(Schema.Number),
 });
 
 /**
@@ -38,6 +39,7 @@ const StoredEntrySchema = Schema.Struct({
   sets: Schema.Array(StoredSetSchema),
   notes: orNull(Schema.String),
   restSeconds: Schema.optionalWith(Schema.Number, { default: () => STORED_REST_SECONDS }),
+  routineItemId: Schema.optional(Schema.String),
 });
 
 const parseColumn = Schema.decodeUnknownOption(Schema.parseJson(Schema.Array(Schema.Unknown)));
@@ -51,7 +53,11 @@ const decodeEntry = Schema.decodeUnknownOption(StoredEntrySchema);
  */
 export function entriesFromColumn(raw: string | null): readonly StrengthEntry[] {
   if (raw === null || raw.length === 0) return [];
-  const stored = Option.getOrElse(parseColumn(raw), (): readonly unknown[] => []);
+  return entriesFromList(Option.getOrElse(parseColumn(raw), (): readonly unknown[] => []));
+}
+
+/** A stored list as its entries, by the same rules as `entriesFromColumn`. */
+export function entriesFromList(stored: readonly unknown[]): readonly StrengthEntry[] {
   return stored.flatMap(entry => Option.toArray(decodeEntry(entry)));
 }
 

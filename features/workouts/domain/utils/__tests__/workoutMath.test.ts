@@ -80,4 +80,13 @@ describe('toCompletedWorkout', () => {
       totalSets: 2,
     });
   });
+
+  it('records the entries without the routine item and rows they were planned from', () => {
+    const planned = anEntry({ routineItemId: 'rit_bench', sets: [aSet({ routineSetIndex: 0 })] });
+
+    const workout = toCompletedWorkout(aSession({ entries: [planned], routineItemIds: ['rit_bench'] }), 5_000);
+
+    expect(workout.entries).toEqual([anEntry({ sets: [aSet()] })]);
+    expect(JSON.stringify(workout.entries)).not.toContain('routine');
+  });
 });

@@ -44,6 +44,22 @@ describe('entryFromPlanItem', () => {
     ]);
   });
 
+  it('marks an entry from a routine item with the item, and each set with the row it opens from', () => {
+    const entry = entryFromPlanItem(aPlanItem({ itemId: 'rit_bench', sets: plannedSets(2, 8, 60) }));
+
+    expect(entry.routineItemId).toBe('rit_bench');
+    expect(entry.sets.map(set => set.routineSetIndex)).toEqual([0, 1]);
+  });
+
+  it('marks nothing on an entry that is not a routine item, nor on the fallback set', () => {
+    const added = entryFromPlanItem(aPlanItem());
+    const empty = entryFromPlanItem(aPlanItem({ itemId: 'rit_bench', sets: [] }));
+
+    expect(added).not.toHaveProperty('routineItemId');
+    expect(added.sets.every(set => !('routineSetIndex' in set))).toBe(true);
+    expect(empty.sets[0]).not.toHaveProperty('routineSetIndex');
+  });
+
   it('keeps a plan of twenty sets as twenty sets', () => {
     expect(entryFromPlanItem(aPlanItem({ sets: plannedSets(20, 5, 100) })).sets).toHaveLength(20);
   });
@@ -65,6 +81,21 @@ describe('sessionFromPlan', () => {
       restEndsAt: null,
     });
     expect(session.entries.map(entry => entry.exerciseName)).toEqual(['Bench Press', 'Overhead Press']);
+  });
+
+  it('keeps the routine items a routine plan starts with', () => {
+    const plan = aPlan({
+      items: [aPlanItem({ itemId: 'rit_bench' }), aPlanItem({ itemId: 'rit_press', exerciseId: 'wger:74' })],
+    });
+
+    expect(sessionFromPlan(plan, NOW).routineItemIds).toEqual(['rit_bench', 'rit_press']);
+  });
+
+  it('keeps no routine items for a plan from no routine, or one whose items do not name themselves', () => {
+    expect(sessionFromPlan(aPlan({ routineId: null, items: [aPlanItem({ itemId: 'x' })] }), NOW)).not.toHaveProperty(
+      'routineItemIds',
+    );
+    expect(sessionFromPlan(aPlan(), NOW)).not.toHaveProperty('routineItemIds');
   });
 
   it('starts an empty workout with no entries', () => {

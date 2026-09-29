@@ -1,7 +1,7 @@
 import { Effect, Layer, TestClock } from 'effect';
 import { SqliteClient } from '@/features/core/sqlite';
 import { itEffect, makeMigratedSqliteLayer } from '@/features/core/testing';
-import { aSession, WORKOUT_TIME } from '@/features/workouts/__fixtures__/builders';
+import { anEntry, aSession, aSet, WORKOUT_TIME } from '@/features/workouts/__fixtures__/builders';
 import { SessionRepositoryLive } from '@/features/workouts/data/repositories/sessionRepositoryLive';
 import { SessionRepository } from '@/features/workouts/domain/repositories/SessionRepository';
 import { ActivityId } from '@/features/workouts/domain/schemas/ActivityId';
@@ -27,6 +27,35 @@ describe('SessionRepositoryLive', () => {
       expect(yield* repository.byId(ID)).toEqual(
         aSession({ restEndsAt: WORKOUT_TIME + 90_000, restDurationSeconds: 90, notes: 'Heavy day' }),
       );
+    }),
+    layer(),
+  );
+
+  itEffect(
+    'reads back the routine items a session started with, and the item and row of each entry and set',
+    Effect.gen(function* () {
+      const repository = yield* SessionRepository;
+      const fromRoutine = aSession({
+        routineItemIds: ['rit_bench', 'rit_gone'],
+        entries: [anEntry({ routineItemId: 'rit_bench', sets: [aSet({ routineSetIndex: 0 }), aSet({ index: 1 })] })],
+      });
+
+      yield* repository.save(fromRoutine);
+
+      expect(yield* repository.byId(ID)).toEqual(fromRoutine);
+    }),
+    layer(),
+  );
+
+  itEffect(
+    'stores a session not from a routine as the plain list of its entries, as before',
+    Effect.gen(function* () {
+      yield* (yield* SessionRepository).save(aSession({ routineId: null }));
+
+      const [row] = yield* Effect.flatMap(SqliteClient, db =>
+        Effect.promise(() => db.getAllAsync<{ entries_json: string }>('SELECT entries_json FROM sessions')),
+      );
+      expect(JSON.parse(row?.entries_json ?? 'null')).toEqual(aSession().entries);
     }),
     layer(),
   );
