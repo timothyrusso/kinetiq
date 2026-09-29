@@ -1,29 +1,26 @@
 import type { Exercise, ExerciseSnapshot } from '@/features/exercises';
 import { RoutineId } from '@/features/routines/domain/schemas/RoutineId';
 import type { Routine, RoutineItem } from '@/features/routines/domain/schemas/RoutineSchema';
+import { uniformSets } from '@/features/routines/domain/utils/itemTargets';
 
-/** One item of a push day: bench press, three sets of eight to twelve at 60 kg. */
+/** One item of a push day: bench press, three sets of eight at 60 kg. */
 export const aRoutineItem = (overrides: Partial<RoutineItem> = {}): RoutineItem => ({
   id: 'rit_bench',
   exerciseId: 'wger:73',
   exerciseName: 'Bench Press',
-  sets: 3,
-  reps: '8-12',
-  weightKg: 60,
+  sets: uniformSets(3, 8, 60),
   restSeconds: 90,
   notes: null,
   ...overrides,
 });
 
-/** A second item: overhead press, bodyweight rest of 60 s. */
+/** A second item: overhead press, four sets of six at 40 kg, resting 60 s. */
 export const anotherRoutineItem = (overrides: Partial<RoutineItem> = {}): RoutineItem =>
   aRoutineItem({
     id: 'rit_press',
     exerciseId: 'wger:74',
     exerciseName: 'Overhead Press',
-    sets: 4,
-    reps: '6',
-    weightKg: 40,
+    sets: uniformSets(4, 6, 40),
     restSeconds: 60,
     notes: 'Brace first',
     ...overrides,

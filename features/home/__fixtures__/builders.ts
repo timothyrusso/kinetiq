@@ -26,14 +26,12 @@ export const anExercise = (overrides: Partial<Exercise> = {}): Exercise => ({
 export const aSquat = (): Exercise =>
   anExercise({ id: 'wger:13', name: 'Squat', category: 'Legs', primaryMuscles: ['Quads'], externalId: 13 });
 
-/** One routine item: bench press, three sets of eight to twelve at 60 kg, resting 90 s. */
+/** One routine item: bench press, three sets of eight at 60 kg, resting 90 s. */
 export const aRoutineItem = (overrides: Partial<RoutineItem> = {}): RoutineItem => ({
   id: 'rit_bench',
   exerciseId: 'wger:73',
   exerciseName: 'Bench Press',
-  sets: 3,
-  reps: '8-12',
-  weightKg: 60,
+  sets: [0, 1, 2].map(index => ({ index, reps: 8, weightKg: 60, targetRpe: null })),
   restSeconds: 90,
   notes: null,
   ...overrides,
@@ -61,9 +59,7 @@ export const aPlan = (overrides: Partial<SessionPlan> = {}): SessionPlan => ({
     {
       exerciseId: 'wger:73',
       exerciseName: 'Bench Press',
-      sets: 3,
-      reps: '8-12',
-      weightKg: 60,
+      sets: [0, 1, 2].map(() => ({ reps: 8, weightKg: 60, targetRpe: null })),
       restSeconds: 90,
       notes: null,
     },
@@ -79,7 +75,6 @@ export const aCompletedWorkout = (overrides: Partial<CompletedWorkout> = {}): Co
   startedAt: WORKOUT_TIME,
   endedAt: WORKOUT_TIME + 2_700_000,
   durationSeconds: 2700,
-  caloriesKcal: 278,
   entries: [anEntry()],
   totalVolumeKg: 500,
   totalSets: 1,

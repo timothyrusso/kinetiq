@@ -1,7 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { exerciseTags, type Tag } from '@/features/core/design-system';
 import {
-  repsFromRange,
   type UnitSystem,
   weightDisplayValue,
   weightFromDisplayValue,
@@ -11,12 +10,14 @@ import {
 import type { ExerciseSnapshot } from '@/features/exercises';
 import type { ItemTarget } from '@/features/routines/domain/entities/ItemTarget';
 import type { RoutineItem } from '@/features/routines/domain/schemas/RoutineSchema';
+import { resizeSets, withEverySet } from '@/features/routines/domain/utils/itemTargets';
 import { itemMeta } from '@/features/routines/mappers/itemMeta';
 
 /**
  * One item's targets in the user's unit. Weight is converted exactly once, on the way out in the
  * change that writes: converting on the way in as well is how a field reads 135 while the stepper
- * steps kilograms.
+ * steps kilograms. The steppers show the first set and write every set: a set added copies the
+ * last one, and reps or weight change on all of them.
  */
 export function useItemEditorFormLogic(
   item: RoutineItem,
@@ -34,11 +35,12 @@ export function useItemEditorFormLogic(
     [snapshot],
   );
 
-  const setSets = useCallback((sets: number) => onChange({ sets }), [onChange]);
-  const setReps = useCallback((reps: number) => onChange({ reps: String(reps) }), [onChange]);
+  const { sets } = item;
+  const setSets = useCallback((count: number) => onChange({ sets: resizeSets(sets, count) }), [onChange, sets]);
+  const setReps = useCallback((reps: number) => onChange({ sets: withEverySet(sets, { reps }) }), [onChange, sets]);
   const setWeight = useCallback(
-    (shown: number) => onChange({ weightKg: weightFromDisplayValue(shown, units) }),
-    [onChange, units],
+    (shown: number) => onChange({ sets: withEverySet(sets, { weightKg: weightFromDisplayValue(shown, units) }) }),
+    [onChange, sets, units],
   );
   const setRest = useCallback((restSeconds: number) => onChange({ restSeconds }), [onChange]);
   const setNotes = useCallback((notes: string | null) => onChange({ notes }), [onChange]);
@@ -47,8 +49,9 @@ export function useItemEditorFormLogic(
     derived: {
       meta,
       libraryTags,
-      reps: repsFromRange(item.reps),
-      weight: weightDisplayValue(item.weightKg, units, step),
+      setCount: sets.length,
+      reps: sets[0]?.reps ?? 8,
+      weight: weightDisplayValue(sets[0]?.weightKg ?? 0, units, step),
       weightStep: step,
       weightMax: units === 'imperial' ? 1000 : 450,
       unit: weightUnit(units),

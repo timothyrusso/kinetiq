@@ -19,7 +19,7 @@
           "exerciseId": "local:hip-thrust",
           "exerciseName": "Hip thrust",
           "sets": 3,
-          "reps": "10-12",
+          "reps": "10",
           "weightKg": 60.25,
           "restSeconds": 90,
           "notes": null
@@ -33,7 +33,7 @@
           "exerciseId": "wger:73",
           "exerciseName": "Bench Press",
           "sets": 3,
-          "reps": "8-12",
+          "reps": "8",
           "weightKg": 60,
           "restSeconds": 90,
           "notes": null

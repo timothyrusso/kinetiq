@@ -1,5 +1,5 @@
 import type { Exercise, ExerciseSnapshot } from '@/features/exercises';
-import type { Routine, RoutineItem } from '@/features/routines';
+import type { Routine, RoutineItem, RoutineSet } from '@/features/routines';
 import { RoutineId } from '@/features/routines';
 import type { Activity, StrengthEntry } from '@/features/workouts';
 import { ActivityId } from '@/features/workouts';
@@ -28,7 +28,6 @@ const anActivity = (overrides: Partial<Activity> = {}): Activity => ({
   title: 'Push Day',
   startedAt: Date.UTC(2026, 8, 22, 17, 30, 0),
   durationSeconds: 2700,
-  caloriesKcal: 278,
   notes: null,
   sourceSessionId: 'session-mfv2k1a0',
   strength: { entries: [aBenchEntry()], totalVolumeKg: 500, totalSets: 1, personalRecords: [] },
@@ -46,7 +45,6 @@ export const someActivities = (): Activity[] => [
     title: 'Legs, "heavy"',
     startedAt: Date.UTC(2026, 8, 23, 6, 15, 0),
     durationSeconds: 3120,
-    caloriesKcal: 321,
     notes: 'Knees felt good\nDeload next week',
     sourceSessionId: null,
     strength: {
@@ -80,20 +78,21 @@ export const someActivities = (): Activity[] => [
     title: 'Damaged',
     startedAt: Date.UTC(2026, 8, 24, 20, 0, 0),
     durationSeconds: 60,
-    caloriesKcal: 6,
     sourceSessionId: 'session-mfx0zz99',
     strength: null,
   }),
 ];
 
-/** One item: bench press, three sets of eight to twelve at 60 kg, resting 90 s. */
+/** `count` sets of `reps` at `weightKg`, with no target RPE. */
+const setsOf = (count: number, reps: number, weightKg: number): RoutineSet[] =>
+  Array.from({ length: count }, (_, index) => ({ index, reps, weightKg, targetRpe: null }));
+
+/** One item: bench press, three sets of eight at 60 kg, resting 90 s. */
 const anItem = (overrides: Partial<RoutineItem> = {}): RoutineItem => ({
   id: 'rit_bench',
   exerciseId: 'wger:73',
   exerciseName: 'Bench Press',
-  sets: 3,
-  reps: '8-12',
-  weightKg: 60,
+  sets: setsOf(3, 8, 60),
   restSeconds: 90,
   notes: null,
   ...overrides,
@@ -109,9 +108,7 @@ const aRoutine = (overrides: Partial<Routine> = {}): Routine => ({
       id: 'rit_press',
       exerciseId: 'wger:74',
       exerciseName: 'Overhead Press',
-      sets: 4,
-      reps: '6',
-      weightKg: 40,
+      sets: setsOf(4, 6, 40),
       restSeconds: 60,
       notes: 'Brace first',
     }),
@@ -133,9 +130,7 @@ export const someRoutines = (): Routine[] => [
         id: 'rit_squat',
         exerciseId: 'wger:111',
         exerciseName: 'Squat, Back',
-        sets: 5,
-        reps: '5',
-        weightKg: 142.5,
+        sets: setsOf(5, 5, 142.5),
         restSeconds: 180,
         notes: 'Belt on top sets',
       }),
@@ -143,9 +138,7 @@ export const someRoutines = (): Routine[] => [
         id: 'rit_thrust',
         exerciseId: 'local:hip-thrust',
         exerciseName: 'Hip thrust',
-        sets: 3,
-        reps: '10-12',
-        weightKg: 60.25,
+        sets: setsOf(3, 10, 60.25),
         restSeconds: 90,
       }),
     ],

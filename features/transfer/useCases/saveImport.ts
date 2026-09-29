@@ -1,5 +1,5 @@
 import { Effect } from 'effect';
-import { localId } from '@/features/core/utils';
+import { localId, repsFromRange } from '@/features/core/utils';
 import { type ExerciseSnapshot, ExerciseSnapshotRepository } from '@/features/exercises';
 import { type RoutineItem, RoutineRepository } from '@/features/routines';
 import type { ResolvedRoutine } from '@/features/transfer/domain/entities/ResolvedImport';
@@ -9,8 +9,9 @@ import type { ResolvedRoutine } from '@/features/transfer/domain/entities/Resolv
  * never overwrites: a routine that went out and came back edited lands beside the original, and
  * the user deletes the one they no longer want. An unnamed routine is named by `fallbackName`,
  * numbered over the whole file, so it gets the name the preview showed; an item with no rest of
- * its own gets the user's default. The snapshots an item needs are stored before it is written,
- * so no item points at an exercise the device does not have.
+ * its own gets the user's default. An item becomes its set count of identical sets, each on the
+ * number its reps start with (`8-12` is 8) and its weight. The snapshots an item needs are stored
+ * before it is written, so no item points at an exercise the device does not have.
  */
 export const saveImport = (
   routines: readonly ResolvedRoutine<ExerciseSnapshot>[],
@@ -31,9 +32,12 @@ export const saveImport = (
           id: localId('rit'),
           exerciseId: snapshot.exerciseId,
           exerciseName: snapshot.name,
-          sets: item.sets,
-          reps: item.reps,
-          weightKg: item.weightKg,
+          sets: Array.from({ length: Math.max(1, item.sets) }, (_, setIndex) => ({
+            index: setIndex,
+            reps: repsFromRange(item.reps),
+            weightKg: item.weightKg,
+            targetRpe: null,
+          })),
           restSeconds: item.restSeconds ?? defaultRestSeconds,
           notes: item.notes,
         });

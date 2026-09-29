@@ -33,8 +33,7 @@ describe('useRoutineDraft', () => {
       expect.objectContaining({
         exerciseId: 'wger:73',
         exerciseName: 'Bench Press',
-        sets: 3,
-        reps: '8-12',
+        sets: [0, 1, 2].map(index => ({ index, reps: 8, weightKg: 0, targetRpe: null })),
         restSeconds: 90,
       }),
     ]);

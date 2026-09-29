@@ -1,7 +1,7 @@
 import { act, waitFor } from '@testing-library/react-native';
 import { anExercise } from '@/features/routines/__fixtures__/builders';
 import { RoutineId } from '@/features/routines/domain/schemas/RoutineId';
-import { defaultItemTarget } from '@/features/routines/domain/utils/itemTargets';
+import { defaultItemTarget, uniformSets } from '@/features/routines/domain/utils/itemTargets';
 import { useRoutine } from '@/features/routines/facades/useRoutine';
 import { useAddRoutineExercise, useSetRoutineItem } from '@/features/routines/facades/useRoutineMutations';
 import { renderOnRoutine } from '@/features/routines/ui/pages/__tests__/renderOnRoutine';
@@ -55,11 +55,15 @@ describe('useSetRoutineItem', () => {
     const { result, id, done } = await renderWrites();
 
     await act(async () => {
-      await result.current.set.mutateAsync({ routineId: id, itemId: 'rit_bench', patch: { weightKg: 70 } });
+      await result.current.set.mutateAsync({
+        routineId: id,
+        itemId: 'rit_bench',
+        patch: { sets: uniformSets(3, 8, 70) },
+      });
     });
 
     await waitFor(() =>
-      expect(result.current.detail.routine?.items.find(item => item.id === 'rit_bench')?.weightKg).toBe(70),
+      expect(result.current.detail.routine?.items.find(item => item.id === 'rit_bench')?.sets[0]?.weightKg).toBe(70),
     );
     await done();
   });

@@ -19,7 +19,7 @@ const savedRoutines = Effect.flatMap(RoutineRepository, repository => repository
 
 describe('saveImport', () => {
   itEffect(
-    'writes each routine as a new one with its matched exercises and targets',
+    'writes each routine as a new one with its matched exercises, one set per planned set on the bottom of the range',
     Effect.gen(function* () {
       const saved = yield* saveImport([aRoutine()], fallbackName, 120);
 
@@ -30,13 +30,22 @@ describe('saveImport', () => {
         {
           exerciseId: 'wger:73',
           exerciseName: 'Bench Press',
-          sets: 3,
-          reps: '8-12',
-          weightKg: 60,
+          sets: [0, 1, 2].map(index => ({ index, reps: 8, weightKg: 60, targetRpe: null })),
           restSeconds: 90,
           notes: null,
         },
       ]);
+    }),
+    layer(),
+  );
+
+  itEffect(
+    'keeps a single rep number as it is',
+    Effect.gen(function* () {
+      yield* saveImport([aRoutine({ items: [anItem({ sets: 1, reps: '12', weightKg: 0 })] })], fallbackName, 120);
+
+      const [routine] = yield* savedRoutines;
+      expect(routine?.items[0]?.sets).toEqual([{ index: 0, reps: 12, weightKg: 0, targetRpe: null }]);
     }),
     layer(),
   );

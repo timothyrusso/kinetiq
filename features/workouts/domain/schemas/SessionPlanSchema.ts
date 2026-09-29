@@ -1,19 +1,27 @@
 import { Schema } from 'effect';
 
+/** One planned set: the reps, load and effort target the workout's set opens with. */
+const SessionPlanSetSchema = Schema.Struct({
+  reps: Schema.Number,
+  // NOTE: kilograms; 0 is bodyweight.
+  weightKg: Schema.Number,
+  // NOTE: 0 to 10, the RPE the set opens with; null for none.
+  targetRpe: Schema.NullOr(Schema.Number),
+});
+
 /** One exercise of a plan, with the targets its sets open with. */
 const SessionPlanItemSchema = Schema.Struct({
   exerciseId: Schema.String,
   exerciseName: Schema.String,
-  sets: Schema.Number,
-  // NOTE: a number or a range, `8` or `8-12`; the sets open on the number the range starts with.
-  reps: Schema.String,
-  // NOTE: kilograms; 0 is bodyweight.
-  weightKg: Schema.Number,
+  // NOTE: in order, one per set the entry opens with.
+  sets: Schema.Array(SessionPlanSetSchema),
   restSeconds: Schema.Number,
   notes: Schema.NullOr(Schema.String),
 });
 
 export type SessionPlanItem = typeof SessionPlanItemSchema.Type;
+
+export type SessionPlanSet = typeof SessionPlanSetSchema.Type;
 
 /**
  * What a session starts from: a name and the exercises to train, in order. Owned here so a

@@ -1,28 +1,36 @@
-import { repsFromRange } from '@/features/core/utils';
 import { ActivityId } from '@/features/workouts/domain/schemas/ActivityId';
-import type { SessionPlan, SessionPlanItem } from '@/features/workouts/domain/schemas/SessionPlanSchema';
+import type {
+  SessionPlan,
+  SessionPlanItem,
+  SessionPlanSet,
+} from '@/features/workouts/domain/schemas/SessionPlanSchema';
 import type { StrengthEntry } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 import type { WorkoutSession } from '@/features/workouts/domain/schemas/WorkoutSessionSchema';
 import { withEstimated1rm } from '@/features/workouts/domain/utils/workoutMath';
 
+/** The set an item with no planned sets opens with: 8 reps at bodyweight. */
+const FALLBACK_SET: SessionPlanSet = { reps: 8, weightKg: 0, targetRpe: null };
+
 /**
- * The empty entry an item opens with: at least one set, each on the item's load and the number
- * its rep range starts with, so the set holds what the routine displayed.
+ * The empty entry an item opens with: one open set per planned set, each on its own reps, load
+ * and target RPE, so the set holds what the routine displayed. An item with no planned sets
+ * opens with one.
  */
 export function entryFromPlanItem(item: SessionPlanItem): StrengthEntry {
+  const planned = item.sets.length > 0 ? item.sets : [FALLBACK_SET];
   return {
     exerciseId: item.exerciseId,
     exerciseName: item.exerciseName,
     muscleGroup: null,
     restSeconds: item.restSeconds,
     notes: item.notes,
-    sets: Array.from({ length: Math.max(1, item.sets) }, (_, index) => ({
+    sets: planned.map((set, index) => ({
       index,
-      reps: repsFromRange(item.reps),
-      weightKg: item.weightKg,
+      reps: set.reps,
+      weightKg: set.weightKg,
       completed: false,
       estimated1rm: null,
-      rpe: null,
+      rpe: set.targetRpe,
     })),
   };
 }

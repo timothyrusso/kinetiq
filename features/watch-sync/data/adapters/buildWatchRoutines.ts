@@ -15,7 +15,8 @@ const clampTo = (value: number, range: { min: number; max: number }) =>
  * The routine snapshot the phone sends to the watch. Values are clamped to `ITEM_BOUNDS` and the
  * lists cut to `IMPORT_LIMITS` on the way out, because the watch rejects a snapshot that breaks
  * them: one out-of-range row written by an older build must not cost the user every routine on
- * their wrist.
+ * their wrist. The v1 envelope has one target per item, so an item goes out as its set count
+ * with its first set's reps and weight.
  */
 export function buildWatchRoutines(
   routines: readonly Routine[],
@@ -34,9 +35,9 @@ export function buildWatchRoutines(
         id: item.id,
         exerciseId: item.exerciseId,
         exerciseName: item.exerciseName,
-        sets: Math.round(clampTo(item.sets, ITEM_BOUNDS.sets)),
-        reps: item.reps.slice(0, ITEM_BOUNDS.repsLength),
-        weightKg: clampTo(item.weightKg, ITEM_BOUNDS.weightKg),
+        sets: Math.round(clampTo(item.sets.length, ITEM_BOUNDS.sets)),
+        reps: `${item.sets[0]?.reps ?? 8}`.slice(0, ITEM_BOUNDS.repsLength),
+        weightKg: clampTo(item.sets[0]?.weightKg ?? 0, ITEM_BOUNDS.weightKg),
         restSeconds: Math.round(clampTo(item.restSeconds, ITEM_BOUNDS.restSeconds)),
         notes: item.notes === null ? null : item.notes.slice(0, ITEM_BOUNDS.notesLength),
       })),

@@ -12,7 +12,7 @@ export type { WorkoutLauncher } from '@/features/routines/domain/entities/Workou
  */
 export { RoutineRepository } from '@/features/routines/domain/repositories/RoutineRepository';
 export { RoutineId } from '@/features/routines/domain/schemas/RoutineId';
-export type { Routine, RoutineItem } from '@/features/routines/domain/schemas/RoutineSchema';
+export type { Routine, RoutineItem, RoutineSet } from '@/features/routines/domain/schemas/RoutineSchema';
 export { RoutineEvents } from '@/features/routines/domain/services/RoutineEvents';
 export { defaultItemTarget } from '@/features/routines/domain/utils/itemTargets';
 /** The routines' query keys, for a higher feature that writes routines (the import). */

@@ -1,6 +1,13 @@
 import { Effect, Either, TestClock } from 'effect';
 import { itEffect } from '@/features/core/testing';
-import { anActivity, anExercise, aPlan, aSession, WORKOUT_TIME } from '@/features/workouts/__fixtures__/builders';
+import {
+  anActivity,
+  anExercise,
+  aPlan,
+  aSession,
+  plannedSets,
+  WORKOUT_TIME,
+} from '@/features/workouts/__fixtures__/builders';
 import { ActivityId } from '@/features/workouts/domain/schemas/ActivityId';
 import { makeFakeWorkoutsDb, makeWorkoutsFake } from '@/features/workouts/useCases/__tests__/workoutFakes';
 import { addSessionExercise } from '@/features/workouts/useCases/addSessionExercise';
@@ -208,7 +215,7 @@ describe('discardSession', () => {
 });
 
 describe('addSessionExercise', () => {
-  const TARGET = { sets: 3, reps: '8-12', weightKg: 0, restSeconds: 120, notes: null };
+  const TARGET = { sets: plannedSets(3, 8, 0), restSeconds: 120, notes: null };
 
   const stored = makeFakeWorkoutsDb();
   itEffect(
