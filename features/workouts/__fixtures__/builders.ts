@@ -3,7 +3,11 @@ import { ActivityId } from '@/features/workouts/domain/schemas/ActivityId';
 import type { Activity } from '@/features/workouts/domain/schemas/ActivitySchema';
 import type { CompletedWorkout } from '@/features/workouts/domain/schemas/CompletedWorkoutSchema';
 import type { PersonalRecord } from '@/features/workouts/domain/schemas/PersonalRecordSchema';
-import type { SessionPlan, SessionPlanItem } from '@/features/workouts/domain/schemas/SessionPlanSchema';
+import type {
+  SessionPlan,
+  SessionPlanItem,
+  SessionPlanSet,
+} from '@/features/workouts/domain/schemas/SessionPlanSchema';
 import type { StrengthEntry, StrengthSet } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 import type { WorkoutSession } from '@/features/workouts/domain/schemas/WorkoutSessionSchema';
 
@@ -72,7 +76,6 @@ export const aCompletedWorkout = (overrides: Partial<CompletedWorkout> = {}): Co
   startedAt: WORKOUT_TIME,
   endedAt: WORKOUT_TIME + 2_700_000,
   durationSeconds: 2700,
-  caloriesKcal: 278,
   entries: [anEntry()],
   totalVolumeKg: 1000,
   totalSets: 2,
@@ -87,7 +90,6 @@ export const anActivity = (overrides: Partial<Activity> = {}): Activity => ({
   title: 'Push Day',
   startedAt: WORKOUT_TIME,
   durationSeconds: 2700,
-  caloriesKcal: 278,
   notes: null,
   sourceSessionId: 'session-mbz1a2b3',
   strength: { entries: [anEntry()], totalVolumeKg: 1000, totalSets: 2, personalRecords: [] },
@@ -105,13 +107,15 @@ export const aRecord = (overrides: Partial<PersonalRecord> = {}): PersonalRecord
   ...overrides,
 });
 
-/** One plan item: bench press, three sets of 8 to 12 at 60 kg, resting 90 s. */
+/** `count` planned sets of `reps` at `weightKg`, with no target RPE. */
+export const plannedSets = (count: number, reps: number, weightKg: number): SessionPlanSet[] =>
+  Array.from({ length: count }, () => ({ reps, weightKg, targetRpe: null }));
+
+/** One plan item: bench press, three sets of 8 at 60 kg, resting 90 s. */
 export const aPlanItem = (overrides: Partial<SessionPlanItem> = {}): SessionPlanItem => ({
   exerciseId: 'wger:73',
   exerciseName: 'Bench Press',
-  sets: 3,
-  reps: '8-12',
-  weightKg: 60,
+  sets: plannedSets(3, 8, 60),
   restSeconds: 90,
   notes: null,
   ...overrides,
@@ -126,9 +130,7 @@ export const aPlan = (overrides: Partial<SessionPlan> = {}): SessionPlan => ({
     aPlanItem({
       exerciseId: 'wger:74',
       exerciseName: 'Overhead Press',
-      sets: 4,
-      reps: '6',
-      weightKg: 40,
+      sets: plannedSets(4, 6, 40),
       notes: 'Brace first',
     }),
   ],

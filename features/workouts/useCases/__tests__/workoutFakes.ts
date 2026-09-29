@@ -81,7 +81,6 @@ const activityRepositoryFake = (db: FakeWorkoutsDb, failing?: keyof ActivityServ
             title: workout.title.trim() || 'Strength session',
             startedAt: workout.startedAt,
             durationSeconds: workout.durationSeconds,
-            caloriesKcal: workout.caloriesKcal,
             notes: workout.notes,
             sourceSessionId: workout.id,
             strength: {

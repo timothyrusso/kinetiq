@@ -1,7 +1,10 @@
 import type { Routine } from '@/features/routines';
 import type { SessionPlan } from '@/features/workouts';
 
-/** The plan a workout from `routine` starts from: its exercises in order, with their targets. */
+/**
+ * The plan a workout from `routine` starts from: its exercises in order, each set planned from
+ * its own row of the routine.
+ */
 export function planFromRoutine(routine: Routine): SessionPlan {
   return {
     routineId: routine.id,
@@ -9,9 +12,7 @@ export function planFromRoutine(routine: Routine): SessionPlan {
     items: routine.items.map(item => ({
       exerciseId: item.exerciseId,
       exerciseName: item.exerciseName,
-      sets: item.sets,
-      reps: item.reps,
-      weightKg: item.weightKg,
+      sets: item.sets.map(set => ({ reps: set.reps, weightKg: set.weightKg, targetRpe: set.targetRpe })),
       restSeconds: item.restSeconds,
       notes: item.notes,
     })),

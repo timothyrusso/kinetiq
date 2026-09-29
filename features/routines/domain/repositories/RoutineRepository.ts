@@ -27,13 +27,14 @@ export class RoutineRepository extends Context.Tag('routines/RoutineRepository')
     readonly save: (input: RoutineInput) => Effect.Effect<Routine, RoutineReadError>;
     /** Renames the routine; a blank name is stored as `Untitled routine`. */
     readonly rename: (id: RoutineId, name: string) => Effect.Effect<void, SqlError>;
-    /** Deletes the routine; its items go with it. */
+    /** Deletes the routine; its items and their sets go with it. */
     readonly delete: (id: RoutineId) => Effect.Effect<void, SqlError>;
     /** Numbers the routine's items in the order of `orderedItemIds`, in one exclusive transaction. */
     readonly reorder: (id: RoutineId, orderedItemIds: readonly string[]) => Effect.Effect<void, SqlError>;
     /**
-     * Changes only the targets present in `patch`. A `notes` key set to `null` clears the note; an
-     * absent key leaves it. An unknown item changes nothing and publishes nothing.
+     * Changes only the targets present in `patch`, in one exclusive transaction. `sets` replaces
+     * the item's sets wholesale. A `notes` key set to `null` clears the note; an absent key leaves
+     * it. An unknown item changes nothing and publishes nothing.
      */
     readonly setItem: (itemId: string, patch: Partial<ItemTarget>) => Effect.Effect<void, RoutineReadError>;
     /** Appends `item` after the routine's last item, in one exclusive transaction. */

@@ -36,7 +36,14 @@ export const ItemEditorForm = memo(function ItemEditorForm({
     <>
       <MetaLine items={derived.meta} theme={theme} wrap />
       <FormSection title={t('itemEditor.sets')}>
-        <Stepper label={t('itemEditor.sets')} value={item.sets} min={1} max={20} step={1} onChange={effects.setSets} />
+        <Stepper
+          label={t('itemEditor.sets')}
+          value={derived.setCount}
+          min={1}
+          max={20}
+          step={1}
+          onChange={effects.setSets}
+        />
       </FormSection>
 
       <FormSection title={t('itemEditor.reps')}>

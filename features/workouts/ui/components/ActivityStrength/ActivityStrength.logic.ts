@@ -2,14 +2,7 @@ import { router } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { routes } from '@/features/core/navigation';
 import { useT } from '@/features/core/translations';
-import {
-  compactNumber,
-  formatCalories,
-  formatDuration,
-  type UnitSystem,
-  weightUnit,
-  weightValue,
-} from '@/features/core/utils';
+import { compactNumber, formatDuration, type UnitSystem, weightUnit, weightValue } from '@/features/core/utils';
 import type { Activity } from '@/features/workouts/domain/schemas/ActivitySchema';
 import type { PersonalRecord } from '@/features/workouts/domain/schemas/PersonalRecordSchema';
 import type { StrengthEntry } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
@@ -39,10 +32,8 @@ export function useActivityStrengthLogic(activity: Activity, units: UnitSystem) 
       setsNote: t(planned > 0 ? 'activity.completed' : 'activity.noSets'),
       exercises: entries.length > 0 ? `${entries.length}` : null,
       exercisesNote: entries.length > 0 ? undefined : t('activity.nothingAdded'),
-      calories: activity.caloriesKcal > 0 ? formatCalories(activity.caloriesKcal) : null,
-      caloriesNote: activity.caloriesKcal > 0 ? undefined : t('activity.noEstimate'),
     }),
-    [activity.caloriesKcal, activity.durationSeconds, completed, entries.length, planned, t, units, volume],
+    [activity.durationSeconds, completed, entries.length, planned, t, units, volume],
   );
 
   const recordRows = useMemo(

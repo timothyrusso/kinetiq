@@ -1,14 +1,16 @@
-import type { Routine, RoutineItem } from '@/features/routines';
+import type { Routine, RoutineItem, RoutineSet } from '@/features/routines';
 import { RoutineId } from '@/features/routines';
 
-/** One item: bench press, four sets of eight to ten at 60 kg, resting 120 s. */
+/** `count` sets of `reps` at `weightKg`, with no target RPE. */
+export const setsOf = (count: number, reps: number, weightKg: number): RoutineSet[] =>
+  Array.from({ length: count }, (_, index) => ({ index, reps, weightKg, targetRpe: null }));
+
+/** One item: bench press, four sets of eight at 60 kg, resting 120 s. */
 export const aRoutineItem = (overrides: Partial<RoutineItem> = {}): RoutineItem => ({
   id: 'rit_1',
   exerciseId: 'wger:73',
   exerciseName: 'Bench Press',
-  sets: 4,
-  reps: '8-10',
-  weightKg: 60,
+  sets: setsOf(4, 8, 60),
   restSeconds: 120,
   notes: null,
   ...overrides,

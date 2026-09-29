@@ -43,7 +43,7 @@ Every feature declares `FEATURE_TIER` in its `index.ts`; `npm run arch` checks t
 | `core/error` | the `AppError` union over `AppErrorRegistry`, `errorTagToMessageKey`, `useErrorMessage`, the HTTP retry budget and delay (`httpRetryDelayMs`, which caps an honoured `Retry-After` at one minute) |
 | `core/config` | `AppConfig` from `makeConfig`, decoding `extra` in `app.json` (the wger base URL) |
 | `core/logger` | `LoggerLive` and `logBackgroundFailure`, the one logging helper outside the boundary (see Exceptions) |
-| `core/sqlite` | `SqliteLive` (expo-sqlite, WAL, foreign keys), the per-version migrations `v001` to `v010`, `SchemaStatus`, `clearAllUserData` and `resetLocalData` |
+| `core/sqlite` | `SqliteLive` (expo-sqlite, WAL, foreign keys), the per-version migrations `v001` to `v011`, `SchemaStatus`, `clearAllUserData` and `resetLocalData` |
 | `core/lifecycle` | `BackgroundSync`, the port the bootstrap installs and `watch-sync` fills (below) |
 | `core/query` | `queryClient` (no TanStack retry for app errors), `useEffectQuery` and `useEffectMutation` re-exported for facades, the app-state and network adapters |
 | `core/state` | `createStore`, `createSelectors`, `resetAllStores` |

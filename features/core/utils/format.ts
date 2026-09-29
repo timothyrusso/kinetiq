@@ -139,11 +139,6 @@ export function repsFromRange(reps: string): number {
   return Number.isFinite(parsed) && parsed > 0 && parsed <= 100 ? parsed : 8;
 }
 
-export function formatCalories(kcal: number): string {
-  if (!Number.isFinite(kcal) || kcal <= 0) return '0';
-  return `${Math.round(kcal)}`;
-}
-
 /**
  * Every helper in this section takes `Date | number` because the domain stores
  * epoch milliseconds and UI code formats ad-hoc; forcing callers to wrap `new

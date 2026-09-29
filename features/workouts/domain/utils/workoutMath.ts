@@ -3,19 +3,6 @@ import type { CompletedWorkout } from '@/features/workouts/domain/schemas/Comple
 import type { StrengthEntry, StrengthSet } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 import type { WorkoutSession } from '@/features/workouts/domain/schemas/WorkoutSessionSchema';
 
-/**
- * MET-based calorie model for resistance training, scaled for a 74 kg reference athlete.
- * Deliberately simple and monotonic: a fitness app's calorie number is an estimate the user
- * trends against, not a measurement.
- */
-const LIFT_MET = 5.0;
-
-/** Kilocalories for a lifting session of `durationSeconds`. */
-export function estimateCalories(durationSeconds: number): number {
-  const hours = Math.max(0, durationSeconds) / 3600;
-  return Math.round(LIFT_MET * 74 * hours);
-}
-
 function roundKg(value: number): number {
   return Math.round(value * 2) / 2;
 }
@@ -92,7 +79,6 @@ export function toCompletedWorkout(session: WorkoutSession, endedAt: number): Co
     startedAt: session.startedAt,
     endedAt,
     durationSeconds,
-    caloriesKcal: estimateCalories(durationSeconds),
     entries: session.entries,
     totalVolumeKg: totalVolumeKg(session.entries),
     totalSets: completedSetCount(session.entries),

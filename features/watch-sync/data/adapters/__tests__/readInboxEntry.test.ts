@@ -1,6 +1,5 @@
 import { anInboxEntry, aWatchDocument, UUID } from '@/features/watch-sync/__fixtures__/watchWorkout';
 import { readInboxEntry } from '@/features/watch-sync/data/adapters/readInboxEntry';
-import { estimateCalories } from '@/features/workouts';
 
 const aSet = { index: 0, reps: 5, weightKg: 80, completed: true, rpe: null };
 
@@ -22,11 +21,10 @@ describe('readInboxEntry', () => {
     expect(workout.routineId).toBe('rtn_1');
   });
 
-  it('computes the duration from the wall clock and the calories as a phone session does', () => {
+  it('computes the duration from the wall clock', () => {
     const workout = workoutOf(anInboxEntry());
 
     expect(workout.durationSeconds).toBe(45 * 60);
-    expect(workout.caloriesKcal).toBe(estimateCalories(45 * 60));
   });
 
   it('counts only the completed sets in the totals and estimates their one-rep max', () => {

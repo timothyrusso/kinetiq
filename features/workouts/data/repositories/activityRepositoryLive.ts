@@ -16,9 +16,9 @@ const decodeActivities = decodeRows(ActivityRow, 'activities');
 
 const INSERT_ACTIVITY = `
   INSERT OR REPLACE INTO activities (
-    id, kind, title, started_at, duration_seconds, calories_kcal, notes,
+    id, kind, title, started_at, duration_seconds, notes,
     source_session_id, entries_json, volume_kg, total_sets, created_at
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
 /** The title a workout with a blank one is stored under. Stored, so it is not translated. */
 const UNTITLED = 'Strength session';
@@ -80,7 +80,6 @@ export const ActivityRepositoryLive = Layer.effect(
           title: workout.title.trim() || UNTITLED,
           startedAt: workout.startedAt,
           durationSeconds: workout.durationSeconds,
-          caloriesKcal: workout.caloriesKcal,
           notes: workout.notes,
           sourceSessionId: workout.id,
           strength: {

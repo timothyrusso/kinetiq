@@ -1,7 +1,6 @@
 import { anEntry, anOpenSet, anotherEntry, aSession, aSet } from '@/features/workouts/__fixtures__/builders';
 import {
   completedSetCount,
-  estimateCalories,
   estimatedOneRepMax,
   restRemaining,
   sessionProgress,
@@ -55,16 +54,6 @@ describe('the session totals', () => {
   });
 });
 
-describe('estimateCalories', () => {
-  it('is 370 kcal an hour for the reference athlete', () => {
-    expect(estimateCalories(3600)).toBe(370);
-  });
-
-  it('is zero for a negative duration', () => {
-    expect(estimateCalories(-60)).toBe(0);
-  });
-});
-
 describe('restRemaining', () => {
   it('rounds the remainder up to the whole second', () => {
     expect(restRemaining(10_100, 10_000)).toBe(1);
@@ -87,7 +76,6 @@ describe('toCompletedWorkout', () => {
       title: 'Push Day',
       endedAt: 5_000,
       durationSeconds: 2700,
-      caloriesKcal: 278,
       totalVolumeKg: 1000,
       totalSets: 2,
     });

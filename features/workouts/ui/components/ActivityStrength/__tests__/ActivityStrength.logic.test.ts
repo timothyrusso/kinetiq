@@ -9,7 +9,7 @@ import { useActivityStrengthLogic } from '@/features/workouts/ui/components/Acti
 const renderStrength = (activity: Activity = anActivity()) =>
   renderHook(() => useActivityStrengthLogic(activity, 'metric'));
 
-const EMPTY: Activity = anActivity({ caloriesKcal: 0, strength: null });
+const EMPTY: Activity = anActivity({ strength: null });
 
 describe('useActivityStrengthLogic', () => {
   it('counts the sets done over the sets planned', async () => {
@@ -37,8 +37,6 @@ describe('useActivityStrengthLogic', () => {
       setsNote: tr('activity.noSets'),
       exercises: null,
       exercisesNote: tr('activity.nothingAdded'),
-      calories: null,
-      caloriesNote: tr('activity.noEstimate'),
     });
   });
 

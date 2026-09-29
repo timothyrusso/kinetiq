@@ -136,8 +136,6 @@ export const en = {
     emptyMessage: 'This session has a duration and no metrics. It still counts toward your streak and your totals.',
     session: 'Session',
     duration: 'Duration',
-    calories: 'Calories',
-    noEstimate: 'Estimate unavailable',
     volume: 'Volume',
     bodyweightWork: 'Bodyweight work, or nothing completed',
     sets: 'Sets',
@@ -415,10 +413,10 @@ export const en = {
   // NOTE: --- end group-d ---
   settingsScreen: {
     namePlaceholder: 'Athlete',
-    heightRequired: 'Height is needed for calorie estimates.',
+    heightRequired: 'Height is required.',
     numbersOnly: 'Numbers only.',
     heightRange: 'Must be between {min} and {max} cm.',
-    birthYearRequired: 'Birth year is needed for calorie estimates.',
+    birthYearRequired: 'Birth year is required.',
     birthYearDigits: 'Four digits, like 1994.',
     birthYearRange: 'Must be between {min} and {max}.',
     nameTooShort: 'A name needs at least two characters.',

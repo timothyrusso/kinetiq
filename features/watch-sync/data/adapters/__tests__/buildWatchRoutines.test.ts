@@ -1,12 +1,12 @@
 import { RoutineId } from '@/features/routines';
 import { IMPORT_LIMITS, ITEM_BOUNDS } from '@/features/watch-bridge';
-import { aRoutineItem as anItem, aRoutine } from '@/features/watch-sync/__fixtures__/routines';
+import { aRoutineItem as anItem, aRoutine, setsOf } from '@/features/watch-sync/__fixtures__/routines';
 import { buildWatchRoutines } from '@/features/watch-sync/data/adapters/buildWatchRoutines';
 
 const at = new Date('2026-09-25T10:00:00.000Z');
 
 describe('buildWatchRoutines', () => {
-  it('writes the kinetiq.watch-routines v1 document with ids and the unit setting', () => {
+  it('writes the kinetiq.watch-routines v1 document with ids and the unit setting, an item as its first set', () => {
     expect(buildWatchRoutines([aRoutine()], 'imperial', at)).toEqual({
       format: 'kinetiq.watch-routines',
       version: 1,
@@ -22,7 +22,7 @@ describe('buildWatchRoutines', () => {
               exerciseId: 'wger:73',
               exerciseName: 'Bench Press',
               sets: 4,
-              reps: '8-10',
+              reps: '8',
               weightKg: 60,
               restSeconds: 120,
               notes: null,
@@ -37,7 +37,7 @@ describe('buildWatchRoutines', () => {
     const [routine] = buildWatchRoutines(
       [
         aRoutine({
-          items: [anItem({ sets: 99, weightKg: -5, restSeconds: 9999, reps: '1'.repeat(40), notes: 'n'.repeat(500) })],
+          items: [anItem({ sets: setsOf(99, 8, -5), restSeconds: 9999, notes: 'n'.repeat(500) })],
         }),
       ],
       'metric',
@@ -46,18 +46,22 @@ describe('buildWatchRoutines', () => {
     const item = routine?.items[0];
 
     expect(item).toMatchObject({ sets: ITEM_BOUNDS.sets.max, weightKg: 0, restSeconds: 600 });
-    expect(item?.reps).toHaveLength(ITEM_BOUNDS.repsLength);
     expect(item?.notes).toHaveLength(ITEM_BOUNDS.notesLength);
   });
 
   it('clamps values below the bounds to the minimum, and a value that is not a number to it', () => {
     const [routine] = buildWatchRoutines(
-      [aRoutine({ items: [anItem({ sets: 0, weightKg: 1000, restSeconds: Number.NaN })] })],
+      [
+        aRoutine({
+          items: [anItem({ sets: [], restSeconds: Number.NaN }), anItem({ id: 'rit_2', sets: setsOf(1, 8, 1000) })],
+        }),
+      ],
       'metric',
       at,
     ).routines;
 
-    expect(routine?.items[0]).toMatchObject({ sets: 1, weightKg: ITEM_BOUNDS.weightKg.max, restSeconds: 0 });
+    expect(routine?.items[0]).toMatchObject({ sets: 1, reps: '8', weightKg: 0, restSeconds: 0 });
+    expect(routine?.items[1]).toMatchObject({ weightKg: ITEM_BOUNDS.weightKg.max });
   });
 
   it('cuts the lists to IMPORT_LIMITS', () => {

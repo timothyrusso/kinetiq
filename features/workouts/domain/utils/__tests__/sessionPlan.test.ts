@@ -1,10 +1,10 @@
-import { aPlan, aPlanItem } from '@/features/workouts/__fixtures__/builders';
+import { aPlan, aPlanItem, plannedSets } from '@/features/workouts/__fixtures__/builders';
 import { entryFromPlanItem, sessionFromPlan } from '@/features/workouts/domain/utils/sessionPlan';
 
 const NOW = 1_750_000_000_000;
 
 describe('entryFromPlanItem', () => {
-  it('opens every set on the number the rep range starts with, at the item’s load', () => {
+  it('opens one set per planned set, on the plan’s reps and load', () => {
     const entry = entryFromPlanItem(aPlanItem());
 
     expect(entry.sets).toEqual(
@@ -20,8 +20,32 @@ describe('entryFromPlanItem', () => {
     expect(entry).toMatchObject({ exerciseId: 'wger:73', restSeconds: 90, muscleGroup: null, notes: null });
   });
 
-  it('gives an item planned with no sets one set', () => {
-    expect(entryFromPlanItem(aPlanItem({ sets: 0 })).sets).toHaveLength(1);
+  it('opens each set on its own reps, load and target RPE', () => {
+    const entry = entryFromPlanItem(
+      aPlanItem({
+        sets: [
+          { reps: 12, weightKg: 50, targetRpe: null },
+          { reps: 10, weightKg: 55, targetRpe: 7 },
+          { reps: 8, weightKg: 60, targetRpe: 9 },
+        ],
+      }),
+    );
+
+    expect(entry.sets.map(({ index, reps, weightKg, rpe }) => ({ index, reps, weightKg, rpe }))).toEqual([
+      { index: 0, reps: 12, weightKg: 50, rpe: null },
+      { index: 1, reps: 10, weightKg: 55, rpe: 7 },
+      { index: 2, reps: 8, weightKg: 60, rpe: 9 },
+    ]);
+  });
+
+  it('gives an item planned with no sets one set of eight at bodyweight', () => {
+    expect(entryFromPlanItem(aPlanItem({ sets: [] })).sets).toEqual([
+      { index: 0, reps: 8, weightKg: 0, completed: false, estimated1rm: null, rpe: null },
+    ]);
+  });
+
+  it('keeps a plan of twenty sets as twenty sets', () => {
+    expect(entryFromPlanItem(aPlanItem({ sets: plannedSets(20, 5, 100) })).sets).toHaveLength(20);
   });
 });
 

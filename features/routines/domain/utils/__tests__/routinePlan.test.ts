@@ -1,27 +1,33 @@
 import { aRoutineItem } from '@/features/routines/__fixtures__/builders';
+import { uniformSets } from '@/features/routines/domain/utils/itemTargets';
 import { estimateMinutes, plannedVolumeKg } from '@/features/routines/domain/utils/routinePlan';
 
 describe('plannedVolumeKg', () => {
-  it('adds sets times reps times weight over the items, as a workout counts its volume', () => {
-    expect(plannedVolumeKg([aRoutineItem({ sets: 5, reps: '10', weightKg: 1 })])).toBe(50);
-    expect(plannedVolumeKg([aRoutineItem(), aRoutineItem({ sets: 2, reps: '5', weightKg: 20 })])).toBe(
+  it('adds reps times weight over every planned set, as a workout counts its volume', () => {
+    expect(plannedVolumeKg([aRoutineItem({ sets: uniformSets(5, 10, 1) })])).toBe(50);
+    expect(plannedVolumeKg([aRoutineItem(), aRoutineItem({ sets: uniformSets(2, 5, 20) })])).toBe(
       3 * 8 * 60 + 2 * 5 * 20,
     );
   });
 
-  it('reads a rep range at its bottom and a rep target that is not a number as 8', () => {
-    expect(plannedVolumeKg([aRoutineItem({ sets: 1, reps: '5-8', weightKg: 10 })])).toBe(50);
-    expect(plannedVolumeKg([aRoutineItem({ sets: 1, reps: 'AMRAP', weightKg: 10 })])).toBe(80);
+  it('reads each set on its own reps and weight', () => {
+    const sets = [
+      { index: 0, reps: 10, weightKg: 50, targetRpe: null },
+      { index: 1, reps: 8, weightKg: 60, targetRpe: 8 },
+      { index: 2, reps: 6, weightKg: 70, targetRpe: 9 },
+    ];
+
+    expect(plannedVolumeKg([aRoutineItem({ sets })])).toBe(10 * 50 + 8 * 60 + 6 * 70);
   });
 
   it('is 0 for a bodyweight routine', () => {
-    expect(plannedVolumeKg([aRoutineItem({ weightKg: 0 })])).toBe(0);
+    expect(plannedVolumeKg([aRoutineItem({ sets: uniformSets(3, 8, 0) })])).toBe(0);
   });
 });
 
 describe('estimateMinutes', () => {
   it('counts three seconds a rep, the rest after each set and twenty seconds per exercise', () => {
-    expect(estimateMinutes([aRoutineItem({ sets: 3, reps: '10', restSeconds: 90 })])).toBe(
+    expect(estimateMinutes([aRoutineItem({ sets: uniformSets(3, 10, 60), restSeconds: 90 })])).toBe(
       Math.round((3 * (10 * 3 + 90) + 20) / 60),
     );
   });

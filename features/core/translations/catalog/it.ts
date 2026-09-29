@@ -139,8 +139,6 @@ export const it: Copy = {
       'Questa sessione ha una durata e nessuna metrica. Conta comunque per i giorni di fila e per i totali.',
     session: 'Sessione',
     duration: 'Durata',
-    calories: 'Calorie',
-    noEstimate: 'Stima non disponibile',
     volume: 'Volume',
     bodyweightWork: 'Lavoro a corpo libero, o nulla completato',
     sets: 'Serie',
@@ -424,10 +422,10 @@ export const it: Copy = {
   // NOTE: --- end group-d ---
   settingsScreen: {
     namePlaceholder: 'Atleta',
-    heightRequired: "L'altezza serve per le stime calorie.",
+    heightRequired: "L'altezza è obbligatoria.",
     numbersOnly: 'Solo numeri.',
     heightRange: 'Deve essere tra {min} e {max} cm.',
-    birthYearRequired: "L'anno di nascita serve per le stime calorie.",
+    birthYearRequired: "L'anno di nascita è obbligatorio.",
     birthYearDigits: 'Quattro cifre, tipo 1994.',
     birthYearRange: 'Deve essere tra {min} e {max}.',
     nameTooShort: 'Un nome ha bisogno di almeno due caratteri.',

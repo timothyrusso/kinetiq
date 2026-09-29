@@ -8,7 +8,6 @@ export interface ExportableWorkout {
   readonly title: string;
   readonly startedAt: number;
   readonly durationSeconds: number;
-  readonly caloriesKcal: number;
   readonly notes: string | null;
   readonly strength: {
     readonly totalVolumeKg: number;
@@ -36,9 +35,10 @@ export interface ExportableRoutine {
   readonly items: readonly {
     readonly exerciseId: string;
     readonly exerciseName: string;
-    readonly sets: number;
-    readonly reps: string;
-    readonly weightKg: number;
+    readonly sets: readonly {
+      readonly reps: number;
+      readonly weightKg: number;
+    }[];
     readonly restSeconds: number;
     readonly notes: string | null;
   }[];

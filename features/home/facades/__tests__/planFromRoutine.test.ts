@@ -2,7 +2,7 @@ import { planFromRoutine } from '@/features/home/facades/planFromRoutine';
 import { RoutineId } from '@/features/routines';
 
 describe('planFromRoutine', () => {
-  it('starts from the routine, named after it, with its exercises and targets in order', () => {
+  it('starts from the routine, named after it, with its exercises in order and each set from its own row', () => {
     const plan = planFromRoutine({
       id: RoutineId.make('rtn_push'),
       name: 'Push Day',
@@ -11,9 +11,10 @@ describe('planFromRoutine', () => {
           id: 'rit_bench',
           exerciseId: 'wger:73',
           exerciseName: 'Bench Press',
-          sets: 3,
-          reps: '8-12',
-          weightKg: 60,
+          sets: [
+            { index: 0, reps: 10, weightKg: 60, targetRpe: null },
+            { index: 1, reps: 8, weightKg: 65, targetRpe: 8 },
+          ],
           restSeconds: 90,
           notes: null,
         },
@@ -21,9 +22,7 @@ describe('planFromRoutine', () => {
           id: 'rit_press',
           exerciseId: 'wger:74',
           exerciseName: 'Overhead Press',
-          sets: 4,
-          reps: '6',
-          weightKg: 40,
+          sets: [{ index: 0, reps: 6, weightKg: 40, targetRpe: 9 }],
           restSeconds: 60,
           notes: 'Brace first',
         },
@@ -41,18 +40,17 @@ describe('planFromRoutine', () => {
         {
           exerciseId: 'wger:73',
           exerciseName: 'Bench Press',
-          sets: 3,
-          reps: '8-12',
-          weightKg: 60,
+          sets: [
+            { reps: 10, weightKg: 60, targetRpe: null },
+            { reps: 8, weightKg: 65, targetRpe: 8 },
+          ],
           restSeconds: 90,
           notes: null,
         },
         {
           exerciseId: 'wger:74',
           exerciseName: 'Overhead Press',
-          sets: 4,
-          reps: '6',
-          weightKg: 40,
+          sets: [{ reps: 6, weightKg: 40, targetRpe: 9 }],
           restSeconds: 60,
           notes: 'Brace first',
         },

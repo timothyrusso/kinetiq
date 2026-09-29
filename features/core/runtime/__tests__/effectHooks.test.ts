@@ -61,7 +61,7 @@ describe('useEffectQuery', () => {
       { wrapper: makeTestWrapper(runtime) },
     );
 
-    await waitFor(() => expect(result.current.data).toEqual({ version: 10, now: 0 }));
+    await waitFor(() => expect(result.current.data).toEqual({ version: 11, now: 0 }));
     await runtime.dispose();
   });
 });

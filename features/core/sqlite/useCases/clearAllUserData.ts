@@ -6,6 +6,7 @@ import { withSqlite } from '@timothyrusso/effect-core';
  * download.
  */
 const USER_TABLES = [
+  'routine_item_sets',
   'routine_items',
   'routines',
   'activities',

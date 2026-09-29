@@ -41,7 +41,7 @@ const WatchWorkoutEntry = Schema.Struct({
 /**
  * `kinetiq.watch-workout` v1, watch to phone: one finished workout, checked against the same
  * bounds the routine editor enforces. It is the phone's `CompletedWorkout` minus everything the
- * phone computes (duration, calories, volume, set count, estimated 1RM, records).
+ * phone computes (duration, volume, set count, estimated 1RM, records).
  */
 export const WatchWorkoutDocumentSchema = Schema.Struct({
   format: Schema.Literal(WATCH_WORKOUT_FORMAT),

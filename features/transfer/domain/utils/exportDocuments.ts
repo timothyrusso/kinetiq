@@ -31,7 +31,6 @@ export function workoutsJson(activities: readonly ExportableWorkout[], now: numb
       title: activity.title,
       startedAt: new Date(activity.startedAt).toISOString(),
       durationSeconds: activity.durationSeconds,
-      caloriesKcal: activity.caloriesKcal,
       notes: activity.notes,
       totalVolumeKg: activity.strength?.totalVolumeKg ?? 0,
       totalSets: activity.strength?.totalSets ?? 0,
@@ -55,7 +54,10 @@ export function workoutsJson(activities: readonly ExportableWorkout[], now: numb
   return JSON.stringify(document, null, 2);
 }
 
-/** `kinetiq.routines` v1 for `routines`, as indented JSON. */
+/**
+ * `kinetiq.routines` v1 for `routines`, as indented JSON. v1 has one target per item, so an item
+ * goes out as its set count with its first set's reps and weight.
+ */
 export function routinesJson(routines: readonly ExportableRoutine[], now: number): string {
   const document = encodeRoutines({
     format: ROUTINES_FORMAT,
@@ -66,9 +68,9 @@ export function routinesJson(routines: readonly ExportableRoutine[], now: number
       items: routine.items.map(item => ({
         exerciseId: item.exerciseId,
         exerciseName: item.exerciseName,
-        sets: item.sets,
-        reps: item.reps,
-        weightKg: item.weightKg,
+        sets: item.sets.length,
+        reps: `${item.sets[0]?.reps ?? 8}`,
+        weightKg: item.sets[0]?.weightKg ?? 0,
         restSeconds: item.restSeconds,
         notes: item.notes,
       })),
