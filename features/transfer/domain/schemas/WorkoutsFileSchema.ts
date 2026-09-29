@@ -24,7 +24,6 @@ const WorkoutFileWorkoutSchema = Schema.Struct({
   title: Schema.String,
   startedAt: Schema.String,
   durationSeconds: Schema.Number,
-  caloriesKcal: Schema.Number,
   notes: Schema.NullOr(Schema.String),
   totalVolumeKg: Schema.Number,
   totalSets: Schema.Number,

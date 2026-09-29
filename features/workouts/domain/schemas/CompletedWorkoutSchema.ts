@@ -10,7 +10,6 @@ export const CompletedWorkoutSchema = Schema.Struct({
   startedAt: Schema.Number,
   endedAt: Schema.Number,
   durationSeconds: Schema.Number,
-  caloriesKcal: Schema.Number,
   entries: Schema.Array(StrengthEntrySchema),
   totalVolumeKg: Schema.Number,
   totalSets: Schema.Number,

@@ -28,7 +28,6 @@ export { WorkoutRecorder } from '@/features/workouts/domain/services/WorkoutReco
 /** The derivations a watch workout is recorded with, the same as a phone session's. */
 export {
   completedSetCount,
-  estimateCalories,
   estimatedOneRepMax,
   totalVolumeKg,
 } from '@/features/workouts/domain/utils/workoutMath';

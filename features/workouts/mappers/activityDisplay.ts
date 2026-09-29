@@ -24,7 +24,6 @@ export function activityDisplay(activity: Activity, units: UnitSystem): Activity
 
   const meta: MetaItem[] = [{ icon: 'clock', label: duration }];
   if (sets > 0) meta.push({ icon: 'layers', label: tr('workout.set', { count: sets }) });
-  if (activity.caloriesKcal > 0) meta.push({ icon: 'flame', label: `${Math.round(activity.caloriesKcal)} kcal` });
 
   return {
     headline: volume > 0 ? formatWeight(volume, units) : duration,
