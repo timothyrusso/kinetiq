@@ -48,7 +48,13 @@ export {
 } from '@/features/core/design-system/icons/materialIcons';
 export { Card } from '@/features/core/design-system/layout/Card';
 export { Divider } from '@/features/core/design-system/layout/Divider';
-export { closeSheet, FormFooter, FormSection, FormSheet } from '@/features/core/design-system/layout/FormSheet';
+export {
+  closeSheet,
+  FormFooter,
+  FormSection,
+  FormSheet,
+  FormSheetList,
+} from '@/features/core/design-system/layout/FormSheet';
 export { Gap } from '@/features/core/design-system/layout/Gap';
 export {
   useScreenContentBottom,
