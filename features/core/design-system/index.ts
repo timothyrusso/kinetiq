@@ -21,6 +21,7 @@ export {
   type SettingsSection,
 } from '@/features/core/design-system/controls/SettingsList';
 export { Stepper } from '@/features/core/design-system/controls/Stepper';
+export { Switch } from '@/features/core/design-system/controls/Switch';
 export { TextInput } from '@/features/core/design-system/controls/TextInput';
 export { ActionRow } from '@/features/core/design-system/display/ActionRow';
 export { ACTIVITY_ICON } from '@/features/core/design-system/display/activityIcon';

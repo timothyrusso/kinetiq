@@ -2,6 +2,7 @@ import { act, renderHook } from '@testing-library/react-native';
 import type { AccessibilityActionEvent } from 'react-native';
 import { tr } from '@/features/core/translations';
 import { anExerciseSnapshot, aRoutineItem } from '@/features/routines/__fixtures__/builders';
+import { uniformSets } from '@/features/routines/domain/utils/itemTargets';
 import {
   type RoutineItemRowInput,
   useRoutineItemRowLogic,
@@ -25,14 +26,14 @@ describe('useRoutineItemRowLogic', () => {
 
     expect(result.current.derived.meta.map(item => item.label)).toEqual([
       tr('workout.set', { count: 3 }),
-      tr('details.repsValue', { reps: '8-12' }),
+      tr('details.repsValue', { reps: '8' }),
       '60 kg',
     ]);
     expect(result.current.derived.tags).toEqual([{ key: 'muscle', label: 'Chest' }]);
   });
 
   it('says bodyweight instead of a load of 0', async () => {
-    const { result } = await renderRow({ item: aRoutineItem({ weightKg: 0 }) });
+    const { result } = await renderRow({ item: aRoutineItem({ sets: uniformSets(3, 8, 0) }) });
 
     expect(result.current.derived.meta[2]?.label).toBe(tr('itemEditor.bodyweightShort'));
   });

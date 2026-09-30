@@ -9,8 +9,9 @@ import type { ResolvedRoutine } from '@/features/transfer/domain/entities/Resolv
  * never overwrites: a routine that went out and came back edited lands beside the original, and
  * the user deletes the one they no longer want. An unnamed routine is named by `fallbackName`,
  * numbered over the whole file, so it gets the name the preview showed; an item with no rest of
- * its own gets the user's default. The snapshots an item needs are stored before it is written,
- * so no item points at an exercise the device does not have.
+ * its own gets the user's default. An item keeps its planned sets in order (a v1 item was read
+ * into identical ones by `parseRoutines`). The snapshots an item needs are stored
+ * before it is written, so no item points at an exercise the device does not have.
  */
 export const saveImport = (
   routines: readonly ResolvedRoutine<ExerciseSnapshot>[],
@@ -31,9 +32,7 @@ export const saveImport = (
           id: localId('rit'),
           exerciseId: snapshot.exerciseId,
           exerciseName: snapshot.name,
-          sets: item.sets,
-          reps: item.reps,
-          weightKg: item.weightKg,
+          sets: item.sets.map((set, setIndex) => ({ index: setIndex, ...set })),
           restSeconds: item.restSeconds ?? defaultRestSeconds,
           notes: item.notes,
         });

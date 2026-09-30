@@ -1,6 +1,6 @@
 import { act } from '@testing-library/react-native';
 import { resetAllStores } from '@/features/core/state';
-import { anExercise, aSession } from '@/features/workouts/__fixtures__/builders';
+import { anExercise, aSession, plannedSets } from '@/features/workouts/__fixtures__/builders';
 import { refuseWrites, storedSnapshot } from '@/features/workouts/di/__tests__/workoutsTestData';
 import { renderWithWorkouts } from '@/features/workouts/facades/__tests__/renderWithWorkouts';
 import { sessionLifecycle } from '@/features/workouts/facades/useActiveSession';
@@ -9,7 +9,7 @@ import { useSessionStore } from '@/features/workouts/state/sessionStore';
 import type { ExerciseTarget } from '@/features/workouts/useCases/addSessionExercise';
 
 const DIPS = anExercise({ id: 'wger:99', externalId: 99, name: 'Dips' });
-const TARGET: ExerciseTarget = { sets: 3, reps: '10', weightKg: 0, restSeconds: 60, notes: null };
+const TARGET: ExerciseTarget = { sets: plannedSets(3, 10, 0), restSeconds: 60, notes: null };
 
 const live = () => useSessionStore.getState().session;
 

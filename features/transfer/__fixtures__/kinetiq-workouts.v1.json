@@ -1,0 +1,112 @@
+{
+  "format": "kinetiq.workouts",
+  "version": 1,
+  "exportedAt": "2026-09-25T10:00:00.000Z",
+  "units": {
+    "weight": "kg"
+  },
+  "workouts": [
+    {
+      "id": "session-mfv2k1a0",
+      "title": "Push Day",
+      "startedAt": "2026-09-22T17:30:00.000Z",
+      "durationSeconds": 2700,
+      "caloriesKcal": 278,
+      "notes": null,
+      "totalVolumeKg": 500,
+      "totalSets": 1,
+      "exercises": [
+        {
+          "exerciseId": "wger:73",
+          "exerciseName": "Bench Press",
+          "muscleGroup": "Chest",
+          "restSeconds": 120,
+          "notes": null,
+          "sets": [
+            {
+              "index": 0,
+              "reps": 5,
+              "weightKg": 100,
+              "completed": true,
+              "rpe": 8,
+              "estimated1rmKg": 116.66666666666667
+            },
+            {
+              "index": 1,
+              "reps": 5,
+              "weightKg": 100,
+              "completed": false,
+              "rpe": null,
+              "estimated1rmKg": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "watch-7A1D0C3E-1111-4222-8333-944455556666",
+      "title": "Legs, \"heavy\"",
+      "startedAt": "2026-09-23T06:15:00.000Z",
+      "durationSeconds": 3120,
+      "caloriesKcal": 321,
+      "notes": "Knees felt good\nDeload next week",
+      "totalVolumeKg": 1150,
+      "totalSets": 3,
+      "exercises": [
+        {
+          "exerciseId": "wger:111",
+          "exerciseName": "Squat, Back",
+          "muscleGroup": null,
+          "restSeconds": 180,
+          "notes": "Belt on top sets",
+          "sets": [
+            {
+              "index": 0,
+              "reps": 3,
+              "weightKg": 142.5,
+              "completed": true,
+              "rpe": 9.5,
+              "estimated1rmKg": 156.75
+            },
+            {
+              "index": 1,
+              "reps": 8,
+              "weightKg": 0,
+              "completed": true,
+              "rpe": null,
+              "estimated1rmKg": null
+            }
+          ]
+        },
+        {
+          "exerciseId": "local:hip-thrust",
+          "exerciseName": "Hip thrust",
+          "muscleGroup": null,
+          "restSeconds": 90,
+          "notes": null,
+          "sets": [
+            {
+              "index": 0,
+              "reps": 12,
+              "weightKg": 60.25,
+              "completed": true,
+              "rpe": null,
+              "estimated1rmKg": 84.35
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "session-mfx0zz99",
+      "title": "Damaged",
+      "startedAt": "2026-09-24T20:00:00.000Z",
+      "durationSeconds": 60,
+      "caloriesKcal": 6,
+      "notes": null,
+      "totalVolumeKg": 0,
+      "totalSets": 0,
+      "exercises": []
+    }
+  ]
+}

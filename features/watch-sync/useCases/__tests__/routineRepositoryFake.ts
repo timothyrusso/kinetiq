@@ -16,4 +16,5 @@ export const RoutineRepositoryFake = (routines: readonly Routine[]) =>
     addItem: unused,
     removeItem: unused,
     markUsed: unused,
+    replaceItems: unused,
   });

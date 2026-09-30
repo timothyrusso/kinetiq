@@ -20,7 +20,8 @@ final class WatchSessionManager: NSObject, WCSessionDelegate {
 
   static let workoutFormat = "kinetiq.watch-workout"
   static let routinesFormat = "kinetiq.watch-routines"
-  static let formatVersion = 1
+  /// `WATCH_FORMAT_VERSION` in `features/watch-bridge`: the snapshot envelope's version.
+  static let formatVersion = 2
 
   /// How long a watch "send me a fresh snapshot" waits for JS before the stored one answers.
   private static let replyTimeout: TimeInterval = 4

@@ -86,15 +86,30 @@ describe('useRestTimer', () => {
     await done();
   });
 
-  it('restarts the rest from an adjustment', async () => {
+  it('restarts the rest from an adjustment and arms the alert for the new deadline', async () => {
     const { result, scheduled, done } = await renderTimer();
     await act(async () => result.current.timer.start(90));
     await waitFor(() => expect(scheduled.size).toBe(1));
+    const [first] = [...scheduled.keys()];
 
     await act(async () => result.current.timer.adjust(60));
 
     expect(result.current.session?.restDurationSeconds).toBe(60);
-    await waitFor(() => expect(scheduled.size).toBe(0));
+    expect(result.current.session?.restEndsAt).toBeGreaterThan(Date.now() + 59_000);
+    await waitFor(() => expect([...scheduled.keys()]).not.toContain(first));
+    expect(scheduled.size).toBe(1);
+    expect([...scheduled.values()][0]?.trigger).toEqual({ kind: 'afterSeconds', seconds: 60 });
+    await done();
+  });
+
+  it('starts no alert for an adjustment when notifications are off', async () => {
+    const { result, scheduled, done } = await renderTimer(false);
+    await act(async () => result.current.timer.start(90));
+
+    await act(async () => result.current.timer.adjust(60));
+
+    expect(result.current.session?.restDurationSeconds).toBe(60);
+    expect(scheduled.size).toBe(0);
     await done();
   });
 
@@ -106,17 +121,6 @@ describe('useRestTimer', () => {
     await act(async () => result.current.timer.adjust(3));
 
     expect(result.current.session?.restEndsAt).toBeNull();
-    await waitFor(() => expect(scheduled.size).toBe(0));
-    await done();
-  });
-
-  it('retracts the armed alert on an adjustment', async () => {
-    const { result, scheduled, done } = await renderTimer();
-    await act(async () => result.current.timer.start(90));
-    await waitFor(() => expect(scheduled.size).toBe(1));
-
-    await act(async () => result.current.timer.adjust(60));
-
     await waitFor(() => expect(scheduled.size).toBe(0));
     await done();
   });

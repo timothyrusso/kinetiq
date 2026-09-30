@@ -61,7 +61,6 @@ export function summariseTraining(
       label: formatWeekLabel(weekStart),
       workouts: inWeek.length,
       durationSeconds: sum(inWeek.map(activity => activity.durationSeconds)),
-      caloriesKcal: sum(inWeek.map(activity => activity.caloriesKcal)),
       volumeKg: sum(inWeek.map(activity => activity.strength?.totalVolumeKg ?? 0)),
     });
   }
@@ -77,7 +76,6 @@ export function summariseTraining(
     totals: {
       workouts: activities.length,
       durationSeconds: sum(activities.map(activity => activity.durationSeconds)),
-      caloriesKcal: sum(activities.map(activity => activity.caloriesKcal)),
       volumeKg: sum(activities.map(activity => activity.strength?.totalVolumeKg ?? 0)),
     },
     activeDays,

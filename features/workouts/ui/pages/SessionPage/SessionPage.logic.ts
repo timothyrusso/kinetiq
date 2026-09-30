@@ -19,7 +19,6 @@ import type { PreviousLift } from '@/features/workouts/domain/entities/PreviousL
 import type { StrengthEntry } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 import { sessionActions, useActiveSession } from '@/features/workouts/facades/useActiveSession';
 import { useDiscardSession } from '@/features/workouts/facades/useDiscardSession';
-import { useFinishSession } from '@/features/workouts/facades/useFinishSession';
 import { useKeepScreenAwake } from '@/features/workouts/facades/useKeepScreenAwake';
 import { usePreviousPerformance } from '@/features/workouts/facades/usePreviousPerformance';
 import { useRestTimer } from '@/features/workouts/facades/useRestTimer';
@@ -92,10 +91,10 @@ export function useSessionPageLogic() {
   const { t, locale } = useT();
   const insets = useSafeAreaInsets();
   const hapticsApi = useHaptics();
-  const { session, hydrated, persistFailed, awayNoticeSeconds } = useActiveSession();
+  // NOTE: the finish runs in its own sheet over this screen, which hears it through `finishing`.
+  const { session, hydrated, persistFailed, awayNoticeSeconds, finishing } = useActiveSession();
   const progress = useSessionProgress(session);
   const rest = useRestTimer(session);
-  const finishSession = useFinishSession();
   const discardSession = useDiscardSession();
 
   const units = useSettings(settings => settings.unitSystem);
@@ -103,9 +102,7 @@ export function useSessionPageLogic() {
   const keepScreenAwake = useSettings(settings => settings.keepScreenAwake);
 
   const [confirmDiscard, setConfirmDiscard] = useState(false);
-  const [confirmFinish, setConfirmFinish] = useState(false);
   const [removing, setRemoving] = useState<number | null>(null);
-  const [finishing, setFinishing] = useState(false);
   const [discarding, setDiscarding] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -211,44 +208,12 @@ export function useSessionPageLogic() {
     });
   }, [discardMutate, discarding, retract, session, t]);
 
-  const { mutate: finishMutate } = finishSession;
-  const finish = useCallback(() => {
-    if (session === null || finishing) return;
-    setFinishing(true);
-    retract();
-    finishMutate(
-      { id: session.id, routineId: session.routineId },
-      {
-        onSuccess: result => {
-          setConfirmFinish(false);
-          // NOTE: one signature per finish: a record's sheet plays its own, and two designed
-          // patterns a moment apart blur into one long buzz.
-          if (result.personalRecords.length === 0) {
-            if (result.closedWeeklyGoal) haptics.weeklyGoalReached();
-            else haptics.workoutFinished();
-          }
-          // NOTE: the workout now tops the history on Home, so that is where this goes; a record is
-          // then presented over Home as a sheet, worth stopping for.
-          router.dismissTo(routes.home());
-          if (result.personalRecords.length > 0) router.push(routes.sessionRecords(result.personalRecords));
-        },
-        onError: error => {
-          setFinishing(false);
-          if (error._tag === 'DuplicateWorkout' || error._tag === 'NoActiveSession') {
-            // NOTE: nothing was written this time: saying otherwise would send someone to a history
-            // that does not contain the workout they just did.
-            setConfirmFinish(false);
-            setActionError(t('session.saveFailed'));
-            return;
-          }
-          setActionError(t('session.saveFailedKept'));
-        },
-      },
-    );
-  }, [finishMutate, finishing, retract, session, t]);
+  // NOTE: a finish ends the rest early, so the alert its tick armed is pulled back.
+  useEffect(() => {
+    if (finishing) retract();
+  }, [finishing, retract]);
 
-  const askFinish = useCallback(() => setConfirmFinish(true), []);
-  const cancelFinish = useCallback(() => setConfirmFinish(false), []);
+  const askFinish = useCallback(() => router.push(routes.sessionFinish()), []);
   const askDiscard = useCallback(() => setConfirmDiscard(true), []);
   const cancelDiscard = useCallback(() => setConfirmDiscard(false), []);
   const cancelRemove = useCallback(() => setRemoving(null), []);
@@ -264,8 +229,10 @@ export function useSessionPageLogic() {
   }, []);
 
   const restShown = rest.remaining > 0;
-  const dockExtent = restShown ? dockHeight + insets.bottom + spacing.md : 0;
-  const contentPadding = Math.max(footerHeight, dockExtent) + spacing.xl;
+  // NOTE: the dock stands on the footer, never over it, so Finish and Discard stay reachable while
+  // a rest runs; the footer's measured height already holds the home indicator.
+  const dockBottom = footerHeight + spacing.sm;
+  const contentPadding = (restShown ? dockBottom + dockHeight : footerHeight) + spacing.xl;
   const contentInset = useMemo(() => ({ paddingBottom: contentPadding }), [contentPadding]);
   const barInset = useMemo(() => ({ paddingTop: insets.top + spacing.xs }), [insets.top]);
   const footerInset = useMemo(() => ({ paddingBottom: insets.bottom + spacing.md }), [insets.bottom]);
@@ -307,7 +274,6 @@ export function useSessionPageLogic() {
       actionError,
       units,
       confirmDiscard,
-      confirmFinish,
       removing,
       finishing,
       discarding,
@@ -320,17 +286,10 @@ export function useSessionPageLogic() {
       progress,
       barMeta,
       restShown,
+      dockBottom,
       showAwayNotice: awayNoticeSeconds > AWAY_NOTICE_SECONDS,
       awayNotice: t('session.awayNotice', { time: formatDurationCompact(awayNoticeSeconds) }),
       exercisesEyebrow: `${entryCount} ${t('session.exerciseWord', { count: entryCount })}`,
-      finishMessage:
-        progress.ratio < 1
-          ? t('session.finishPartial', {
-              left: progress.planned - progress.completed,
-              planned: progress.planned,
-              word: setWord,
-            })
-          : t('session.finishAll', { planned: progress.planned }),
       discardMessage: t('session.discardMessage', { count: progress.completed }),
       removingName: removingEntry?.exerciseName ?? t('session.thisExercise'),
       removingSets: removingEntry?.sets.filter(set => set.completed).length ?? 0,
@@ -343,8 +302,6 @@ export function useSessionPageLogic() {
       leave,
       togglePause,
       askFinish,
-      cancelFinish,
-      finish,
       askDiscard,
       cancelDiscard,
       discard,

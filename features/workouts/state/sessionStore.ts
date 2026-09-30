@@ -32,10 +32,18 @@ interface SessionStoreState {
   readonly persistFailed: boolean;
   /** Counts the clock's ticks, so a screen showing the elapsed time re-renders each second. */
   readonly tick: number;
-  /** How long the app was just away, counted into the session on return. */
+  /**
+   * How long the app was just away, counted into the session on return. It belongs to that
+   * session: cleared when the session ends and when the next one starts.
+   */
   readonly awayNoticeSeconds: number;
   /** The session clock is counting. */
   readonly clockRunning: boolean;
+  /**
+   * A finish is being recorded, or was: the live workout leaves from under the finish sheet, so it
+   * hears here that it is on its way out. Cleared by a failed finish and by the next workout.
+   */
+  readonly finishing: boolean;
   /** When the clock last banked time, unix ms. */
   readonly lastTickAt: number;
   /** Counts the writes the session needs; the persistence writes `pendingWrite` when it moves. */
@@ -61,6 +69,8 @@ interface SessionStoreState {
   readonly appStateChanged: (next: AppLifecycle, now: number) => void;
   /** Stops the clock while the session is being recorded. */
   readonly beginFinish: () => void;
+  /** The finish failed: the workout is still on screen. */
+  readonly finishFailed: () => void;
   /** Session `id` was recorded or discarded: nothing is in progress any more. */
   readonly ended: (id: string) => void;
   readonly markPersistFailed: () => void;
@@ -106,6 +116,7 @@ const sessionStore = createStore<SessionStoreState>((set, get) => {
     tick: 0,
     awayNoticeSeconds: 0,
     clockRunning: false,
+    finishing: false,
     lastTickAt: 0,
     writes: 0,
     pendingWrite: null,
@@ -115,11 +126,19 @@ const sessionStore = createStore<SessionStoreState>((set, get) => {
         session,
         hydrated: true,
         persistFailed: false,
+        finishing: false,
         ...(session?.status === 'active' ? clockOn(state, now) : {}),
       })),
 
     start: (session, now) =>
-      set(state => ({ ...saved(state, session), hydrated: true, persistFailed: false, ...clockOn(state, now) })),
+      set(state => ({
+        ...saved(state, session),
+        hydrated: true,
+        persistFailed: false,
+        finishing: false,
+        awayNoticeSeconds: 0,
+        ...clockOn(state, now),
+      })),
 
     pause: now =>
       set(state => {
@@ -204,10 +223,16 @@ const sessionStore = createStore<SessionStoreState>((set, get) => {
         };
       }),
 
-    beginFinish: () => set({ clockRunning: false }),
+    beginFinish: () => set({ clockRunning: false, finishing: true }),
+
+    finishFailed: () => set({ finishing: false }),
 
     ended: id =>
-      set(state => (state.session?.id === id ? { session: null, persistFailed: false, clockRunning: false } : {})),
+      set(state =>
+        state.session?.id === id
+          ? { session: null, persistFailed: false, clockRunning: false, awayNoticeSeconds: 0 }
+          : {},
+      ),
 
     markPersistFailed: () => set({ persistFailed: true }),
   };

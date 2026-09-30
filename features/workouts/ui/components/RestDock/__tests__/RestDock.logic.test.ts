@@ -1,13 +1,5 @@
 import { act, renderHook } from '@testing-library/react-native';
-import { createElement, type ReactNode } from 'react';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { spacing } from '@/features/core/theme';
 import { type RestDockInput, useRestDockLogic } from '@/features/workouts/ui/components/RestDock/RestDock.logic';
-
-const METRICS = { frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 47, left: 0, right: 0, bottom: 34 } };
-
-const wrapper = ({ children }: { readonly children: ReactNode }) =>
-  createElement(SafeAreaProvider, { initialMetrics: METRICS }, children);
 
 const renderDock = async (overrides: Partial<RestDockInput> = {}) => {
   const adjusted: number[] = [];
@@ -15,11 +7,12 @@ const renderDock = async (overrides: Partial<RestDockInput> = {}) => {
   const input: RestDockInput = {
     remainingSeconds: 45,
     totalSeconds: 90,
+    bottom: 120,
     onAdjust: seconds => void adjusted.push(seconds),
     onHeight: height => void heights.push(height),
     ...overrides,
   };
-  return { ...(await renderHook(() => useRestDockLogic(input), { wrapper })), adjusted, heights };
+  return { ...(await renderHook(() => useRestDockLogic(input))), adjusted, heights };
 };
 
 describe('useRestDockLogic', () => {
@@ -35,10 +28,10 @@ describe('useRestDockLogic', () => {
     expect(result.current.derived.fillWidth).toEqual({ width: '0%' });
   });
 
-  it('sits above the home indicator', async () => {
+  it('stands where the screen places it', async () => {
     const { result } = await renderDock();
 
-    expect(result.current.derived.position).toEqual({ bottom: 34 + spacing.md });
+    expect(result.current.derived.position).toEqual({ bottom: 120 });
   });
 
   it('takes fifteen seconds off, never below zero', async () => {

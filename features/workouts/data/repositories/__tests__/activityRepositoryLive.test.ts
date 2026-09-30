@@ -41,7 +41,6 @@ describe('ActivityRepositoryLive recordWorkout', () => {
         title: 'Push Day',
         startedAt: WORKOUT_TIME,
         durationSeconds: 2700,
-        caloriesKcal: 278,
         notes: null,
         sourceSessionId: 'session-mbz1a2b3',
         strength: { entries, totalVolumeKg: 500, totalSets: 1, personalRecords: [] },

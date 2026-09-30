@@ -1,6 +1,5 @@
 import { anInboxEntry, aWatchDocument, UUID } from '@/features/watch-sync/__fixtures__/watchWorkout';
 import { readInboxEntry } from '@/features/watch-sync/data/adapters/readInboxEntry';
-import { estimateCalories } from '@/features/workouts';
 
 const aSet = { index: 0, reps: 5, weightKg: 80, completed: true, rpe: null };
 
@@ -22,11 +21,10 @@ describe('readInboxEntry', () => {
     expect(workout.routineId).toBe('rtn_1');
   });
 
-  it('computes the duration from the wall clock and the calories as a phone session does', () => {
+  it('computes the duration from the wall clock', () => {
     const workout = workoutOf(anInboxEntry());
 
     expect(workout.durationSeconds).toBe(45 * 60);
-    expect(workout.caloriesKcal).toBe(estimateCalories(45 * 60));
   });
 
   it('counts only the completed sets in the totals and estimates their one-rep max', () => {
@@ -52,8 +50,15 @@ describe('readInboxEntry', () => {
     expect(workout.entries[0]?.sets[0]?.rpe).toBeNull();
   });
 
+  it('still saves a v1 workout from a watch app not yet updated', () => {
+    const workout = workoutOf(anInboxEntry(aWatchDocument({ version: 1 }), { version: 1 }));
+
+    expect(workout.id).toBe(`watch-${UUID}`);
+    expect(workout.totalSets).toBe(1);
+  });
+
   it('reads a document from a newer watch app as version, apart from bad data', () => {
-    expect(readInboxEntry(anInboxEntry(aWatchDocument(), { version: 2 })).read).toEqual({
+    expect(readInboxEntry(anInboxEntry(aWatchDocument(), { version: 3 })).read).toEqual({
       ok: false,
       reason: 'version',
     });

@@ -1,6 +1,7 @@
 import { Effect, Exit, Layer } from 'effect';
 import { SqlError } from '@/features/core/error';
 import { type ExerciseSnapshot, ExerciseSnapshotRepository } from '@/features/exercises';
+import type { RoutineUpdate } from '@/features/workouts/domain/entities/RoutineUpdate';
 import { ActivityRepository } from '@/features/workouts/domain/repositories/ActivityRepository';
 import { RecordRepository } from '@/features/workouts/domain/repositories/RecordRepository';
 import { SessionRepository } from '@/features/workouts/domain/repositories/SessionRepository';
@@ -23,6 +24,8 @@ export interface FakeWorkoutsDb {
   snapshots: Map<string, ExerciseSnapshot>;
   /** Every workout counted against a routine, in order. */
   routinesUsed: { routineId: string; performedAt: number }[];
+  /** Every workout written back into its routine, in order. */
+  routinesUpdated: RoutineUpdate[];
 }
 
 export const makeFakeWorkoutsDb = (seed: Partial<FakeWorkoutsDb> = {}): FakeWorkoutsDb => ({
@@ -31,6 +34,7 @@ export const makeFakeWorkoutsDb = (seed: Partial<FakeWorkoutsDb> = {}): FakeWork
   sessions: new Map(),
   snapshots: new Map(),
   routinesUsed: [],
+  routinesUpdated: [],
   ...seed,
 });
 
@@ -41,6 +45,8 @@ export interface FakeFailures {
   readonly sessions?: keyof SessionService;
   readonly snapshots?: 'upsert';
   readonly routineUsage?: true;
+  /** Only the write-back into the routine fails. */
+  readonly routineUpdate?: true;
 }
 
 const failure = (method: string) => Effect.fail(new SqlError({ message: `fake ${method} failed` }));
@@ -81,7 +87,6 @@ const activityRepositoryFake = (db: FakeWorkoutsDb, failing?: keyof ActivityServ
             title: workout.title.trim() || 'Strength session',
             startedAt: workout.startedAt,
             durationSeconds: workout.durationSeconds,
-            caloriesKcal: workout.caloriesKcal,
             notes: workout.notes,
             sourceSessionId: workout.id,
             strength: {
@@ -152,6 +157,7 @@ const snapshotOf = (db: FakeWorkoutsDb) => ({
   sessions: new Map(db.sessions),
   snapshots: new Map(db.snapshots),
   routinesUsed: [...db.routinesUsed],
+  routinesUpdated: [...db.routinesUpdated],
 });
 
 /** A transaction over the fakes: a failure puts every table back as it was before it began. */
@@ -166,10 +172,12 @@ const workoutTransactionFake = (db: FakeWorkoutsDb) =>
       }),
   });
 
-const routineUsageFake = (db: FakeWorkoutsDb, failing?: true) =>
+const routineUsageFake = (db: FakeWorkoutsDb, failing?: true, updateFailing?: true) =>
   Layer.succeed(RoutineUsage, {
     markUsed: (routineId, performedAt) =>
       failing ? failure('markUsed') : Effect.sync(() => void db.routinesUsed.push({ routineId, performedAt })),
+    applyWorkout: update =>
+      failing || updateFailing ? failure('applyWorkout') : Effect.sync(() => void db.routinesUpdated.push(update)),
   });
 
 const snapshotRepositoryFake = (db: FakeWorkoutsDb, failing?: 'upsert') =>
@@ -202,6 +210,6 @@ export const makeWorkoutsFake = (db: FakeWorkoutsDb = makeFakeWorkoutsDb(), fail
     recordRepositoryFake(db, failing.records),
     sessionRepositoryFake(db, failing.sessions),
     workoutTransactionFake(db),
-    routineUsageFake(db, failing.routineUsage),
+    routineUsageFake(db, failing.routineUsage, failing.routineUpdate),
     snapshotRepositoryFake(db, failing.snapshots),
   );

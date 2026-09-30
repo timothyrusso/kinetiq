@@ -1,5 +1,5 @@
-import { Schema } from 'effect';
-import { entriesFromColumn, entriesToColumn } from '@/features/workouts/data/adapters/decodeRows';
+import { Option, Schema } from 'effect';
+import { entriesFromColumn, entriesFromList, entriesToColumn } from '@/features/workouts/data/adapters/decodeRows';
 import { ActivityId } from '@/features/workouts/domain/schemas/ActivityId';
 import {
   type WorkoutSession,
@@ -30,6 +30,28 @@ export const SessionRow = Schema.Struct({
 
 const isStatus = Schema.is(WorkoutSessionStatusSchema);
 
+/**
+ * The `entries_json` of a session started from a routine: its entries beside the routine items it
+ * started with. Any other session stores the plain list, as every row before it did.
+ */
+const PlannedColumnSchema = Schema.parseJson(
+  Schema.Struct({ entries: Schema.Array(Schema.Unknown), routineItemIds: Schema.Array(Schema.String) }),
+);
+
+const decodePlannedColumn = Schema.decodeUnknownOption(PlannedColumnSchema);
+
+/** A session's stored entries, and the routine items it started with when it stored them. */
+function plannedFromColumn(raw: string): Pick<WorkoutSession, 'entries' | 'routineItemIds'> {
+  const planned = decodePlannedColumn(raw);
+  if (Option.isNone(planned)) return { entries: entriesFromColumn(raw) };
+  return { entries: entriesFromList(planned.value.entries), routineItemIds: planned.value.routineItemIds };
+}
+
+function plannedToColumn(session: WorkoutSession): string {
+  const { entries, routineItemIds } = session;
+  return routineItemIds === undefined ? entriesToColumn(entries) : JSON.stringify({ entries, routineItemIds });
+}
+
 /** A stored row as a session. A status the app does not know reads as `active`, so it restores. */
 export function sessionFromRow(row: typeof SessionRow.Type): WorkoutSession {
   return {
@@ -39,7 +61,7 @@ export function sessionFromRow(row: typeof SessionRow.Type): WorkoutSession {
     startedAt: row.started_at,
     elapsedSeconds: row.elapsed_seconds,
     status: isStatus(row.status) ? row.status : 'active',
-    entries: entriesFromColumn(row.entries_json),
+    ...plannedFromColumn(row.entries_json),
     activeIndex: row.active_index,
     restEndsAt: row.rest_ends_at,
     restDurationSeconds: row.rest_duration,
@@ -57,7 +79,7 @@ export function sessionToRow(session: WorkoutSession): (string | number | null)[
     session.startedAt,
     session.elapsedSeconds,
     session.status,
-    entriesToColumn(session.entries),
+    plannedToColumn(session),
     session.activeIndex,
     session.restEndsAt,
     session.restDurationSeconds,

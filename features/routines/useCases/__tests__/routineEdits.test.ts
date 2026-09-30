@@ -3,6 +3,7 @@ import { itEffect } from '@/features/core/testing';
 import { anExerciseSnapshot, aRoutine, aRoutineItem } from '@/features/routines/__fixtures__/builders';
 import { RoutineRepository } from '@/features/routines/domain/repositories/RoutineRepository';
 import { RoutineId } from '@/features/routines/domain/schemas/RoutineId';
+import { uniformSets } from '@/features/routines/domain/utils/itemTargets';
 import { makeRoutineRepositoryFake, makeRoutinesFake } from '@/features/routines/useCases/__tests__/routineFakes';
 import { deleteRoutine } from '@/features/routines/useCases/deleteRoutine';
 import { getRoutineDetail } from '@/features/routines/useCases/getRoutineDetail';
@@ -69,9 +70,11 @@ describe('setRoutineItem', () => {
   itEffect(
     'changes the item’s targets',
     Effect.gen(function* () {
-      yield* setRoutineItem('rit_bench', { sets: 5 });
+      yield* setRoutineItem('rit_bench', { sets: uniformSets(5, 8, 60) });
 
-      expect((yield* (yield* RoutineRepository).byId(PUSH.id))?.items[0]).toEqual(aRoutineItem({ sets: 5 }));
+      expect((yield* (yield* RoutineRepository).byId(PUSH.id))?.items[0]).toEqual(
+        aRoutineItem({ sets: uniformSets(5, 8, 60) }),
+      );
     }),
     makeRoutineRepositoryFake([PUSH]),
   );

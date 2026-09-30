@@ -1,5 +1,6 @@
 import { isSessionInProgress, resetAllStores } from '@/features/core/state';
 import { anEntry, aSession } from '@/features/workouts/__fixtures__/builders';
+import { ActivityId } from '@/features/workouts/domain/schemas/ActivityId';
 import { useSessionStore } from '@/features/workouts/state/sessionStore';
 
 const NOW = 2_000_000_000_000;
@@ -175,12 +176,50 @@ describe('the session store ending a workout', () => {
     expect(store().session).not.toBeNull();
   });
 
+  it('says a finish is under way until it fails, so the live workout knows it is leaving', () => {
+    store().beginFinish();
+    const during = store().finishing;
+    store().ended(aSession().id);
+    const after = store().finishing;
+    store().finishFailed();
+
+    expect([during, after, store().finishing]).toEqual([true, true, false]);
+  });
+
+  it('starts the next workout with no finish under way', () => {
+    store().beginFinish();
+    store().start(aSession(), NOW);
+
+    expect(store().finishing).toBe(false);
+  });
+
   it('lets the session go once it was recorded or discarded', () => {
     store().markPersistFailed();
 
     store().ended(aSession().id);
 
     expect(store()).toMatchObject({ session: null, persistFailed: false, clockRunning: false });
+  });
+
+  it('starts the next workout without the away notice of the one before', () => {
+    store().appStateChanged('background', NOW);
+    store().appStateChanged('active', NOW + 180_000);
+    const away = store().awayNoticeSeconds;
+
+    store().ended(aSession().id);
+    const afterEnd = store().awayNoticeSeconds;
+    store().start(aSession({ id: ActivityId.make('session-next') }), NOW + 200_000);
+
+    expect([away, afterEnd, store().awayNoticeSeconds]).toEqual([180, 0, 0]);
+  });
+
+  it('clears the away notice when a workout starts over one that never ended', () => {
+    store().appStateChanged('background', NOW);
+    store().appStateChanged('active', NOW + 180_000);
+
+    store().start(aSession({ id: ActivityId.make('session-next') }), NOW + 200_000);
+
+    expect(store().awayNoticeSeconds).toBe(0);
   });
 
   it('keeps the session when another one ended', () => {

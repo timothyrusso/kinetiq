@@ -3,19 +3,6 @@ import type { CompletedWorkout } from '@/features/workouts/domain/schemas/Comple
 import type { StrengthEntry, StrengthSet } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 import type { WorkoutSession } from '@/features/workouts/domain/schemas/WorkoutSessionSchema';
 
-/**
- * MET-based calorie model for resistance training, scaled for a 74 kg reference athlete.
- * Deliberately simple and monotonic: a fitness app's calorie number is an estimate the user
- * trends against, not a measurement.
- */
-const LIFT_MET = 5.0;
-
-/** Kilocalories for a lifting session of `durationSeconds`. */
-export function estimateCalories(durationSeconds: number): number {
-  const hours = Math.max(0, durationSeconds) / 3600;
-  return Math.round(LIFT_MET * 74 * hours);
-}
-
 function roundKg(value: number): number {
   return Math.round(value * 2) / 2;
 }
@@ -82,6 +69,11 @@ export function sessionProgress(session: Pick<WorkoutSession, 'entries'>): Sessi
   return { completed, planned, ratio: planned === 0 ? 0 : completed / planned };
 }
 
+/** An entry as history keeps it: without the routine item and set rows it was planned from. */
+function recordedEntry({ routineItemId: _item, ...entry }: StrengthEntry): StrengthEntry {
+  return { ...entry, sets: entry.sets.map(({ routineSetIndex: _row, ...set }) => set) };
+}
+
 /** The shape a finished session is recorded as. Its duration is the counted time, not the wall. */
 export function toCompletedWorkout(session: WorkoutSession, endedAt: number): CompletedWorkout {
   const durationSeconds = session.elapsedSeconds;
@@ -92,8 +84,7 @@ export function toCompletedWorkout(session: WorkoutSession, endedAt: number): Co
     startedAt: session.startedAt,
     endedAt,
     durationSeconds,
-    caloriesKcal: estimateCalories(durationSeconds),
-    entries: session.entries,
+    entries: session.entries.map(recordedEntry),
     totalVolumeKg: totalVolumeKg(session.entries),
     totalSets: completedSetCount(session.entries),
     notes: session.notes,

@@ -73,7 +73,8 @@ function ThemedRoot() {
             <Stack.Screen name="routine/item" options={formSheet('picker')} />
             <Stack.Screen name="routine/rename" options={formSheet('fit')} />
             <Stack.Screen name="workout/set" options={formSheet('fit')} />
-            <Stack.Screen name="workout/records" options={{ ...formSheet('fit'), gestureEnabled: false }} />
+            <Stack.Screen name="workout/finish" options={formSheet('fit')} />
+            <Stack.Screen name="workout/records" options={formSheet('fit')} />
             <Stack.Screen name="+not-found" options={{ presentation: 'card' }} />
           </Stack>
         </ThemeProvider>

@@ -22,7 +22,6 @@ export const ActivitySchema = Schema.Struct({
   title: Schema.String,
   startedAt: Schema.Number,
   durationSeconds: Schema.Number,
-  caloriesKcal: Schema.Number,
   notes: Schema.NullOr(Schema.String),
   // NOTE: the session that produced it, when it came from the tracker.
   sourceSessionId: Schema.NullOr(Schema.String),

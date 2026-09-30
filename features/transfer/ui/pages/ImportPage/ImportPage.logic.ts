@@ -7,11 +7,20 @@ import { useT } from '@/features/core/translations';
 import { formatWeight } from '@/features/core/utils';
 import type { ExerciseSnapshot } from '@/features/exercises';
 import { useSettings } from '@/features/settings';
+import type { ParsedSet } from '@/features/transfer/domain/entities/ParsedImport';
 import type { ResolvedItem } from '@/features/transfer/domain/entities/ResolvedImport';
 import { importable } from '@/features/transfer/domain/utils/matchRules';
 import { useImportRoutines } from '@/features/transfer/facades/useImportRoutines';
 import { useResolvedImport } from '@/features/transfer/facades/useResolvedImport';
 import { useStagedImport } from '@/features/transfer/facades/useStagedImport';
+
+/** The item's reps: one number when every set has it, otherwise the fewest and the most. */
+function repsLabel(sets: readonly ParsedSet[]): string {
+  const reps = sets.map(set => set.reps);
+  const low = Math.min(...reps);
+  const high = Math.max(...reps);
+  return low === high ? `${low}` : `${low}-${high}`;
+}
 
 /**
  * Import preview: what a pasted or picked routines file will become, before anything is saved.
@@ -56,7 +65,7 @@ export function useImportPageLogic() {
           : match.status === 'closest' && item.exerciseName !== ''
             ? t('dataTransfer.matchedFrom', { name: item.exerciseName })
             : t('dataTransfer.itemTargets', {
-                weight: formatWeight(item.weightKg, units),
+                weight: formatWeight(item.sets[0]?.weightKg ?? 0, units),
                 rest: item.restSeconds ?? defaultRest,
               });
       return {
@@ -64,7 +73,7 @@ export function useImportPageLogic() {
         key,
         title,
         subtitle,
-        value: t('dataTransfer.setsReps', { sets: item.sets, reps: item.reps }),
+        value: t('dataTransfer.setsReps', { sets: item.sets.length, reps: repsLabel(item.sets) }),
       };
     },
     [defaultRest, t, units],

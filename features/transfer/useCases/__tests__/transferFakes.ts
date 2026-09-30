@@ -77,6 +77,7 @@ export const RoutineRepositoryFake = (routines: Routine[] = []) =>
     addItem: unused,
     removeItem: unused,
     markUsed: unused,
+    replaceItems: unused,
   });
 
 /** The stored snapshots, in a map by exercise id. */

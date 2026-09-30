@@ -8,6 +8,7 @@ import { RoutineRepository } from '@/features/routines/domain/repositories/Routi
 import { RoutineId } from '@/features/routines/domain/schemas/RoutineId';
 import type { RoutineItem } from '@/features/routines/domain/schemas/RoutineSchema';
 import { RoutineEvents } from '@/features/routines/domain/services/RoutineEvents';
+import { uniformSets } from '@/features/routines/domain/utils/itemTargets';
 
 const NOW = 1_750_000_000_000;
 
@@ -103,6 +104,7 @@ describe('RoutineRepositoryLive save and reads', () => {
 
       expect(saved.name).toBe('Push Day B');
       expect(saved.items).toEqual([DIPS]);
+      expect(yield* rows('SELECT DISTINCT item_id FROM routine_item_sets')).toEqual([{ item_id: 'rit_dips' }]);
       expect(saved.createdAt).toBe(NOW);
       expect(saved.updatedAt).toBe(NOW + 5_000);
     }),
@@ -209,7 +211,7 @@ describe('RoutineRepositoryLive edits', () => {
   );
 
   itEffect(
-    'deletes a routine together with its items',
+    'deletes a routine together with its items and their sets',
     Effect.gen(function* () {
       yield* savePushDay;
       const repo = yield* RoutineRepository;
@@ -218,6 +220,7 @@ describe('RoutineRepositoryLive edits', () => {
 
       expect(yield* repo.byId(PUSH)).toBeUndefined();
       expect(yield* rows('SELECT id FROM routine_items')).toEqual([]);
+      expect(yield* rows('SELECT item_id FROM routine_item_sets')).toEqual([]);
     }),
     layer(),
   );
@@ -244,9 +247,33 @@ describe('RoutineRepositoryLive edits', () => {
       yield* savePushDay;
       const repo = yield* RoutineRepository;
 
-      yield* repo.setItem('rit_bench', { sets: 5, weightKg: 62.5 });
+      yield* repo.setItem('rit_bench', { restSeconds: 120 });
 
-      expect((yield* repo.byId(PUSH))?.items[0]).toEqual(aRoutineItem({ sets: 5, weightKg: 62.5 }));
+      expect((yield* repo.byId(PUSH))?.items[0]).toEqual(aRoutineItem({ restSeconds: 120 }));
+    }),
+    layer(),
+  );
+
+  itEffect(
+    'replaces the item’s sets with the patch’s, each on its own targets, and keeps the other items’ sets',
+    Effect.gen(function* () {
+      yield* savePushDay;
+      const repo = yield* RoutineRepository;
+      const sets = [
+        { index: 0, reps: 12, weightKg: 50, targetRpe: null },
+        { index: 1, reps: 10, weightKg: 62.5, targetRpe: 7.5 },
+        { index: 2, reps: 8, weightKg: 0, targetRpe: 10 },
+        { index: 3, reps: 6, weightKg: 70, targetRpe: 0 },
+        { index: 4, reps: 1, weightKg: 100, targetRpe: 9 },
+      ];
+
+      yield* repo.setItem('rit_bench', { sets });
+
+      const routine = yield* repo.byId(PUSH);
+      expect(routine?.items[0]?.sets).toEqual(sets);
+      expect(routine?.items[1]).toEqual(anotherRoutineItem());
+      yield* repo.setItem('rit_bench', { sets: sets.slice(0, 1) });
+      expect((yield* repo.byId(PUSH))?.items[0]?.sets).toEqual(sets.slice(0, 1));
     }),
     layer(),
   );
@@ -257,7 +284,7 @@ describe('RoutineRepositoryLive edits', () => {
       yield* savePushDay;
       const repo = yield* RoutineRepository;
 
-      yield* repo.setItem('rit_press', { reps: '5' });
+      yield* repo.setItem('rit_press', { restSeconds: 45 });
       const kept = (yield* repo.byId(PUSH))?.items[1]?.notes;
       yield* repo.setItem('rit_press', { notes: null });
 
@@ -273,7 +300,7 @@ describe('RoutineRepositoryLive edits', () => {
       const saved = yield* savePushDay;
       const repo = yield* RoutineRepository;
 
-      yield* repo.setItem('rit_gone', { sets: 9 });
+      yield* repo.setItem('rit_gone', { sets: uniformSets(9, 8, 0) });
 
       expect(yield* repo.byId(PUSH)).toEqual(saved);
     }),
@@ -320,6 +347,7 @@ describe('RoutineRepositoryLive edits', () => {
         { id: 'rit_press', position: 0 },
         { id: 'rit_dips', position: 1 },
       ]);
+      expect(yield* rows("SELECT item_id FROM routine_item_sets WHERE item_id = 'rit_bench'")).toEqual([]);
     }),
     layer(),
   );
@@ -336,6 +364,60 @@ describe('RoutineRepositoryLive edits', () => {
       const routine = yield* repo.byId(PUSH);
       expect(routine?.timesCompleted).toBe(2);
       expect(routine?.lastPerformedAt).toBe(NOW + 10_000);
+    }),
+    layer(),
+  );
+});
+
+describe('RoutineRepositoryLive replaceItems', () => {
+  itEffect(
+    'replaces the items and their sets in order, keeping the name and the trained count',
+    Effect.gen(function* () {
+      yield* savePushDay;
+      const repo = yield* RoutineRepository;
+      yield* repo.markUsed(PUSH, NOW);
+      yield* TestClock.setTime(NOW + 60_000);
+      const press = anotherRoutineItem({ sets: [{ index: 0, reps: 5, weightKg: 45, targetRpe: 8 }] });
+
+      yield* repo.replaceItems(PUSH, [press, DIPS]);
+
+      const routine = yield* repo.byId(PUSH);
+      expect(routine?.name).toBe('Push Day');
+      expect(routine?.timesCompleted).toBe(1);
+      expect(routine?.updatedAt).toBe(NOW + 60_000);
+      expect(routine?.items).toEqual([press, DIPS]);
+      const orphans = yield* rows<{ n: number }>(
+        "SELECT COUNT(*) AS n FROM routine_item_sets WHERE item_id = 'rit_bench'",
+      );
+      expect(orphans[0]?.n).toBe(0);
+    }),
+    layer(),
+  );
+
+  itEffect(
+    'joins a transaction the caller holds, so a rollback undoes it',
+    Effect.gen(function* () {
+      const before = yield* savePushDay;
+      const repo = yield* RoutineRepository;
+
+      yield* run('BEGIN');
+      yield* repo.replaceItems(PUSH, [DIPS]);
+      yield* run('ROLLBACK');
+
+      expect((yield* repo.byId(PUSH))?.items).toEqual(before.items);
+    }),
+    layer(),
+  );
+
+  itEffect(
+    'announces the change',
+    Effect.gen(function* () {
+      yield* savePushDay;
+      const repo = yield* RoutineRepository;
+
+      const events = yield* published(repo.replaceItems(PUSH, [DIPS]));
+
+      expect(events).toEqual([{ routineId: PUSH, kind: 'itemsChanged' }]);
     }),
     layer(),
   );
@@ -376,7 +458,7 @@ describe('RoutineRepositoryLive change events', () => {
 
       const events = yield* published(
         Effect.gen(function* () {
-          yield* repo.setItem('rit_bench', { sets: 4 });
+          yield* repo.setItem('rit_bench', { sets: uniformSets(4, 8, 60) });
           yield* repo.addItem(PUSH, DIPS);
           yield* repo.removeItem(PUSH, 'rit_dips');
           yield* repo.markUsed(PUSH, NOW);
@@ -408,7 +490,7 @@ describe('RoutineRepositoryLive change events', () => {
       yield* savePushDay;
       const repo = yield* RoutineRepository;
 
-      const events = yield* published(repo.setItem('rit_gone', { sets: 2 }));
+      const events = yield* published(repo.setItem('rit_gone', { sets: uniformSets(2, 8, 60) }));
 
       expect(events).toEqual([]);
     }),

@@ -9,6 +9,7 @@ import type { RoutineItem } from '@/features/routines/domain/schemas/RoutineSche
 import { ExerciseAbout } from '@/features/routines/ui/components/ExerciseAbout/ExerciseAbout';
 import { useItemEditorFormLogic } from '@/features/routines/ui/components/ItemEditorForm/ItemEditorForm.logic';
 import { NoteField } from '@/features/routines/ui/components/NoteField/NoteField';
+import { RoutineSetRow } from '@/features/routines/ui/components/RoutineSetRow/RoutineSetRow';
 
 /**
  * Editing one exercise's targets. Every stepper press commits, so the sheet is a surface for
@@ -36,30 +37,36 @@ export const ItemEditorForm = memo(function ItemEditorForm({
     <>
       <MetaLine items={derived.meta} theme={theme} wrap />
       <FormSection title={t('itemEditor.sets')}>
-        <Stepper label={t('itemEditor.sets')} value={item.sets} min={1} max={20} step={1} onChange={effects.setSets} />
-      </FormSection>
-
-      <FormSection title={t('itemEditor.reps')}>
-        <Stepper
-          label={t('itemEditor.reps')}
-          value={derived.reps}
-          min={1}
-          max={100}
-          step={1}
-          suffix={t('itemEditor.repsSuffix')}
-          onChange={effects.setReps}
-        />
-      </FormSection>
-
-      <FormSection title={t('itemEditor.weightIn', { unit: derived.unit })}>
-        <Stepper
-          label={t('itemEditor.weightPerSet', { unit: derived.unit })}
-          value={derived.weight}
-          min={0}
-          max={derived.weightMax}
-          step={derived.weightStep}
-          decimal
-          onChange={effects.setWeight}
+        {derived.rows.map((row, at) => (
+          <RoutineSetRow
+            key={row.key}
+            index={row.index}
+            reps={row.reps}
+            weight={row.weight}
+            rpe={row.rpe}
+            unit={derived.unit}
+            repsBounds={derived.reps}
+            rpeBounds={derived.rpe}
+            weightMax={derived.weightMax}
+            weightStep={derived.weightStep}
+            canRemove={derived.canRemoveSet}
+            topDivider={at > 0}
+            theme={theme}
+            onReps={effects.setReps}
+            onWeight={effects.setWeight}
+            onRpe={effects.setRpe}
+            onRemove={effects.removeSet}
+          />
+        ))}
+        <Txt variant="micro" tone="faint">
+          {t('itemEditor.targetRpeNote')}
+        </Txt>
+        <Button
+          label={t('itemEditor.addSet')}
+          variant="secondary"
+          icon="plus"
+          disabled={!derived.canAddSet}
+          onPress={effects.addSet}
         />
       </FormSection>
 
@@ -67,8 +74,8 @@ export const ItemEditorForm = memo(function ItemEditorForm({
         <Stepper
           label={t('itemEditor.restBetweenSets')}
           value={item.restSeconds}
-          min={0}
-          max={600}
+          min={derived.rest.min}
+          max={derived.rest.max}
           step={15}
           suffix="s"
           onChange={effects.setRest}

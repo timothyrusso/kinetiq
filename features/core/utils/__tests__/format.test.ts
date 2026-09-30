@@ -1,7 +1,6 @@
 import {
   addDays,
   compactNumber,
-  formatCalories,
   formatDuration,
   formatDurationCompact,
   formatTimer,
@@ -139,16 +138,6 @@ describe('repsFromRange', () => {
 
   it('reads a number above one hundred as eight', () => {
     expect(repsFromRange('1000')).toBe(8);
-  });
-});
-
-describe('formatCalories', () => {
-  it('rounds to a whole number', () => {
-    expect(formatCalories(278.6)).toBe('279');
-  });
-
-  it('shows zero for nothing burned', () => {
-    expect(formatCalories(0)).toBe('0');
   });
 });
 

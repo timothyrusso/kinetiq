@@ -13,16 +13,15 @@ describe('activityDisplay', () => {
     expect(activityDisplay(bodyweight, 'metric').headline).toBe('45m');
   });
 
-  it('lists the duration, the sets and the calories under the title', () => {
+  it('lists the duration and the sets under the title', () => {
     expect(activityDisplay(anActivity(), 'metric').meta).toEqual([
       { icon: 'clock', label: '45m' },
       { icon: 'layers', label: tr('workout.set', { count: 2 }) },
-      { icon: 'flame', label: '278 kcal' },
     ]);
   });
 
-  it('leaves out the sets and the calories when there are none', () => {
-    const plain = anActivity({ caloriesKcal: 0, strength: null });
+  it('leaves out the sets when there are none', () => {
+    const plain = anActivity({ strength: null });
 
     expect(activityDisplay(plain, 'metric').meta).toEqual([{ icon: 'clock', label: '45m' }]);
   });

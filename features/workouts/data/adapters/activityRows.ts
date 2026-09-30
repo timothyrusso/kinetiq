@@ -5,7 +5,7 @@ import type { Activity } from '@/features/workouts/domain/schemas/ActivitySchema
 
 /** The `activities` columns every read selects, in the insert's order. */
 export const ACTIVITY_COLUMNS = `
-  id, kind, title, started_at, duration_seconds, calories_kcal, notes,
+  id, kind, title, started_at, duration_seconds, notes,
   source_session_id, entries_json, volume_kg, total_sets, created_at`;
 
 /** A row of the `activities` table. */
@@ -15,7 +15,6 @@ export const ActivityRow = Schema.Struct({
   title: Schema.String,
   started_at: Schema.Number,
   duration_seconds: Schema.Number,
-  calories_kcal: Schema.Number,
   notes: Schema.NullOr(Schema.String),
   source_session_id: Schema.NullOr(Schema.String),
   entries_json: Schema.NullOr(Schema.String),
@@ -37,7 +36,6 @@ export function activityFromRow(row: typeof ActivityRow.Type): Activity {
     title: row.title,
     startedAt: row.started_at,
     durationSeconds: row.duration_seconds,
-    caloriesKcal: row.calories_kcal,
     notes: row.notes,
     sourceSessionId: row.source_session_id,
     strength:
@@ -61,7 +59,6 @@ export function activityToRow(activity: Activity): (string | number | null)[] {
     activity.title,
     activity.startedAt,
     activity.durationSeconds,
-    activity.caloriesKcal,
     activity.notes,
     activity.sourceSessionId,
     activity.strength ? entriesToColumn(activity.strength.entries) : null,

@@ -6,7 +6,6 @@ export { withAlpha } from '@/features/core/utils/color';
 export {
   addDays,
   compactNumber,
-  formatCalories,
   formatDuration,
   formatDurationCompact,
   formatTimer,

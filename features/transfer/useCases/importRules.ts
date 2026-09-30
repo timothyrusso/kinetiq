@@ -8,6 +8,13 @@ import { IMPORT_LIMITS, ITEM_BOUNDS } from '@/features/watch-bridge';
  */
 export const IMPORT_RULES: ImportRules = {
   limits: IMPORT_LIMITS,
-  bounds: ITEM_BOUNDS,
+  bounds: {
+    sets: ITEM_BOUNDS.sets,
+    reps: ITEM_BOUNDS.reps,
+    weightKg: ITEM_BOUNDS.weightKg,
+    targetRpe: ITEM_BOUNDS.rpe,
+    restSeconds: ITEM_BOUNDS.restSeconds,
+    notesLength: ITEM_BOUNDS.notesLength,
+  },
   isExerciseId: id => externalIdOf(id) !== null || isLocalExerciseId(id),
 };

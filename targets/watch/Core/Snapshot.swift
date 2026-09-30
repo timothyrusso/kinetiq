@@ -1,9 +1,9 @@
 import Foundation
 
-/// `kinetiq.watch-routines` v1, phone to watch (issue #27). Mirrors `features/watch-bridge/domain/schemas`.
+/// `kinetiq.watch-routines` v2, phone to watch (issues #27 and #108). Mirrors `features/watch-bridge/domain/schemas`.
 public struct RoutinesSnapshot: Codable, Equatable, Sendable {
     public static let format = "kinetiq.watch-routines"
-    public static let version = 1
+    public static let version = 2
 
     public let format: String
     public let version: Int
@@ -41,10 +41,9 @@ public struct RoutineItem: Codable, Equatable, Identifiable, Sendable {
     public let id: String
     public let exerciseId: String
     public let exerciseName: String
-    public let sets: Int
-    /// A number or a range, "8" or "8-12". `Reps.target` reads the number a set starts at.
-    public let reps: String
-    public let weightKg: Double
+    /// One row per planned set, in order.
+    public let sets: [RoutineSet]
+    /// One rest for every set of the exercise.
     public let restSeconds: Int
     public let notes: String?
 
@@ -52,9 +51,7 @@ public struct RoutineItem: Codable, Equatable, Identifiable, Sendable {
         id: String,
         exerciseId: String,
         exerciseName: String,
-        sets: Int,
-        reps: String,
-        weightKg: Double,
+        sets: [RoutineSet],
         restSeconds: Int,
         notes: String?
     ) {
@@ -62,9 +59,21 @@ public struct RoutineItem: Codable, Equatable, Identifiable, Sendable {
         self.exerciseId = exerciseId
         self.exerciseName = exerciseName
         self.sets = sets
-        self.reps = reps
-        self.weightKg = weightKg
         self.restSeconds = restSeconds
         self.notes = notes
+    }
+}
+
+/// The targets one set of a workout opens with.
+public struct RoutineSet: Codable, Equatable, Sendable {
+    public let reps: Int
+    public let weightKg: Double
+    /// Carried with the plan; the watch does not ask for RPE.
+    public let targetRpe: Double?
+
+    public init(reps: Int, weightKg: Double, targetRpe: Double?) {
+        self.reps = reps
+        self.weightKg = weightKg
+        self.targetRpe = targetRpe
     }
 }

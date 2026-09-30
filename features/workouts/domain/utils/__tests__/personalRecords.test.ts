@@ -1,7 +1,14 @@
 import { anActivity, anEntry, aSet, WORKOUT_TIME } from '@/features/workouts/__fixtures__/builders';
+import type { StrengthSet } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 import { detectPersonalRecords } from '@/features/workouts/domain/utils/personalRecords';
 
 const NOW = WORKOUT_TIME + 86_400_000;
+
+/** An earlier bench press workout made of `sets`. */
+const earlierBench = (sets: StrengthSet[]) =>
+  anActivity({
+    strength: { entries: [anEntry({ sets })], totalVolumeKg: 0, totalSets: sets.length, personalRecords: [] },
+  });
 
 describe('detectPersonalRecords', () => {
   it('reports a first estimated max with nothing before it', () => {
@@ -52,6 +59,38 @@ describe('detectPersonalRecords', () => {
       ['est1rm', 101.5],
       ['maxReps', 8],
     ]);
+  });
+
+  it('gives no rep record for fewer loaded reps than the best before', () => {
+    const tens = earlierBench([
+      aSet({ reps: 10, weightKg: 61, estimated1rm: 81.3 }),
+      aSet({ index: 1, reps: 9, weightKg: 65, estimated1rm: 84.5 }),
+    ]);
+    const eights = anEntry({ sets: [aSet({ reps: 8, weightKg: 60, estimated1rm: 76 })] });
+
+    expect(detectPersonalRecords([eights], [tens], NOW)).toEqual([]);
+  });
+
+  it('reports more loaded reps than the best before, with the best it beat', () => {
+    const tens = earlierBench([aSet({ reps: 10, weightKg: 61, estimated1rm: 81.3 })]);
+    const elevens = anEntry({ sets: [aSet({ reps: 11, weightKg: 50, estimated1rm: 68.3 })] });
+
+    const records = detectPersonalRecords([elevens], [tens], NOW);
+
+    expect(records).toEqual([expect.objectContaining({ kind: 'maxReps', value: 11, previousValue: 10 })]);
+  });
+
+  it('ignores earlier bodyweight and unfinished sets as a rep baseline', () => {
+    const earlier = earlierBench([
+      aSet({ reps: 20, weightKg: 0, estimated1rm: null }),
+      aSet({ index: 1, reps: 15, weightKg: 40, completed: false, estimated1rm: null }),
+      aSet({ index: 2, reps: 5, weightKg: 100 }),
+    ]);
+    const tens = anEntry({ sets: [aSet({ reps: 10, weightKg: 50, estimated1rm: 66.7 })] });
+
+    const records = detectPersonalRecords([tens], [earlier], NOW);
+
+    expect(records).toEqual([expect.objectContaining({ kind: 'maxReps', value: 10, previousValue: 5 })]);
   });
 
   it('gives no rep record for bodyweight sets', () => {

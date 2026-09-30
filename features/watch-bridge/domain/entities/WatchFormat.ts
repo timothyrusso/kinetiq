@@ -7,4 +7,13 @@
  */
 export const WATCH_ROUTINES_FORMAT = 'kinetiq.watch-routines';
 export const WATCH_WORKOUT_FORMAT = 'kinetiq.watch-workout';
-export const WATCH_FORMAT_VERSION = 1;
+/**
+ * v2 plans every set of a routine item from its own row. A watch app still on v1 refuses a v2
+ * snapshot as a newer version, and says so, rather than reading it with sets missing.
+ */
+export const WATCH_FORMAT_VERSION = 2;
+/**
+ * The workout versions the phone reads. A v1 workout, from a watch app not yet updated, has the
+ * same shape as v2.
+ */
+export const WATCH_WORKOUT_VERSIONS = [1, WATCH_FORMAT_VERSION] as const;

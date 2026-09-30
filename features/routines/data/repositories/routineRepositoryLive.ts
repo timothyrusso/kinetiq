@@ -1,9 +1,10 @@
 import { Clock, Effect, Layer, PubSub } from 'effect';
-import { SqliteClient, trySql } from '@/features/core/sqlite';
+import { SqliteClient, type SqliteDatabase, trySql } from '@/features/core/sqlite';
 import { localId } from '@/features/core/utils';
 import {
   decodeRoutineItemRows,
   decodeRoutineRows,
+  decodeRoutineSetRows,
   routineFromRows,
   routinesFromRows,
 } from '@/features/routines/data/adapters/routineRows';
@@ -11,20 +12,30 @@ import type { ItemTarget } from '@/features/routines/domain/entities/ItemTarget'
 import type { RoutineChangeKind } from '@/features/routines/domain/entities/RoutineChanged';
 import { RoutineRepository } from '@/features/routines/domain/repositories/RoutineRepository';
 import { RoutineId } from '@/features/routines/domain/schemas/RoutineId';
-import type { RoutineItem } from '@/features/routines/domain/schemas/RoutineSchema';
+import type { RoutineItem, RoutineSet } from '@/features/routines/domain/schemas/RoutineSchema';
 import { RoutineEvents } from '@/features/routines/domain/services/RoutineEvents';
 
 const SELECT_ROUTINES = `SELECT id, name, created_at, updated_at, times_completed,
                 last_performed_at
          FROM routines`;
 
-const SELECT_ITEMS = `SELECT id, routine_id, exercise_id, position, sets, reps, weight_kg,
-                rest_seconds, notes, exercise_name
+const SELECT_ITEMS = `SELECT id, routine_id, exercise_id, position, rest_seconds, notes, exercise_name
          FROM routine_items`;
 
-const INSERT_ITEM = `INSERT INTO routine_items (id, routine_id, exercise_id, position, sets, reps,
-                                      weight_kg, rest_seconds, notes, exercise_name)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+const SELECT_SETS = `SELECT item_id, position, reps, weight_kg, target_rpe
+         FROM routine_item_sets`;
+
+const INSERT_ITEM = `INSERT INTO routine_items (id, routine_id, exercise_id, position, rest_seconds, notes,
+                                      exercise_name)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`;
+
+const INSERT_SET = `INSERT INTO routine_item_sets (item_id, position, reps, weight_kg, target_rpe)
+           VALUES (?, ?, ?, ?, ?)`;
+
+// NOTE: explicit rather than left to the cascade: an exclusive transaction runs on its own
+// connection, where foreign keys are off.
+const DELETE_ROUTINE_SETS =
+  'DELETE FROM routine_item_sets WHERE item_id IN (SELECT id FROM routine_items WHERE routine_id = ?)';
 
 const TOUCH_ROUTINE = 'UPDATE routines SET updated_at = ? WHERE id = ?';
 
@@ -35,21 +46,23 @@ const itemValues = (routineId: RoutineId, item: RoutineItem, position: number) =
   routineId,
   item.exerciseId,
   position,
-  item.sets,
-  item.reps,
-  item.weightKg,
   item.restSeconds,
   item.notes,
   item.exerciseName.trim(),
 ];
 
-/** The columns `setItem` may change, by target. */
+/** Writes `sets` as the item's set rows, numbered from 0 in their order. */
+async function insertSets(txn: SqliteDatabase, itemId: string, sets: readonly RoutineSet[]): Promise<void> {
+  let position = 0;
+  for (const set of sets) {
+    await txn.runAsync(INSERT_SET, [itemId, position++, set.reps, set.weightKg, set.targetRpe]);
+  }
+}
+
+/** The columns `setItem` may change, by target; `sets` replaces the item's set rows instead. */
 const ITEM_COLUMNS = {
-  sets: 'sets',
-  reps: 'reps',
-  weightKg: 'weight_kg',
   restSeconds: 'rest_seconds',
-} as const satisfies Record<Exclude<keyof ItemTarget, 'notes'>, string>;
+} as const satisfies Record<Exclude<keyof ItemTarget, 'notes' | 'sets'>, string>;
 
 /** `SET` assignments and their values for the targets present in `patch`; `notes` may be null. */
 function itemAssignments(patch: Partial<ItemTarget>): { columns: string[]; values: (string | number | null)[] } {
@@ -84,29 +97,38 @@ export const RoutineRepositoryLive = Layer.effect(
 
     const byId = (id: RoutineId) =>
       Effect.gen(function* () {
-        const [rows, items] = yield* Effect.all([
+        const [rows, items, sets] = yield* Effect.all([
           trySql('read a routine', () => db.getAllAsync<unknown>(`${SELECT_ROUTINES} WHERE id = ?`, [id])).pipe(
             Effect.flatMap(decodeRoutineRows),
           ),
           trySql('read a routine’s items', () =>
             db.getAllAsync<unknown>(`${SELECT_ITEMS} WHERE routine_id = ? ORDER BY position ASC`, [id]),
           ).pipe(Effect.flatMap(decodeRoutineItemRows)),
+          trySql('read a routine’s sets', () =>
+            db.getAllAsync<unknown>(
+              `${SELECT_SETS} WHERE item_id IN (SELECT id FROM routine_items WHERE routine_id = ?)`,
+              [id],
+            ),
+          ).pipe(Effect.flatMap(decodeRoutineSetRows)),
         ]);
         const [row] = rows;
-        return row === undefined ? undefined : routineFromRows(row, items);
+        return row === undefined ? undefined : routineFromRows(row, items, sets);
       });
 
     return {
       list: Effect.gen(function* () {
-        const [rows, items] = yield* Effect.all([
+        const [rows, items, sets] = yield* Effect.all([
           trySql('list routines', () => db.getAllAsync<unknown>(`${SELECT_ROUTINES} ORDER BY updated_at DESC`)).pipe(
             Effect.flatMap(decodeRoutineRows),
           ),
           trySql('list routine items', () => db.getAllAsync<unknown>(`${SELECT_ITEMS} ORDER BY position ASC`)).pipe(
             Effect.flatMap(decodeRoutineItemRows),
           ),
+          trySql('list routine sets', () => db.getAllAsync<unknown>(SELECT_SETS)).pipe(
+            Effect.flatMap(decodeRoutineSetRows),
+          ),
         ]);
-        return routinesFromRows(rows, items);
+        return routinesFromRows(rows, items, sets);
       }),
 
       byId,
@@ -126,10 +148,12 @@ export const RoutineRepositoryLive = Layer.effect(
            updated_at = excluded.updated_at`,
                 [id, input.name.trim() || UNTITLED, now, now],
               );
+              await txn.runAsync(DELETE_ROUTINE_SETS, [id]);
               await txn.runAsync('DELETE FROM routine_items WHERE routine_id = ?', [id]);
               let position = 0;
               for (const item of input.items) {
                 await txn.runAsync(INSERT_ITEM, itemValues(id, item, position++));
+                await insertSets(txn, item.id, item.sets);
               }
             }),
           );
@@ -153,9 +177,13 @@ export const RoutineRepositoryLive = Layer.effect(
         }),
 
       delete: id =>
-        trySql('delete a routine', () => db.runAsync('DELETE FROM routines WHERE id = ?', [id])).pipe(
-          Effect.zipRight(announce(id, 'deleted')),
-        ),
+        trySql('delete a routine', () =>
+          db.withExclusiveTransactionAsync(async txn => {
+            await txn.runAsync(DELETE_ROUTINE_SETS, [id]);
+            await txn.runAsync('DELETE FROM routine_items WHERE routine_id = ?', [id]);
+            await txn.runAsync('DELETE FROM routines WHERE id = ?', [id]);
+          }),
+        ).pipe(Effect.zipRight(announce(id, 'deleted'))),
 
       reorder: (id, orderedItemIds) =>
         Effect.gen(function* () {
@@ -175,7 +203,8 @@ export const RoutineRepositoryLive = Layer.effect(
       setItem: (itemId, patch) =>
         Effect.gen(function* () {
           const { columns, values } = itemAssignments(patch);
-          if (columns.length === 0) return;
+          const { sets } = patch;
+          if (columns.length === 0 && sets === undefined) return;
           const [owner] = yield* trySql('find a routine item', () =>
             db.getAllAsync<unknown>(`${SELECT_ITEMS} WHERE id = ?`, [itemId]),
           ).pipe(Effect.flatMap(decodeRoutineItemRows));
@@ -183,9 +212,17 @@ export const RoutineRepositoryLive = Layer.effect(
           const routineId = RoutineId.make(owner.routine_id);
           const now = yield* Clock.currentTimeMillis;
           yield* trySql('change a routine item', () =>
-            db.runAsync(`UPDATE routine_items SET ${columns.join(', ')} WHERE id = ?`, [...values, itemId]),
+            db.withExclusiveTransactionAsync(async txn => {
+              if (columns.length > 0) {
+                await txn.runAsync(`UPDATE routine_items SET ${columns.join(', ')} WHERE id = ?`, [...values, itemId]);
+              }
+              if (sets !== undefined) {
+                await txn.runAsync('DELETE FROM routine_item_sets WHERE item_id = ?', [itemId]);
+                await insertSets(txn, itemId, sets);
+              }
+              await txn.runAsync(TOUCH_ROUTINE, [now, routineId]);
+            }),
           );
-          yield* trySql('touch a routine', () => db.runAsync(TOUCH_ROUTINE, [now, routineId]));
           yield* announce(routineId, 'itemsChanged');
         }),
 
@@ -195,23 +232,13 @@ export const RoutineRepositoryLive = Layer.effect(
           yield* trySql('add a routine item', () =>
             db.withExclusiveTransactionAsync(async txn => {
               await txn.runAsync(
-                `INSERT INTO routine_items (id, routine_id, exercise_id, position, sets, reps,
-                                    weight_kg, rest_seconds, notes, exercise_name)
+                `INSERT INTO routine_items (id, routine_id, exercise_id, position, rest_seconds, notes,
+                                    exercise_name)
          VALUES (?, ?, ?, (SELECT COALESCE(MAX(position), -1) + 1 FROM routine_items WHERE routine_id = ?),
-                 ?, ?, ?, ?, ?, ?)`,
-                [
-                  item.id,
-                  id,
-                  item.exerciseId,
-                  id,
-                  item.sets,
-                  item.reps,
-                  item.weightKg,
-                  item.restSeconds,
-                  item.notes,
-                  item.exerciseName.trim(),
-                ],
+                 ?, ?, ?)`,
+                [item.id, id, item.exerciseId, id, item.restSeconds, item.notes, item.exerciseName.trim()],
               );
+              await insertSets(txn, item.id, item.sets);
               await txn.runAsync(TOUCH_ROUTINE, [now, id]);
             }),
           );
@@ -222,6 +249,10 @@ export const RoutineRepositoryLive = Layer.effect(
         Effect.gen(function* () {
           const now = yield* Clock.currentTimeMillis;
           yield* trySql('remove a routine item', async () => {
+            await db.runAsync(
+              'DELETE FROM routine_item_sets WHERE item_id IN (SELECT id FROM routine_items WHERE id = ? AND routine_id = ?)',
+              [itemId, id],
+            );
             await db.runAsync('DELETE FROM routine_items WHERE id = ? AND routine_id = ?', [itemId, id]);
             await db.runAsync(TOUCH_ROUTINE, [now, id]);
           });
@@ -247,6 +278,22 @@ export const RoutineRepositoryLive = Layer.effect(
             [performedAt, id],
           ),
         ).pipe(Effect.zipRight(announce(id, 'used'))),
+
+      replaceItems: (id, items) =>
+        Effect.gen(function* () {
+          const now = yield* Clock.currentTimeMillis;
+          yield* trySql('replace a routine’s items', async () => {
+            await db.runAsync(DELETE_ROUTINE_SETS, [id]);
+            await db.runAsync('DELETE FROM routine_items WHERE routine_id = ?', [id]);
+            let position = 0;
+            for (const item of items) {
+              await db.runAsync(INSERT_ITEM, itemValues(id, item, position++));
+              await insertSets(db, item.id, item.sets);
+            }
+            await db.runAsync(TOUCH_ROUTINE, [now, id]);
+          });
+          yield* announce(id, 'itemsChanged');
+        }),
     };
   }),
 );

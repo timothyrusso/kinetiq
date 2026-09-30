@@ -237,6 +237,7 @@ export function SessionPage() {
         <RestDock
           remainingSeconds={state.restRemaining}
           totalSeconds={state.restTotal}
+          bottom={derived.dockBottom}
           onHeight={effects.dockHeight}
           onSkip={effects.skipRest}
           onAdjust={effects.adjustRest}
@@ -253,18 +254,6 @@ export function SessionPage() {
           destructive
           onConfirm={effects.discard}
           onCancel={effects.cancelDiscard}
-        />
-      ) : null}
-
-      {state.confirmFinish ? (
-        <ConfirmDialog
-          visible={!state.finishing}
-          title={t('session.finishTitle')}
-          message={derived.finishMessage}
-          confirmLabel={t('session.finishConfirm')}
-          cancelLabel={t('common.cancel')}
-          onConfirm={effects.finish}
-          onCancel={effects.cancelFinish}
         />
       ) : null}
 

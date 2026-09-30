@@ -1,5 +1,6 @@
 import { Effect } from 'effect';
-import { getPermissionsAsync, requestPermissionsAsync } from 'expo-notifications';
+import { getPermissionsAsync, requestPermissionsAsync, scheduleNotificationAsync } from 'expo-notifications';
+import appJson from '@/app.json';
 import { itEffect } from '@/features/core/testing';
 import { NotificationsDeviceLive } from '@/features/notifications/data/services/notificationsDeviceLive';
 import { Notifications } from '@/features/notifications/domain/services/Notifications';
@@ -44,4 +45,29 @@ describe('NotificationsDeviceLive', () => {
     }),
     NotificationsDeviceLive,
   );
+
+  itEffect(
+    'schedules the rest alert on a date trigger in the training channel',
+    Effect.gen(function* () {
+      const notifications = yield* Notifications;
+      const date = new Date(Date.UTC(2026, 8, 30, 7, 27, 26));
+      yield* notifications.schedule({
+        content: { title: 'Rest complete', body: 'Next set' },
+        trigger: { kind: 'at', date },
+      });
+      expect(scheduleNotificationAsync).toHaveBeenCalledWith({
+        content: { sound: 'default', title: 'Rest complete', body: 'Next set' },
+        trigger: { type: 'date', date, channelId: 'training' },
+      });
+    }),
+    NotificationsDeviceLive,
+  );
+
+  // NOTE: expo-notifications falls back to an inexact alarm, up to a minute or more late, when the
+  // app may not set exact ones (#123). The manifest permissions are what let it set them.
+  it('declares the Android permissions that make the alarm exact', () => {
+    expect(appJson.expo.android.permissions).toEqual(
+      expect.arrayContaining(['SCHEDULE_EXACT_ALARM', 'USE_EXACT_ALARM']),
+    );
+  });
 });

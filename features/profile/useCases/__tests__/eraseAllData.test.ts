@@ -37,8 +37,8 @@ describe('eraseAllData', () => {
     Effect.gen(function* () {
       yield* exec(`
         INSERT INTO routines (id, name, created_at, updated_at) VALUES ('r1', 'Push day', 1, 1);
-        INSERT INTO activities (id, kind, title, started_at, duration_seconds, calories_kcal, created_at)
-          VALUES ('a1', 'lift', 'Push day', 1, 3600, 300, 1);
+        INSERT INTO activities (id, kind, title, started_at, duration_seconds, created_at)
+          VALUES ('a1', 'lift', 'Push day', 1, 3600, 1);
       `);
 
       yield* eraseAllData;

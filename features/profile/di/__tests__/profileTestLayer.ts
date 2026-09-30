@@ -23,7 +23,7 @@ export const ProfileTestLayer = WorkoutsLive.pipe(
   Layer.provideMerge(
     Layer.mergeAll(
       RoutinesLive.pipe(Layer.provideMerge(ExercisesLive)),
-      Layer.succeed(RoutineUsage, { markUsed: () => Effect.void }),
+      Layer.succeed(RoutineUsage, { markUsed: () => Effect.void, applyWorkout: () => Effect.void }),
       BackgroundSyncFake,
     ),
   ),

@@ -2,9 +2,10 @@ import { act, waitFor } from '@testing-library/react-native';
 import { routes } from '@/features/core/navigation';
 import { resetAllStores } from '@/features/core/state';
 import { renderWithLayer, routerFake } from '@/features/core/testing';
+import { spacing } from '@/features/core/theme';
 import { updateSettings } from '@/features/settings';
 import { aSession } from '@/features/workouts/__fixtures__/builders';
-import { makeSessionScreenTestLayer, storedActivity } from '@/features/workouts/di/__tests__/workoutsTestData';
+import { makeSessionScreenTestLayer } from '@/features/workouts/di/__tests__/workoutsTestData';
 import { sessionLifecycle } from '@/features/workouts/facades/useActiveSession';
 import { useSessionPageLogic } from '@/features/workouts/ui/pages/SessionPage/SessionPage.logic';
 
@@ -13,8 +14,8 @@ beforeEach(() => {
 });
 
 /** The live workout screen over the builder's open push day. */
-const renderScreen = async () => {
-  sessionLifecycle.restore(aSession());
+const renderScreen = async (session = aSession()) => {
+  sessionLifecycle.restore(session);
   const test = makeSessionScreenTestLayer();
   const rendered = await renderWithLayer(test.layer, useSessionPageLogic, undefined);
   return { ...rendered, screen: test.screen };
@@ -89,13 +90,26 @@ describe('useSessionPageLogic', () => {
     await done();
   });
 
-  it('finishes the workout into history and goes Home', async () => {
-    const { result, runtime, done } = await renderScreen();
+  it('asks to finish in the finish sheet', async () => {
+    const { result, done } = await renderScreen();
 
-    await act(async () => result.current.effects.finish());
+    await act(async () => result.current.effects.askFinish());
 
-    await waitFor(() => expect(routerFake.history[0]).toEqual({ verb: 'dismissTo', href: routes.home() }));
-    expect((await storedActivity(runtime, aSession().id))?.title).toBe('Push Day');
+    expect(routerFake.history).toEqual([{ verb: 'push', href: routes.sessionFinish() }]);
+    expect(result.current.state.session).not.toBeNull();
+    await done();
+  });
+
+  it('stands the rest dock on the footer, so Finish and Discard stay reachable', async () => {
+    const { result, done } = await renderScreen(aSession({ restEndsAt: Date.now() + 60_000, restDurationSeconds: 90 }));
+    const layout = (height: number) => ({ nativeEvent: { layout: { x: 0, y: 0, width: 390, height } } }) as never;
+
+    await act(async () => result.current.effects.footerLayout(layout(110.4)));
+    await act(async () => result.current.effects.dockHeight(72));
+
+    expect(result.current.derived.restShown).toBe(true);
+    expect(result.current.derived.dockBottom).toBe(110 + spacing.sm);
+    expect(result.current.derived.contentInset).toEqual({ paddingBottom: 110 + spacing.sm + 72 + spacing.xl });
     await done();
   });
 });

@@ -6,7 +6,6 @@ export interface WeekSummary {
   readonly label: string;
   readonly workouts: number;
   readonly durationSeconds: number;
-  readonly caloriesKcal: number;
   /** Strength volume in kg. */
   readonly volumeKg: number;
 }
@@ -22,7 +21,6 @@ export interface TrainingSummary {
   readonly totals: {
     readonly workouts: number;
     readonly durationSeconds: number;
-    readonly caloriesKcal: number;
     readonly volumeKg: number;
   };
   /** Distinct calendar days with at least one workout, inside the window. */

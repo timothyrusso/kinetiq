@@ -19,7 +19,7 @@ describe('summariseTraining', () => {
   it('totals the window and says whether anything is recorded at all', () => {
     const summary = summariseTraining([workoutOn(17)], 5, 1, NOW);
 
-    expect(summary.totals).toEqual({ workouts: 1, durationSeconds: 3600, caloriesKcal: 278, volumeKg: 1000 });
+    expect(summary.totals).toEqual({ workouts: 1, durationSeconds: 3600, volumeKg: 1000 });
     expect(summary.hasAnyHistory).toBe(true);
   });
 

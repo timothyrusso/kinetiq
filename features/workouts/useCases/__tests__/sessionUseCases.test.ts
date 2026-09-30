@@ -1,6 +1,13 @@
 import { Effect, Either, TestClock } from 'effect';
 import { itEffect } from '@/features/core/testing';
-import { anActivity, anExercise, aPlan, aSession, WORKOUT_TIME } from '@/features/workouts/__fixtures__/builders';
+import {
+  anActivity,
+  anExercise,
+  aPlan,
+  aSession,
+  plannedSets,
+  WORKOUT_TIME,
+} from '@/features/workouts/__fixtures__/builders';
 import { ActivityId } from '@/features/workouts/domain/schemas/ActivityId';
 import { makeFakeWorkoutsDb, makeWorkoutsFake } from '@/features/workouts/useCases/__tests__/workoutFakes';
 import { addSessionExercise } from '@/features/workouts/useCases/addSessionExercise';
@@ -102,7 +109,7 @@ describe('finishSession', () => {
     Effect.gen(function* () {
       yield* TestClock.setTime(FINISHED_AT);
 
-      const result = yield* finishSession(ID, aSession(), 3);
+      const result = yield* finishSession(ID, aSession(), 3, false);
 
       expect(finishing.sessions.get(ID)?.status).toBe('finished');
       expect(finishing.activities.get(ID)).toMatchObject({ durationSeconds: 600, title: 'Push Day' });
@@ -115,7 +122,7 @@ describe('finishSession', () => {
   itEffect(
     'records the stored session when the one in memory is another',
     Effect.gen(function* () {
-      const result = yield* finishSession(ID, null, 3);
+      const result = yield* finishSession(ID, null, 3, false);
 
       expect(result.activity.id).toBe(ID);
     }),
@@ -126,7 +133,7 @@ describe('finishSession', () => {
   itEffect(
     'fails with NoActiveSession for a session that is gone, and records nothing',
     Effect.gen(function* () {
-      const result = yield* Effect.either(finishSession(ID, null, 3));
+      const result = yield* Effect.either(finishSession(ID, null, 3, false));
 
       expect(Either.isLeft(result) && result.left._tag).toBe('NoActiveSession');
       expect(gone.activities.size).toBe(0);
@@ -141,7 +148,7 @@ describe('finishSession', () => {
   itEffect(
     'fails with DuplicateWorkout for a session already in history, leaving it finished',
     Effect.gen(function* () {
-      const result = yield* Effect.either(finishSession(ID, aSession(), 3));
+      const result = yield* Effect.either(finishSession(ID, aSession(), 3, false));
 
       expect(Either.isLeft(result) && result.left._tag).toBe('DuplicateWorkout');
       expect(replayed.sessions.get(ID)?.status).toBe('finished');
@@ -160,7 +167,7 @@ describe('finishSession', () => {
     Effect.gen(function* () {
       yield* TestClock.setTime(FINISHED_AT);
 
-      const result = yield* finishSession(ID, aSession({ entries: [] }), 3);
+      const result = yield* finishSession(ID, aSession({ entries: [] }), 3, false);
 
       expect(result.closedWeeklyGoal).toBe(true);
     }),
@@ -172,12 +179,79 @@ describe('finishSession', () => {
     Effect.gen(function* () {
       yield* TestClock.setTime(FINISHED_AT);
 
-      const result = yield* finishSession(ID, aSession(), 1);
+      const result = yield* finishSession(ID, aSession(), 1, false);
 
       expect(result.personalRecords).not.toHaveLength(0);
       expect(result.closedWeeklyGoal).toBe(false);
     }),
     makeWorkoutsFake(makeFakeWorkoutsDb({ sessions: new Map([[ID, aSession()]]) })),
+  );
+});
+
+describe('finishSession with "Update routine with today\'s values"', () => {
+  const fromRoutine = aSession({ routineItemIds: ['rit_bench', 'rit_press'] });
+  const withRoutine = () => makeFakeWorkoutsDb({ sessions: new Map([[ID, fromRoutine]]) });
+
+  const on = withRoutine();
+  itEffect(
+    'writes the workout as it ended back into its routine, with the items it started with',
+    Effect.gen(function* () {
+      yield* finishSession(ID, fromRoutine, 3, true);
+
+      expect(on.routinesUpdated).toEqual([
+        { routineId: 'rtn_push', plannedItemIds: ['rit_bench', 'rit_press'], entries: fromRoutine.entries },
+      ]);
+      expect(on.activities.has(ID)).toBe(true);
+    }),
+    makeWorkoutsFake(on),
+  );
+
+  const off = withRoutine();
+  itEffect(
+    'writes nothing back with the switch off, and still records the workout and counts the routine',
+    Effect.gen(function* () {
+      yield* finishSession(ID, fromRoutine, 3, false);
+
+      expect(off.routinesUpdated).toEqual([]);
+      expect(off.activities.has(ID)).toBe(true);
+      expect(off.routinesUsed).toHaveLength(1);
+    }),
+    makeWorkoutsFake(off),
+  );
+
+  const freeform = makeFakeWorkoutsDb({ sessions: new Map([[ID, aSession({ routineId: null })]]) });
+  itEffect(
+    'writes nothing back for a workout that did not start from a routine',
+    Effect.gen(function* () {
+      yield* finishSession(ID, aSession({ routineId: null }), 3, true);
+
+      expect(freeform.routinesUpdated).toEqual([]);
+    }),
+    makeWorkoutsFake(freeform),
+  );
+
+  const legacy = makeFakeWorkoutsDb({ sessions: new Map([[ID, aSession()]]) });
+  itEffect(
+    'writes nothing back for a session started before it knew its routine items',
+    Effect.gen(function* () {
+      yield* finishSession(ID, aSession(), 3, true);
+
+      expect(legacy.routinesUpdated).toEqual([]);
+    }),
+    makeWorkoutsFake(legacy),
+  );
+
+  const refused = withRoutine();
+  itEffect(
+    'records nothing when the routine cannot be updated: the workout and its routine roll back together',
+    Effect.gen(function* () {
+      const result = yield* Effect.either(finishSession(ID, fromRoutine, 3, true));
+
+      expect(Either.isLeft(result) && result.left._tag).toBe('SqlError');
+      expect(refused.activities.size).toBe(0);
+      expect(refused.routinesUsed).toEqual([]);
+    }),
+    makeWorkoutsFake(refused, { routineUpdate: true }),
   );
 });
 
@@ -208,7 +282,7 @@ describe('discardSession', () => {
 });
 
 describe('addSessionExercise', () => {
-  const TARGET = { sets: 3, reps: '8-12', weightKg: 0, restSeconds: 120, notes: null };
+  const TARGET = { sets: plannedSets(3, 8, 0), restSeconds: 120, notes: null };
 
   const stored = makeFakeWorkoutsDb();
   itEffect(

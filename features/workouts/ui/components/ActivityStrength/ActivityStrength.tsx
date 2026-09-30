@@ -42,11 +42,6 @@ export function ActivityStrength({ activity, units, theme }: { activity: Activit
             value={metrics.exercises}
             {...(metrics.exercisesNote === undefined ? {} : { note: metrics.exercisesNote })}
           />
-          <ActivityMetric
-            label={t('activity.calories')}
-            value={metrics.calories}
-            {...(metrics.caloriesNote === undefined ? {} : { note: metrics.caloriesNote })}
-          />
         </MetricGrid>
       </Column>
 

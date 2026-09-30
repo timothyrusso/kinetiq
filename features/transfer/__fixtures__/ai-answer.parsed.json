@@ -7,27 +7,154 @@
         {
           "exerciseId": "wger:73",
           "exerciseName": "Bench Press",
-          "sets": 20,
-          "reps": "8-12",
-          "weightKg": 61.25,
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 61.25,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 61.25,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 61.25,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 61.25,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 61.25,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 61.25,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 61.25,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 61.25,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 61.25,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 61.25,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 61.25,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 61.25,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 61.25,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 61.25,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 61.25,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 61.25,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 61.25,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 61.25,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 61.25,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 61.25,
+              "targetRpe": null
+            }
+          ],
           "restSeconds": 600,
           "notes": null
         },
         {
           "exerciseId": null,
           "exerciseName": "Row",
-          "sets": 3,
-          "reps": "8-12",
-          "weightKg": 0,
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 0,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 0,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 0,
+              "targetRpe": null
+            }
+          ],
           "restSeconds": null,
           "notes": null
         },
         {
           "exerciseId": "local:band-pull",
           "exerciseName": "Band pull-apart",
-          "sets": 3,
-          "reps": "15",
-          "weightKg": 0,
+          "sets": [
+            {
+              "reps": 15,
+              "weightKg": 0,
+              "targetRpe": null
+            },
+            {
+              "reps": 15,
+              "weightKg": 0,
+              "targetRpe": null
+            },
+            {
+              "reps": 15,
+              "weightKg": 0,
+              "targetRpe": null
+            }
+          ],
           "restSeconds": null,
           "notes": "Slow"
         }
@@ -39,9 +166,23 @@
         {
           "exerciseId": null,
           "exerciseName": "Plank",
-          "sets": 3,
-          "reps": "60",
-          "weightKg": 0,
+          "sets": [
+            {
+              "reps": 60,
+              "weightKg": 0,
+              "targetRpe": null
+            },
+            {
+              "reps": 60,
+              "weightKg": 0,
+              "targetRpe": null
+            },
+            {
+              "reps": 60,
+              "weightKg": 0,
+              "targetRpe": null
+            }
+          ],
           "restSeconds": null,
           "notes": null
         }
