@@ -113,6 +113,9 @@ export function FormSheetList<T>({
       nestedScrollEnabled
       style={{ backgroundColor: theme.colors.background }}
       contentContainerStyle={contentContainerStyle}
+      // NOTE: a drag that scrolls the rows puts the keyboard away, and a tap on a row with the
+      // keyboard up reaches the row on the first tap rather than only closing the keyboard.
+      keyboardDismissMode="on-drag"
       keyboardShouldPersistTaps="handled"
       contentInsetAdjustmentBehavior="automatic"
       data={data}

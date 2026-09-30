@@ -62,4 +62,11 @@ describe('usePickIntoSessionLogic', () => {
     expect(result.current.picker.effects.isIncluded('wger:13')).toBe(false);
     await done();
   });
+
+  it('names the workout in the picker footer when picking into the live workout', async () => {
+    const { result, done } = await renderPicker();
+
+    expect(result.current.picker.state.destination).toBe('workout');
+    await done();
+  });
 });

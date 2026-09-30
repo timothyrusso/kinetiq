@@ -13,13 +13,25 @@ const ROWS = Array.from({ length: 60 }, (_, i) =>
   anExercise({ id: `wger:${100 + i}`, externalId: 100 + i, name: `Curl ${i}` }),
 );
 
-const renderPicker = (picked: Exercise[] = []) => {
+const renderPicker = (
+  picked: Exercise[] = [],
+  {
+    exercises = [BENCH, SQUAT, ...ROWS],
+    included = [SQUAT.id],
+    destination = 'routine',
+  }: {
+    exercises?: Exercise[];
+    included?: string[];
+    destination?: PickExercisePageProps['destination'];
+  } = {},
+) => {
   const props: PickExercisePageProps = {
     onPick: exercise => void picked.push(exercise),
-    isIncluded: id => id === SQUAT.id,
+    isIncluded: id => included.includes(id),
     error: null,
+    destination,
   };
-  return renderWithCatalog(usePickExercisePageLogic, { exercises: [BENCH, SQUAT, ...ROWS] }, props);
+  return renderWithCatalog(usePickExercisePageLogic, { exercises }, props);
 };
 
 describe('usePickExercisePageLogic', () => {
@@ -94,6 +106,56 @@ describe('usePickExercisePageLogic', () => {
     await act(async () => result.current.effects.toggleMuscle(4));
 
     expect(result.current.state.muscleId).toBeNull();
+    await done();
+  });
+
+  it('counts one exercise in the library in the singular', async () => {
+    const { result, done } = await renderPicker([], { exercises: [BENCH], included: [] });
+
+    await waitFor(() => expect(result.current.derived.libraryHint).toBe('1 exercise in the library'));
+    await done();
+  });
+
+  it('counts the library in the plural', async () => {
+    const { result, done } = await renderPicker();
+
+    await waitFor(() => expect(result.current.derived.libraryHint).toBe('62 exercises in the library'));
+    await done();
+  });
+
+  it('says one exercise is already in this routine', async () => {
+    const { result, done } = await renderPicker();
+
+    await waitFor(() => expect(result.current.derived.includedNote).toBe('1 is already in this routine'));
+    await done();
+  });
+
+  it('says how many are already in this routine in the plural', async () => {
+    const { result, done } = await renderPicker([], { included: [BENCH.id, SQUAT.id] });
+
+    await waitFor(() => expect(result.current.derived.includedNote).toBe('2 are already in this routine'));
+    await done();
+  });
+
+  it('names the workout, not the routine, when picking into a live workout', async () => {
+    const { result, done } = await renderPicker([], { destination: 'workout' });
+
+    await waitFor(() => expect(result.current.derived.includedNote).toBe('1 is already in this workout'));
+    await done();
+  });
+
+  it('counts the workout in the plural', async () => {
+    const { result, done } = await renderPicker([], { destination: 'workout', included: [BENCH.id, SQUAT.id] });
+
+    await waitFor(() => expect(result.current.derived.includedNote).toBe('2 are already in this workout'));
+    await done();
+  });
+
+  it('shows no footer note while nothing picked is in the list', async () => {
+    const { result, done } = await renderPicker([], { included: [] });
+
+    await waitFor(() => expect(result.current.state.rows).toHaveLength(50));
+    expect(result.current.derived.includedNote).toBeNull();
     await done();
   });
 });

@@ -2,9 +2,12 @@ import { useCallback, useMemo, useState } from 'react';
 import { haptics } from '@/features/core/haptics';
 import { useT } from '@/features/core/translations';
 import type { Exercise } from '@/features/exercises';
+import type { PickDestination } from '@/features/exercises/pages';
 import { defaultItemTarget } from '@/features/routines';
 import { useSettings } from '@/features/settings';
 import { useActiveSession, useAddSessionExercise } from '@/features/workouts';
+
+const DESTINATION: PickDestination = 'workout';
 
 /**
  * Picks into the workout in progress. The opening targets are the routines' own, so an exercise
@@ -40,5 +43,5 @@ export function usePickIntoSessionLogic() {
     },
     [add, defaultRest, ids, t],
   );
-  return { state: { error }, effects: { pick, isIncluded } };
+  return { state: { error, destination: DESTINATION }, effects: { pick, isIncluded } };
 }

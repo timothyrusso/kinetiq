@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { type TKey, useT } from '@/features/core/translations';
 import { useDebouncedValue, useIsSettling } from '@/features/core/utils';
 import type { ExerciseFilter } from '@/features/exercises/domain/schemas/ExerciseFilterSchema';
 import type { Exercise } from '@/features/exercises/domain/schemas/ExerciseSchema';
@@ -7,6 +8,14 @@ import { useExerciseTaxonomy } from '@/features/exercises/facades/useExerciseTax
 
 /** One empty array, so the list's data keeps its identity while an error is shown. */
 const NO_ROWS: readonly Exercise[] = [];
+
+/** Where the picked exercises go, which names the list the footer counts against. */
+export type PickDestination = 'routine' | 'workout';
+
+const INCLUDED_KEY = {
+  routine: 'details.pickerIncluded',
+  workout: 'details.pickerIncludedInWorkout',
+} as const satisfies Record<PickDestination, TKey>;
 
 export interface PickExercisePageProps {
   /** Called once per chosen exercise, with the catalog's row. */
@@ -19,6 +28,7 @@ export interface PickExercisePageProps {
   readonly isIncluded: (exerciseId: string) => boolean;
   /** Why the last pick did not land, shown above the results. */
   readonly error: string | null;
+  readonly destination: PickDestination;
 }
 
 /**
@@ -33,7 +43,8 @@ export interface PickExercisePageProps {
  * rendering. An explicit Load more widens the read by one catalog page and gives it a visible
  * state, which `onEndReached` cannot at the end of a short list.
  */
-export function usePickExercisePageLogic({ onPick, isIncluded }: PickExercisePageProps) {
+export function usePickExercisePageLogic({ onPick, isIncluded, destination }: PickExercisePageProps) {
+  const { t } = useT();
   const [query, setQuery] = useState('');
   const [muscleId, setMuscleId] = useState<number | null>(null);
   const [equipmentId, setEquipmentId] = useState<number | null>(null);
@@ -90,6 +101,13 @@ export function usePickExercisePageLogic({ onPick, isIncluded }: PickExercisePag
       searching: query.trim().length > 0,
       filtered: muscleId !== null || equipmentId !== null,
       includedCount,
+      // NOTE: no count until the library has answered; a placeholder number would be read aloud.
+      libraryHint: settling
+        ? t('exerciseList.searching')
+        : search.total === null
+          ? undefined
+          : t('details.pickerInLibrary', { count: search.total }),
+      includedNote: includedCount > 0 ? t(INCLUDED_KEY[destination], { count: includedCount }) : null,
     },
     effects: {
       setQuery,
