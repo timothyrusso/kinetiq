@@ -26,6 +26,11 @@ const CHANNEL_ID = 'training';
 /**
  * The trigger as expo-notifications takes it. `channelId` belongs on the trigger, not the
  * content: on Android it picks the channel the notification is posted to.
+ *
+ * On Android 12+ expo-notifications sets an exact alarm only when `canScheduleExactAlarms()` is
+ * true, and an inexact one (up to a minute or more late) otherwise. `USE_EXACT_ALARM` in app.json
+ * grants it on Android 13+, `SCHEDULE_EXACT_ALARM` on Android 12; without either the rest alert
+ * still fires, only late (#123).
  */
 function toTriggerInput(trigger: NotificationTrigger): NotificationTriggerInput | null {
   if (trigger === null) return null;
