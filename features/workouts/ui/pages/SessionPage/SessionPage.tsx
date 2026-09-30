@@ -237,6 +237,7 @@ export function SessionPage() {
         <RestDock
           remainingSeconds={state.restRemaining}
           totalSeconds={state.restTotal}
+          bottom={derived.dockBottom}
           onHeight={effects.dockHeight}
           onSkip={effects.skipRest}
           onAdjust={effects.adjustRest}

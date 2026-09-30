@@ -7,7 +7,7 @@ import { type RestDockInput, useRestDockLogic } from '@/features/workouts/ui/com
 import { createStyles } from '@/features/workouts/ui/components/RestDock/RestDock.style';
 
 /**
- * The rest-timer dock, pinned to the bottom of the window rather than left in the scroll: a timer
+ * The rest-timer dock, pinned above the screen's footer rather than left in the scroll: a timer
  * that scrolls away gets forgotten, and the point of a countdown is that you stop watching it. No
  * drag to dismiss: this floats over set rows, and a pan here would swallow taps meant for them.
  *
