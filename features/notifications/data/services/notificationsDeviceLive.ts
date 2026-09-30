@@ -5,7 +5,6 @@ import {
   cancelScheduledNotificationAsync,
   getPermissionsAsync,
   type NotificationTriggerInput,
-  PermissionStatus,
   requestPermissionsAsync,
   SchedulableTriggerInputTypes,
   scheduleNotificationAsync,
@@ -71,14 +70,18 @@ export const NotificationsDeviceLive = Layer.sync(Notifications, () => {
         ),
   );
 
-  // NOTE: `read` is called with no arguments, never passed as `try` itself: Effect.tryPromise hands
+  // NOTE: `canAsk` is not `status === 'undetermined'`: Android 13+ reports `denied` whenever
+  // notifications are off, a fresh install included, and only `canAskAgain` tells the two apart.
+  // iOS sets `canAskAgain` false once denied, and Android below 13 only while notifications are on.
+  //
+  // `read` is called with no arguments, never passed as `try` itself: Effect.tryPromise hands
   // an AbortSignal to a `try` that declares a parameter, `requestPermissionsAsync` would take it as
   // the permissions to ask for, and iOS would never show the prompt.
   const readPermission = (read: typeof getPermissionsAsync) =>
     Effect.tryPromise({ try: () => read(), catch: cause => new NotificationPermissionDenied({ cause }) }).pipe(
       Effect.map(status => ({
         granted: status.granted,
-        canAsk: status.status === PermissionStatus.UNDETERMINED && status.canAskAgain,
+        canAsk: !status.granted && status.canAskAgain,
       })),
     );
 
