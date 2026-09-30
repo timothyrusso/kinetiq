@@ -181,7 +181,9 @@ final class WorkoutRpeTests: XCTestCase {
         let data = try XCTUnwrap(workout.document(endedAt: now).json())
         let json = try XCTUnwrap(try JSONSerialization.jsonObject(with: data) as? [String: Any])
         let entry = try XCTUnwrap((json["entries"] as? [[String: Any]])?.first)
-        return try XCTUnwrap(entry["sets"] as? [[String: Any]]).map { $0["rpe"] ?? NSNull() }
+        let sets = try XCTUnwrap(entry["sets"] as? [[String: Any]])
+        // The phone expects an explicit null, not a missing key.
+        return try sets.map { try XCTUnwrap($0["rpe"], "every set carries an rpe key") }
     }
 
     func testTheRestScreenValueIsWrittenToTheSetJustCompleted() throws {
