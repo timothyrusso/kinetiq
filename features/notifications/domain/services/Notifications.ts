@@ -1,4 +1,5 @@
 import { Context, type Effect } from 'effect';
+import type { UnexpectedError } from '@/features/core/error';
 import type { NotificationPermission } from '@/features/notifications/domain/entities/NotificationPermission';
 import type { NotificationRequest } from '@/features/notifications/domain/entities/NotificationRequest';
 import type {
@@ -17,6 +18,8 @@ export class Notifications extends Context.Tag('notifications/Notifications')<
     readonly permission: Effect.Effect<NotificationPermission, NotificationPermissionDenied>;
     /** Asks the system, which may show its prompt once and then only ever answer. */
     readonly requestPermission: Effect.Effect<NotificationPermission, NotificationPermissionDenied>;
+    /** Opens the app's page in the system settings, the only place a refusal can be undone. */
+    readonly openSettings: Effect.Effect<void, UnexpectedError>;
     /** Posts `request` and succeeds with the identifier the scheduler assigned. */
     readonly schedule: (request: NotificationRequest) => Effect.Effect<string, NotificationScheduleFailed>;
     /** Retracts the one scheduled notification `identifier` names. */

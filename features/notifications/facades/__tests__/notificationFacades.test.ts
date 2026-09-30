@@ -3,9 +3,13 @@ import { resetAllStores } from '@/features/core/state';
 import { renderWithLayer } from '@/features/core/testing';
 import { tr } from '@/features/core/translations';
 import { makeSchedulerFake } from '@/features/notifications/di/__tests__/schedulerFake';
-import { useNotificationPermission } from '@/features/notifications/facades/useNotificationPermission';
+import {
+  useAskNotificationPermissionOnce,
+  useNotificationPermission,
+} from '@/features/notifications/facades/useNotificationPermission';
 import { useRestAlert } from '@/features/notifications/facades/useRestAlert';
-import { getSettings } from '@/features/settings';
+import { useRestAlertsOff } from '@/features/notifications/facades/useRestAlertsOff';
+import { getSettings, updateSettings } from '@/features/settings';
 
 const { layer: SchedulerFake, device, reset } = makeSchedulerFake();
 
@@ -52,6 +56,171 @@ describe('useNotificationPermission', () => {
 
     await waitFor(() => expect(result.current.granted).toBe(true));
     expect(getSettings().notificationsGranted).toBe(true);
+    await done();
+  });
+});
+
+describe('useAskNotificationPermissionOnce', () => {
+  const renderAsk = async (when: boolean) => {
+    const rendered = await renderWithLayer(SchedulerFake, useAskNotificationPermissionOnce, when);
+    return {
+      ...rendered,
+      done: async () => {
+        await rendered.unmount();
+        await rendered.done();
+      },
+    };
+  };
+
+  it('asks once while the system can still show its prompt, and mirrors the grant', async () => {
+    device.permission = false;
+    device.canAsk = true;
+    updateSettings({ notificationsGranted: false });
+    const { rerender, done } = await renderAsk(true);
+
+    await waitFor(() => expect(getSettings().notificationsGranted).toBe(true));
+    await rerender(false);
+    await rerender(true);
+    await act(async () => undefined);
+
+    expect(device.requests).toBe(1);
+    await done();
+  });
+
+  it('remembers the ask, so a later start asks nothing even when Android could ask again', async () => {
+    device.permission = false;
+    device.canAsk = true;
+    device.answer = false;
+    const first = await renderAsk(true);
+    await waitFor(() => expect(getSettings().notificationsAsked).toBe(true));
+    await first.done();
+    // NOTE: Android 13+ still offers a second prompt after the first refusal.
+    device.canAsk = true;
+
+    const second = await renderAsk(true);
+    await act(async () => undefined);
+
+    expect(device.requests).toBe(1);
+    await second.done();
+  });
+
+  it('asks nothing after a relaunch whose stored settings say it already asked', async () => {
+    device.permission = false;
+    device.canAsk = true;
+    updateSettings({ notificationsAsked: true });
+    const { done } = await renderAsk(true);
+
+    await act(async () => undefined);
+
+    expect(device.requests).toBe(0);
+    await done();
+  });
+
+  it('does not remember an ask that never showed the prompt', async () => {
+    const { done } = await renderAsk(true);
+
+    await waitFor(() => expect(getSettings().notificationsGranted).toBe(true));
+    expect(getSettings().notificationsAsked).toBe(false);
+    await done();
+  });
+
+  it('waits for the start before it asks', async () => {
+    device.permission = false;
+    device.canAsk = true;
+    const { done } = await renderAsk(false);
+
+    await act(async () => undefined);
+
+    expect(device.requests).toBe(0);
+    await done();
+  });
+
+  it('asks nothing when the permission is already granted', async () => {
+    const { done } = await renderAsk(true);
+
+    await waitFor(() => expect(getSettings().notificationsGranted).toBe(true));
+    expect(device.requests).toBe(0);
+    await done();
+  });
+
+  it('asks nothing when the system has refused for good', async () => {
+    device.permission = false;
+    const { done } = await renderAsk(true);
+
+    await waitFor(() => expect(getSettings().notificationsGranted).toBe(false));
+    expect(device.requests).toBe(0);
+    await done();
+  });
+
+  it("asks nothing while the app's own switch is off", async () => {
+    device.permission = false;
+    device.canAsk = true;
+    updateSettings({ notificationsEnabled: false });
+    const { done } = await renderAsk(true);
+
+    await act(async () => undefined);
+
+    expect(device.requests).toBe(0);
+    await done();
+  });
+});
+
+describe('useRestAlertsOff', () => {
+  it('says nothing when alerts can be delivered', async () => {
+    const { result, done } = await render(useRestAlertsOff);
+
+    await act(async () => undefined);
+
+    expect(result.current.reason).toBeNull();
+    await done();
+  });
+
+  it('says nothing while the system can still ask', async () => {
+    device.permission = false;
+    device.canAsk = true;
+    const { result, done } = await render(useRestAlertsOff);
+
+    await act(async () => undefined);
+
+    expect(result.current.reason).toBeNull();
+    await done();
+  });
+
+  it('points a refusal at the system settings', async () => {
+    device.permission = false;
+    const { result, done } = await render(useRestAlertsOff);
+
+    await waitFor(() => expect(result.current.reason).toBe('permission'));
+    await act(async () => result.current.openSystemSettings());
+
+    await waitFor(() => expect(device.settingsOpened).toBe(1));
+    await done();
+  });
+
+  it('treats a refusal after the start asked as off, though Android could ask again', async () => {
+    device.permission = false;
+    device.canAsk = true;
+    updateSettings({ notificationsAsked: true });
+    const { result, done } = await render(useRestAlertsOff);
+
+    await waitFor(() => expect(result.current.reason).toBe('permission'));
+    await done();
+  });
+
+  it("points the app's own switch at the notifications screen", async () => {
+    updateSettings({ notificationsEnabled: false });
+    const { result, done } = await render(useRestAlertsOff);
+
+    await waitFor(() => expect(result.current.reason).toBe('switch'));
+    await done();
+  });
+
+  it('puts a refusal before the switch, which cannot be turned on without it', async () => {
+    device.permission = false;
+    updateSettings({ notificationsEnabled: false });
+    const { result, done } = await render(useRestAlertsOff);
+
+    await waitFor(() => expect(result.current.reason).toBe('permission'));
     await done();
   });
 });

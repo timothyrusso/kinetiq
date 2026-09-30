@@ -9,6 +9,8 @@ import { Notifications } from '@/features/notifications/domain/services/Notifica
 interface FakeOptions {
   /** What the device answers; `'unreadable'` fails the read. */
   readonly permission?: boolean | 'unreadable';
+  /** The system would still show its prompt. */
+  readonly canAsk?: boolean;
   /** What a permission request answers. */
   readonly requestAnswer?: boolean;
   /** The scheduler refuses every call. */
@@ -20,6 +22,7 @@ interface FakeOptions {
 /** A `Notifications` that records what it was asked to do instead of posting anything. */
 export const makeNotificationsFake = ({
   permission = true,
+  canAsk = false,
   requestAnswer = true,
   failing = false,
   refusingCancelAll = false,
@@ -32,8 +35,12 @@ export const makeNotificationsFake = ({
     permission:
       permission === 'unreadable'
         ? Effect.fail(new NotificationPermissionDenied())
-        : Effect.succeed({ granted: permission }),
-    requestPermission: Effect.succeed({ granted: requestAnswer }),
+        : Effect.succeed({ granted: permission, canAsk }),
+    requestPermission: Effect.sync(() => {
+      calls.push('requestPermission');
+      return { granted: requestAnswer, canAsk: false };
+    }),
+    openSettings: Effect.sync(() => void calls.push('openSettings')),
     schedule: request =>
       failing
         ? refuse('schedule')

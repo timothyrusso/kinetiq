@@ -452,6 +452,11 @@ export const en = {
     restLess: 'Rest fifteen seconds less',
     restMore: 'Rest fifteen seconds longer',
     skipRest: 'Skip the rest',
+    restAlertsOff: 'Rest alerts are off',
+    restAlertsSettings: 'Settings',
+    restAlertsSettingsHint: "Opens this app's page in the system settings, where notifications can be allowed.",
+    restAlertsTurnOn: 'Turn on',
+    restAlertsTurnOnHint: 'Opens Notifications in Profile.',
     removeExerciseTitle: 'Remove this exercise?',
     removeWithSets_one:
       '{name} and the {count} set already banked against it come out of this workout. Nothing else changes.',

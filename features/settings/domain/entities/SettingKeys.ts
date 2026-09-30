@@ -15,6 +15,7 @@ export const SETTING_KEYS = {
   restCountdownHaptics: 'settings.restCountdownHaptics',
   keepScreenAwake: 'settings.keepScreenAwake',
   notificationsEnabled: 'settings.notifications',
+  notificationsAsked: 'settings.notificationsAsked',
   defaultRestSeconds: 'settings.defaultRestSeconds',
   weeklyGoalWorkouts: 'settings.weeklyGoalWorkouts',
   autoStartRest: 'settings.autoStartRest',

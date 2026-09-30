@@ -14,4 +14,8 @@ export { NotificationPermissionDenied } from '@/features/notifications/domain/er
 export { Notifications } from '@/features/notifications/domain/services/Notifications';
 /** The weekly reminder, reconciled by the launch and on every return to the foreground. */
 export { TrainingReminder } from '@/features/notifications/domain/services/TrainingReminder';
+/** Asks for the permission when a workout starts, while the system can still show its prompt. */
+export { useAskNotificationPermissionOnce } from '@/features/notifications/facades/useNotificationPermission';
 export { useRestAlert } from '@/features/notifications/facades/useRestAlert';
+/** Why the rest dock says its alerts are off, and the way to the system settings. */
+export { useRestAlertsOff } from '@/features/notifications/facades/useRestAlertsOff';

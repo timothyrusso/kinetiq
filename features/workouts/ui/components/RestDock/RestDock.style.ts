@@ -24,4 +24,6 @@ export const createStyles = (theme: Theme) =>
     },
     fill: { height: '100%', backgroundColor: theme.colors.accent, borderRadius: radius.pill },
     adjust: { flexDirection: 'row', gap: spacing.xs },
+    alertsOff: { marginTop: spacing.sm },
+    alertsOffLine: { flex: 1, minWidth: 0 },
   });

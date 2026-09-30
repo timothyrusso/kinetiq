@@ -241,6 +241,8 @@ export function SessionPage() {
           onHeight={effects.dockHeight}
           onSkip={effects.skipRest}
           onAdjust={effects.adjustRest}
+          alertsOff={derived.restAlertsOff}
+          onFixAlerts={effects.fixRestAlerts}
         />
       ) : null}
 

@@ -54,7 +54,7 @@ describe('SettingsRepositoryLive', () => {
       const repository = yield* SettingsRepository;
       yield* repository.save({ ...changed, notificationsGranted: true });
       const stored = yield* rows;
-      expect(stored).toHaveLength(13);
+      expect(stored).toHaveLength(14);
       expect(stored).toContainEqual({ key: 'settings.units', value_json: '"imperial"' });
       expect(stored).toContainEqual({
         key: 'settings.reminder',
@@ -72,7 +72,7 @@ describe('SettingsRepositoryLive', () => {
       yield* repository.save(changed);
       yield* repository.save({ ...changed, weeklyGoalWorkouts: 2 });
       expect((yield* repository.load).weeklyGoalWorkouts).toBe(2);
-      expect(yield* rows).toHaveLength(13);
+      expect(yield* rows).toHaveLength(14);
     }),
     layer(),
   );

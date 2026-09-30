@@ -57,17 +57,44 @@ export const refuseWrites = (runtime: TestRuntime, table: string, operation: 'IN
 
 type Request = Parameters<Context.Tag.Service<typeof Notifications>['schedule']>[0];
 
+/** The device's permission as a test sets it up and reads it back. */
+interface PermissionDevice {
+  granted: boolean;
+  /** The system would still show its prompt. */
+  canAsk: boolean;
+  /** What a request answers. */
+  answer: boolean;
+  requests: number;
+  settingsOpened: number;
+}
+
 /**
- * `WorkoutsTestLayer` with a `Notifications` whose permission is granted and whose scheduler
- * holds what it was asked to post until it is retracted, for the rest alert. `scheduled` is what
- * the test reads; make one per test.
+ * `WorkoutsTestLayer` with a `Notifications` whose permission is `permission` (granted by
+ * default) and whose scheduler holds what it was asked to post until it is retracted, for the
+ * rest alert. `scheduled` and `permission` are what the test reads; make one per test.
  */
-export const makeRestAlertTestLayer = () => {
+export const makeRestAlertTestLayer = (setup: Partial<PermissionDevice> = {}) => {
   const scheduled = new Map<string, Request>();
+  const permission: PermissionDevice = {
+    granted: true,
+    canAsk: false,
+    answer: true,
+    requests: 0,
+    settingsOpened: 0,
+    ...setup,
+  };
   let next = 0;
   const notifications = Layer.succeed(Notifications, {
-    permission: Effect.succeed({ granted: true }),
-    requestPermission: Effect.succeed({ granted: true }),
+    permission: Effect.sync(() => ({ granted: permission.granted, canAsk: permission.canAsk })),
+    requestPermission: Effect.sync(() => {
+      permission.requests += 1;
+      permission.granted = permission.answer;
+      permission.canAsk = false;
+      return { granted: permission.granted, canAsk: false };
+    }),
+    openSettings: Effect.sync(() => {
+      permission.settingsOpened += 1;
+    }),
     schedule: request =>
       Effect.sync(() => {
         next += 1;
@@ -79,15 +106,19 @@ export const makeRestAlertTestLayer = () => {
     cancelAll: Effect.sync(() => scheduled.clear()),
     installHandler: Effect.void,
   });
-  return { layer: Layer.merge(WorkoutsTestLayer, notifications), scheduled: scheduled as ReadonlyMap<string, Request> };
+  return {
+    layer: Layer.merge(WorkoutsTestLayer, notifications),
+    scheduled: scheduled as ReadonlyMap<string, Request>,
+    permission: permission as Readonly<PermissionDevice>,
+  };
 };
 
 /**
  * {@link makeRestAlertTestLayer} with a `ScreenWake` that holds whether the screen is kept on, for
  * the live workout screen. `screen.awake` is what the test reads; make one per test.
  */
-export const makeSessionScreenTestLayer = () => {
-  const rest = makeRestAlertTestLayer();
+export const makeSessionScreenTestLayer = (permission: Partial<PermissionDevice> = {}) => {
+  const rest = makeRestAlertTestLayer(permission);
   const screen = { awake: false };
   const wake = Layer.succeed(ScreenWake, {
     keepOn: Effect.sync(() => {
@@ -100,6 +131,7 @@ export const makeSessionScreenTestLayer = () => {
   return {
     layer: Layer.merge(rest.layer, wake),
     scheduled: rest.scheduled,
+    permission: rest.permission,
     screen: screen as { readonly awake: boolean },
   };
 };

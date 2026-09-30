@@ -67,11 +67,10 @@ export function useRestTimer(session: WorkoutSession | null) {
     if (id !== null) cancel(id);
   }, [cancel]);
 
-  const start = useCallback(
+  const armFor = useCallback(
     (seconds: number) => {
-      sessionActions.setRest(seconds);
       const live = useSessionStore.getState().session;
-      if (!notificationsOn || live === null) return;
+      if (live === null) return;
       const index = currentIndex(live);
       const name = live.entries[index]?.exerciseName ?? t('session.thisSet');
       void arm({ exerciseName: name, nextLabel: nextUpLabel(live, index, t), delaySeconds: seconds }).then(id => {
@@ -81,8 +80,29 @@ export function useRestTimer(session: WorkoutSession | null) {
         alertId.current = id;
       });
     },
-    [arm, cancel, notificationsOn, t],
+    [arm, cancel, t],
   );
+
+  const start = useCallback(
+    (seconds: number) => {
+      sessionActions.setRest(seconds);
+      if (notificationsOn) armFor(seconds);
+    },
+    [armFor, notificationsOn],
+  );
+
+  // NOTE: a grant that arrives mid-rest (the prompt at the start, or the system settings) arms the
+  // rest already running for the time it has left. Only on the change: a remount with alerts
+  // already on would arm a second alert for a rest that has one.
+  const wasOn = useRef(notificationsOn);
+  useEffect(() => {
+    const before = wasOn.current;
+    wasOn.current = notificationsOn;
+    if (before || !notificationsOn) return;
+    const live = useSessionStore.getState().session;
+    const left = live === null ? 0 : restRemaining(live.restEndsAt, Date.now());
+    if (left > 0) armFor(left);
+  }, [armFor, notificationsOn]);
 
   const skip = useCallback(() => {
     retract();

@@ -72,6 +72,7 @@ const GLYPHS = {
 
   // NOTE: Training and metrics
   bell: 'notifications',
+  bellOff: 'notifications-off',
   clock: 'time',
   timer: 'timer',
   flame: 'flame',

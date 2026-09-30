@@ -12,8 +12,12 @@ jest.mock('expo-notifications', () => ({
   SchedulableTriggerInputTypes: { TIME_INTERVAL: 'timeInterval', DATE: 'date' },
   cancelAllScheduledNotificationsAsync: jest.fn(async () => undefined),
   cancelScheduledNotificationAsync: jest.fn(async () => undefined),
-  getPermissionsAsync: jest.fn(async () => ({ granted: false })),
-  requestPermissionsAsync: jest.fn(async (_permissions?: unknown) => ({ granted: true })),
+  getPermissionsAsync: jest.fn(async () => ({ granted: false, status: 'undetermined', canAskAgain: true })),
+  requestPermissionsAsync: jest.fn(async (_permissions?: unknown) => ({
+    granted: true,
+    status: 'granted',
+    canAskAgain: true,
+  })),
   scheduleNotificationAsync: jest.fn(async () => 'id'),
   setNotificationChannelAsync: jest.fn(async () => null),
   setNotificationHandler: jest.fn(),
@@ -29,7 +33,7 @@ describe('NotificationsDeviceLive', () => {
     'asks the system for permission with no arguments',
     Effect.gen(function* () {
       const notifications = yield* Notifications;
-      expect(yield* notifications.requestPermission).toEqual({ granted: true });
+      expect(yield* notifications.requestPermission).toEqual({ granted: true, canAsk: false });
       expect(requestPermissionsAsync).toHaveBeenCalledTimes(1);
       expect(requestPermissionsAsync).toHaveBeenCalledWith();
     }),
@@ -40,8 +44,52 @@ describe('NotificationsDeviceLive', () => {
     'reads the permission with no arguments',
     Effect.gen(function* () {
       const notifications = yield* Notifications;
-      expect(yield* notifications.permission).toEqual({ granted: false });
+      expect(yield* notifications.permission).toEqual({ granted: false, canAsk: true });
       expect(getPermissionsAsync).toHaveBeenCalledWith();
+    }),
+    NotificationsDeviceLive,
+  );
+
+  itEffect(
+    'reads a refusal the system will not ask about again as one it cannot ask',
+    Effect.gen(function* () {
+      jest.mocked(getPermissionsAsync).mockResolvedValueOnce({
+        granted: false,
+        status: 'denied',
+        canAskAgain: false,
+      } as never);
+      const notifications = yield* Notifications;
+      expect(yield* notifications.permission).toEqual({ granted: false, canAsk: false });
+    }),
+    NotificationsDeviceLive,
+  );
+
+  // NOTE: expo-notifications on Android 13+ reports `denied` whenever notifications are off, a
+  // fresh install that has never been asked included; `canAskAgain` is what says it can still ask.
+  itEffect(
+    'reads an Android 13 fresh install, denied but still askable, as one it can ask',
+    Effect.gen(function* () {
+      jest.mocked(getPermissionsAsync).mockResolvedValueOnce({
+        granted: false,
+        status: 'denied',
+        canAskAgain: true,
+      } as never);
+      const notifications = yield* Notifications;
+      expect(yield* notifications.permission).toEqual({ granted: false, canAsk: true });
+    }),
+    NotificationsDeviceLive,
+  );
+
+  itEffect(
+    'reads a granted permission as nothing to ask',
+    Effect.gen(function* () {
+      jest.mocked(getPermissionsAsync).mockResolvedValueOnce({
+        granted: true,
+        status: 'granted',
+        canAskAgain: true,
+      } as never);
+      const notifications = yield* Notifications;
+      expect(yield* notifications.permission).toEqual({ granted: true, canAsk: false });
     }),
     NotificationsDeviceLive,
   );
