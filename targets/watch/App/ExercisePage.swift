@@ -90,8 +90,9 @@ struct ExercisePage: View {
             .padding(.bottom, 8)
         }
         .onAppear { crownFocused = true }
+        // Only the page on screen takes the Crown back; the pager keeps its neighbours alive.
         .onChange(of: workout.restEndsAt == nil) { _, free in
-            if free { crownFocused = true }
+            if free && index == workout.currentEntry { crownFocused = true }
         }
         .sheet(isPresented: $editingRest) {
             RestEditor(index: index, seconds: entry.restSeconds)
