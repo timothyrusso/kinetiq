@@ -229,8 +229,10 @@ export function useSessionPageLogic() {
   }, []);
 
   const restShown = rest.remaining > 0;
-  const dockExtent = restShown ? dockHeight + insets.bottom + spacing.md : 0;
-  const contentPadding = Math.max(footerHeight, dockExtent) + spacing.xl;
+  // NOTE: the dock stands on the footer, never over it, so Finish and Discard stay reachable while
+  // a rest runs; the footer's measured height already holds the home indicator.
+  const dockBottom = footerHeight + spacing.sm;
+  const contentPadding = (restShown ? dockBottom + dockHeight : footerHeight) + spacing.xl;
   const contentInset = useMemo(() => ({ paddingBottom: contentPadding }), [contentPadding]);
   const barInset = useMemo(() => ({ paddingTop: insets.top + spacing.xs }), [insets.top]);
   const footerInset = useMemo(() => ({ paddingBottom: insets.bottom + spacing.md }), [insets.bottom]);
@@ -284,6 +286,7 @@ export function useSessionPageLogic() {
       progress,
       barMeta,
       restShown,
+      dockBottom,
       showAwayNotice: awayNoticeSeconds > AWAY_NOTICE_SECONDS,
       awayNotice: t('session.awayNotice', { time: formatDurationCompact(awayNoticeSeconds) }),
       exercisesEyebrow: `${entryCount} ${t('session.exerciseWord', { count: entryCount })}`,
