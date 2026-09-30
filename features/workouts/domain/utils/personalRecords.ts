@@ -23,6 +23,10 @@ export function detectPersonalRecords(
         const value = set.estimated1rm ?? estimatedOneRepMax(set.weightKg, set.reps) ?? 0;
         const current = bestPrior.get(key) ?? 0;
         if (value > current) bestPrior.set(key, value);
+        if (set.weightKg > 0) {
+          const repKey = `${entry.exerciseId}:maxReps`;
+          if (set.reps > (bestPrior.get(repKey) ?? 0)) bestPrior.set(repKey, set.reps);
+        }
       }
     }
   }
