@@ -44,16 +44,24 @@ private final class ManualSleep {
 final class RepeatingSignalTests: XCTestCase {
     private var plays = 0
     private var clock = ManualSleep()
+    private let origin = ContinuousClock.now
+    /// How far the injected clock has moved from `origin`.
+    private var elapsed: Duration = .zero
 
     override func setUp() async throws {
         plays = 0
         clock = ManualSleep()
+        elapsed = .zero
     }
 
     private func signal(count: Int = 3) -> RepeatingSignal {
-        RepeatingSignal(count: count, interval: .milliseconds(700), sleep: clock.sleep) { [weak self] in
-            self?.plays += 1
-        }
+        RepeatingSignal(
+            count: count,
+            interval: .milliseconds(700),
+            sleep: clock.sleep,
+            now: { [unowned self] in self.origin + self.elapsed },
+            play: { [weak self] in self?.plays += 1 }
+        )
     }
 
     func testPlaysThreeTimesSevenTenthsOfASecondApart() async {
@@ -62,9 +70,11 @@ final class RepeatingSignalTests: XCTestCase {
         XCTAssertEqual(plays, 1)
         XCTAssertTrue(alarm.isPlaying)
         await clock.waitForSleep()
+        elapsed = .milliseconds(710)
         await clock.advance()
         XCTAssertEqual(plays, 2)
         await clock.waitForSleep()
+        elapsed = .milliseconds(1_420)
         await clock.advance()
         XCTAssertEqual(plays, 3)
         XCTAssertFalse(alarm.isPlaying)
@@ -107,6 +117,31 @@ final class RepeatingSignalTests: XCTestCase {
         await clock.waitForSleep()
         await clock.advance()
         XCTAssertEqual(plays, 4)
+        XCTAssertFalse(alarm.isPlaying)
+    }
+
+    func testARepeatThatWakesLateIsDroppedWithTheRestOfThePattern() async {
+        let alarm = signal()
+        alarm.start()
+        await clock.waitForSleep()
+        elapsed = .seconds(180)
+        await clock.advance()
+        XCTAssertEqual(plays, 1, "a buzz minutes after the rest ended must not play")
+        XCTAssertFalse(alarm.isPlaying)
+        XCTAssertEqual(clock.requested.count, 1)
+    }
+
+    func testARepeatLessThanAnIntervalLateStillPlays() async {
+        let alarm = signal()
+        alarm.start()
+        await clock.waitForSleep()
+        elapsed = .milliseconds(1_300)
+        await clock.advance()
+        XCTAssertEqual(plays, 2)
+        await clock.waitForSleep()
+        elapsed = .milliseconds(2_200)
+        await clock.advance()
+        XCTAssertEqual(plays, 2, "the last repeat is more than an interval late")
         XCTAssertFalse(alarm.isPlaying)
     }
 
