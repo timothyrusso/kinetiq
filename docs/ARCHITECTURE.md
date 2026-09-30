@@ -110,8 +110,8 @@ Every feature declares `FEATURE_TIER` in its `index.ts`; `npm run arch` checks t
   the same reset.
 - **`useExerciseSearch` is a widening single query**, not an infinite query: Load more raises the
   limit of one read (`0..n`), so the list is always one consistent read and a catalog swapped
-  mid-scroll cannot repeat a row. The picker shows 24 rows of a 50-row read and offers Load more
-  while `shown < items.length || hasMore`.
+  mid-scroll cannot repeat a row. The picker's `FlashList` shows every row read and offers Load
+  more while `hasMore`.
 - **A catalog with no row is an answer.** `getExercise` answers `null` for a retired or `local:`
   exercise; `useExercise` falls back to the stored snapshot and logs nothing.
 - **Stored rows read tolerantly**, as `main` did: an `entries_json` entry missing a nullable field

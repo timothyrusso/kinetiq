@@ -13,11 +13,13 @@
  * cannot be inset by a header it cannot measure, so the header sat over the first field.
  *
  * `fit` bodies are plain views so a `fitToContents` detent can measure them. Taller editors
- * (the exercise picker) scroll, and use the list inside them instead of this body.
+ * scroll; a sheet whose body is a long list uses `FormSheetList` instead, so the list is the
+ * sheet's only scroll container.
  */
 
+import { FlashList, type ListRenderItem } from '@shopify/flash-list';
 import { router } from 'expo-router';
-import { memo, type ReactNode } from 'react';
+import { memo, type ReactElement, type ReactNode, useMemo } from 'react';
 import { ScrollView, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/features/core/design-system/controls/Button';
@@ -26,27 +28,111 @@ import { screenGutter, spacing, useAppTheme } from '@/features/core/theme';
 import type { TKey } from '@/features/core/translations';
 import { useT } from '@/features/core/translations';
 
-export function FormSheet({
-  title,
-  doneLabel,
-  onDone,
-  doneDisabled = false,
-  scroll = false,
-  children,
-}: {
+interface FormSheetBarProps {
   title: string;
   /** The trailing text action. Defaults to closing the sheet under the label "Done". */
   doneLabel?: TKey;
   onDone?: () => void;
   doneDisabled?: boolean;
+}
+
+export function FormSheet({
+  scroll = false,
+  children,
+  ...barProps
+}: FormSheetBarProps & {
   /** For bodies taller than a phone's half height. */
   scroll?: boolean;
   children: ReactNode;
 }) {
-  const { t } = useT();
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
-  const bar = (
+  const bar = <FormSheetBar {...barProps} />;
+  const body = <View style={[styles.body, { paddingBottom: insets.bottom + spacing.lg }]}>{children}</View>;
+  return (
+    <>
+      {scroll ? (
+        <ScrollView
+          // NOTE: Android's sheet (Material's BottomSheetBehavior) only yields a drag to a child
+          // with nested scrolling on; without it every downward drag moved the sheet, so the list
+          // could not scroll back up. At the top of the list a drag still moves the sheet.
+          nestedScrollEnabled
+          style={{ backgroundColor: theme.colors.background }}
+          contentContainerStyle={styles.gutter}
+          keyboardShouldPersistTaps="handled"
+          contentInsetAdjustmentBehavior="automatic"
+        >
+          {bar}
+          {body}
+        </ScrollView>
+      ) : (
+        <View style={[styles.gutter, { backgroundColor: theme.colors.background }]}>
+          {bar}
+          {body}
+        </View>
+      )}
+    </>
+  );
+}
+
+/**
+ * A form sheet whose body is a long list: the title bar and `header` scroll away as the list's
+ * header and `footer` follows its last row, so a `FlashList` is the sheet's only scroll
+ * container. A virtualised list inside the `scroll` body would be two scroll containers fighting
+ * over one gesture, and would render every row anyway.
+ */
+export function FormSheetList<T>({
+  header,
+  footer,
+  data,
+  renderItem,
+  keyExtractor,
+  empty,
+  ...barProps
+}: FormSheetBarProps & {
+  /** Everything above the rows: the search, the filters. Scrolls with them. */
+  header: ReactNode;
+  /** Below the last row, e.g. a Load more. */
+  footer?: ReactNode;
+  data: readonly T[];
+  renderItem: ListRenderItem<T>;
+  keyExtractor: (item: T, index: number) => string;
+  /** Drawn in place of the rows while there are none: a skeleton, an error, an empty state. */
+  empty: ReactElement;
+}) {
+  const theme = useAppTheme();
+  const insets = useSafeAreaInsets();
+  const contentContainerStyle = useMemo(
+    () => ({ paddingHorizontal: screenGutter, paddingBottom: insets.bottom + spacing.lg }),
+    [insets.bottom],
+  );
+  return (
+    <FlashList
+      // NOTE: the list is the sheet's scrolling child, so it carries the nested scrolling that
+      // Android's sheet needs before it yields a drag (see `FormSheet`).
+      nestedScrollEnabled
+      style={{ backgroundColor: theme.colors.background }}
+      contentContainerStyle={contentContainerStyle}
+      keyboardShouldPersistTaps="handled"
+      contentInsetAdjustmentBehavior="automatic"
+      data={data}
+      renderItem={renderItem}
+      keyExtractor={keyExtractor}
+      ListHeaderComponent={
+        <>
+          <FormSheetBar {...barProps} />
+          <View style={[styles.body, styles.listHeader]}>{header}</View>
+        </>
+      }
+      ListFooterComponent={footer ? <View style={[styles.body, styles.listFooter]}>{footer}</View> : null}
+      ListEmptyComponent={empty}
+    />
+  );
+}
+
+function FormSheetBar({ title, doneLabel, onDone, doneDisabled = false }: FormSheetBarProps) {
+  const { t } = useT();
+  return (
     <View style={styles.bar}>
       <Txt variant="subhead" weight="600" accessibilityRole="header" numberOfLines={1} style={styles.flex}>
         {title}
@@ -58,30 +144,6 @@ export function FormSheet({
         size="sm"
       />
     </View>
-  );
-  const body = <View style={[styles.body, { paddingBottom: insets.bottom + spacing.lg }]}>{children}</View>;
-  return (
-    <>
-      {scroll ? (
-        <ScrollView
-          // NOTE: Android's sheet (Material's BottomSheetBehavior) only yields a drag to a child
-          // with nested scrolling on; without it every downward drag moved the sheet, so the list
-          // could not scroll back up. At the top of the list a drag still moves the sheet.
-          nestedScrollEnabled
-          style={{ backgroundColor: theme.colors.background }}
-          keyboardShouldPersistTaps="handled"
-          contentInsetAdjustmentBehavior="automatic"
-        >
-          {bar}
-          {body}
-        </ScrollView>
-      ) : (
-        <View style={{ backgroundColor: theme.colors.background }}>
-          {bar}
-          {body}
-        </View>
-      )}
-    </>
   );
 }
 
@@ -127,14 +189,11 @@ export const FormFooter = memo(function FormFooter({
 });
 
 const styles = StyleSheet.create({
-  bar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingHorizontal: screenGutter,
-    paddingTop: spacing.xl,
-  },
-  body: { paddingHorizontal: screenGutter, paddingTop: spacing.lg, gap: spacing.xl },
+  gutter: { paddingHorizontal: screenGutter },
+  bar: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingTop: spacing.xl },
+  body: { paddingTop: spacing.lg, gap: spacing.xl },
+  listHeader: { paddingBottom: spacing.xl },
+  listFooter: { paddingTop: spacing.xl },
   section: { gap: spacing.md },
   sectionHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   flex: { flex: 1 },

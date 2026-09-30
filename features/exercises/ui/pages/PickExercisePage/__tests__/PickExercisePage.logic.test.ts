@@ -9,7 +9,7 @@ import {
 
 const BENCH = anExercise();
 const SQUAT = anExercise({ id: 'wger:13', externalId: 13, name: 'Squat', category: 'Legs' });
-const ROWS = Array.from({ length: 30 }, (_, i) =>
+const ROWS = Array.from({ length: 60 }, (_, i) =>
   anExercise({ id: `wger:${100 + i}`, externalId: 100 + i, name: `Curl ${i}` }),
 );
 
@@ -23,18 +23,18 @@ const renderPicker = (picked: Exercise[] = []) => {
 };
 
 describe('usePickExercisePageLogic', () => {
-  it('shows the first 24 rows and counts the ones already in the list', async () => {
+  it('shows the first catalog page and counts the ones already in the list', async () => {
     const { result, done } = await renderPicker();
 
-    await waitFor(() => expect(result.current.state.rows).toHaveLength(24));
-    expect(result.current.state.total).toBe(32);
+    await waitFor(() => expect(result.current.state.rows).toHaveLength(50));
+    expect(result.current.state.total).toBe(62);
     expect(result.current.derived.includedCount).toBe(1);
     await done();
   });
 
   it('narrows the rows to the search term once typing settles', async () => {
     const { result, done } = await renderPicker();
-    await waitFor(() => expect(result.current.state.rows).toHaveLength(24));
+    await waitFor(() => expect(result.current.state.rows).toHaveLength(50));
 
     await act(async () => result.current.effects.setQuery('squat'));
 
@@ -43,20 +43,20 @@ describe('usePickExercisePageLogic', () => {
     await done();
   });
 
-  it('shows another 24 rows on Load more', async () => {
+  it('reads the next catalog page on Load more', async () => {
     const { result, done } = await renderPicker();
-    await waitFor(() => expect(result.current.state.rows).toHaveLength(24));
+    await waitFor(() => expect(result.current.state.rows).toHaveLength(50));
 
     await act(async () => result.current.effects.loadMore());
 
-    await waitFor(() => expect(result.current.state.rows).toHaveLength(32));
+    await waitFor(() => expect(result.current.state.rows).toHaveLength(62));
     await done();
   });
 
-  it('offers Load more while rows already read are still hidden', async () => {
+  it('offers Load more while the catalog has more rows', async () => {
     const { result, done } = await renderPicker();
 
-    await waitFor(() => expect(result.current.state.rows).toHaveLength(24));
+    await waitFor(() => expect(result.current.state.rows).toHaveLength(50));
 
     expect(result.current.state.hasMore).toBe(true);
     await done();
@@ -64,11 +64,11 @@ describe('usePickExercisePageLogic', () => {
 
   it('stops offering Load more once every matching row is shown', async () => {
     const { result, done } = await renderPicker();
-    await waitFor(() => expect(result.current.state.rows).toHaveLength(24));
+    await waitFor(() => expect(result.current.state.rows).toHaveLength(50));
 
     await act(async () => result.current.effects.loadMore());
 
-    await waitFor(() => expect(result.current.state.rows).toHaveLength(32));
+    await waitFor(() => expect(result.current.state.rows).toHaveLength(62));
     expect(result.current.state.hasMore).toBe(false);
     await done();
   });
@@ -76,7 +76,7 @@ describe('usePickExercisePageLogic', () => {
   it('hands the chosen row to onPick', async () => {
     const picked: Exercise[] = [];
     const { result, done } = await renderPicker(picked);
-    await waitFor(() => expect(result.current.state.rows).toHaveLength(24));
+    await waitFor(() => expect(result.current.state.rows).toHaveLength(50));
 
     await act(async () => result.current.effects.select(BENCH.id));
 
@@ -86,7 +86,7 @@ describe('usePickExercisePageLogic', () => {
 
   it('toggles a muscle filter on and off', async () => {
     const { result, done } = await renderPicker();
-    await waitFor(() => expect(result.current.state.rows).toHaveLength(24));
+    await waitFor(() => expect(result.current.state.rows).toHaveLength(50));
 
     await act(async () => result.current.effects.toggleMuscle(4));
     expect(result.current.state.muscleId).toBe(4);
