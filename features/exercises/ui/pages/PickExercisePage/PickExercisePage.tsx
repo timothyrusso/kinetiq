@@ -45,9 +45,7 @@ export function PickExercisePage(props: PickExercisePageProps) {
             placeholder={t('picker.placeholder')}
             // NOTE: text rather than a spinner: a hint is announced, and it explains the one state
             // where typing has been received and nothing has moved yet.
-            hint={
-              state.settling ? t('exerciseList.searching') : t('details.pickerInLibrary', { total: state.total ?? '-' })
-            }
+            hint={derived.libraryHint}
             accessibilityHint={t('picker.searchHint')}
           />
           <Stack gap="sm">
@@ -80,7 +78,7 @@ export function PickExercisePage(props: PickExercisePageProps) {
         )
       }
       footer={
-        state.hasMore || derived.includedCount > 0 ? (
+        state.hasMore || derived.includedNote !== null ? (
           <>
             {state.hasMore ? (
               <Button
@@ -92,9 +90,9 @@ export function PickExercisePage(props: PickExercisePageProps) {
                 onPress={effects.loadMore}
               />
             ) : null}
-            {derived.includedCount > 0 ? (
+            {derived.includedNote !== null ? (
               <Txt variant="micro" tone="faint" align="center">
-                {t('details.pickerIncluded', { count: derived.includedCount })}
+                {derived.includedNote}
               </Txt>
             ) : null}
           </>

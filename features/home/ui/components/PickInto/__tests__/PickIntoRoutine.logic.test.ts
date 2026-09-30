@@ -56,4 +56,11 @@ describe('usePickIntoRoutineLogic', () => {
     expect(result.current.saved.routine).toBeNull();
     await done();
   });
+
+  it('names the routine in the picker footer when picking into a saved routine', async () => {
+    const { result, done } = await renderPicker();
+
+    expect(result.current.picker.state.destination).toBe('routine');
+    await done();
+  });
 });

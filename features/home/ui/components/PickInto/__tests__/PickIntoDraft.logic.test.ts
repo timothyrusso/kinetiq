@@ -39,4 +39,11 @@ describe('usePickIntoDraftLogic', () => {
     expect(result.current.picker.effects.isIncluded('wger:13')).toBe(false);
     await done();
   });
+
+  it('names the routine in the picker footer when picking into the routine draft', async () => {
+    const { result, done } = await renderWithLayer(HomeTestLayer, usePicker, undefined);
+
+    expect(result.current.picker.state.destination).toBe('routine');
+    await done();
+  });
 });

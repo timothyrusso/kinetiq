@@ -2,8 +2,11 @@ import { useCallback, useMemo, useState } from 'react';
 import { haptics } from '@/features/core/haptics';
 import { useT } from '@/features/core/translations';
 import type { Exercise } from '@/features/exercises';
+import type { PickDestination } from '@/features/exercises/pages';
 import { defaultItemTarget, type RoutineId, useAddRoutineExercise, useRoutine } from '@/features/routines';
 import { useSettings } from '@/features/settings';
+
+const DESTINATION: PickDestination = 'routine';
 
 /**
  * Picks into saved routine `routineId`. The opening targets come from `defaultItemTarget`, the
@@ -31,5 +34,5 @@ export function usePickIntoRoutineLogic(routineId: RoutineId) {
     },
     [addExercise, defaultRest, routineId, t],
   );
-  return { state: { error }, effects: { pick, isIncluded } };
+  return { state: { error, destination: DESTINATION }, effects: { pick, isIncluded } };
 }

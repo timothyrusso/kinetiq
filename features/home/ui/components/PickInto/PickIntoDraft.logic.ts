@@ -1,7 +1,10 @@
 import { useCallback, useMemo } from 'react';
 import { haptics } from '@/features/core/haptics';
 import type { Exercise } from '@/features/exercises';
+import type { PickDestination } from '@/features/exercises/pages';
 import { useRoutineDraft } from '@/features/routines';
+
+const DESTINATION: PickDestination = 'routine';
 
 /**
  * Picks into the routine builder's draft. Subscribed, so the included marks follow the adds:
@@ -19,5 +22,5 @@ export function usePickIntoDraftLogic() {
     },
     [actions],
   );
-  return { effects: { pick, isIncluded } };
+  return { state: { destination: DESTINATION }, effects: { pick, isIncluded } };
 }

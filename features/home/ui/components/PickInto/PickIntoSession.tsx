@@ -4,5 +4,12 @@ import { usePickIntoSessionLogic } from '@/features/home/ui/components/PickInto/
 /** The picker, adding to the workout in progress. */
 export function PickIntoSession() {
   const { state, effects } = usePickIntoSessionLogic();
-  return <PickExercisePage isIncluded={effects.isIncluded} onPick={effects.pick} error={state.error} />;
+  return (
+    <PickExercisePage
+      isIncluded={effects.isIncluded}
+      destination={state.destination}
+      onPick={effects.pick}
+      error={state.error}
+    />
+  );
 }
