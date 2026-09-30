@@ -226,7 +226,7 @@ describe('useRestAlertsOff', () => {
 });
 
 describe('useRestAlert', () => {
-  const alert = { exerciseName: 'Bench Press', nextLabel: 'Set 2', delaySeconds: 89.6 };
+  const alert = { exerciseName: 'Bench Press', next: { kind: 'exercise', name: 'Squat' }, delaySeconds: 89.6 } as const;
 
   it('arms the alert for the rest remaining and resolves its identifier', async () => {
     const { result, done } = await render(useRestAlert);
@@ -238,7 +238,7 @@ describe('useRestAlert', () => {
 
     expect(identifier).toBe('n1');
     expect(device.pending.get('n1')).toEqual({
-      content: { title: tr('push.restComplete'), body: tr('push.restNext', { name: 'Bench Press', next: 'Set 2' }) },
+      content: { title: tr('push.restComplete'), body: tr('push.restNext', { name: 'Bench Press', next: 'Squat' }) },
       trigger: { kind: 'afterSeconds', seconds: 90 },
     });
     await done();
@@ -247,7 +247,7 @@ describe('useRestAlert', () => {
   it('says the last set is done when nothing follows', async () => {
     const { result, done } = await render(useRestAlert);
 
-    await act(async () => void (await result.current.arm({ ...alert, nextLabel: '' })));
+    await act(async () => void (await result.current.arm({ ...alert, next: { kind: 'none' } })));
 
     expect(device.pending.get('n1')?.content.body).toBe(tr('push.restLast', { name: 'Bench Press' }));
     await done();
@@ -284,7 +284,7 @@ describe('useRestAlert', () => {
   it('retracts exactly the alert it armed', async () => {
     const { result, done } = await render(useRestAlert);
     await act(async () => void (await result.current.arm(alert)));
-    await act(async () => void (await result.current.arm({ ...alert, nextLabel: '' })));
+    await act(async () => void (await result.current.arm({ ...alert, next: { kind: 'none' } })));
 
     await act(async () => result.current.cancel('n1'));
 

@@ -173,7 +173,7 @@ export function useSessionPageLogic() {
         return;
       }
       haptics.setCompleted();
-      if (autoStartRest) startRest(startedRest);
+      if (autoStartRest) startRest(startedRest, entryIndex);
     },
     [autoStartRest, retract, startRest],
   );

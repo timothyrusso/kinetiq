@@ -48,7 +48,7 @@ describe('SessionEngineLive persistence', () => {
     'clears the rest on disk when the rest is skipped',
     Effect.gen(function* () {
       yield* startAtNow;
-      store().setRest(90, NOW + 1);
+      store().setRest(90, 0, NOW + 1);
       yield* settle;
 
       store().clearRest(NOW + 2);

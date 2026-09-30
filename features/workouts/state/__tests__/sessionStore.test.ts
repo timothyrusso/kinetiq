@@ -101,12 +101,25 @@ describe('the session store editing a workout', () => {
   });
 
   it('queues only the rest being cleared when a rest is skipped', () => {
-    store().setRest(90, NOW + 1);
+    store().setRest(90, 0, NOW + 1);
 
     store().clearRest(NOW + 2);
 
     expect(store().pendingWrite).toEqual({ kind: 'clearRest', sessionId: aSession().id });
     expect(store().session?.restEndsAt).toBeNull();
+    expect(store().restEntryIndex).toBeNull();
+  });
+
+  it('keeps the exercise a rest follows as the list closes up, and drops it with that exercise', () => {
+    store().addExercise(anEntry({ exerciseId: 'wger:99' }), NOW + 1);
+    store().setRest(90, 2, NOW + 2);
+
+    store().removeExercise(0, NOW + 3);
+    const followed = store().restEntryIndex;
+    store().removeExercise(1, NOW + 4);
+
+    expect(followed).toBe(1);
+    expect(store().restEntryIndex).toBeNull();
   });
 
   it('adds an exercise at the end of the list', () => {

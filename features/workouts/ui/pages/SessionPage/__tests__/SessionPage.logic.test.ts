@@ -22,7 +22,7 @@ const renderScreen = async (
   sessionLifecycle.restore(session);
   const test = makeSessionScreenTestLayer(permission);
   const rendered = await renderWithLayer(test.layer, useSessionPageLogic, undefined);
-  return { ...rendered, screen: test.screen, permission: test.permission };
+  return { ...rendered, screen: test.screen, permission: test.permission, scheduled: test.scheduled };
 };
 
 describe('useSessionPageLogic', () => {
@@ -91,6 +91,19 @@ describe('useSessionPageLogic', () => {
 
     expect(routerFake.history).toEqual([{ verb: 'push', href: routes.sessionSet(1, 0) }]);
     expect(result.current.derived.blocks.map(block => block.isCurrent)).toEqual([false, true]);
+    await done();
+  });
+
+  it('arms the rest alert for the exercise whose set was ticked, not the current one', async () => {
+    const { result, scheduled, done } = await renderScreen();
+
+    await act(async () => result.current.effects.toggleSet(1, 0));
+
+    await waitFor(() => expect(scheduled.size).toBe(1));
+    expect(result.current.derived.blocks.map(block => block.isCurrent)).toEqual([true, false]);
+    expect([...scheduled.values()][0]?.content.body).toBe(
+      tr('push.restNextSet', { name: 'Overhead Press', set: 2, total: 3 }),
+    );
     await done();
   });
 
