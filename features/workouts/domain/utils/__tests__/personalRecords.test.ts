@@ -93,6 +93,39 @@ describe('detectPersonalRecords', () => {
     expect(records).toEqual([expect.objectContaining({ kind: 'maxReps', value: 10, previousValue: 5 })]);
   });
 
+  it('reports a rep record above the reps a max can be estimated from', () => {
+    const sixteens = earlierBench([aSet({ reps: 16, weightKg: 2, estimated1rm: null })]);
+    const nineteens = anEntry({ sets: [aSet({ reps: 19, weightKg: 2, estimated1rm: null })] });
+
+    const records = detectPersonalRecords([nineteens], [sixteens], NOW);
+
+    expect(records).toEqual([expect.objectContaining({ kind: 'maxReps', value: 19, previousValue: 16 })]);
+  });
+
+  it('gives no rep record for high reps below the best before', () => {
+    const nineteens = earlierBench([aSet({ reps: 19, weightKg: 2, estimated1rm: null })]);
+    const sixteens = anEntry({ sets: [aSet({ reps: 16, weightKg: 2, estimated1rm: null })] });
+
+    expect(detectPersonalRecords([sixteens], [nineteens], NOW)).toEqual([]);
+  });
+
+  it('reports the max from an estimable set and the reps from a longer set of the same entry', () => {
+    const tens = earlierBench([aSet({ reps: 10, weightKg: 61, estimated1rm: 81.3 })]);
+    const mixed = anEntry({
+      sets: [
+        aSet({ reps: 5, weightKg: 80, estimated1rm: 93.3 }),
+        aSet({ index: 1, reps: 20, weightKg: 30, estimated1rm: null }),
+      ],
+    });
+
+    const records = detectPersonalRecords([mixed], [tens], NOW);
+
+    expect(records).toEqual([
+      expect.objectContaining({ kind: 'est1rm', value: 93.3, previousValue: 81.3 }),
+      expect.objectContaining({ kind: 'maxReps', value: 20, previousValue: 10 }),
+    ]);
+  });
+
   it('gives no rep record for bodyweight sets', () => {
     const bodyweight = anEntry({ sets: [aSet({ reps: 12, weightKg: 0, estimated1rm: null })] });
 

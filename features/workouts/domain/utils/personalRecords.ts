@@ -35,15 +35,11 @@ export function detectPersonalRecords(
   const seen = new Set<string>();
   for (const entry of entries) {
     let best1rm = 0;
-    let best1rmReps = 0;
     let bestReps = 0;
     for (const set of entry.sets) {
       if (!set.completed) continue;
       const est = set.estimated1rm ?? estimatedOneRepMax(set.weightKg, set.reps) ?? 0;
-      if (est > best1rm) {
-        best1rm = est;
-        best1rmReps = set.reps;
-      }
+      if (est > best1rm) best1rm = est;
       if (set.reps > bestReps && set.weightKg > 0) bestReps = set.reps;
     }
 
@@ -63,7 +59,7 @@ export function detectPersonalRecords(
 
     const repKey = `${entry.exerciseId}:maxReps`;
     const priorReps = bestPrior.get(repKey) ?? 0;
-    if (bestReps > priorReps && bestReps >= 8 && !seen.has(repKey) && best1rmReps > 0) {
+    if (bestReps > priorReps && bestReps >= 8 && !seen.has(repKey)) {
       seen.add(repKey);
       records.push({
         exerciseId: entry.exerciseId,
