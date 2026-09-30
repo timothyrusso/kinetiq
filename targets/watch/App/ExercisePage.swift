@@ -38,7 +38,8 @@ struct ExercisePage: View {
                     tile(.reps, value: String(selectedSet?.reps ?? 0), unit: String(localized: "workout.repsUnit"),
                          label: "workout.reps", adjust: adjustReps)
                 }
-                .focusable()
+                // The rest screen covers the page while it runs and takes the Crown.
+                .focusable(workout.restEndsAt == nil)
                 .focused($crownFocused)
                 .digitalCrownRotation(
                     crownBinding,
@@ -89,6 +90,9 @@ struct ExercisePage: View {
             .padding(.bottom, 8)
         }
         .onAppear { crownFocused = true }
+        .onChange(of: workout.restEndsAt == nil) { _, free in
+            if free { crownFocused = true }
+        }
         .sheet(isPresented: $editingRest) {
             RestEditor(index: index, seconds: entry.restSeconds)
         }
