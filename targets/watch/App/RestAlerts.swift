@@ -119,10 +119,16 @@ final class RestAlerts: NSObject, UNUserNotificationCenterDelegate, WKExtendedRu
     }
 
     /// A rest notification that reached the app instead of the screen: its haptic is the app's.
+    /// With neither end known, it was scheduled by a process that is gone (a relaunch just after
+    /// the rest ended), and nothing in this one has played for it.
     private func notificationArrivedInApp() {
-        guard let end = notificationEnd, signalledEnd != end else { return }
-        signalledEnd = end
-        notificationEnd = nil
+        if let end = notificationEnd {
+            guard signalledEnd != end else { return }
+            signalledEnd = end
+            notificationEnd = nil
+        } else if signalledEnd != nil {
+            return
+        }
         WKInterfaceDevice.current().play(.stop)
         onRestDeadline?()
     }
