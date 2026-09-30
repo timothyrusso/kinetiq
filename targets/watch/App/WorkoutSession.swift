@@ -41,6 +41,7 @@ final class WorkoutSession: ObservableObject {
             store.save(resumed)
             self.alerts.workoutResumed(resumed)
         }
+        self.alerts.onRestDeadline = { [weak self] in self?.restEnded() }
     }
 
     func start(_ routine: Routine, unitSystem: UnitSystem) {
@@ -68,24 +69,27 @@ final class WorkoutSession: ObservableObject {
     func update(_ change: (inout Workout) -> Void) {
         guard var next = workout else { return }
         change(&next)
-        guard next != workout else { return }
+        guard let current = workout, next != current else { return }
         store.save(next)
         workout = next
         alerts.restChanged(next)
+        // Complete set and a ticked checkbox both land here.
+        if next.completedSets > current.completedSets { alerts.setCompleted() }
     }
 
     /// Complete set on the exercise page: the selected set, not necessarily the next open one.
     func completeSet(_ set: Int, in entry: Int) {
         update { $0.completeSet(set, in: entry, now: Date()) }
-        alerts.setCompleted()
     }
 
-    /// The rest reached zero with the app on screen: the haptic plays here, the notification is
-    /// withdrawn so it does not buzz a second time.
+    /// The rest reached zero, seen by the rest view on screen or by the rest timer with the wrist
+    /// down. `RestAlerts` plays the haptic unless the notification has it.
     func restEnded() {
-        guard workout?.restEndsAt != nil else { return }
+        guard let current = workout, let end = current.restEndsAt, current.restRemaining(now: Date()) == 0 else {
+            return
+        }
+        alerts.restEnded(end)
         update { $0.clearRest() }
-        alerts.restEndedInApp()
     }
 
     /// Writes the finished workout to the outbox first; the workout file is removed only once
@@ -100,7 +104,7 @@ final class WorkoutSession: ObservableObject {
         workout = nil
         isShowing = true
         message = "workout.finished"
-        alerts.workoutEnded()
+        alerts.workoutFinished()
         onFinished?()
     }
 
