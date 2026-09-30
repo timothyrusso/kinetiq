@@ -366,8 +366,6 @@ export const en = {
     noLoadRecorded: 'Last time, no load recorded',
     bodyweight: 'bodyweight',
     lastTime: 'Last time {load}',
-    moreSetsOf_one: '{count} more set of {name}',
-    moreSetsOf_other: '{count} more sets of {name}',
   },
   profileScreen: {
     editProfileHint: 'Opens your name, height and birth year',
@@ -683,6 +681,7 @@ export const en = {
     channel: 'Training',
     restComplete: 'Rest complete',
     restNext: '{name} is done. Next up: {next}.',
+    restNextSet: 'Next up: {name}, set {set} of {total}.',
     restLast: '{name} is done: you are finished here.',
     testTitle: 'Notifications are working',
     testBody: 'This is the same channel your rest-timer alerts use.',

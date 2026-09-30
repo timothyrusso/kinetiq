@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { haptics } from '@/features/core/haptics';
-import { type TKey, type TVars, useT } from '@/features/core/translations';
-import { useRestAlert } from '@/features/notifications';
+import { useT } from '@/features/core/translations';
+import { type RestNextUp, useRestAlert } from '@/features/notifications';
 import { useSettings } from '@/features/settings';
 import type { StrengthEntry } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 import type { WorkoutSession } from '@/features/workouts/domain/schemas/WorkoutSessionSchema';
@@ -11,8 +11,6 @@ import { useSessionStore } from '@/features/workouts/state/sessionStore';
 
 /** Below this a rest cannot be held (the timer floors at five seconds), so it is cleared instead. */
 const MIN_REST_SECONDS = 5;
-
-type Translate = (key: TKey, vars?: TVars) => string;
 
 /**
  * The exercise the rest follows: the one whose set was ticked, or the current one for a rest
@@ -26,17 +24,17 @@ function restIndex(session: WorkoutSession, entryIndex: number | null): number {
 const hasOpenSet = (entry: StrengthEntry) => entry.sets.some(set => !set.completed);
 
 /**
- * The alert's body: what comes after this rest. The sets still open in the rest's exercise, else
- * the next exercise with a set open (below it, then from the top, since a set can be ticked
- * anywhere in the list), else nothing, which says the workout is done.
+ * What comes after this rest: the first open set of the rest's exercise, else the next exercise
+ * with a set open (below it, then from the top, since a set can be ticked anywhere in the list),
+ * else nothing, which says the workout is done.
  */
-function nextUpLabel(session: WorkoutSession, index: number, t: Translate): string {
+function nextUp(session: WorkoutSession, index: number): RestNextUp {
   const entry = session.entries[index];
-  if (!entry) return '';
-  const open = entry.sets.filter(set => !set.completed).length;
-  if (open > 0) return t('session.moreSetsOf', { count: open, name: entry.exerciseName });
+  if (!entry) return { kind: 'none' };
+  const open = entry.sets.findIndex(set => !set.completed);
+  if (open >= 0) return { kind: 'set', set: open + 1, total: entry.sets.length };
   const next = session.entries.slice(index + 1).find(hasOpenSet) ?? session.entries.slice(0, index).find(hasOpenSet);
-  return next?.exerciseName ?? '';
+  return next === undefined ? { kind: 'none' } : { kind: 'exercise', name: next.exerciseName };
 }
 
 /**
@@ -87,7 +85,7 @@ export function useRestTimer(session: WorkoutSession | null) {
       if (live === null) return;
       const index = restIndex(live, restEntryIndex);
       const name = live.entries[index]?.exerciseName ?? t('session.thisSet');
-      void arm({ exerciseName: name, nextLabel: nextUpLabel(live, index, t), delaySeconds: seconds }).then(id => {
+      void arm({ exerciseName: name, next: nextUp(live, index), delaySeconds: seconds }).then(id => {
         // NOTE: a re-arm can overtake a slower earlier one; cancel what that one scheduled rather
         // than drop its identifier, or a rest the user skipped would still buzz.
         if (alertId.current !== null) cancel(alertId.current);

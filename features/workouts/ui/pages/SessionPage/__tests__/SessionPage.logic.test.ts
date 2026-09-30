@@ -102,10 +102,7 @@ describe('useSessionPageLogic', () => {
     await waitFor(() => expect(scheduled.size).toBe(1));
     expect(result.current.derived.blocks.map(block => block.isCurrent)).toEqual([true, false]);
     expect([...scheduled.values()][0]?.content.body).toBe(
-      tr('push.restNext', {
-        name: 'Overhead Press',
-        next: tr('session.moreSetsOf', { count: 2, name: 'Overhead Press' }),
-      }),
+      tr('push.restNextSet', { name: 'Overhead Press', set: 2, total: 3 }),
     );
     await done();
   });

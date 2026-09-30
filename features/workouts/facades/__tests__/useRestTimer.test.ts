@@ -73,19 +73,14 @@ describe('useRestTimer', () => {
     const bodyOf = (scheduled: ReadonlyMap<string, { content: { body: string } }>) =>
       [...scheduled.values()][0]?.content.body;
 
-    it('names the ticked exercise and its sets still open', async () => {
+    it('names the next open set of the ticked exercise without calling it done', async () => {
       sessionLifecycle.restore(aSession({ entries: [anEntry(), anotherEntry(), squat] }));
       const { result, scheduled, done } = await renderTimer();
 
       await act(async () => result.current.timer.start(60, 1));
 
       await waitFor(() => expect(scheduled.size).toBe(1));
-      expect(bodyOf(scheduled)).toBe(
-        tr('push.restNext', {
-          name: 'Overhead Press',
-          next: tr('session.moreSetsOf', { count: 3, name: 'Overhead Press' }),
-        }),
-      );
+      expect(bodyOf(scheduled)).toBe(tr('push.restNextSet', { name: 'Overhead Press', set: 1, total: 3 }));
       await done();
     });
 
@@ -100,9 +95,7 @@ describe('useRestTimer', () => {
 
       await waitFor(() => expect([...scheduled.keys()]).not.toContain(first));
       expect(scheduled.size).toBe(1);
-      expect(bodyOf(scheduled)).toBe(
-        tr('push.restNext', { name: 'Squat', next: tr('session.moreSetsOf', { count: 2, name: 'Squat' }) }),
-      );
+      expect(bodyOf(scheduled)).toBe(tr('push.restNextSet', { name: 'Squat', set: 1, total: 2 }));
       await done();
     });
 
@@ -142,9 +135,7 @@ describe('useRestTimer', () => {
       await act(async () => updateSettings({ notificationsGranted: true, notificationsEnabled: true }));
 
       await waitFor(() => expect(scheduled.size).toBe(1));
-      expect(bodyOf(scheduled)).toBe(
-        tr('push.restNext', { name: 'Squat', next: tr('session.moreSetsOf', { count: 2, name: 'Squat' }) }),
-      );
+      expect(bodyOf(scheduled)).toBe(tr('push.restNextSet', { name: 'Squat', set: 1, total: 2 }));
       await done();
     });
   });

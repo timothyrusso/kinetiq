@@ -8,6 +8,8 @@ import type { FeatureTier } from '@timothyrusso/arch-rules';
 export const FEATURE_TIER: FeatureTier = 2;
 
 export { NotificationsLive } from '@/features/notifications/di/layer';
+/** What follows a rest, which its alert words. */
+export type { RestNextUp } from '@/features/notifications/domain/entities/RestNextUp';
 /** The device cannot say, or says no: what reading the permission fails with. */
 export { NotificationPermissionDenied } from '@/features/notifications/domain/errors/NotificationErrors';
 /** The device's notifications, for the launch: the foreground handler and the permission read. */

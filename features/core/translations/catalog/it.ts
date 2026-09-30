@@ -375,8 +375,6 @@ export const it: Copy = {
     noLoadRecorded: "L'ultima volta, nessun carico registrato",
     bodyweight: 'corpo libero',
     lastTime: "L'ultima volta {load}",
-    moreSetsOf_one: '{count} serie ancora di {name}',
-    moreSetsOf_other: '{count} serie ancora di {name}',
   },
   profileScreen: {
     editProfileHint: 'Apre nome, altezza e anno di nascita',
@@ -689,6 +687,7 @@ export const it: Copy = {
     channel: 'Allenamento',
     restComplete: 'Recupero finito',
     restNext: '{name} è fatto. Prossimo: {next}.',
+    restNextSet: 'Prossimo: {name}, serie {set} di {total}.',
     restLast: '{name} è fatto: qui hai finito.',
     testTitle: 'Le notifiche funzionano',
     testBody: 'È lo stesso canale che usano gli avvisi del timer di recupero.',
