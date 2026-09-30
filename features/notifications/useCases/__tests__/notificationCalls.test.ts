@@ -65,7 +65,10 @@ describe('askNotificationPermissionOnce', () => {
   itEffect(
     'asks while the system can still show its prompt',
     Effect.gen(function* () {
-      expect(yield* askNotificationPermissionOnce).toEqual({ granted: true, canAsk: false });
+      expect(yield* askNotificationPermissionOnce).toEqual({
+        permission: { granted: true, canAsk: false },
+        requested: true,
+      });
       expect(undetermined.calls).toEqual(['requestPermission']);
     }),
     undetermined.layer,
@@ -75,7 +78,10 @@ describe('askNotificationPermissionOnce', () => {
   itEffect(
     'asks nothing when the permission is granted',
     Effect.gen(function* () {
-      expect(yield* askNotificationPermissionOnce).toEqual({ granted: true, canAsk: false });
+      expect(yield* askNotificationPermissionOnce).toEqual({
+        permission: { granted: true, canAsk: false },
+        requested: false,
+      });
       expect(granted.calls).toEqual([]);
     }),
     granted.layer,
@@ -85,7 +91,10 @@ describe('askNotificationPermissionOnce', () => {
   itEffect(
     'asks nothing when the system has refused for good',
     Effect.gen(function* () {
-      expect(yield* askNotificationPermissionOnce).toEqual({ granted: false, canAsk: false });
+      expect(yield* askNotificationPermissionOnce).toEqual({
+        permission: { granted: false, canAsk: false },
+        requested: false,
+      });
       expect(refused.calls).toEqual([]);
     }),
     refused.layer,

@@ -59,21 +59,26 @@ export function useNotificationPermission() {
  * its prompt and the app's own switch is on: a workout start is when a rest alert is about to be
  * needed, and a user who switched alerts off in the app has already answered. The answer lands
  * in the settings store at once, so a rest already running arms its alert without a relaunch.
+ *
+ * Once the prompt has been shown, `notificationsAsked` is stored and no later start asks again,
+ * across relaunches: Android 13+ would show it a second time after a refusal.
  */
 export function useAskNotificationPermissionOnce(when: boolean) {
   const queryClient = useQueryClient();
   const enabled = useSettings(settings => settings.notificationsEnabled);
-  const asked = useRef(false);
+  const alreadyAsked = useSettings(settings => settings.notificationsAsked);
+  const checked = useRef(false);
   const { mutate } = useEffectMutation({
     mutationFn: () => askNotificationPermissionOnce,
-    onSuccess: answer => {
-      queryClient.setQueryData(PERMISSION_KEY, answer);
-      mirrorGranted(answer.granted);
+    onSuccess: ({ permission, requested }) => {
+      queryClient.setQueryData(PERMISSION_KEY, permission);
+      mirrorGranted(permission.granted);
+      if (requested) updateSettings({ notificationsAsked: true });
     },
   });
   useEffect(() => {
-    if (!when || !enabled || asked.current) return;
-    asked.current = true;
+    if (!when || !enabled || alreadyAsked || checked.current) return;
+    checked.current = true;
     mutate();
-  }, [enabled, mutate, when]);
+  }, [alreadyAsked, enabled, mutate, when]);
 }

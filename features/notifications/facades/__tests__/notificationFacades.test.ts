@@ -87,6 +87,43 @@ describe('useAskNotificationPermissionOnce', () => {
     await done();
   });
 
+  it('remembers the ask, so a later start asks nothing even when Android could ask again', async () => {
+    device.permission = false;
+    device.canAsk = true;
+    device.answer = false;
+    const first = await renderAsk(true);
+    await waitFor(() => expect(getSettings().notificationsAsked).toBe(true));
+    await first.done();
+    // NOTE: Android 13+ still offers a second prompt after the first refusal.
+    device.canAsk = true;
+
+    const second = await renderAsk(true);
+    await act(async () => undefined);
+
+    expect(device.requests).toBe(1);
+    await second.done();
+  });
+
+  it('asks nothing after a relaunch whose stored settings say it already asked', async () => {
+    device.permission = false;
+    device.canAsk = true;
+    updateSettings({ notificationsAsked: true });
+    const { done } = await renderAsk(true);
+
+    await act(async () => undefined);
+
+    expect(device.requests).toBe(0);
+    await done();
+  });
+
+  it('does not remember an ask that never showed the prompt', async () => {
+    const { done } = await renderAsk(true);
+
+    await waitFor(() => expect(getSettings().notificationsGranted).toBe(true));
+    expect(getSettings().notificationsAsked).toBe(false);
+    await done();
+  });
+
   it('waits for the start before it asks', async () => {
     device.permission = false;
     device.canAsk = true;
@@ -157,6 +194,16 @@ describe('useRestAlertsOff', () => {
     await act(async () => result.current.openSystemSettings());
 
     await waitFor(() => expect(device.settingsOpened).toBe(1));
+    await done();
+  });
+
+  it('treats a refusal after the start asked as off, though Android could ask again', async () => {
+    device.permission = false;
+    device.canAsk = true;
+    updateSettings({ notificationsAsked: true });
+    const { result, done } = await render(useRestAlertsOff);
+
+    await waitFor(() => expect(result.current.reason).toBe('permission'));
     await done();
   });
 

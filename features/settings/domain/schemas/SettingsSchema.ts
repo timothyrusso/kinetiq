@@ -115,6 +115,9 @@ export const SettingsSchema = Schema.compose(
     notificationsEnabled: field(Schema.Boolean, true),
     // NOTE: the operating system's answer, not a preference: read from the device, never stored.
     notificationsGranted: field(Schema.Boolean, false),
+    // NOTE: the app has shown the system prompt once at a workout start. Stored, because Android 13+
+    // would show it a second time after a refusal, and the start asks only once.
+    notificationsAsked: field(Schema.Boolean, false),
     defaultRestSeconds: clampedInt(15, 600, 90),
     autoStartRest: field(Schema.Boolean, true),
     weeklyGoalWorkouts: clampedInt(1, 14, 4),

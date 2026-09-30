@@ -16,6 +16,7 @@ describe('normaliseSettings', () => {
       keepScreenAwake: true,
       notificationsEnabled: true,
       notificationsGranted: false,
+      notificationsAsked: false,
       defaultRestSeconds: 90,
       autoStartRest: true,
       weeklyGoalWorkouts: 4,
