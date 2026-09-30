@@ -1,5 +1,6 @@
 import { isSessionInProgress, resetAllStores } from '@/features/core/state';
 import { anEntry, aSession } from '@/features/workouts/__fixtures__/builders';
+import { ActivityId } from '@/features/workouts/domain/schemas/ActivityId';
 import { useSessionStore } from '@/features/workouts/state/sessionStore';
 
 const NOW = 2_000_000_000_000;
@@ -198,6 +199,27 @@ describe('the session store ending a workout', () => {
     store().ended(aSession().id);
 
     expect(store()).toMatchObject({ session: null, persistFailed: false, clockRunning: false });
+  });
+
+  it('starts the next workout without the away notice of the one before', () => {
+    store().appStateChanged('background', NOW);
+    store().appStateChanged('active', NOW + 180_000);
+    const away = store().awayNoticeSeconds;
+
+    store().ended(aSession().id);
+    const afterEnd = store().awayNoticeSeconds;
+    store().start(aSession({ id: ActivityId.make('session-next') }), NOW + 200_000);
+
+    expect([away, afterEnd, store().awayNoticeSeconds]).toEqual([180, 0, 0]);
+  });
+
+  it('clears the away notice when a workout starts over one that never ended', () => {
+    store().appStateChanged('background', NOW);
+    store().appStateChanged('active', NOW + 180_000);
+
+    store().start(aSession({ id: ActivityId.make('session-next') }), NOW + 200_000);
+
+    expect(store().awayNoticeSeconds).toBe(0);
   });
 
   it('keeps the session when another one ended', () => {
