@@ -7,8 +7,9 @@ import WatchKit
 /// Baseline: a local notification scheduled just after the rest's absolute end, which watchOS
 /// delivers with a haptic whether the app is running or not. On top of it, a
 /// `WKExtendedRuntimeSession` (physical therapy, background mode only, no HealthKit, one hour at
-/// most) keeps the app running with the wrist down, and a timer in the app plays `.stop` at the
-/// end itself (issue #132). Either can fail or be refused; neither is needed for correctness,
+/// most) keeps the app running with the wrist down, and a timer in the app plays the rest-end
+/// alarm at the end itself (issue #132): `.notification` three times, 0.7 s apart, stopped by the
+/// first interaction (issue #135). Either can fail or be refused; neither is needed for correctness,
 /// because the timer is an absolute deadline on disk.
 ///
 /// Exactly one buzz per rest: the notification is due `notificationDelay` after the end, so a
@@ -32,6 +33,9 @@ final class RestAlerts: NSObject, UNUserNotificationCenterDelegate, WKExtendedRu
     /// The rest end whose haptic has played, so no path plays it a second time.
     private var signalledEnd: Date?
     private var timer: Task<Void, Never>?
+    private let alarm = RepeatingSignal(count: 3, interval: .milliseconds(700)) {
+        WKInterfaceDevice.current().play(.notification)
+    }
 
     /// Called when the timer reaches the rest's end, to end the rest (`WorkoutSession.restEnded`).
     var onRestDeadline: (() -> Void)?
@@ -53,6 +57,7 @@ final class RestAlerts: NSObject, UNUserNotificationCenterDelegate, WKExtendedRu
     }
 
     func workoutEnded() {
+        alarm.cancel()
         cancelSchedule()
         withdrawNotification()
         runtime?.invalidate()
@@ -69,14 +74,20 @@ final class RestAlerts: NSObject, UNUserNotificationCenterDelegate, WKExtendedRu
         WKInterfaceDevice.current().play(.start)
     }
 
-    /// The rest that ends at `end` is over, found by the timer or by the rest view. Plays `.stop`
-    /// unless the notification has buzzed or will buzz instead.
+    /// Any change the user makes (a set, a new or adjusted rest, a page) or leaving the workout:
+    /// the rest-end alarm has been noticed, so its remaining repeats stop.
+    func interacted() {
+        alarm.cancel()
+    }
+
+    /// The rest that ends at `end` is over, found by the timer or by the rest view. Plays the
+    /// alarm unless the notification has buzzed or will buzz instead.
     func restEnded(_ end: Date) {
         guard signalledEnd != end else { return }
         guard Date() < end.addingTimeInterval(Self.notificationDelay - Self.withdrawalMargin) else { return }
         signalledEnd = end
         withdrawNotification()
-        WKInterfaceDevice.current().play(.stop)
+        alarm.start()
     }
 
     /// Schedules the notification and the timer for the current rest, or withdraws them when none
@@ -129,8 +140,9 @@ final class RestAlerts: NSObject, UNUserNotificationCenterDelegate, WKExtendedRu
         } else if signalledEnd != nil {
             return
         }
-        WKInterfaceDevice.current().play(.stop)
+        // NOTE: the rest is cleared first, because clearing it counts as an interaction.
         onRestDeadline?()
+        alarm.start()
     }
 
     // MARK: Extended runtime

@@ -58,6 +58,7 @@ final class WorkoutSession: ObservableObject {
     }
 
     func minimize() {
+        alerts.interacted()
         isShowing = false
     }
 
@@ -72,6 +73,7 @@ final class WorkoutSession: ObservableObject {
         guard let current = workout, next != current else { return }
         store.save(next)
         workout = next
+        alerts.interacted()
         alerts.restChanged(next)
         // Complete set and a ticked checkbox both land here.
         if next.completedSets > current.completedSets { alerts.setCompleted() }
@@ -83,13 +85,14 @@ final class WorkoutSession: ObservableObject {
     }
 
     /// The rest reached zero, seen by the rest view on screen or by the rest timer with the wrist
-    /// down. `RestAlerts` plays the haptic unless the notification has it.
+    /// down. `RestAlerts` plays the alarm unless the notification has it, after the rest is
+    /// cleared, since clearing it goes through `update` and would stop the alarm.
     func restEnded() {
         guard let current = workout, let end = current.restEndsAt, current.restRemaining(now: Date()) == 0 else {
             return
         }
-        alerts.restEnded(end)
         update { $0.clearRest() }
+        alerts.restEnded(end)
     }
 
     /// Writes the finished workout to the outbox first; the workout file is removed only once
