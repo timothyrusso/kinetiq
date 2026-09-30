@@ -64,6 +64,10 @@ export function FormSheet({
     <>
       {scroll ? (
         <ScrollView
+          // NOTE: Android's sheet (Material's BottomSheetBehavior) only yields a drag to a child
+          // with nested scrolling on; without it every downward drag moved the sheet, so the list
+          // could not scroll back up. At the top of the list a drag still moves the sheet.
+          nestedScrollEnabled
           style={{ backgroundColor: theme.colors.background }}
           keyboardShouldPersistTaps="handled"
           contentInsetAdjustmentBehavior="automatic"
