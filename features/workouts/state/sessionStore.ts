@@ -32,7 +32,10 @@ interface SessionStoreState {
   readonly persistFailed: boolean;
   /** Counts the clock's ticks, so a screen showing the elapsed time re-renders each second. */
   readonly tick: number;
-  /** How long the app was just away, counted into the session on return. */
+  /**
+   * How long the app was just away, counted into the session on return. It belongs to that
+   * session: cleared when the session ends and when the next one starts.
+   */
   readonly awayNoticeSeconds: number;
   /** The session clock is counting. */
   readonly clockRunning: boolean;
@@ -133,6 +136,7 @@ const sessionStore = createStore<SessionStoreState>((set, get) => {
         hydrated: true,
         persistFailed: false,
         finishing: false,
+        awayNoticeSeconds: 0,
         ...clockOn(state, now),
       })),
 
@@ -224,7 +228,11 @@ const sessionStore = createStore<SessionStoreState>((set, get) => {
     finishFailed: () => set({ finishing: false }),
 
     ended: id =>
-      set(state => (state.session?.id === id ? { session: null, persistFailed: false, clockRunning: false } : {})),
+      set(state =>
+        state.session?.id === id
+          ? { session: null, persistFailed: false, clockRunning: false, awayNoticeSeconds: 0 }
+          : {},
+      ),
 
     markPersistFailed: () => set({ persistFailed: true }),
   };
