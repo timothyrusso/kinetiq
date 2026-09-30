@@ -9,3 +9,16 @@ export const requestNotificationPermission = Effect.flatMap(
   Notifications,
   notifications => notifications.requestPermission,
 );
+
+/**
+ * Asks only while the system can still show its prompt, and otherwise answers with the
+ * permission as it stands: a start that finds it granted or refused asks nothing.
+ */
+export const askNotificationPermissionOnce = Effect.gen(function* () {
+  const notifications = yield* Notifications;
+  const now = yield* notifications.permission;
+  return now.canAsk ? yield* notifications.requestPermission : now;
+});
+
+/** Opens the app's page in the system settings, where a refused permission is turned back on. */
+export const openNotificationSettings = Effect.flatMap(Notifications, notifications => notifications.openSettings);

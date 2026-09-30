@@ -64,8 +64,9 @@ function testLayer(
       permission:
         options.granted === 'unreadable'
           ? Effect.fail(new NotificationPermissionDenied())
-          : Effect.succeed({ granted: options.granted ?? false }),
+          : Effect.succeed({ granted: options.granted ?? false, canAsk: false }),
       requestPermission: unused(),
+      openSettings: unused(),
       schedule: unused,
       cancel: unused,
       cancelAll: unused(),

@@ -5,13 +5,15 @@ import {
   cancelScheduledNotificationAsync,
   getPermissionsAsync,
   type NotificationTriggerInput,
+  PermissionStatus,
   requestPermissionsAsync,
   SchedulableTriggerInputTypes,
   scheduleNotificationAsync,
   setNotificationChannelAsync,
   setNotificationHandler,
 } from 'expo-notifications';
-import { Platform } from 'react-native';
+import { Linking, Platform } from 'react-native';
+import { toAppError } from '@/features/core/error';
 import { tr } from '@/features/core/translations';
 import type { NotificationTrigger } from '@/features/notifications/domain/entities/NotificationRequest';
 import {
@@ -74,12 +76,16 @@ export const NotificationsDeviceLive = Layer.sync(Notifications, () => {
   // the permissions to ask for, and iOS would never show the prompt.
   const readPermission = (read: typeof getPermissionsAsync) =>
     Effect.tryPromise({ try: () => read(), catch: cause => new NotificationPermissionDenied({ cause }) }).pipe(
-      Effect.map(status => ({ granted: status.granted })),
+      Effect.map(status => ({
+        granted: status.granted,
+        canAsk: status.status === PermissionStatus.UNDETERMINED && status.canAskAgain,
+      })),
     );
 
   return {
     permission: readPermission(getPermissionsAsync),
     requestPermission: readPermission(requestPermissionsAsync),
+    openSettings: Effect.tryPromise({ try: () => Linking.openSettings(), catch: cause => toAppError(cause) }),
     schedule: request =>
       Effect.zipRight(
         ensureChannel,

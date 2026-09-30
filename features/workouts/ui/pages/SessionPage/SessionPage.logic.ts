@@ -14,6 +14,7 @@ import {
   formatWeight,
   type UnitSystem,
 } from '@/features/core/utils';
+import { useAskNotificationPermissionOnce, useRestAlertsOff } from '@/features/notifications';
 import { useSettings } from '@/features/settings';
 import type { PreviousLift } from '@/features/workouts/domain/entities/PreviousLift';
 import type { StrengthEntry } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
@@ -23,6 +24,7 @@ import { useKeepScreenAwake } from '@/features/workouts/facades/useKeepScreenAwa
 import { usePreviousPerformance } from '@/features/workouts/facades/usePreviousPerformance';
 import { useRestTimer } from '@/features/workouts/facades/useRestTimer';
 import { useSessionProgress } from '@/features/workouts/hooks/useSessionProgress';
+import type { RestAlertsNotice } from '@/features/workouts/ui/components/RestDock/RestDock.logic';
 
 /** A background stint longer than this is worth saying out loud. */
 const AWAY_NOTICE_SECONDS = 30;
@@ -118,6 +120,25 @@ export function useSessionPageLogic() {
   // NOTE: "keep screen on" holds while this screen is open, so the rest timer is still there when
   // the phone is picked up between sets; released on leave.
   useKeepScreenAwake(keepScreenAwake && session !== null);
+
+  // NOTE: this screen is where every workout lands (from a routine, empty, or resumed), so it is
+  // where the rest alert's permission is asked for, once, while the system can still ask.
+  useAskNotificationPermissionOnce(session !== null);
+  const { reason: alertsOffReason, openSystemSettings } = useRestAlertsOff();
+  const restAlertsOff = useMemo<RestAlertsNotice | null>(() => {
+    if (alertsOffReason === null) return null;
+    const label = t('setRow.restAlertsOff');
+    return {
+      meta: [{ id: 'alertsOff', icon: 'bellOff', label }],
+      action: t(alertsOffReason === 'switch' ? 'setRow.restAlertsTurnOn' : 'setRow.restAlertsSettings'),
+      hint: t(alertsOffReason === 'switch' ? 'setRow.restAlertsTurnOnHint' : 'setRow.restAlertsSettingsHint'),
+    };
+  }, [alertsOffReason, t]);
+  // NOTE: the app's own switch lives in Profile > Notifications; a refusal only the system can undo.
+  const fixRestAlerts = useCallback(() => {
+    if (alertsOffReason === 'switch') router.push(routes.settingsNotifications());
+    else openSystemSettings();
+  }, [alertsOffReason, openSystemSettings]);
 
   useEffect(() => {
     if (awayNoticeSeconds > 0) hapticsApi.warning();
@@ -286,6 +307,7 @@ export function useSessionPageLogic() {
       progress,
       barMeta,
       restShown,
+      restAlertsOff,
       dockBottom,
       showAwayNotice: awayNoticeSeconds > AWAY_NOTICE_SECONDS,
       awayNotice: t('session.awayNotice', { time: formatDurationCompact(awayNoticeSeconds) }),
@@ -319,6 +341,7 @@ export function useSessionPageLogic() {
       dockHeight: setDockHeight,
       skipRest: rest.skip,
       adjustRest: rest.adjust,
+      fixRestAlerts,
     },
   };
 }

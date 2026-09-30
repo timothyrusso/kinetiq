@@ -124,4 +124,26 @@ describe('useRestTimer', () => {
     await waitFor(() => expect(scheduled.size).toBe(0));
     await done();
   });
+
+  it('arms the rest already running when alerts turn on mid-rest, for the time it has left', async () => {
+    jest.useFakeTimers({ now: NOW });
+    sessionLifecycle.restore(aSession({ restEndsAt: NOW + 40_000, restDurationSeconds: 90 }));
+    const { scheduled, done } = await renderTimer(false);
+    expect(scheduled.size).toBe(0);
+
+    await act(async () => updateSettings({ notificationsGranted: true, notificationsEnabled: true }));
+
+    await waitFor(() => expect(scheduled.size).toBe(1));
+    expect([...scheduled.values()][0]?.trigger).toEqual({ kind: 'afterSeconds', seconds: 40 });
+    await done();
+  });
+
+  it('arms nothing when alerts turn on with no rest running', async () => {
+    const { scheduled, done } = await renderTimer(false);
+
+    await act(async () => updateSettings({ notificationsGranted: true, notificationsEnabled: true }));
+
+    expect(scheduled.size).toBe(0);
+    await done();
+  });
 });

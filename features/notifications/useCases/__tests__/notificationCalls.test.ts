@@ -5,6 +5,8 @@ import { cancelNotification } from '@/features/notifications/useCases/cancelNoti
 import { clearScheduledNotifications } from '@/features/notifications/useCases/clearScheduledNotifications';
 import { installNotificationHandler } from '@/features/notifications/useCases/installNotificationHandler';
 import {
+  askNotificationPermissionOnce,
+  openNotificationSettings,
   readNotificationPermission,
   requestNotificationPermission,
 } from '@/features/notifications/useCases/readNotificationPermission';
@@ -51,8 +53,52 @@ describe('the permission', () => {
   itEffect(
     'is read from the device and requested from the system',
     Effect.gen(function* () {
-      expect(yield* readNotificationPermission).toEqual({ granted: false });
-      expect(yield* requestNotificationPermission).toEqual({ granted: true });
+      expect(yield* readNotificationPermission).toEqual({ granted: false, canAsk: false });
+      expect(yield* requestNotificationPermission).toEqual({ granted: true, canAsk: false });
+    }),
+    fake.layer,
+  );
+});
+
+describe('askNotificationPermissionOnce', () => {
+  const undetermined = makeNotificationsFake({ permission: false, canAsk: true, requestAnswer: true });
+  itEffect(
+    'asks while the system can still show its prompt',
+    Effect.gen(function* () {
+      expect(yield* askNotificationPermissionOnce).toEqual({ granted: true, canAsk: false });
+      expect(undetermined.calls).toEqual(['requestPermission']);
+    }),
+    undetermined.layer,
+  );
+
+  const granted = makeNotificationsFake({ permission: true });
+  itEffect(
+    'asks nothing when the permission is granted',
+    Effect.gen(function* () {
+      expect(yield* askNotificationPermissionOnce).toEqual({ granted: true, canAsk: false });
+      expect(granted.calls).toEqual([]);
+    }),
+    granted.layer,
+  );
+
+  const refused = makeNotificationsFake({ permission: false, canAsk: false });
+  itEffect(
+    'asks nothing when the system has refused for good',
+    Effect.gen(function* () {
+      expect(yield* askNotificationPermissionOnce).toEqual({ granted: false, canAsk: false });
+      expect(refused.calls).toEqual([]);
+    }),
+    refused.layer,
+  );
+});
+
+describe('openNotificationSettings', () => {
+  const fake = makeNotificationsFake();
+  itEffect(
+    "opens the app's page in the system settings",
+    Effect.gen(function* () {
+      yield* openNotificationSettings;
+      expect(fake.calls).toEqual(['openSettings']);
     }),
     fake.layer,
   );
