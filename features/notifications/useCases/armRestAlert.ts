@@ -3,7 +3,6 @@ import { tr } from '@/features/core/translations';
 import type { RestNextUp } from '@/features/notifications/domain/entities/RestNextUp';
 import { postNotification } from '@/features/notifications/useCases/postNotification';
 
-/**
 /** An exercise with sets left is not done, so only its next set is named. */
 function restBody(exerciseName: string, next: RestNextUp): string {
   switch (next.kind) {
