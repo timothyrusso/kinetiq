@@ -3,6 +3,7 @@ import { haptics } from '@/features/core/haptics';
 import { type TKey, type TVars, useT } from '@/features/core/translations';
 import { useRestAlert } from '@/features/notifications';
 import { useSettings } from '@/features/settings';
+import type { StrengthEntry } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 import type { WorkoutSession } from '@/features/workouts/domain/schemas/WorkoutSessionSchema';
 import { restRemaining } from '@/features/workouts/domain/utils/workoutMath';
 import { sessionActions } from '@/features/workouts/facades/useActiveSession';
@@ -13,28 +14,41 @@ const MIN_REST_SECONDS = 5;
 
 type Translate = (key: TKey, vars?: TVars) => string;
 
-/** The current exercise, clamped: a restored session can point past the end of its list. */
-function currentIndex(session: WorkoutSession): number {
+/**
+ * The exercise the rest follows: the one whose set was ticked, or the current one for a rest
+ * that does not know (restored from disk), clamped: a restored session can point past its end.
+ */
+function restIndex(session: WorkoutSession, entryIndex: number | null): number {
+  if (entryIndex !== null && entryIndex < session.entries.length) return entryIndex;
   return Math.min(session.activeIndex, Math.max(0, session.entries.length - 1));
 }
 
-/** The alert's body: what comes after this set, if anything. */
-function nextUpLabel(session: WorkoutSession, activeIndex: number, t: Translate): string {
-  const entry = session.entries[activeIndex];
+const hasOpenSet = (entry: StrengthEntry) => entry.sets.some(set => !set.completed);
+
+/**
+ * The alert's body: what comes after this rest. The sets still open in the rest's exercise, else
+ * the next exercise with a set open (below it, then from the top, since a set can be ticked
+ * anywhere in the list), else nothing, which says the workout is done.
+ */
+function nextUpLabel(session: WorkoutSession, index: number, t: Translate): string {
+  const entry = session.entries[index];
   if (!entry) return '';
-  const open = entry.sets.filter(set => !set.completed);
-  if (open.length > 1) return t('session.moreSetsOf', { count: open.length - 1, name: entry.exerciseName });
-  return session.entries.slice(activeIndex + 1).find(next => next.sets.length > 0)?.exerciseName ?? '';
+  const open = entry.sets.filter(set => !set.completed).length;
+  if (open > 0) return t('session.moreSetsOf', { count: open, name: entry.exerciseName });
+  const next = session.entries.slice(index + 1).find(hasOpenSet) ?? session.entries.slice(0, index).find(hasOpenSet);
+  return next?.exerciseName ?? '';
 }
 
 /**
  * The rest between sets: the countdown read from the deadline, its haptics, and the alert that
  * fires at its end while the phone is in a pocket.
  *
- * The alert is armed when a rest starts and retracted only by what ends that rest early: an
- * unticked set, a skip, an adjusted or re-armed rest, a finish or a discard. Leaving the screen
- * mid-rest is exactly what it exists for, so an unmount does not retract it. Every handler is
- * stable and reads the session at call time, because the screen re-renders every second.
+ * The alert names the exercise whose set started the rest, which the session keeps beside the
+ * deadline, so an adjustment or a late grant names it too. It is armed when a rest starts and
+ * retracted only by what ends that rest early: an unticked set, a skip, an adjusted or re-armed
+ * rest, a finish or a discard. Leaving the screen mid-rest is exactly what it exists for, so an
+ * unmount does not retract it. Every handler is stable and reads the session at call time,
+ * because the screen re-renders every second.
  */
 export function useRestTimer(session: WorkoutSession | null) {
   const { t } = useT();
@@ -69,9 +83,9 @@ export function useRestTimer(session: WorkoutSession | null) {
 
   const armFor = useCallback(
     (seconds: number) => {
-      const live = useSessionStore.getState().session;
+      const { session: live, restEntryIndex } = useSessionStore.getState();
       if (live === null) return;
-      const index = currentIndex(live);
+      const index = restIndex(live, restEntryIndex);
       const name = live.entries[index]?.exerciseName ?? t('session.thisSet');
       void arm({ exerciseName: name, nextLabel: nextUpLabel(live, index, t), delaySeconds: seconds }).then(id => {
         // NOTE: a re-arm can overtake a slower earlier one; cancel what that one scheduled rather
@@ -84,8 +98,8 @@ export function useRestTimer(session: WorkoutSession | null) {
   );
 
   const start = useCallback(
-    (seconds: number) => {
-      sessionActions.setRest(seconds);
+    (seconds: number, entryIndex: number | null) => {
+      sessionActions.setRest(seconds, entryIndex);
       if (notificationsOn) armFor(seconds);
     },
     [armFor, notificationsOn],
@@ -117,7 +131,7 @@ export function useRestTimer(session: WorkoutSession | null) {
     (seconds: number) => {
       retract();
       if (seconds < MIN_REST_SECONDS) sessionActions.clearRest();
-      else start(seconds);
+      else start(seconds, useSessionStore.getState().restEntryIndex);
       haptics.selection();
     },
     [retract, start],

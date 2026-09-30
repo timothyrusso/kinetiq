@@ -44,6 +44,12 @@ interface SessionStoreState {
    * hears here that it is on its way out. Cleared by a failed finish and by the next workout.
    */
   readonly finishing: boolean;
+  /**
+   * The exercise the running rest follows: the one whose set was ticked, which need not be the
+   * current one. `null` when no rest runs, or for one restored from disk: only the alert reads it,
+   * and a restored rest's alert was armed before the launch.
+   */
+  readonly restEntryIndex: number | null;
   /** When the clock last banked time, unix ms. */
   readonly lastTickAt: number;
   /** Counts the writes the session needs; the persistence writes `pendingWrite` when it moves. */
@@ -54,7 +60,7 @@ interface SessionStoreState {
   readonly start: (session: WorkoutSession, now: number) => void;
   readonly pause: (now: number) => void;
   readonly resume: (now: number) => void;
-  readonly setRest: (seconds: number | null, now: number) => void;
+  readonly setRest: (seconds: number | null, entryIndex: number | null, now: number) => void;
   readonly clearRest: (now: number) => void;
   readonly focus: (entryIndex: number, now: number) => void;
   /** Returns the rest to start: the entry's, when the set was just completed, else `null`. */
@@ -117,6 +123,7 @@ const sessionStore = createStore<SessionStoreState>((set, get) => {
     awayNoticeSeconds: 0,
     clockRunning: false,
     finishing: false,
+    restEntryIndex: null,
     lastTickAt: 0,
     writes: 0,
     pendingWrite: null,
@@ -127,6 +134,7 @@ const sessionStore = createStore<SessionStoreState>((set, get) => {
         hydrated: true,
         persistFailed: false,
         finishing: false,
+        restEntryIndex: null,
         ...(session?.status === 'active' ? clockOn(state, now) : {}),
       })),
 
@@ -137,6 +145,7 @@ const sessionStore = createStore<SessionStoreState>((set, get) => {
         persistFailed: false,
         finishing: false,
         awayNoticeSeconds: 0,
+        restEntryIndex: null,
         ...clockOn(state, now),
       })),
 
@@ -152,13 +161,22 @@ const sessionStore = createStore<SessionStoreState>((set, get) => {
         return { ...saved(state, resumeSession(state.session, now)), ...clockOn(state, now) };
       }),
 
-    setRest: (seconds, now) => transition(session => startRest(session, seconds, now)),
+    setRest: (seconds, entryIndex, now) =>
+      set(state =>
+        state.session === null
+          ? {}
+          : {
+              ...applied(state, startRest(state.session, seconds, now)),
+              restEntryIndex: seconds === null ? null : entryIndex,
+            },
+      ),
 
     clearRest: now =>
       set(state => {
         if (state.session === null) return {};
         return {
           session: clearRest(state.session, now),
+          restEntryIndex: null,
           writes: state.writes + 1,
           pendingWrite: { kind: 'clearRest', sessionId: state.session.id },
         };
@@ -183,7 +201,18 @@ const sessionStore = createStore<SessionStoreState>((set, get) => {
 
     skipExercise: (entryIndex, now) => transition(session => skipExercise(session, entryIndex, now)),
 
-    removeExercise: (entryIndex, now) => transition(session => removeExercise(session, entryIndex, now)),
+    // NOTE: the rest keeps following its exercise as the list closes up, and follows none once
+    // that exercise is gone.
+    removeExercise: (entryIndex, now) =>
+      set(state => {
+        if (state.session === null) return {};
+        const next = removeExercise(state.session, entryIndex, now);
+        if (next === state.session) return {};
+        const resting = state.restEntryIndex;
+        const restEntryIndex =
+          resting === null || resting === entryIndex ? null : resting > entryIndex ? resting - 1 : resting;
+        return { ...saved(state, next), restEntryIndex };
+      }),
 
     addExercise: (entry, now) => transition(session => addExercise(session, entry, now)),
 
@@ -230,7 +259,7 @@ const sessionStore = createStore<SessionStoreState>((set, get) => {
     ended: id =>
       set(state =>
         state.session?.id === id
-          ? { session: null, persistFailed: false, clockRunning: false, awayNoticeSeconds: 0 }
+          ? { session: null, persistFailed: false, clockRunning: false, awayNoticeSeconds: 0, restEntryIndex: null }
           : {},
       ),
 

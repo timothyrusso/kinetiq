@@ -15,7 +15,8 @@ const store = () => useSessionStore.getState();
 export const sessionActions = {
   pause: () => store().pause(Date.now()),
   resume: () => store().resume(Date.now()),
-  setRest: (seconds: number | null) => store().setRest(seconds, Date.now()),
+  // NOTE: `entryIndex` is the exercise the rest follows, which its alert names.
+  setRest: (seconds: number | null, entryIndex: number | null) => store().setRest(seconds, entryIndex, Date.now()),
   clearRest: () => store().clearRest(Date.now()),
   focus: (entryIndex: number) => store().focus(entryIndex, Date.now()),
   // NOTE: returns the rest to start when the set was just completed, else `null`.

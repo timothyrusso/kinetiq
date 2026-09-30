@@ -32,13 +32,13 @@ describe('sessionActions', () => {
   });
 
   it('starts a rest of the given length', () => {
-    sessionActions.setRest(90);
+    sessionActions.setRest(90, 0);
 
     expect(live()?.restDurationSeconds).toBe(90);
   });
 
   it('clears a rest', () => {
-    sessionActions.setRest(90);
+    sessionActions.setRest(90, 0);
 
     sessionActions.clearRest();
 

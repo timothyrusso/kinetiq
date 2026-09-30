@@ -3,7 +3,7 @@ import { resetAllStores } from '@/features/core/state';
 import { renderWithLayer } from '@/features/core/testing';
 import { tr } from '@/features/core/translations';
 import { updateSettings } from '@/features/settings';
-import { aSession } from '@/features/workouts/__fixtures__/builders';
+import { anEntry, anOpenSet, anotherEntry, aSession } from '@/features/workouts/__fixtures__/builders';
 import { makeRestAlertTestLayer } from '@/features/workouts/di/__tests__/workoutsTestData';
 import { sessionLifecycle, useActiveSession } from '@/features/workouts/facades/useActiveSession';
 import { useRestTimer } from '@/features/workouts/facades/useRestTimer';
@@ -50,7 +50,7 @@ describe('useRestTimer', () => {
   it('starts a rest and arms an alert naming what comes next', async () => {
     const { result, scheduled, done } = await renderTimer();
 
-    await act(async () => result.current.timer.start(90));
+    await act(async () => result.current.timer.start(90, 0));
 
     expect(result.current.session?.restDurationSeconds).toBe(90);
     await waitFor(() => expect(scheduled.size).toBe(1));
@@ -64,10 +64,95 @@ describe('useRestTimer', () => {
     await done();
   });
 
+  describe('for a set ticked outside the current exercise', () => {
+    const squat = anEntry({
+      exerciseId: 'wger:111',
+      exerciseName: 'Squat',
+      sets: [anOpenSet(), anOpenSet({ index: 1 })],
+    });
+    const bodyOf = (scheduled: ReadonlyMap<string, { content: { body: string } }>) =>
+      [...scheduled.values()][0]?.content.body;
+
+    it('names the ticked exercise and its sets still open', async () => {
+      sessionLifecycle.restore(aSession({ entries: [anEntry(), anotherEntry(), squat] }));
+      const { result, scheduled, done } = await renderTimer();
+
+      await act(async () => result.current.timer.start(60, 1));
+
+      await waitFor(() => expect(scheduled.size).toBe(1));
+      expect(bodyOf(scheduled)).toBe(
+        tr('push.restNext', {
+          name: 'Overhead Press',
+          next: tr('session.moreSetsOf', { count: 3, name: 'Overhead Press' }),
+        }),
+      );
+      await done();
+    });
+
+    it('keeps naming the ticked exercise after an adjustment', async () => {
+      sessionLifecycle.restore(aSession({ entries: [anEntry(), anotherEntry(), squat] }));
+      const { result, scheduled, done } = await renderTimer();
+      await act(async () => result.current.timer.start(60, 2));
+      await waitFor(() => expect(scheduled.size).toBe(1));
+      const [first] = [...scheduled.keys()];
+
+      await act(async () => result.current.timer.adjust(75));
+
+      await waitFor(() => expect([...scheduled.keys()]).not.toContain(first));
+      expect(scheduled.size).toBe(1);
+      expect(bodyOf(scheduled)).toBe(
+        tr('push.restNext', { name: 'Squat', next: tr('session.moreSetsOf', { count: 2, name: 'Squat' }) }),
+      );
+      await done();
+    });
+
+    it('points back up the list when the ticked exercise is done and only earlier ones are open', async () => {
+      const bench = anEntry({ sets: [anOpenSet()] });
+      sessionLifecycle.restore(
+        aSession({ entries: [bench, anEntry({ exerciseId: 'wger:74', exerciseName: 'Overhead Press' })] }),
+      );
+      const { result, scheduled, done } = await renderTimer();
+
+      await act(async () => result.current.timer.start(60, 1));
+
+      await waitFor(() => expect(scheduled.size).toBe(1));
+      expect(bodyOf(scheduled)).toBe(tr('push.restNext', { name: 'Overhead Press', next: 'Bench Press' }));
+      await done();
+    });
+
+    it('says the workout is done when nothing is left open', async () => {
+      sessionLifecycle.restore(
+        aSession({ entries: [anEntry(), anEntry({ exerciseId: 'wger:74', exerciseName: 'Overhead Press' })] }),
+      );
+      const { result, scheduled, done } = await renderTimer();
+
+      await act(async () => result.current.timer.start(60, 1));
+
+      await waitFor(() => expect(scheduled.size).toBe(1));
+      expect(bodyOf(scheduled)).toBe(tr('push.restLast', { name: 'Overhead Press' }));
+      await done();
+    });
+
+    it('names the ticked exercise when alerts turn on mid-rest', async () => {
+      sessionLifecycle.restore(aSession({ entries: [anEntry(), anotherEntry(), squat] }));
+      const { result, scheduled, done } = await renderTimer(false);
+      await act(async () => result.current.timer.start(60, 2));
+      expect(scheduled.size).toBe(0);
+
+      await act(async () => updateSettings({ notificationsGranted: true, notificationsEnabled: true }));
+
+      await waitFor(() => expect(scheduled.size).toBe(1));
+      expect(bodyOf(scheduled)).toBe(
+        tr('push.restNext', { name: 'Squat', next: tr('session.moreSetsOf', { count: 2, name: 'Squat' }) }),
+      );
+      await done();
+    });
+  });
+
   it('starts a rest without an alert when notifications are off', async () => {
     const { result, scheduled, done } = await renderTimer(false);
 
-    await act(async () => result.current.timer.start(90));
+    await act(async () => result.current.timer.start(90, 0));
 
     expect(result.current.session?.restDurationSeconds).toBe(90);
     expect(scheduled.size).toBe(0);
@@ -76,7 +161,7 @@ describe('useRestTimer', () => {
 
   it('skips the rest and retracts its alert', async () => {
     const { result, scheduled, done } = await renderTimer();
-    await act(async () => result.current.timer.start(90));
+    await act(async () => result.current.timer.start(90, 0));
     await waitFor(() => expect(scheduled.size).toBe(1));
 
     await act(async () => result.current.timer.skip());
@@ -88,7 +173,7 @@ describe('useRestTimer', () => {
 
   it('restarts the rest from an adjustment and arms the alert for the new deadline', async () => {
     const { result, scheduled, done } = await renderTimer();
-    await act(async () => result.current.timer.start(90));
+    await act(async () => result.current.timer.start(90, 0));
     await waitFor(() => expect(scheduled.size).toBe(1));
     const [first] = [...scheduled.keys()];
 
@@ -104,7 +189,7 @@ describe('useRestTimer', () => {
 
   it('starts no alert for an adjustment when notifications are off', async () => {
     const { result, scheduled, done } = await renderTimer(false);
-    await act(async () => result.current.timer.start(90));
+    await act(async () => result.current.timer.start(90, 0));
 
     await act(async () => result.current.timer.adjust(60));
 
@@ -115,7 +200,7 @@ describe('useRestTimer', () => {
 
   it('clears the rest when an adjustment goes below five seconds', async () => {
     const { result, scheduled, done } = await renderTimer();
-    await act(async () => result.current.timer.start(90));
+    await act(async () => result.current.timer.start(90, 0));
     await waitFor(() => expect(scheduled.size).toBe(1));
 
     await act(async () => result.current.timer.adjust(3));
