@@ -1,20 +1,17 @@
-import { memo, useCallback, useEffect, useRef } from 'react';
+import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { useStepperPress } from '@/features/core/design-system/controls/Stepper/Stepper.logic';
 import { StepperValue } from '@/features/core/design-system/controls/Stepper/StepperValue';
-import { formatStepperValue, type StepperProps, stepClamp } from '@/features/core/design-system/controls/Stepper/types';
+import { formatStepperValue, type StepperProps } from '@/features/core/design-system/controls/Stepper/types';
 import { ICON_SIZE, Icon, type IconName } from '@/features/core/design-system/icons/icons';
-import { haptics } from '@/features/core/haptics';
 import { radius, spacing, touchTarget, useAppTheme } from '@/features/core/theme';
 
 export type { StepperProps } from '@/features/core/design-system/controls/Stepper/types';
 
 /**
  * Material has no stepper, so this is the Material idiom for one: two outlined icon buttons
- * with the value centred between them, and hold-to-repeat. Tapping the value types it: see
- * `StepperValue`.
- *
- * The repeat tick reads the latest value from a ref, not from the closure: the classic stepper
- * bug is a hold that keeps adding to whatever number was under the finger when it started.
+ * with the value centred between them, and hold-to-repeat (see `useStepperPress`). Tapping the
+ * value types it: see `StepperValue`.
  */
 export const Stepper = memo(function Stepper({
   value,
@@ -28,44 +25,15 @@ export const Stepper = memo(function Stepper({
   decimal = false,
 }: StepperProps) {
   const theme = useAppTheme();
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
-  const valueRef = useRef(value);
-  valueRef.current = value;
-
-  const commit = useCallback(
-    (delta: number) => {
-      const next = stepClamp(valueRef.current + delta, { min, max, step });
-      if (next === valueRef.current) return;
-      valueRef.current = next;
-      haptics.selection();
-      onChange(next);
-    },
-    [max, min, onChange, step],
-  );
-  const stop = useCallback(() => {
-    if (timer.current !== null) {
-      clearInterval(timer.current);
-      timer.current = null;
-    }
-  }, []);
-  const start = useCallback(
-    (delta: number) => {
-      commit(delta);
-      stop();
-      timer.current = setInterval(() => commit(delta), 110);
-    },
-    [commit, stop],
-  );
-  // NOTE: Unmounted mid-hold (navigating away, a re-key): no interval may outlive the control.
-  useEffect(() => stop, [stop]);
+  const { effects } = useStepperPress(value, onChange, { min, max, step });
 
   const size = compact ? 32 : touchTarget - spacing.xs;
   const button = (delta: number, icon: IconName) => {
     const atEdge = delta > 0 ? value >= max : value <= min;
     return (
       <Pressable
-        onPressIn={() => start(delta)}
-        onPressOut={stop}
+        onPressIn={() => effects.press(delta)}
+        onPressOut={effects.release}
         disabled={atEdge}
         accessibilityRole="button"
         accessibilityLabel={`${label} ${delta > 0 ? '+' : '-'}${formatStepperValue(Math.abs(delta))}`}
