@@ -33,7 +33,7 @@ final class WorkoutTests: XCTestCase {
         XCTAssertEqual(workout.completedSets, 0)
     }
 
-    func testStartPlansEachSetFromItsOwnRowWithNoRPE() {
+    func testStartPlansEachSetFromItsOwnRowWithItsTargetRPE() {
         let pyramid = [
             RoutineSet(reps: 10, weightKg: 60, targetRpe: nil),
             RoutineSet(reps: 8, weightKg: 65, targetRpe: 8),
@@ -46,7 +46,7 @@ final class WorkoutTests: XCTestCase {
         XCTAssertEqual(sets?.map(\.index), [0, 1, 2])
         XCTAssertEqual(sets?.map(\.reps), [10, 8, 6])
         XCTAssertEqual(sets?.map(\.weightKg), [60, 65, 70])
-        XCTAssertEqual(sets?.map(\.rpe), [nil, nil, nil])
+        XCTAssertEqual(sets?.map(\.rpe), [nil, 8, 9.5])
     }
 
     func testCompletingASetStartsItsRest() {
@@ -160,6 +160,90 @@ final class WorkoutTests: XCTestCase {
         XCTAssertEqual(outbox.entries().map(\.id), ["0F2C-UUID"])
         outbox.remove(id: "0F2C-UUID")
         XCTAssertTrue(outbox.entries().isEmpty)
+    }
+}
+
+final class WorkoutRpeTests: XCTestCase {
+    private let now = Date(timeIntervalSince1970: 1_790_000_000)
+
+    private func workout() -> Workout {
+        let sets = [
+            RoutineSet(reps: 8, weightKg: 60, targetRpe: 8),
+            RoutineSet(reps: 8, weightKg: 60, targetRpe: nil)
+        ]
+        let routine = Routine(id: "r", name: "Push", items: [
+            RoutineItem(id: "i", exerciseId: "e", exerciseName: "E", sets: sets, restSeconds: 90, notes: nil)
+        ])
+        return Workout.start(routine: routine, unitSystem: .metric, id: "w", now: now)
+    }
+
+    private func wireRpe(_ workout: Workout) throws -> [Any] {
+        let data = try XCTUnwrap(workout.document(endedAt: now).json())
+        let json = try XCTUnwrap(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let entry = try XCTUnwrap((json["entries"] as? [[String: Any]])?.first)
+        return try XCTUnwrap(entry["sets"] as? [[String: Any]]).map { $0["rpe"] ?? NSNull() }
+    }
+
+    func testTheRestScreenValueIsWrittenToTheSetJustCompleted() throws {
+        var workout = workout()
+        workout.completeSet(0, in: 0, now: now)
+        let done = try XCTUnwrap(workout.lastCompleted)
+        XCTAssertEqual(workout.rpe(ofSet: done.set, in: done.entry), 8, "starts at the target")
+        workout.setRpe(9, forSet: done.set, in: done.entry, bounds: Fixtures.bounds)
+        XCTAssertEqual(workout.entries.first?.sets.map(\.rpe), [9, nil])
+        let rpe = try wireRpe(workout)
+        XCTAssertEqual(rpe.first as? Double, 9)
+        XCTAssertTrue(rpe.last is NSNull)
+    }
+
+    func testASetWithNoTargetThatIsNotTouchedKeepsNoRpe() throws {
+        var workout = workout()
+        workout.completeSet(1, in: 0, now: now)
+        XCTAssertEqual(workout.lastCompleted, Workout.SetRef(entry: 0, set: 1))
+        XCTAssertNil(workout.rpe(ofSet: 1, in: 0))
+        XCTAssertTrue(try wireRpe(workout).last is NSNull)
+    }
+
+    func testRpeIsAWholeNumberFromZeroToTen() {
+        var workout = workout()
+        workout.setRpe(12, forSet: 0, in: 0, bounds: Fixtures.bounds)
+        XCTAssertEqual(workout.rpe(ofSet: 0, in: 0), 10)
+        workout.setRpe(-3, forSet: 0, in: 0, bounds: Fixtures.bounds)
+        XCTAssertEqual(workout.rpe(ofSet: 0, in: 0), 0)
+        workout.setRpe(7.4, forSet: 0, in: 0, bounds: Fixtures.bounds)
+        XCTAssertEqual(workout.rpe(ofSet: 0, in: 0), 7)
+        workout.setRpe(.nan, forSet: 0, in: 0, bounds: Fixtures.bounds)
+        XCTAssertEqual(workout.rpe(ofSet: 0, in: 0), 7)
+        workout.setRpe(nil, forSet: 0, in: 0, bounds: Fixtures.bounds)
+        XCTAssertNil(workout.rpe(ofSet: 0, in: 0))
+        workout.setRpe(5, forSet: 9, in: 0, bounds: Fixtures.bounds)
+        workout.setRpe(5, forSet: 0, in: 9, bounds: Fixtures.bounds)
+        XCTAssertEqual(workout.entries.first?.sets.map(\.rpe), [nil, nil])
+    }
+
+    func testTheCrownStartsAnEmptyRpeAtSevenAndStaysInBounds() {
+        let bounds = Fixtures.bounds
+        XCTAssertEqual(Workout.nudgedRpe(nil, by: 1, bounds: bounds), 7)
+        XCTAssertEqual(Workout.nudgedRpe(nil, by: -1, bounds: bounds), 7)
+        XCTAssertNil(Workout.nudgedRpe(nil, by: 0, bounds: bounds))
+        XCTAssertEqual(Workout.nudgedRpe(8, by: 1, bounds: bounds), 9)
+        XCTAssertEqual(Workout.nudgedRpe(8.5, by: 1, bounds: bounds), 9)
+        XCTAssertEqual(Workout.nudgedRpe(8.5, by: -1, bounds: bounds), 8)
+        XCTAssertEqual(Workout.nudgedRpe(10, by: 3, bounds: bounds), 10)
+        XCTAssertEqual(Workout.nudgedRpe(0, by: -1, bounds: bounds), 0)
+    }
+
+    func testTheRpeSurvivesARelaunch() {
+        let files = Fixtures.temporaryStore()
+        var workout = workout()
+        workout.completeSet(1, in: 0, now: now)
+        workout.setRpe(6, forSet: 1, in: 0, bounds: Fixtures.bounds)
+        XCTAssertTrue(WorkoutStore(files: files).save(workout))
+        guard case .workout(let resumed) = WorkoutStore(files: files).load() else {
+            return XCTFail("the workout did not reload")
+        }
+        XCTAssertEqual(resumed.entries.first?.sets.map(\.rpe), [8, 6])
+        XCTAssertEqual(resumed.lastCompleted, Workout.SetRef(entry: 0, set: 1))
     }
 }
 

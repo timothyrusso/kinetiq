@@ -32,8 +32,9 @@ public struct Workout: Codable, Equatable, Sendable {
     }
 
     /// Starts a workout from a routine, copying it in: a Sync mid-workout cannot change what is
-    /// being trained. The same rule as the phone's `entriesFromItems`: one entry per item, one set
-    /// per planned row with that row's reps and weight, nothing completed, no RPE.
+    /// being trained. The same rule as the phone's session plan: one entry per item, one set per
+    /// planned row with that row's reps and weight, nothing completed, and the row's target RPE as
+    /// the set's RPE until the rest screen changes it (issue #132).
     public static func start(routine: Routine, unitSystem: UnitSystem, id: String, now: Date) -> Workout {
         Workout(
             version: fileVersion,
@@ -51,7 +52,7 @@ public struct Workout: Codable, Equatable, Sendable {
                     sets: item.sets.enumerated().map { index, planned in
                         WorkoutSet(
                             index: index, reps: planned.reps, weightKg: planned.weightKg,
-                            completed: false, rpe: nil
+                            completed: false, rpe: planned.targetRpe
                         )
                     }
                 )
@@ -80,6 +81,13 @@ public struct Workout: Codable, Equatable, Sendable {
     }
 
     public var canUndo: Bool { !completionLog.isEmpty }
+
+    /// The set completed most recently: the one whose RPE the rest screen shows.
+    public var lastCompleted: SetRef? { completionLog.last }
+
+    public func rpe(ofSet set: Int, in entry: Int) -> Double? {
+        entries[safe: entry]?.sets[safe: set]?.rpe
+    }
 
     public func isDone(_ entry: Int) -> Bool {
         guard let row = entries[safe: entry] else { return false }
@@ -195,6 +203,30 @@ public struct Workout: Codable, Equatable, Sendable {
         entries[safe: entry] = row
     }
 
+    /// RPE for one set, from the rest screen: a whole number clamped to `ITEM_BOUNDS`, or nil for
+    /// none. A value that is not a number changes nothing.
+    public mutating func setRpe(_ rpe: Double?, forSet set: Int, in entry: Int, bounds: Bounds) {
+        guard var row = entries[safe: entry], var target = row.sets[safe: set] else { return }
+        if let rpe {
+            guard rpe.isFinite else { return }
+            target.rpe = bounds.itemBounds.rpe.clamp(rpe.rounded())
+        } else {
+            target.rpe = nil
+        }
+        row.sets[safe: set] = target
+        entries[safe: entry] = row
+    }
+
+    /// Where `steps` turns of the Crown take an RPE. From empty it starts at `defaultRpe`, since a
+    /// set with a target already holds it; from a half value such as 8.5 the first step lands on
+    /// the whole number in that direction.
+    public static func nudgedRpe(_ current: Double?, by steps: Int, bounds: Bounds) -> Double? {
+        guard steps != 0 else { return current }
+        guard let current, current.isFinite else { return defaultRpe }
+        let base = steps > 0 ? current.rounded(.down) : current.rounded(.up)
+        return bounds.itemBounds.rpe.clamp(base + Double(steps))
+    }
+
     /// Reopens the most recently completed set and stops its rest.
     public mutating func undoLastCompleted() {
         guard let last = completionLog.popLast(),
@@ -248,6 +280,8 @@ public struct Workout: Codable, Equatable, Sendable {
     public static let repsRange = 1...100
     /// The phone's rest stepper step.
     public static let restStep = 15
+    /// Where the Crown starts an RPE the routine gave no target for.
+    public static let defaultRpe: Double = 7
 
     private mutating func updateRemainingSets(in entry: Int, _ change: (inout WorkoutSet) -> Void) {
         guard var row = entries[safe: entry], let first = nextSet(in: entry) else { return }

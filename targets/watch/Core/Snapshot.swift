@@ -68,7 +68,7 @@ public struct RoutineItem: Codable, Equatable, Identifiable, Sendable {
 public struct RoutineSet: Codable, Equatable, Sendable {
     public let reps: Int
     public let weightKg: Double
-    /// Carried with the plan; the watch does not ask for RPE.
+    /// The set's starting RPE on the watch, which the rest screen adjusts (issue #132).
     public let targetRpe: Double?
 
     public init(reps: Int, weightKg: Double, targetRpe: Double?) {
