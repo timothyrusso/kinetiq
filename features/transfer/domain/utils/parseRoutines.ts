@@ -29,11 +29,12 @@ function number(value: unknown): number | null {
 }
 
 /**
- * A line only the app's own AI instructions carry, in every language: the wger search they tell the
- * AI to use. A routines document never contains it, so text that does is the instructions pasted
- * back (by mistake, or echoed by the AI), and the example routine inside them is not an answer.
+ * A line only the app's own AI instructions carry, in every language: the link to the public
+ * exercise index they tell the AI to read. A routines document never contains it, so text that
+ * does is the instructions pasted back (by mistake, or echoed by the AI), and the example routine
+ * inside them is not an answer.
  */
-const AI_PROMPT_SIGNATURE = 'wger.de/api/v2/exerciseinfo/?name__search=';
+const AI_PROMPT_SIGNATURE = 'timothyrusso/kinetiq/main/assets/catalog/index.json';
 
 /** The JSON inside a code fence or a sentence, or the text itself. */
 function jsonSlice(raw: string): string {
@@ -50,14 +51,13 @@ function routineList(doc: unknown): unknown[] | null {
   return null;
 }
 
-/** `wger:192`, `local:bench-press`, or a bare catalog number (192). */
+/**
+ * `ex:barbell-squat` or `local:bench-press`. Anything else, an id from a retired catalog
+ * included, is no id: the item is matched by its name.
+ */
 function exerciseIdOf(item: Json, rules: ImportRules): string | null {
-  const raw = item.exerciseId ?? item.wgerId;
-  if (typeof raw === 'number' && Number.isInteger(raw) && raw > 0) return `wger:${raw}`;
-  const id = text(raw);
-  if (id === null) return null;
-  if (/^\d+$/.test(id)) return `wger:${id}`;
-  return rules.isExerciseId(id) ? id : null;
+  const id = text(item.exerciseId);
+  return id !== null && rules.isExerciseId(id) ? id : null;
 }
 
 /** A v1 rep text: digits and one hyphen. AIs like en and em dashes, and "x". */

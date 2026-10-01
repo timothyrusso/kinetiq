@@ -6,6 +6,11 @@ import { TransferDeviceFake } from '@/features/transfer/useCases/__tests__/trans
 import { readImport } from '@/features/transfer/useCases/readImport';
 
 const fixture = (name: string) => readFileSync(`${__dirname}/../../__fixtures__/${name}`, 'utf8');
+const indexIds = new Set<string>(
+  JSON.parse(readFileSync(`${__dirname}/../../../../assets/catalog/index.json`, 'utf8')).exercises.map(
+    ([id]: [string]) => id,
+  ),
+);
 const parsedFixture = (name: string) => {
   const { routines, issues } = JSON.parse(fixture(name));
   return { routines, issues };
@@ -149,6 +154,10 @@ describe('readImport', () => {
     const prompt = tr('dataTransfer.aiPrompt');
     setLanguagePreference('system');
 
+    it(`links the public exercise index in the ${language} AI instructions`, () => {
+      expect(prompt).toContain('https://raw.githubusercontent.com/timothyrusso/kinetiq/main/assets/catalog/index.json');
+    });
+
     itEffect(
       `refuses the app's own AI instructions in ${language} instead of offering their example routine`,
       Effect.gen(function* () {
@@ -168,6 +177,7 @@ describe('readImport', () => {
         const read = yield* readImport('clipboard');
 
         expect(read?.issues).toEqual([]);
+        expect(indexIds.has(read?.routines[0]?.items[0]?.exerciseId ?? '')).toBe(true);
         expect(read?.routines[0]?.items[0]?.sets).toEqual([
           { reps: 10, weightKg: 50, targetRpe: null },
           { reps: 8, weightKg: 60, targetRpe: 7 },
