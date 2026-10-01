@@ -5,7 +5,7 @@ import type { RoutineId } from '@/features/routines/domain/schemas/RoutineId';
 import type { Routine } from '@/features/routines/domain/schemas/RoutineSchema';
 
 /** A routine and the stored snapshots of the exercises it names, by exercise id. */
-interface RoutineDetail {
+export interface RoutineDetail {
   readonly routine: Routine;
   readonly snapshots: ReadonlyMap<string, ExerciseSnapshot>;
 }

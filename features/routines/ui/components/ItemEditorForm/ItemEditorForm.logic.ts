@@ -8,7 +8,7 @@ import {
   weightUnit,
 } from '@/features/core/utils';
 import type { ExerciseSnapshot } from '@/features/exercises';
-import type { ItemTarget } from '@/features/routines/domain/entities/ItemTarget';
+import type { ItemChange } from '@/features/routines/domain/entities/ItemTarget';
 import type { RoutineItem } from '@/features/routines/domain/schemas/RoutineSchema';
 import { removeSet, resizeSets, withSet } from '@/features/routines/domain/utils/itemTargets';
 import { itemMeta } from '@/features/routines/mappers/itemMeta';
@@ -27,13 +27,14 @@ export type SetRowValues = {
  * One item's targets in the user's unit. Weight is converted exactly once, on the way out in the
  * change that writes: converting on the way in as well is how a field reads 135 while the stepper
  * steps kilograms. Each set is its own row: reps, weight and target RPE write that set alone, a
- * set added copies the last one, and rest is one value for the whole item.
+ * set added copies the last one, and rest is one value for the whole item. Every writer hands over
+ * an `ItemChange`, applied to the item as it is when written, not to the `sets` drawn here.
  */
 export function useItemEditorFormLogic(
   item: RoutineItem,
   snapshot: ExerciseSnapshot | null,
   units: UnitSystem,
-  onChange: (patch: Partial<ItemTarget>) => void,
+  onChange: (change: ItemChange) => void,
 ) {
   const step = weightStep(units);
   const meta = useMemo(() => itemMeta(item, units), [item, units]);
@@ -60,30 +61,33 @@ export function useItemEditorFormLogic(
 
   const addSet = useCallback(() => {
     if (sets.length >= ITEM_BOUNDS.sets.max) return;
-    onChange({ sets: resizeSets(sets, sets.length + 1) });
-  }, [onChange, sets]);
+    onChange(item =>
+      item.sets.length >= ITEM_BOUNDS.sets.max ? {} : { sets: resizeSets(item.sets, item.sets.length + 1) },
+    );
+  }, [onChange, sets.length]);
   const removeSetAt = useCallback(
     (index: number) => {
       if (sets.length <= ITEM_BOUNDS.sets.min) return;
-      onChange({ sets: removeSet(sets, index) });
+      onChange(item => (item.sets.length <= ITEM_BOUNDS.sets.min ? {} : { sets: removeSet(item.sets, index) }));
     },
-    [onChange, sets],
+    [onChange, sets.length],
   );
   const setReps = useCallback(
-    (index: number, reps: number) => onChange({ sets: withSet(sets, index, { reps }) }),
-    [onChange, sets],
+    (index: number, reps: number) => onChange(item => ({ sets: withSet(item.sets, index, { reps }) })),
+    [onChange],
   );
   const setWeight = useCallback(
     (index: number, shown: number) =>
-      onChange({ sets: withSet(sets, index, { weightKg: weightFromDisplayValue(shown, units) }) }),
-    [onChange, sets, units],
+      onChange(item => ({ sets: withSet(item.sets, index, { weightKg: weightFromDisplayValue(shown, units) }) })),
+    [onChange, units],
   );
   const setRpe = useCallback(
-    (index: number, rpe: number) => onChange({ sets: withSet(sets, index, { targetRpe: rpe === 0 ? null : rpe }) }),
-    [onChange, sets],
+    (index: number, rpe: number) =>
+      onChange(item => ({ sets: withSet(item.sets, index, { targetRpe: rpe === 0 ? null : rpe }) })),
+    [onChange],
   );
-  const setRest = useCallback((restSeconds: number) => onChange({ restSeconds }), [onChange]);
-  const setNotes = useCallback((notes: string | null) => onChange({ notes }), [onChange]);
+  const setRest = useCallback((restSeconds: number) => onChange(() => ({ restSeconds })), [onChange]);
+  const setNotes = useCallback((notes: string | null) => onChange(() => ({ notes })), [onChange]);
 
   return {
     derived: {

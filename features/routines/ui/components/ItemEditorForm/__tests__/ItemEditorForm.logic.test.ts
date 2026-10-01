@@ -2,7 +2,7 @@ import { act, renderHook } from '@testing-library/react-native';
 import type { UnitSystem } from '@/features/core/utils';
 import type { ExerciseSnapshot } from '@/features/exercises';
 import { anExerciseSnapshot, aRoutineItem } from '@/features/routines/__fixtures__/builders';
-import type { ItemTarget } from '@/features/routines/domain/entities/ItemTarget';
+import type { ItemChange, ItemTarget } from '@/features/routines/domain/entities/ItemTarget';
 import type { RoutineItem } from '@/features/routines/domain/schemas/RoutineSchema';
 import { uniformSets } from '@/features/routines/domain/utils/itemTargets';
 import { useItemEditorFormLogic } from '@/features/routines/ui/components/ItemEditorForm/ItemEditorForm.logic';
@@ -11,15 +11,23 @@ const renderForm = async ({
   item = aRoutineItem(),
   snapshot = anExerciseSnapshot(),
   units = 'metric',
+  chain = false,
 }: {
   item?: RoutineItem;
   snapshot?: ExerciseSnapshot | null;
   units?: UnitSystem;
+  /** Applies each edit to the item the edits before left, as the cache does. */
+  chain?: boolean;
 } = {}) => {
   const patches: Partial<ItemTarget>[] = [];
-  const onChange = (patch: Partial<ItemTarget>) => void patches.push(patch);
+  let current: ItemTarget = item;
+  const onChange = (change: ItemChange) => {
+    const patch = change(current);
+    if (chain) current = { ...current, ...patch };
+    patches.push(patch);
+  };
   const rendered = await renderHook(() => useItemEditorFormLogic(item, snapshot, units, onChange));
-  return { ...rendered, patches };
+  return { ...rendered, patches, latest: () => current };
 };
 
 describe('useItemEditorFormLogic', () => {
@@ -66,6 +74,21 @@ describe('useItemEditorFormLogic', () => {
       { sets: [{ ...sets[0], weightKg: 55 }, sets[1]] },
       { sets: [{ ...sets[0], targetRpe: 7 }, sets[1]] },
       { sets: [sets[0], { ...sets[1], targetRpe: null }] },
+    ]);
+  });
+
+  it('builds each edit on the one before, even before the form redraws', async () => {
+    const sets = uniformSets(2, 8, 60);
+    const { result, latest } = await renderForm({ item: aRoutineItem({ sets }), chain: true });
+
+    await act(async () => {
+      result.current.effects.setReps(0, 12);
+      result.current.effects.setWeight(1, 80);
+    });
+
+    expect(latest().sets).toEqual([
+      { ...sets[0], reps: 12 },
+      { ...sets[1], weightKg: 80 },
     ]);
   });
 
