@@ -58,8 +58,8 @@ describe('usePickIntoSessionLogic', () => {
   it('marks the exercises already in the workout as included', async () => {
     const { result, done } = await renderPicker();
 
-    expect(result.current.picker.effects.isIncluded('wger:73')).toBe(true);
-    expect(result.current.picker.effects.isIncluded('wger:13')).toBe(false);
+    expect(result.current.picker.effects.isIncluded('ex:barbell-bench-press')).toBe(true);
+    expect(result.current.picker.effects.isIncluded('ex:goblet-squat')).toBe(false);
     await done();
   });
 

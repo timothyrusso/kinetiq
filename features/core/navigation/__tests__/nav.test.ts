@@ -18,7 +18,10 @@ describe('TAB_LABELS', () => {
 
 describe('routes', () => {
   it('passes a detail id as a param rather than in the path', () => {
-    expect(routes.exerciseDetail('wger:73')).toEqual({ pathname: '/exercise/[id]', params: { id: 'wger:73' } });
+    expect(routes.exerciseDetail('ex:barbell-bench-press')).toEqual({
+      pathname: '/exercise/[id]',
+      params: { id: 'ex:barbell-bench-press' },
+    });
   });
 
   it('sends the Workout and Home destinations to their tabs', () => {

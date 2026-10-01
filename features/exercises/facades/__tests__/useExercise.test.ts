@@ -21,7 +21,7 @@ describe('useExercise', () => {
   });
 
   it('answers an exercise the catalog has retired as unknown, logging nothing', async () => {
-    const { result, logs, done } = await renderWithCatalog(useExercise, { exercises: [BENCH] }, 'wger:999');
+    const { result, logs, done } = await renderWithCatalog(useExercise, { exercises: [BENCH] }, 'ex:retired-press');
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.exercise).toBeNull();
@@ -39,11 +39,10 @@ describe('useExercise', () => {
     await done();
   });
 
-  it('names the muscles and equipment of a stored exercise picked in Italian in the language of the app', async () => {
+  it('shows an exercise from the previous catalog from its stored copy, named in the language of the app', async () => {
     updateSettings({ language: 'en' });
     const retired = anExercise({
-      id: 'wger:999',
-      externalId: 999,
+      id: 'legacy:999',
       name: 'Panca piana',
       category: 'Petto',
       primaryMuscles: ['Petto'],

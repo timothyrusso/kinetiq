@@ -5,14 +5,13 @@ import { BundledCatalog } from '@/features/exercises/domain/services/BundledCata
 
 describe('BundledCatalogSourceLive', () => {
   itEffect(
-    'loads the committed snapshot as a format 1 catalog of at least 800 exercises',
+    'loads the committed dataset, every entry decoding, at the version version.json names',
     Effect.gen(function* () {
-      const payload = yield* (yield* BundledCatalog).load;
+      const bundled = yield* BundledCatalog;
+      const payload = yield* bundled.load;
 
-      expect(payload.formatVersion).toBe(1);
-      expect(payload.source).toBe('wger');
+      expect(payload.datasetVersion).toBe(yield* bundled.version);
       expect(payload.exercises.length).toBeGreaterThanOrEqual(800);
-      expect(payload.categories.length).toBeGreaterThan(0);
     }),
     BundledCatalogSourceLive,
   );

@@ -24,7 +24,7 @@ describe('commitWorkout', () => {
         ['est1rm', 128, 116.5],
       ]);
       expect(fresh.activities.get('session-mbz1a2b3')?.strength?.personalRecords).toEqual(result.personalRecords);
-      expect(fresh.records.get('wger:73:est1rm')?.value).toBe(128);
+      expect(fresh.records.get('ex:barbell-bench-press:est1rm')?.value).toBe(128);
     }),
     makeWorkoutsFake(Object.assign(fresh, { activities: new Map([['session-last-week', lastWeek()]]) })),
   );

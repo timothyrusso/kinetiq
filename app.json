@@ -88,8 +88,6 @@
       "typedRoutes": true,
       "reactCompiler": false
     },
-    "extra": {
-      "wgerBaseUrl": "https://wger.de/api/v2/"
-    }
+    "extra": {}
   }
 }

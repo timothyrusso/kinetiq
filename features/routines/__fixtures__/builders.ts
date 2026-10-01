@@ -6,7 +6,7 @@ import { uniformSets } from '@/features/routines/domain/utils/itemTargets';
 /** One item of a push day: bench press, three sets of eight at 60 kg. */
 export const aRoutineItem = (overrides: Partial<RoutineItem> = {}): RoutineItem => ({
   id: 'rit_bench',
-  exerciseId: 'wger:73',
+  exerciseId: 'ex:barbell-bench-press',
   exerciseName: 'Bench Press',
   sets: uniformSets(3, 8, 60),
   restSeconds: 90,
@@ -18,7 +18,7 @@ export const aRoutineItem = (overrides: Partial<RoutineItem> = {}): RoutineItem 
 export const anotherRoutineItem = (overrides: Partial<RoutineItem> = {}): RoutineItem =>
   aRoutineItem({
     id: 'rit_press',
-    exerciseId: 'wger:74',
+    exerciseId: 'ex:barbell-squat',
     exerciseName: 'Overhead Press',
     sets: uniformSets(4, 6, 40),
     restSeconds: 60,
@@ -40,33 +40,36 @@ export const aRoutine = (overrides: Partial<Routine> = {}): Routine => ({
 
 /** The stored copy of the bench press. */
 export const anExerciseSnapshot = (overrides: Partial<ExerciseSnapshot> = {}): ExerciseSnapshot => ({
-  exerciseId: 'wger:73',
+  exerciseId: 'ex:barbell-bench-press',
   name: 'Bench Press',
-  instructions: 'Lower the bar to the chest, then press.',
+  instructions: ['Lower the bar to the chest, then press.'],
   category: 'Chest',
   primaryMuscles: ['Chest'],
   secondaryMuscles: ['Triceps'],
   equipment: ['Barbell'],
-  imageUrl: 'https://wger.de/media/bench.png',
-  thumbnailUrl: 'https://wger.de/media/bench-small.png',
-  externalId: 73,
+  imageUrl: 'assets/catalog/images/barbell-bench-press-medium-grip/0.webp',
+  thumbnailUrl: 'assets/catalog/images/barbell-bench-press-medium-grip/thumb.webp',
   capturedAt: 1_700_000_000_000,
   ...overrides,
 });
 
 /** The bench press as the catalog reads it. */
 export const anExercise = (overrides: Partial<Exercise> = {}): Exercise => ({
-  id: 'wger:73',
+  id: 'ex:barbell-bench-press',
   name: 'Bench Press',
-  instructions: 'Lower the bar to the chest, then press.',
+  instructions: ['Lower the bar to the chest, then press.'],
   category: 'Chest',
+  bodyArea: 'chest',
+  trainingType: 'strength',
+  level: 'beginner',
+  force: 'push',
+  mechanic: 'compound',
   primaryMuscles: ['Chest'],
   secondaryMuscles: ['Triceps'],
   equipment: ['Barbell'],
-  imageUrl: 'https://wger.de/media/bench.png',
-  thumbnailUrl: 'https://wger.de/media/bench-small.png',
-  videoUrl: null,
-  source: 'remote',
-  externalId: 73,
+  imageUrl: 'assets/catalog/images/barbell-bench-press-medium-grip/0.webp',
+  imageEndUrl: 'assets/catalog/images/barbell-bench-press-medium-grip/1.webp',
+  thumbnailUrl: 'assets/catalog/images/barbell-bench-press-medium-grip/thumb.webp',
+  source: 'catalog',
   ...overrides,
 });

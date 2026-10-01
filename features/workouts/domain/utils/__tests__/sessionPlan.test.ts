@@ -17,7 +17,12 @@ describe('entryFromPlanItem', () => {
         rpe: null,
       })),
     );
-    expect(entry).toMatchObject({ exerciseId: 'wger:73', restSeconds: 90, muscleGroup: null, notes: null });
+    expect(entry).toMatchObject({
+      exerciseId: 'ex:barbell-bench-press',
+      restSeconds: 90,
+      muscleGroup: null,
+      notes: null,
+    });
   });
 
   it('opens each set on its own reps, load and target RPE', () => {
@@ -85,7 +90,7 @@ describe('sessionFromPlan', () => {
 
   it('keeps the routine items a routine plan starts with', () => {
     const plan = aPlan({
-      items: [aPlanItem({ itemId: 'rit_bench' }), aPlanItem({ itemId: 'rit_press', exerciseId: 'wger:74' })],
+      items: [aPlanItem({ itemId: 'rit_bench' }), aPlanItem({ itemId: 'rit_press', exerciseId: 'ex:barbell-squat' })],
     });
 
     expect(sessionFromPlan(plan, NOW).routineItemIds).toEqual(['rit_bench', 'rit_press']);

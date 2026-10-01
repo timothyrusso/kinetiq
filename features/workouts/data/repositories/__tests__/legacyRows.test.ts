@@ -17,12 +17,12 @@ import { ActivityId } from '@/features/workouts/domain/schemas/ActivityId';
  */
 const LEGACY_ENTRIES = JSON.stringify([
   {
-    exerciseId: 'wger:73',
+    exerciseId: 'ex:barbell-bench-press',
     exerciseName: 'Bench Press',
     sets: [{ index: 0, reps: 8, weightKg: 60 }],
   },
   {
-    exerciseId: 'wger:74',
+    exerciseId: 'ex:barbell-squat',
     exerciseName: 'Overhead Press',
     muscleGroup: 'Shoulders',
     sets: [{ index: 0, reps: 10, weightKg: 30, completed: true, estimated1rm: 40, rpe: 8 }],
@@ -64,9 +64,9 @@ const legacyDatabase = Layer.effectDiscard(
       db.execAsync(`
         INSERT INTO app_state (key, value_json) VALUES ('session.active', '"session-open"');
         INSERT INTO records (exercise_id, kind, exercise_name, value, achieved_at)
-          VALUES ('wger:73', 'est1rm', 'Bench Press', 76, 1);
+          VALUES ('ex:barbell-bench-press', 'est1rm', 'Bench Press', 76, 1);
         INSERT INTO records (exercise_id, kind, exercise_name, value, achieved_at)
-          VALUES ('wger:73', 'tonnage', 'Bench Press', 480, 1);
+          VALUES ('ex:barbell-bench-press', 'tonnage', 'Bench Press', 480, 1);
       `),
     );
     yield* runMigrations(db, migrations);
@@ -87,7 +87,7 @@ describe('rows written by a v9 build', () => {
 
       expect(workout?.strength?.entries).toEqual([
         {
-          exerciseId: 'wger:73',
+          exerciseId: 'ex:barbell-bench-press',
           exerciseName: 'Bench Press',
           muscleGroup: null,
           sets: [{ index: 0, reps: 8, weightKg: 60, completed: false, estimated1rm: null, rpe: null }],
@@ -95,7 +95,7 @@ describe('rows written by a v9 build', () => {
           restSeconds: 90,
         },
         {
-          exerciseId: 'wger:74',
+          exerciseId: 'ex:barbell-squat',
           exerciseName: 'Overhead Press',
           muscleGroup: 'Shoulders',
           sets: [{ index: 0, reps: 10, weightKg: 30, completed: true, estimated1rm: 40, rpe: 8 }],
@@ -120,7 +120,7 @@ describe('rows written by a v9 build', () => {
   itEffect(
     'read the known records and leave out a kind this build does not know',
     Effect.gen(function* () {
-      const records = yield* (yield* RecordRepository).forExercise('wger:73');
+      const records = yield* (yield* RecordRepository).forExercise('ex:barbell-bench-press');
 
       expect(records.map(record => [record.kind, record.value])).toEqual([['est1rm', 76]]);
     }),

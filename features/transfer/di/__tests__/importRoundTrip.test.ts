@@ -29,8 +29,7 @@ const layer = (clipboard: string) =>
 const importClipboard = Effect.gen(function* () {
   const snapshots = yield* ExerciseSnapshotRepository;
   for (const item of someRoutines().flatMap(routine => routine.items)) {
-    const externalId = item.exerciseId.startsWith('wger:') ? Number(item.exerciseId.slice(5)) : null;
-    yield* snapshots.upsert(anExerciseSnapshot({ exerciseId: item.exerciseId, name: item.exerciseName, externalId }));
+    yield* snapshots.upsert(anExerciseSnapshot({ exerciseId: item.exerciseId, name: item.exerciseName }));
   }
   const read = yield* readImport('clipboard');
   const resolved = yield* resolveExercisesByName(read?.routines ?? [], 'en');

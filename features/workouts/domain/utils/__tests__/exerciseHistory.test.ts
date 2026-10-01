@@ -18,11 +18,11 @@ const benchOn = (id: string, startedAt: number, weightKg: number) =>
 
 describe('summariseExerciseHistory', () => {
   it('is empty for an exercise nobody logged', () => {
-    expect(summariseExerciseHistory('wger:73', [])).toBe(EMPTY_EXERCISE_HISTORY);
+    expect(summariseExerciseHistory('ex:barbell-bench-press', [])).toBe(EMPTY_EXERCISE_HISTORY);
   });
 
   it('lists the workouts newest first and draws the heaviest-set line oldest first', () => {
-    const history = summariseExerciseHistory('wger:73', [
+    const history = summariseExerciseHistory('ex:barbell-bench-press', [
       benchOn('session-a', WORKOUT_TIME, 90),
       benchOn('session-b', WORKOUT_TIME + DAY, 100),
     ]);
@@ -42,10 +42,15 @@ describe('summariseExerciseHistory', () => {
 
   it('never matches an id that only contains the one asked for', () => {
     const other = anActivity({
-      strength: { entries: [anEntry({ exerciseId: 'wger:173' })], totalVolumeKg: 1, totalSets: 1, personalRecords: [] },
+      strength: {
+        entries: [anEntry({ exerciseId: 'ex:barbell-curl' })],
+        totalVolumeKg: 1,
+        totalSets: 1,
+        personalRecords: [],
+      },
     });
 
-    expect(summariseExerciseHistory('wger:73', [other]).sessionsCount).toBe(0);
+    expect(summariseExerciseHistory('ex:barbell-bench-press', [other]).sessionsCount).toBe(0);
   });
 
   it('counts a skipped exercise as a workout with no load, left off the line', () => {
@@ -58,7 +63,7 @@ describe('summariseExerciseHistory', () => {
       },
     });
 
-    const history = summariseExerciseHistory('wger:73', [skipped]);
+    const history = summariseExerciseHistory('ex:barbell-bench-press', [skipped]);
 
     expect(history.sessions[0]).toMatchObject({ completedSets: 0, topWeightKg: 0, estimated1rmKg: null });
     expect(history.weightTrend).toEqual([]);

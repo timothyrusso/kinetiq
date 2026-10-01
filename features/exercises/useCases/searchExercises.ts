@@ -19,10 +19,10 @@ export const searchExercises = (
 ) =>
   Effect.gen(function* () {
     const { items, total } = yield* (yield* CatalogRepository).page(filter, language, offset, limit);
-    const fetched = offset + items.length;
+    const reached = offset + items.length;
     return {
       items,
       total,
-      nextOffset: items.length > 0 && fetched < total ? fetched : null,
+      nextOffset: items.length > 0 && reached < total ? reached : null,
     } satisfies ExercisePage;
   });

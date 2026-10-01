@@ -143,12 +143,11 @@ describe('useDataPageLogic AI recipe', () => {
   });
 });
 
-describe('useDataPageLogic catalog', () => {
-  it('shows no count before the catalog is installed', async () => {
+describe('useDataPageLogic sections', () => {
+  it('has no exercise library section: the library is bundled and has nothing to manage', async () => {
     const { result, done } = await renderPage();
 
-    await waitFor(() => expect(rowOf(result.current.derived.sections, 'catalog', 'catalogCount')).toBeDefined());
-    expect(rowOf(result.current.derived.sections, 'catalog', 'catalogCount')).toMatchObject({ value: undefined });
+    expect(result.current.derived.sections.map(section => section.key)).toEqual(['export', 'import', 'ai']);
     await done();
   });
 });

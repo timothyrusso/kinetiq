@@ -8,7 +8,7 @@ export const setsOf = (count: number, reps: number, weightKg: number): RoutineSe
 /** One item: bench press, four sets of eight at 60 kg, resting 120 s. */
 export const aRoutineItem = (overrides: Partial<RoutineItem> = {}): RoutineItem => ({
   id: 'rit_1',
-  exerciseId: 'wger:73',
+  exerciseId: 'ex:barbell-bench-press',
   exerciseName: 'Bench Press',
   sets: setsOf(4, 8, 60),
   restSeconds: 120,

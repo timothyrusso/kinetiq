@@ -4,7 +4,7 @@ import type { Theme } from '@/features/core/theme';
 import type { Exercise } from '@/features/exercises/domain/schemas/ExerciseSchema';
 import { useExerciseVariationRowLogic } from '@/features/exercises/ui/components/ExerciseVariationRow/ExerciseVariationRow.logic';
 
-/** One exercise of the variation family; opens its own detail. */
+/** One similar exercise; opens its own detail. */
 export const ExerciseVariationRow = memo(function ExerciseVariationRow({
   exercise,
   current,
@@ -23,7 +23,7 @@ export const ExerciseVariationRow = memo(function ExerciseVariationRow({
   return (
     <ExerciseRow
       name={exercise.name}
-      uri={derived.uri}
+      image={derived.image}
       tags={derived.tags}
       theme={theme}
       dimmed={current}

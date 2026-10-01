@@ -4,7 +4,7 @@ import { useRoutineDraft } from '@/features/routines/facades/useRoutineDraft';
 import { updateSettings } from '@/features/settings';
 
 const BENCH = anExercise();
-const DIPS = anExercise({ id: 'wger:75', name: 'Dips', externalId: 75 });
+const DIPS = anExercise({ id: 'ex:dips', name: 'Dips' });
 
 afterEach(() => updateSettings({ language: 'system' }));
 
@@ -31,13 +31,13 @@ describe('useRoutineDraft', () => {
 
     expect(result.current.draft.items).toEqual([
       expect.objectContaining({
-        exerciseId: 'wger:73',
+        exerciseId: 'ex:barbell-bench-press',
         exerciseName: 'Bench Press',
         sets: [0, 1, 2].map(index => ({ index, reps: 8, weightKg: 0, targetRpe: null })),
         restSeconds: 90,
       }),
     ]);
-    expect(result.current.draft.snapshots.map(snapshot => snapshot.exerciseId)).toEqual(['wger:73']);
+    expect(result.current.draft.snapshots.map(snapshot => snapshot.exerciseId)).toEqual(['ex:barbell-bench-press']);
     expect(result.current.actions.isDirty()).toBe(true);
   });
 
@@ -50,7 +50,7 @@ describe('useRoutineDraft', () => {
     });
 
     expect(result.current.draft.items).toHaveLength(1);
-    expect(result.current.actions.containsExercise('wger:73')).toBe(true);
+    expect(result.current.actions.containsExercise('ex:barbell-bench-press')).toBe(true);
   });
 
   it('moves a row and ignores a move off the list', async () => {
@@ -114,8 +114,8 @@ describe('useRoutineDraft', () => {
     const routine = result.current.actions.toNewRoutine();
 
     expect(routine.name).toBe('Chest');
-    expect(routine.items.map(item => item.exerciseId)).toEqual(['wger:73']);
-    expect(routine.snapshots.map(snapshot => snapshot.exerciseId)).toEqual(['wger:73']);
+    expect(routine.items.map(item => item.exerciseId)).toEqual(['ex:barbell-bench-press']);
+    expect(routine.snapshots.map(snapshot => snapshot.exerciseId)).toEqual(['ex:barbell-bench-press']);
   });
 
   it('names the muscles and equipment of an exercise picked in Italian in English after a switch', async () => {

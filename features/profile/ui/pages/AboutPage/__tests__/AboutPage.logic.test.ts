@@ -42,7 +42,7 @@ describe('useAboutPageLogic', () => {
     const { result, done } = await renderAbout();
 
     const catalog = result.current.derived.sections.find(section => section.key === 'catalog');
-    expect(catalog?.rows[0]?.title).toBe('wger Workout Manager');
+    expect(catalog?.rows[0]?.title).toBe('free-exercise-db');
     await done();
   });
 

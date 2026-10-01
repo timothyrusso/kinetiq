@@ -9,7 +9,7 @@ import { makeRoutinesFake } from '@/features/routines/useCases/__tests__/routine
 import { addRoutineItem } from '@/features/routines/useCases/addRoutineItem';
 
 const EMPTY = aRoutine({ items: [] });
-const DIPS = anExercise({ id: 'wger:75', name: 'Dips', externalId: 75, imageUrl: null, thumbnailUrl: null });
+const DIPS = anExercise({ id: 'ex:dips', name: 'Dips', imageUrl: null, thumbnailUrl: null });
 
 describe('addRoutineItem', () => {
   itEffect(
@@ -18,7 +18,7 @@ describe('addRoutineItem', () => {
       yield* addRoutineItem(EMPTY.id, DIPS, defaultItemTarget(90));
 
       const [item] = (yield* (yield* RoutineRepository).byId(EMPTY.id))?.items ?? [];
-      expect(item).toMatchObject({ exerciseId: 'wger:75', exerciseName: 'Dips', ...defaultItemTarget(90) });
+      expect(item).toMatchObject({ exerciseId: 'ex:dips', exerciseName: 'Dips', ...defaultItemTarget(90) });
       expect(item?.id).toMatch(/^rit_/);
     }),
     makeRoutinesFake([EMPTY]),
@@ -31,7 +31,7 @@ describe('addRoutineItem', () => {
 
       yield* addRoutineItem(EMPTY.id, anExercise(), defaultItemTarget(90));
 
-      expect(yield* (yield* ExerciseSnapshotRepository).byId('wger:73')).toEqual(
+      expect(yield* (yield* ExerciseSnapshotRepository).byId('ex:barbell-bench-press')).toEqual(
         anExerciseSnapshot({ capturedAt: 1_760_000_000_000 }),
       );
     }),
@@ -44,7 +44,7 @@ describe('addRoutineItem', () => {
       const result = yield* Effect.either(addRoutineItem(RoutineId.make('rtn_gone'), DIPS, defaultItemTarget(90)));
 
       expect(Either.isLeft(result) && result.left._tag).toBe('RoutineNotFound');
-      expect(yield* (yield* ExerciseSnapshotRepository).byId('wger:75')).toBeUndefined();
+      expect(yield* (yield* ExerciseSnapshotRepository).byId('ex:dips')).toBeUndefined();
     }),
     makeRoutinesFake([EMPTY]),
   );

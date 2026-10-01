@@ -7,22 +7,10 @@ import { createStyles } from '@/features/exercises/ui/components/ExerciseProvena
 
 /**
  * One line under the hero saying where the exercise on screen came from. A stored copy is dated,
- * which explains why there is no video, and gets a "check for updates" action when the catalog
- * could have the exercise. The action is a Text with role="button" rather than a nested
- * Touchable: it sits in a line of text-width content, and VoiceOver reads it as its own element.
+ * which explains why it shows less than the library would. The library is bundled, so there is
+ * nothing to check a stored copy against: the catalog either has the exercise or never will.
  */
-export function ExerciseProvenance({
-  from,
-  storedAt,
-  isFetching,
-  onRetry,
-}: {
-  from: ExerciseSourceKind;
-  storedAt: number | null;
-  isFetching: boolean;
-  /** Null when the catalog cannot have this exercise (a `local:` id): nothing to check. */
-  onRetry: (() => void) | null;
-}) {
+export function ExerciseProvenance({ from, storedAt }: { from: ExerciseSourceKind; storedAt: number | null }) {
   const { t } = useT();
   const theme = useAppTheme();
   const styles = useStyles(createStyles);
@@ -36,18 +24,6 @@ export function ExerciseProvenance({
             ? t('exerciseDetail.offlineCopy')
             : t('exerciseDetail.offlineCopyDated', { date: shortDateLabel(storedAt) })}
         </Txt>
-        {onRetry !== null ? (
-          <Txt
-            variant="caption"
-            weight="700"
-            color={theme.colors.accent}
-            role="button"
-            onPress={onRetry}
-            suppressHighlighting
-          >
-            {t(isFetching ? 'exerciseDetail.checking' : 'exerciseDetail.checkUpdates')}
-          </Txt>
-        ) : null}
       </Row>
     );
   }

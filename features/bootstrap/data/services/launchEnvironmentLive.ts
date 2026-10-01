@@ -5,10 +5,9 @@ import { type AppStateStatus, AppState as NativeAppState } from 'react-native';
 import type { AppState } from '@/features/bootstrap/domain/entities/AppState';
 import { LaunchEnvironment } from '@/features/bootstrap/domain/services/LaunchEnvironment';
 import { toAppError } from '@/features/core/error';
-import { getNetworkStatus, startNetworkStatus, subscribeNetworkStatus } from '@/features/core/network';
-import { getQueryClient, installQueryAdapters } from '@/features/core/query';
+import { startNetworkStatus } from '@/features/core/network';
+import { installQueryAdapters } from '@/features/core/query';
 import { themeFor } from '@/features/core/theme';
-import { invalidateCatalogQueries } from '@/features/exercises';
 
 /**
  * `unknown` and `extension` are real statuses the launch has no opinion about. Both mean "not the
@@ -16,20 +15,6 @@ import { invalidateCatalogQueries } from '@/features/exercises';
  */
 const appStateOf = (status: AppStateStatus): AppState =>
   status === 'active' || status === 'inactive' ? status : 'background';
-
-/** The network probe's first answer: an optimistic `online` before it would send a request into a dead radio. */
-const firstNetworkAnswer = Effect.async<boolean>(resume => {
-  if (getNetworkStatus().known) {
-    resume(Effect.succeed(getNetworkStatus().online));
-    return;
-  }
-  const unsubscribe = subscribeNetworkStatus(() => {
-    if (!getNetworkStatus().known) return;
-    unsubscribe();
-    resume(Effect.succeed(getNetworkStatus().online));
-  });
-  return Effect.sync(unsubscribe);
-});
 
 /** The one app-state subscription, and the listener it calls: a launch run again replaces it. */
 let appStateListener: ((next: AppState) => void) | null = null;
@@ -63,8 +48,6 @@ export const LaunchEnvironmentLive = Layer.succeed(LaunchEnvironment, {
       void SystemUI.setBackgroundColorAsync(themeFor(mode).brandBackground).catch(() => undefined);
       StatusBar.setStyle(mode === 'dark' ? 'light' : 'dark', true);
     }).pipe(Effect.catchAllDefect(() => Effect.void)),
-  online: firstNetworkAnswer,
-  catalogChanged: Effect.promise(() => invalidateCatalogQueries(getQueryClient())),
   appState: Effect.sync(() => appStateOf(NativeAppState.currentState)),
   onAppStateChange: listener =>
     Effect.sync(() => {

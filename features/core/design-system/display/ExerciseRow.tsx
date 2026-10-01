@@ -8,12 +8,11 @@ import { radius, spacing, type Theme } from '@/features/core/theme';
 import { useT } from '@/features/core/translations';
 
 /**
- * A catalog row from the remote exercise provider.
+ * A catalog exercise as a row.
  *
- * `subtitle` arrives pre-formatted for the same reason `ActivityRow`'s does: which of
- * muscles, category and equipment deserves the line depends on what the provider actually
- * filled in for that exercise, and wger leaves several of those empty often enough that a
- * row guessing on its own would print a lonely separator. The caller decides.
+ * `tags` arrive built for the same reason `ActivityRow`'s subtitle does: which of muscles, body
+ * area and equipment deserves the line depends on what the exercise has, and a stored copy may
+ * have none of them, so a row guessing on its own would print an empty line. The caller decides.
  *
  * `dimmed` is for `keepPreviousData`: rows still on screen belong to the *previous* query
  * while a new one is in flight. Dimming says "these are about to change"; leaving them
@@ -21,7 +20,7 @@ import { useT } from '@/features/core/translations';
  */
 export const ExerciseRow = memo(function ExerciseRow({
   name,
-  uri,
+  image,
   tags,
   badge,
   theme,
@@ -30,7 +29,8 @@ export const ExerciseRow = memo(function ExerciseRow({
   topDivider = true,
 }: {
   name: string;
-  uri: string | null;
+  /** The bundled thumbnail, as `ExerciseThumb` takes it. */
+  image: number | null;
   /** Primary muscles first, capped at two with "+n": a row stays one line tall. */
   tags: readonly Tag[];
   /** A status-style pill opposite the title: the exercise's category on the Exercises tab. */
@@ -59,7 +59,7 @@ export const ExerciseRow = memo(function ExerciseRow({
         onPress={onPress}
         showChevron
         accessibilityHint={t('misc.opensExercise')}
-        leading={<ExerciseThumb uri={uri} name={name} size={48} theme={theme} />}
+        leading={<ExerciseThumb source={image} name={name} size={48} theme={theme} />}
         {...(badge ? { body: <RowBadge label={badge} theme={theme} /> } : {})}
       />
     </View>

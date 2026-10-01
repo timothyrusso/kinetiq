@@ -1,60 +1,63 @@
-/** One of wger's three taxonomies. */
-export type TaxonKind = 'category' | 'equipment' | 'muscle';
+import type { BodyArea, Equipment, Muscle } from '@/features/exercises/domain/entities/catalogTaxonomy';
 
-const CATEGORY = [
-  [8, 'exerciseCategories.arms'],
-  [9, 'exerciseCategories.legs'],
-  [10, 'exerciseCategories.abs'],
-  [11, 'exerciseCategories.chest'],
-  [12, 'exerciseCategories.back'],
-  [13, 'exerciseCategories.shoulders'],
-  [14, 'exerciseCategories.calves'],
-  [15, 'exerciseCategories.cardio'],
-] as const;
+/** One of the catalog's three filterable taxonomies. */
+export type TaxonKind = 'bodyArea' | 'equipment' | 'muscle';
 
-const EQUIPMENT = [
-  [1, 'exerciseEquipment.barbell'],
-  [2, 'exerciseEquipment.szBar'],
-  [3, 'exerciseEquipment.dumbbell'],
-  [4, 'exerciseEquipment.gymMat'],
-  [5, 'exerciseEquipment.swissBall'],
-  [6, 'exerciseEquipment.pullUpBar'],
-  [7, 'exerciseEquipment.bodyweight'],
-  [8, 'exerciseEquipment.bench'],
-  [9, 'exerciseEquipment.inclineBench'],
-  [10, 'exerciseEquipment.kettlebell'],
-  [11, 'exerciseEquipment.resistanceBand'],
-  [12, 'exerciseEquipment.cableMachine'],
-] as const;
+const BODY_AREA = {
+  arms: 'exerciseCategories.arms',
+  legs: 'exerciseCategories.legs',
+  abs: 'exerciseCategories.abs',
+  chest: 'exerciseCategories.chest',
+  back: 'exerciseCategories.back',
+  shoulders: 'exerciseCategories.shoulders',
+  calves: 'exerciseCategories.calves',
+  cardio: 'exerciseCategories.cardio',
+} as const satisfies Record<BodyArea, string>;
 
-const MUSCLE = [
-  [1, 'exerciseMuscles.biceps'],
-  [2, 'exerciseMuscles.shoulders'],
-  [3, 'exerciseMuscles.serratus'],
-  [4, 'exerciseMuscles.chest'],
-  [5, 'exerciseMuscles.triceps'],
-  [6, 'exerciseMuscles.abs'],
-  [7, 'exerciseMuscles.calves'],
-  [8, 'exerciseMuscles.glutes'],
-  [9, 'exerciseMuscles.trapezius'],
-  [10, 'exerciseMuscles.quads'],
-  [11, 'exerciseMuscles.hamstrings'],
-  [12, 'exerciseMuscles.lats'],
-  [13, 'exerciseMuscles.brachialis'],
-  [14, 'exerciseMuscles.obliques'],
-  [15, 'exerciseMuscles.soleus'],
-] as const;
+const MUSCLE = {
+  abdominals: 'exerciseMuscles.abdominals',
+  biceps: 'exerciseMuscles.biceps',
+  triceps: 'exerciseMuscles.triceps',
+  forearms: 'exerciseMuscles.forearms',
+  chest: 'exerciseMuscles.chest',
+  lats: 'exerciseMuscles.lats',
+  'middle-back': 'exerciseMuscles.middleBack',
+  'lower-back': 'exerciseMuscles.lowerBack',
+  traps: 'exerciseMuscles.traps',
+  shoulders: 'exerciseMuscles.shoulders',
+  neck: 'exerciseMuscles.neck',
+  quadriceps: 'exerciseMuscles.quadriceps',
+  hamstrings: 'exerciseMuscles.hamstrings',
+  glutes: 'exerciseMuscles.glutes',
+  adductors: 'exerciseMuscles.adductors',
+  abductors: 'exerciseMuscles.abductors',
+  calves: 'exerciseMuscles.calves',
+} as const satisfies Record<Muscle, string>;
 
-/** The catalog key naming a wger taxon: a key of the app's translation catalog. */
-export type TaxonKey = (typeof CATEGORY)[number][1] | (typeof EQUIPMENT)[number][1] | (typeof MUSCLE)[number][1];
+const EQUIPMENT = {
+  'body-only': 'exerciseEquipment.bodyOnly',
+  machine: 'exerciseEquipment.machine',
+  other: 'exerciseEquipment.other',
+  'foam-roll': 'exerciseEquipment.foamRoll',
+  kettlebell: 'exerciseEquipment.kettlebell',
+  dumbbell: 'exerciseEquipment.dumbbell',
+  cable: 'exerciseEquipment.cable',
+  barbell: 'exerciseEquipment.barbell',
+  band: 'exerciseEquipment.band',
+  'medicine-ball': 'exerciseEquipment.medicineBall',
+  'exercise-ball': 'exerciseEquipment.exerciseBall',
+  'ez-bar': 'exerciseEquipment.ezBar',
+} as const satisfies Record<Equipment, string>;
+
+/** The catalog key naming a taxon: a key of the app's translation catalog. */
+export type TaxonKey = (typeof BODY_AREA)[BodyArea] | (typeof MUSCLE)[Muscle] | (typeof EQUIPMENT)[Equipment];
 
 /**
- * The catalog key naming each wger taxon, by wger's id. wger names its taxonomy in English (and
- * muscles in Latin) only, so the app names the ones it knows in its own catalog; the ids are stable
- * across catalog refreshes, the English names are not.
+ * The translation catalog key naming each taxon, by the dataset's own key. The dataset names
+ * nothing for display: every label is the app's, in every language it speaks.
  */
-export const TAXON_KEYS: Record<TaxonKind, ReadonlyMap<number, TaxonKey>> = {
-  category: new Map<number, TaxonKey>(CATEGORY),
-  equipment: new Map<number, TaxonKey>(EQUIPMENT),
-  muscle: new Map<number, TaxonKey>(MUSCLE),
+export const TAXON_KEYS: Record<TaxonKind, ReadonlyMap<string, TaxonKey>> = {
+  bodyArea: new Map<string, TaxonKey>(Object.entries(BODY_AREA)),
+  equipment: new Map<string, TaxonKey>(Object.entries(EQUIPMENT)),
+  muscle: new Map<string, TaxonKey>(Object.entries(MUSCLE)),
 };

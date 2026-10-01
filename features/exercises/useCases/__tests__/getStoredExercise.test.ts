@@ -7,14 +7,13 @@ import { getStoredExercise } from '@/features/exercises/useCases/getStoredExerci
 const stored: ExerciseSnapshot = {
   exerciseId: 'local:hip-thrust',
   name: 'Hip Thrust',
-  instructions: null,
+  instructions: [],
   category: 'Legs',
   primaryMuscles: ['Glutes'],
   secondaryMuscles: [],
   equipment: ['Barbell'],
   imageUrl: null,
   thumbnailUrl: null,
-  externalId: null,
   capturedAt: 1_700_000_000_000,
 };
 
@@ -30,7 +29,7 @@ describe('getStoredExercise', () => {
   itEffect(
     'returns null for an exercise nothing has stored',
     Effect.gen(function* () {
-      expect(yield* getStoredExercise('wger:10')).toBeNull();
+      expect(yield* getStoredExercise('ex:barbell-bench-press')).toBeNull();
     }),
     makeExerciseSnapshotRepositoryFake([stored]),
   );

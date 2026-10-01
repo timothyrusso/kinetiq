@@ -46,14 +46,12 @@ function testLayer(
   const step = (name: string) => Effect.sync(() => void launch.steps.push(name));
   return Layer.mergeAll(
     schemaStatusOf({ fromVersion: 9, toVersion: 10, migrationError: options.migrationError ?? null }),
-    AppConfig.layerOf({ wgerBaseUrl: 'https://wger.de/api/v2/' }),
+    AppConfig.layerOf({}),
     Layer.succeed(LaunchEnvironment, {
       installQueryPlumbing: step('queries'),
       loadFonts: options.fontsFail ? Effect.fail(new UnexpectedError({ cause: 'no font' })) : step('fonts'),
       prefetchHeaderIcons: step('icons'),
       paintChrome: mode => Effect.sync(() => void launch.painted.push(mode)).pipe(Effect.zipRight(step('chrome'))),
-      online: Effect.succeed(true),
-      catalogChanged: Effect.void,
       appState: Effect.succeed<AppState>('active'),
       onAppStateChange: listener =>
         Effect.sync(() => {
@@ -82,10 +80,9 @@ function testLayer(
       save: unused,
     }),
     Layer.succeed(ExerciseCatalog, {
-      installBundledIfMissing: options.catalogFails
+      installBundledIfNewer: options.catalogFails
         ? Effect.fail(new SqlError({ message: 'disk full' }))
         : Effect.succeed(false),
-      refreshIfStale: () => Effect.succeed(false),
       find: unused,
       search: unused,
     }),

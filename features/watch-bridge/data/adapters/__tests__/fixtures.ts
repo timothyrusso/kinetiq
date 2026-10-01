@@ -19,7 +19,7 @@ export function document(
     notes: null,
     entries: [
       {
-        exerciseId: 'wger:73',
+        exerciseId: 'ex:barbell-bench-press',
         exerciseName: 'Bench Press',
         restSeconds: 120,
         notes: null,

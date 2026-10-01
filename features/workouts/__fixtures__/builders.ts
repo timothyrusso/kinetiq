@@ -31,7 +31,7 @@ export const anOpenSet = (overrides: Partial<StrengthSet> = {}): StrengthSet =>
 
 /** Bench press, two sets of five at 100 kg, both done, resting 90 s. */
 export const anEntry = (overrides: Partial<StrengthEntry> = {}): StrengthEntry => ({
-  exerciseId: 'wger:73',
+  exerciseId: 'ex:barbell-bench-press',
   exerciseName: 'Bench Press',
   muscleGroup: null,
   sets: [aSet(), aSet({ index: 1 })],
@@ -43,7 +43,7 @@ export const anEntry = (overrides: Partial<StrengthEntry> = {}): StrengthEntry =
 /** A second exercise: overhead press, three sets of eight at 40 kg, none done. */
 export const anotherEntry = (overrides: Partial<StrengthEntry> = {}): StrengthEntry =>
   anEntry({
-    exerciseId: 'wger:74',
+    exerciseId: 'ex:barbell-squat',
     exerciseName: 'Overhead Press',
     sets: [0, 1, 2].map(index => anOpenSet({ index, reps: 8, weightKg: 40 })),
     notes: 'Brace first',
@@ -98,7 +98,7 @@ export const anActivity = (overrides: Partial<Activity> = {}): Activity => ({
 
 /** A bench press estimated-max record of 116.5 kg, set at `WORKOUT_TIME`. */
 export const aRecord = (overrides: Partial<PersonalRecord> = {}): PersonalRecord => ({
-  exerciseId: 'wger:73',
+  exerciseId: 'ex:barbell-bench-press',
   exerciseName: 'Bench Press',
   kind: 'est1rm',
   value: 116.5,
@@ -113,7 +113,7 @@ export const plannedSets = (count: number, reps: number, weightKg: number): Sess
 
 /** One plan item: bench press, three sets of 8 at 60 kg, resting 90 s. */
 export const aPlanItem = (overrides: Partial<SessionPlanItem> = {}): SessionPlanItem => ({
-  exerciseId: 'wger:73',
+  exerciseId: 'ex:barbell-bench-press',
   exerciseName: 'Bench Press',
   sets: plannedSets(3, 8, 60),
   restSeconds: 90,
@@ -128,7 +128,7 @@ export const aPlan = (overrides: Partial<SessionPlan> = {}): SessionPlan => ({
   items: [
     aPlanItem(),
     aPlanItem({
-      exerciseId: 'wger:74',
+      exerciseId: 'ex:barbell-squat',
       exerciseName: 'Overhead Press',
       sets: plannedSets(4, 6, 40),
       notes: 'Brace first',
@@ -139,17 +139,21 @@ export const aPlan = (overrides: Partial<SessionPlan> = {}): SessionPlan => ({
 
 /** The bench press as the catalog reads it. */
 export const anExercise = (overrides: Partial<Exercise> = {}): Exercise => ({
-  id: 'wger:73',
+  id: 'ex:barbell-bench-press',
   name: 'Bench Press',
-  instructions: 'Lower the bar to the chest, then press.',
+  instructions: ['Lower the bar to the chest, then press.'],
   category: 'Chest',
+  bodyArea: 'chest',
+  trainingType: 'strength',
+  level: 'beginner',
+  force: 'push',
+  mechanic: 'compound',
   primaryMuscles: ['Chest'],
   secondaryMuscles: ['Triceps'],
   equipment: ['Barbell'],
-  imageUrl: 'https://wger.de/media/bench.png',
-  thumbnailUrl: 'https://wger.de/media/bench-small.png',
-  videoUrl: null,
-  source: 'remote',
-  externalId: 73,
+  imageUrl: 'assets/catalog/images/barbell-bench-press-medium-grip/0.webp',
+  imageEndUrl: 'assets/catalog/images/barbell-bench-press-medium-grip/1.webp',
+  thumbnailUrl: 'assets/catalog/images/barbell-bench-press-medium-grip/thumb.webp',
+  source: 'catalog',
   ...overrides,
 });

@@ -3,10 +3,10 @@ import { TAXON_KEYS, type TaxonKind } from '@/features/exercises/domain/entities
 import type { CatalogLanguage } from '@/features/exercises/domain/schemas/CatalogLanguage';
 
 /**
- * The name of wger taxon `id` in `language`. An id the app does not name, one a later catalog
- * added, keeps the name stored with the catalog.
+ * The name of taxon `key` in `language`. A key the app does not name, one a later edit of the
+ * dataset added, reads as itself rather than as nothing.
  */
-export function taxonName(kind: TaxonKind, id: number, stored: string, language: CatalogLanguage): string {
-  const key = TAXON_KEYS[kind].get(id);
-  return key === undefined ? stored : translate(language, key);
+export function taxonName(kind: TaxonKind, key: string, language: CatalogLanguage): string {
+  const catalogKey = TAXON_KEYS[kind].get(key);
+  return catalogKey === undefined ? key : translate(language, catalogKey);
 }

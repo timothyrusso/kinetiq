@@ -10,10 +10,7 @@ import { useSaveRoutine } from '@/features/routines/facades/useSaveRoutine';
 const NEW_ROUTINE = {
   name: 'Push Day',
   items: [aRoutineItem(), anotherRoutineItem()],
-  snapshots: [
-    anExerciseSnapshot(),
-    anExerciseSnapshot({ exerciseId: 'wger:74', name: 'Overhead Press', externalId: 74 }),
-  ],
+  snapshots: [anExerciseSnapshot(), anExerciseSnapshot({ exerciseId: 'ex:barbell-squat', name: 'Overhead Press' })],
 };
 
 /** The list, one routine's detail, and the writes, in one component like a screen and its sheet. */
@@ -53,7 +50,7 @@ describe('the routine facades', () => {
     await rerender(id);
 
     await waitFor(() => expect(result.current.detail.routine?.name).toBe('Push Day'));
-    expect(result.current.detail.snapshots.get('wger:73')?.name).toBe('Bench Press');
+    expect(result.current.detail.snapshots.get('ex:barbell-bench-press')?.name).toBe('Bench Press');
     expect(result.current.detail.missing).toBe(false);
     await done();
   });

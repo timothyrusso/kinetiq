@@ -6,9 +6,9 @@ import { useExerciseSearch } from '@/features/exercises/facades/useExerciseSearc
 import type { makeCatalogRepositoryFake } from '@/features/exercises/useCases/__tests__/catalogFakes';
 
 const PRESSES = Array.from({ length: 120 }, (_, i) =>
-  anExercise({ id: `wger:${i + 1}`, externalId: i + 1, name: `Press ${String(i + 1).padStart(3, '0')}` }),
+  anExercise({ id: `ex:press-${i + 1}`, name: `Press ${String(i + 1).padStart(3, '0')}` }),
 );
-const PRESS: ExerciseFilter = { query: 'press', categoryId: null, equipmentId: null, muscleId: null };
+const PRESS: ExerciseFilter = { query: 'press', bodyArea: null, equipment: null, muscle: null };
 const PRESS_0: ExerciseFilter = { ...PRESS, query: 'press 0' };
 
 const renderSearch = (options: Parameters<typeof makeCatalogRepositoryFake>[0], filter = PRESS) =>
