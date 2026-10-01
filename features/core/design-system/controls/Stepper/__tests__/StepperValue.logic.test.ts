@@ -112,6 +112,53 @@ describe('useStepperField', () => {
     expect(result.current.state.selectOnFocus).toBe(true);
   });
 
+  it('keeps typing that starts while a press is still being written', async () => {
+    const changes: number[] = [];
+    const { result, rerender } = await renderField(10, changes);
+
+    await act(async () => result.current.effects.focus());
+    await act(async () => result.current.effects.changeText('15'));
+    await act(async () => {
+      const typed = result.current.effects.take();
+      result.current.effects.write((typed ?? 10) + 1);
+    });
+    await act(async () => result.current.effects.changeText('2'));
+    await act(async () => rerender({ at: 16 }));
+
+    expect(changes).toEqual([16]);
+    expect(result.current.state.text).toBe('2');
+  });
+
+  it('keeps typing that starts while a blur is still being written', async () => {
+    const changes: number[] = [];
+    const { result, rerender } = await renderField(60, changes);
+
+    await act(async () => result.current.effects.focus());
+    await act(async () => result.current.effects.changeText('80'));
+    await act(async () => result.current.effects.blur());
+    expect(result.current.state.text).toBe('80');
+    await act(async () => result.current.effects.focus());
+    await act(async () => result.current.effects.changeText('9'));
+    await act(async () => rerender({ at: 80 }));
+
+    expect(changes).toEqual([80]);
+    expect(result.current.state.text).toBe('9');
+  });
+
+  it('does not write a number again while it is still being written', async () => {
+    const changes: number[] = [];
+    const { result, unmount } = await renderField(60, changes);
+
+    await act(async () => result.current.effects.focus());
+    await act(async () => result.current.effects.changeText('80'));
+    await act(async () => result.current.effects.blur());
+    await act(async () => result.current.effects.focus());
+    await act(async () => result.current.effects.blur());
+    await act(async () => unmount());
+
+    expect(changes).toEqual([80]);
+  });
+
   it('commits what was typed when the field goes away mid-typing', async () => {
     const changes: number[] = [];
     const { result, unmount } = await renderField(60, changes);

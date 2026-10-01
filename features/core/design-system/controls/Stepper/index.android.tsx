@@ -28,11 +28,11 @@ export const Stepper = memo(function Stepper({
   const theme = useAppTheme();
   const typesDecimals = decimal || !Number.isInteger(step);
   const field = useStepperField(value, onChange, { min, max, decimal: typesDecimals });
-  const { effects } = useStepperPress(value, onChange, { min, max, step }, field.effects.take);
+  const { effects } = useStepperPress(field.state.value, field.effects.write, { min, max, step }, field.effects.take);
 
   const size = compact ? 32 : touchTarget - spacing.xs;
   const button = (delta: number, icon: IconName) => {
-    const atEdge = delta > 0 ? value >= max : value <= min;
+    const atEdge = delta > 0 ? field.state.value >= max : field.state.value <= min;
     return (
       <Pressable
         onPressIn={() => effects.press(delta)}

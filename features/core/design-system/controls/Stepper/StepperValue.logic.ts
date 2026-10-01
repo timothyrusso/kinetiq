@@ -22,9 +22,15 @@ import { useT } from '@/features/core/translations';
  * zeros that were never typed.
  *
  * `take` retires a pending draft and returns the number it would commit (nothing when there is none
- * to write), for a − or + press to step from the typed number rather than the one under it. The field
- * going away commits too: a sheet swiped shut mid-typing, or iOS's number pad, which has no done
- * key.
+ * to write), for a − or + press to step from the typed number rather than the one under it; the
+ * press writes through `write`. The field going away commits too: a sheet swiped shut mid-typing,
+ * or iOS's number pad, which has no done key.
+ *
+ * ## The number in flight
+ *
+ * A write can take a moment to come back as `value`. Until it does, the field stands for the
+ * number it wrote (`state.value`): a draft started in that moment is typed over that number, so the
+ * write landing does not retire it, and a draft that only repeats it writes nothing again.
  */
 export function useStepperField(value: number, onChange: (next: number) => void, bounds: FieldBounds) {
   const { locale } = useT();
@@ -33,8 +39,17 @@ export function useStepperField(value: number, onChange: (next: number) => void,
   const [focused, setFocused] = useState(false);
   const input = useRef<TextInput>(null);
   const keyboard = useRef<EmitterSubscription | null>(null);
-  const latest = useRef({ draft, value, onChange, bounds });
-  latest.current = { draft, value, onChange, bounds };
+  const inFlight = useRef<number | null>(null);
+  if (inFlight.current === value) inFlight.current = null;
+  const shown = inFlight.current ?? value;
+  const latest = useRef({ draft, value: shown, onChange, bounds });
+  latest.current = { draft, value: shown, onChange, bounds };
+
+  const write = useCallback((next: number) => {
+    inFlight.current = next;
+    latest.current.value = next;
+    latest.current.onChange(next);
+  }, []);
 
   const take = useCallback((): number | null => {
     const { draft: pending, value: current, bounds: range } = latest.current;
@@ -42,17 +57,17 @@ export function useStepperField(value: number, onChange: (next: number) => void,
     setDraft(null);
     return committedValue(pending, current, range);
   }, []);
-  const commit = useCallback((): number | null => {
+
+  const commit = useCallback(() => {
     const next = take();
-    if (next !== null) latest.current.onChange(next);
-    return next;
-  }, [take]);
+    if (next !== null) write(next);
+  }, [take, write]);
 
   const focus = useCallback(() => {
     const current = latest.current.value;
-    setDraft(kept =>
-      kept !== null && kept.base === current ? kept : { text: fieldText(current, separator), base: current },
-    );
+    const next = { text: fieldText(current, separator), base: current };
+    latest.current.draft = next;
+    setDraft(next);
     setFocused(true);
     // NOTE: Android's back key hides the keyboard but leaves the field focused, so nothing would commit.
     keyboard.current?.remove();
@@ -69,11 +84,8 @@ export function useStepperField(value: number, onChange: (next: number) => void,
     keyboard.current?.remove();
     keyboard.current = null;
     setFocused(false);
-    const before = latest.current.value;
-    const next = commit();
-    // NOTE: Until the write comes back the field keeps showing what it committed, not the old number.
-    if (next !== null) setDraft({ text: fieldText(next, separator), base: before });
-  }, [commit, separator]);
+    commit();
+  }, [commit]);
 
   useEffect(
     () => () => {
@@ -84,10 +96,15 @@ export function useStepperField(value: number, onChange: (next: number) => void,
   );
 
   return {
-    // NOTE: Select-on-focus is switched off while focused. Android's field selects all again on its
-    // first layout after focus, and a field that widens as it is typed in lays out mid-typing: the
-    // third digit replaced the first two.
-    state: { text: stepperText(draft, value, separator), input, selectOnFocus: !focused },
-    effects: { focus, changeText, blur, take },
+    state: {
+      value: shown,
+      text: stepperText(draft, shown, separator),
+      input,
+      // NOTE: Select-on-focus is switched off while focused. Android's field selects all again on its
+      // first layout after focus, and a field that widens as it is typed in lays out mid-typing: the
+      // third digit replaced the first two.
+      selectOnFocus: !focused,
+    },
+    effects: { focus, changeText, blur, take, write },
   };
 }
