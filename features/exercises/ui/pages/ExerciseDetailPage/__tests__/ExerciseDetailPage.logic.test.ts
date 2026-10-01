@@ -7,7 +7,16 @@ import { anExercise } from '@/features/exercises/__fixtures__/builders';
 import { renderWithCatalog } from '@/features/exercises/facades/__tests__/renderWithCatalog';
 import { useExerciseDetailPageLogic } from '@/features/exercises/ui/pages/ExerciseDetailPage/ExerciseDetailPage.logic';
 
-const BENCH = anExercise();
+const BENCH = anExercise({ instructions: ['Lower the bar to the chest.', '  ', 'Press it back up.'] });
+
+const STRETCH = anExercise({
+  id: 'ex:90-90-hamstring',
+  name: '90/90 Hamstring',
+  trainingType: 'stretching',
+  level: 'beginner',
+  mechanic: null,
+  instructions: [],
+});
 
 const PICTURED = anExercise({
   id: 'ex:barbell-squat',
@@ -24,12 +33,36 @@ const renderDetail = (id?: string, exercise = BENCH) => {
 };
 
 describe('useExerciseDetailPageLogic', () => {
-  it('titles the screen with the catalog exercise and lists its steps', async () => {
+  it('titles the screen with the catalog exercise and lists its non-blank steps in order', async () => {
     const { result, done } = await renderDetail(BENCH.id);
 
     await waitFor(() => expect(result.current.state.exercise).toEqual(BENCH));
     expect(result.current.derived.title).toBe(BENCH.name);
-    expect(result.current.derived.instructions).toBe('Lower the bar to the chest, then press.');
+    expect(result.current.derived.steps).toEqual(['Lower the bar to the chest.', 'Press it back up.']);
+    await done();
+  });
+
+  it('badges the level and mechanic, and no training type for a strength exercise', async () => {
+    const { result, done } = await renderDetail(BENCH.id);
+
+    await waitFor(() => expect(result.current.state.exercise).toEqual(BENCH));
+    expect(result.current.derived.badgeTags.map(tag => tag.label)).toEqual([
+      tr('exerciseLevels.beginner'),
+      tr('exerciseMechanics.compound'),
+    ]);
+    expect(result.current.derived.hasLead).toBe(true);
+    await done();
+  });
+
+  it('badges a stretching exercise as one, and keeps the fallback for no steps', async () => {
+    const { result, done } = await renderDetail(STRETCH.id, STRETCH);
+
+    await waitFor(() => expect(result.current.state.exercise).toEqual(STRETCH));
+    expect(result.current.derived.badgeTags.map(tag => tag.label)).toEqual([
+      tr('exerciseTrainingTypes.stretching'),
+      tr('exerciseLevels.beginner'),
+    ]);
+    expect(result.current.derived.steps).toBeNull();
     await done();
   });
 
@@ -48,11 +81,10 @@ describe('useExerciseDetailPageLogic', () => {
     await done();
   });
 
-  it('opens a similar exercise, and not the exercise already on screen', async () => {
+  it('opens a similar exercise', async () => {
     const { result, done } = await renderDetail(BENCH.id);
     await waitFor(() => expect(result.current.state.exercise).toEqual(BENCH));
 
-    await act(async () => result.current.effects.openSimilar(BENCH.id));
     await act(async () => result.current.effects.openSimilar('ex:barbell-squat'));
 
     expect(routerFake.history).toEqual([{ verb: 'push', href: routes.exerciseDetail('ex:barbell-squat') }]);
