@@ -2,20 +2,26 @@ import { anExercise } from '@/features/exercises/__fixtures__/builders';
 import { snapshotOf } from '@/features/exercises/domain/utils/snapshotOf';
 
 describe('snapshotOf', () => {
-  it('copies what the exercise says and stamps the capture time', () => {
-    const snapshot = snapshotOf(anExercise({ imageUrl: 'big.png', thumbnailUrl: 'small.png' }), 1_700_000_000_000);
+  it('copies what the exercise says, its images as asset paths, and stamps the capture time', () => {
+    const snapshot = snapshotOf(
+      anExercise({
+        imageUrl: 'assets/catalog/images/barbell-bench-press/0.webp',
+        imageEndUrl: 'assets/catalog/images/barbell-bench-press/1.webp',
+        thumbnailUrl: 'assets/catalog/images/barbell-bench-press/thumb.webp',
+      }),
+      1_700_000_000_000,
+    );
 
     expect(snapshot).toEqual({
-      exerciseId: 'wger:10',
-      name: 'Bench Press',
-      instructions: 'Lower the bar to the chest, then press.',
+      exerciseId: 'ex:barbell-bench-press',
+      name: 'Barbell Bench Press',
+      instructions: ['Lower the bar to the chest, then press.'],
       category: 'Chest',
       primaryMuscles: ['Chest'],
-      secondaryMuscles: ['Triceps brachii'],
+      secondaryMuscles: ['Triceps'],
       equipment: ['Barbell'],
-      imageUrl: 'big.png',
-      thumbnailUrl: 'small.png',
-      externalId: 10,
+      imageUrl: 'assets/catalog/images/barbell-bench-press/0.webp',
+      thumbnailUrl: 'assets/catalog/images/barbell-bench-press/thumb.webp',
       capturedAt: 1_700_000_000_000,
     });
   });

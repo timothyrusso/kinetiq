@@ -6,7 +6,7 @@ import { useRoutine } from '@/features/routines/facades/useRoutine';
 import { useAddRoutineExercise, useSetRoutineItem } from '@/features/routines/facades/useRoutineMutations';
 import { renderOnRoutine } from '@/features/routines/ui/pages/__tests__/renderOnRoutine';
 
-const DIPS = anExercise({ id: 'wger:75', name: 'Dips', externalId: 75, equipment: [] });
+const DIPS = anExercise({ id: 'ex:dips', name: 'Dips', equipment: [] });
 
 const useRoutineWrites = (id: RoutineId | null) => ({
   detail: useRoutine(id),
@@ -31,7 +31,7 @@ describe('useAddRoutineExercise', () => {
     });
 
     await waitFor(() => expect(result.current.detail.routine?.items.map(item => item.exerciseName)).toContain('Dips'));
-    expect(result.current.detail.snapshots.get('wger:75')?.name).toBe('Dips');
+    expect(result.current.detail.snapshots.get('ex:dips')?.name).toBe('Dips');
     await done();
   });
 

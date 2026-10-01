@@ -8,7 +8,7 @@ import { useAddSessionExercise } from '@/features/workouts/facades/useAddSession
 import { useSessionStore } from '@/features/workouts/state/sessionStore';
 import type { ExerciseTarget } from '@/features/workouts/useCases/addSessionExercise';
 
-const DIPS = anExercise({ id: 'wger:99', externalId: 99, name: 'Dips' });
+const DIPS = anExercise({ id: 'ex:pullups', name: 'Dips' });
 const TARGET: ExerciseTarget = { sets: plannedSets(3, 10, 0), restSeconds: 60, notes: null };
 
 const live = () => useSessionStore.getState().session;
@@ -44,7 +44,7 @@ describe('useAddSessionExercise', () => {
 
     await act(async () => void (await result.current.add(DIPS, TARGET, false)));
 
-    expect((await stored('wger:99'))?.name).toBe('Dips');
+    expect((await stored('ex:pullups'))?.name).toBe('Dips');
     await done();
   });
 
@@ -58,7 +58,7 @@ describe('useAddSessionExercise', () => {
 
     expect(added).toBe(false);
     expect(live()?.entries).toHaveLength(2);
-    expect(await stored('wger:99')).toBeUndefined();
+    expect(await stored('ex:pullups')).toBeUndefined();
     await done();
   });
 

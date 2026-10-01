@@ -3,16 +3,15 @@ import { snapshotInLanguage } from '@/features/exercises/mappers/snapshotInLangu
 
 /** The bench press as a routine stored it when it was picked in Italian. */
 const PICKED_IN_ITALIAN: ExerciseSnapshot = {
-  exerciseId: 'wger:73',
+  exerciseId: 'ex:barbell-bench-press',
   name: 'Panca piana',
-  instructions: null,
+  instructions: [],
   category: 'Petto',
   primaryMuscles: ['Petto'],
   secondaryMuscles: ['Tricipiti', 'Spalle'],
-  equipment: ['Bilanciere', 'Panca'],
+  equipment: ['Bilanciere', 'Cavi'],
   imageUrl: null,
   thumbnailUrl: null,
-  externalId: 73,
   capturedAt: 1_700_000_000_000,
 };
 
@@ -22,11 +21,11 @@ describe('snapshotInLanguage', () => {
       category: 'Chest',
       primaryMuscles: ['Chest'],
       secondaryMuscles: ['Triceps', 'Shoulders'],
-      equipment: ['Barbell', 'Bench'],
+      equipment: ['Barbell', 'Cable'],
     });
   });
 
-  it("names wger's English, as a snapshot stored before the app named the taxonomy, in Italian", () => {
+  it('names a snapshot stored in English in Italian', () => {
     const stored = { ...PICKED_IN_ITALIAN, category: 'Chest', primaryMuscles: ['Chest'], equipment: ['Barbell'] };
 
     expect(snapshotInLanguage(stored, 'it')).toMatchObject({
@@ -40,10 +39,13 @@ describe('snapshotInLanguage', () => {
     expect(snapshotInLanguage(PICKED_IN_ITALIAN, 'en').name).toBe('Panca piana');
   });
 
-  it('keeps a taxon the app does not name as stored', () => {
-    const stored = { ...PICKED_IN_ITALIAN, primaryMuscles: ['Musculus mysterius'] };
+  it('keeps a taxon the app does not name, such as one from the previous catalog, as stored', () => {
+    const stored = { ...PICKED_IN_ITALIAN, primaryMuscles: ['Musculus mysterius'], equipment: ['SZ-Bar'] };
 
-    expect(snapshotInLanguage(stored, 'en').primaryMuscles).toEqual(['Musculus mysterius']);
+    expect(snapshotInLanguage(stored, 'en')).toMatchObject({
+      primaryMuscles: ['Musculus mysterius'],
+      equipment: ['SZ-Bar'],
+    });
   });
 
   it('leaves a snapshot with no category without one', () => {

@@ -1,59 +1,55 @@
 import { Schema } from 'effect';
+import {
+  BODY_AREAS,
+  EQUIPMENT,
+  FORCES,
+  LEVELS,
+  MECHANICS,
+  MUSCLES,
+  TRAINING_TYPES,
+} from '@/features/exercises/domain/entities/catalogTaxonomy';
 import { ExerciseId } from '@/features/exercises/domain/schemas/ExerciseId';
 
-const CatalogTranslationSchema = Schema.Struct({
-  name: Schema.String,
-  instructions: Schema.NullOr(Schema.String),
-});
+/** The format `CatalogPayloadSchema` reads, stamped in `catalog_meta` with every install. */
+export const CATALOG_FORMAT_VERSION = 2;
 
-const NamedTaxonSchema = Schema.Struct({ id: Schema.Number, name: Schema.String });
+const Muscle = Schema.Literal(...MUSCLES);
 
-/** One exercise as the catalog stores it: ids into the taxonomy, and a translation per language. */
+/** A text per catalog language: the dataset writes every exercise in both. */
+const PerLanguage = <A, I>(value: Schema.Schema<A, I>) => Schema.Struct({ en: value, it: value });
+
+/** One exercise as `exercises.json` holds it: text keys into the vocabularies, and both languages. */
 const CatalogExerciseSchema = Schema.Struct({
   id: ExerciseId,
-  externalId: Schema.Number,
-  uuid: Schema.NullOr(Schema.String),
-  // NOTE: wger's variation uuid; exercises sharing one are variations of each other.
-  variationGroup: Schema.NullOr(Schema.String),
-  categoryId: Schema.Number,
-  primaryMuscleIds: Schema.Array(Schema.Number),
-  secondaryMuscleIds: Schema.Array(Schema.Number),
-  equipmentIds: Schema.Array(Schema.Number),
-  imageUrl: Schema.NullOr(Schema.String),
-  thumbnailUrl: Schema.NullOr(Schema.String),
-  videoUrl: Schema.NullOr(Schema.String),
-  translations: Schema.Struct({
-    en: Schema.optional(CatalogTranslationSchema),
-    it: Schema.optional(CatalogTranslationSchema),
-  }),
+  name: PerLanguage(Schema.String),
+  // NOTE: the steps in order, one sentence or two each; empty when the dataset has none.
+  instructions: PerLanguage(Schema.Array(Schema.String)),
+  bodyArea: Schema.Literal(...BODY_AREAS),
+  trainingType: Schema.Literal(...TRAINING_TYPES),
+  level: Schema.Literal(...LEVELS),
+  force: Schema.NullOr(Schema.Literal(...FORCES)),
+  mechanic: Schema.NullOr(Schema.Literal(...MECHANICS)),
+  primaryMuscles: Schema.Array(Muscle),
+  secondaryMuscles: Schema.Array(Muscle),
+  equipment: Schema.Literal(...EQUIPMENT),
+  // NOTE: paths relative to `assets/catalog`; an exercise in `pendingPhotos.json` names files
+  // that are not there yet.
+  images: Schema.Struct({ start: Schema.String, end: Schema.String, thumb: Schema.String }),
 });
 
 export type CatalogExercise = typeof CatalogExerciseSchema.Type;
 
 /**
- * The one shape the exercise catalog travels in, format version 1.
- *
- * The bundled snapshot and the network download both produce a `CatalogPayload`, and both go
- * through `replaceCatalog`, the only writer of the catalog tables: two sources, one write path,
- * so a bug in the swap cannot hide in whichever source was not tested. Only English and Italian
- * are kept, and nothing here is derived for display.
+ * The shape the exercise catalog travels in, format version 2: `assets/catalog/exercises.json`
+ * as committed. `datasetVersion` goes up with every edit of the dataset, and is what tells an
+ * installed catalog it is out of date. `replaceCatalog` is the only writer of the catalog tables.
  */
 export const CatalogPayloadSchema = Schema.Struct({
-  formatVersion: Schema.Literal(1),
-  source: Schema.Literal('wger'),
-  // NOTE: epoch ms: when the payload was fetched from wger.
-  generatedAt: Schema.Number,
-  categories: Schema.Array(NamedTaxonSchema),
-  equipment: Schema.Array(NamedTaxonSchema),
-  muscles: Schema.Array(
-    Schema.Struct({
-      id: Schema.Number,
-      name: Schema.String,
-      nameEn: Schema.NullOr(Schema.String),
-      isFront: Schema.Boolean,
-    }),
-  ),
+  datasetVersion: Schema.Int.pipe(Schema.positive()),
   exercises: Schema.Array(CatalogExerciseSchema),
 });
 
 export type CatalogPayload = typeof CatalogPayloadSchema.Type;
+
+/** `assets/catalog/version.json`: the bundled dataset's version alone, a few bytes to read. */
+export const CatalogVersionSchema = Schema.Struct({ datasetVersion: CatalogPayloadSchema.fields.datasetVersion });

@@ -73,7 +73,7 @@
     "ios": "expo run:ios --device \"iPhone 17 Pro\"",
     "android": "expo run:android",
     "prebuild": "expo prebuild --clean",
-    "catalog:update": "tsx scripts/build-catalog.ts",
+    "catalog:images": "tsx scripts/catalog-images.ts",
     "typecheck": "tsc --noEmit",
     "check:i18n": "config-presets check-i18n",
     "check": "npm run lint && npm run typecheck && npm run check:text && npm run check:arch && npm run check:i18n && npm run check:unused-keys && npm run check:hooks && npm run check:unused && npm run test",

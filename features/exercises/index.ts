@@ -12,11 +12,10 @@ export type { Exercise } from '@/features/exercises/domain/schemas/ExerciseSchem
 export type { ExerciseSnapshot } from '@/features/exercises/domain/schemas/ExerciseSnapshotSchema';
 /** The catalog as the launch and the routine importer use it. */
 export { ExerciseCatalog } from '@/features/exercises/domain/services/ExerciseCatalog';
-export { externalIdOf, isLocalExerciseId } from '@/features/exercises/domain/utils/exerciseId';
+export { isCatalogExerciseId, isLocalExerciseId } from '@/features/exercises/domain/utils/exerciseId';
 export { snapshotOf } from '@/features/exercises/domain/utils/snapshotOf';
-export { invalidateCatalogQueries } from '@/features/exercises/facades/exerciseQueryKeys';
 export { useCatalogLanguage } from '@/features/exercises/facades/useCatalogLanguage';
-export { useCatalogMeta } from '@/features/exercises/facades/useCatalogMeta';
 export { useExercise } from '@/features/exercises/facades/useExercise';
-export { useRefreshCatalog } from '@/features/exercises/facades/useRefreshCatalog';
+/** A stored image path as the bundled image it names, for the rows that draw an exercise. */
+export { exerciseImageSource } from '@/features/exercises/mappers/exerciseImageSource';
 export { snapshotInLanguage } from '@/features/exercises/mappers/snapshotInLanguage';

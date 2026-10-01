@@ -19,7 +19,7 @@ describe('buildWatchRoutines', () => {
           items: [
             {
               id: 'rit_1',
-              exerciseId: 'wger:73',
+              exerciseId: 'ex:barbell-bench-press',
               exerciseName: 'Bench Press',
               sets: Array.from({ length: 4 }, () => ({ reps: 8, weightKg: 60, targetRpe: null })),
               restSeconds: 120,

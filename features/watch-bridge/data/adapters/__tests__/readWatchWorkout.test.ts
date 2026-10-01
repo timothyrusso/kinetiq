@@ -3,7 +3,9 @@ import { readWatchWorkout } from '@/features/watch-bridge/data/adapters/readWatc
 
 const withSet = (set: Record<string, unknown>) =>
   document({
-    entries: [{ exerciseId: 'wger:73', exerciseName: 'Bench', restSeconds: 60, notes: null, sets: [set] }],
+    entries: [
+      { exerciseId: 'ex:barbell-bench-press', exerciseName: 'Bench', restSeconds: 60, notes: null, sets: [set] },
+    ],
   });
 const set = { index: 0, reps: 5, weightKg: 80, completed: true, rpe: null };
 

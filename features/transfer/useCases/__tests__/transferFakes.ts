@@ -98,8 +98,7 @@ export const ExerciseCatalogFake = (
   options: { readonly searchFails?: SqlError } = {},
 ) =>
   Layer.succeed(ExerciseCatalog, {
-    installBundledIfMissing: unused(),
-    refreshIfStale: unused,
+    installBundledIfNewer: unused(),
     find: id => Effect.succeed(exercises.find(exercise => exercise.id === id)),
     search: name =>
       options.searchFails === undefined

@@ -1,12 +1,9 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import type { SettingsRow, SettingsSection } from '@/features/core/design-system';
-import { isOfflineFailure } from '@/features/core/error';
 import { haptics } from '@/features/core/haptics';
 import { routes } from '@/features/core/navigation';
 import { useT } from '@/features/core/translations';
-import { shortDateLabel } from '@/features/core/utils';
-import { useCatalogMeta, useRefreshCatalog } from '@/features/exercises';
 import type { ParseIssue } from '@/features/transfer/domain/entities/ParsedImport';
 import type { ExportTarget, ImportSource } from '@/features/transfer/domain/entities/TransferFormat';
 import { ImportTooLarge, ImportUnreadable } from '@/features/transfer/domain/errors/TransferErrors';
@@ -25,20 +22,17 @@ function issueOf(error: unknown): ParseIssue {
 }
 
 /**
- * Your data: export history and routines, import routines, the AI recipe and the exercise
- * library. Import is routines only: importing a plan twice is harmless, importing history twice
- * doubles every chart. The AI section is a recipe, not an integration: "Copy instructions" puts a
+ * Your data: export history and routines, import routines and the AI recipe. Import is routines
+ * only: importing a plan twice is harmless, importing history twice doubles every chart. The AI section is a recipe, not an integration: "Copy instructions" puts a
  * prompt describing the routines file on the clipboard, and any chat can write a file "Paste from
  * clipboard" reads back. Errors stay on the screen, as a row under the buttons that caused them.
  */
 export function useDataPageLogic() {
-  const { t, locale } = useT();
+  const { t } = useT();
   const router = useRouter();
   const { mutate: exportFile, isPending: exporting, isError: exportFailed } = useExport();
   const { mutate: read, isPending: reading, error: readError } = useReadImport();
   const { mutate: copy, isSuccess: copied } = useCopyAiPrompt();
-  const { data: catalog } = useCatalogMeta();
-  const { mutate: refreshCatalog, isPending: refreshing, error: refreshError } = useRefreshCatalog();
 
   const runExport = useCallback(
     (target: ExportTarget) => exportFile(target, { onError: () => haptics.warning() }),
@@ -60,10 +54,6 @@ export function useDataPageLogic() {
   const copyPrompt = useCallback(
     () => copy(t('dataTransfer.aiPrompt'), { onSuccess: () => haptics.success() }),
     [copy, t],
-  );
-  const refresh = useCallback(
-    () => refreshCatalog(undefined, { onSuccess: () => haptics.success(), onError: () => haptics.warning() }),
-    [refreshCatalog],
   );
 
   const importIssue = readError === null ? null : issueOf(readError);
@@ -119,36 +109,6 @@ export function useDataPageLogic() {
       });
     }
 
-    const catalogRows: SettingsRow[] = [
-      {
-        kind: 'info',
-        key: 'catalogCount',
-        title: t('dataTransfer.catalogExercises'),
-        value: catalog?.exerciseCount == null ? undefined : catalog.exerciseCount.toLocaleString(locale),
-        subtitle:
-          catalog?.generatedAt == null
-            ? undefined
-            : t('dataTransfer.catalogUpdated', { date: shortDateLabel(catalog.generatedAt) }),
-      },
-      {
-        kind: 'button',
-        key: 'catalogRefresh',
-        title: t(refreshing ? 'dataTransfer.catalogRefreshing' : 'dataTransfer.catalogRefresh'),
-        busy: refreshing,
-        onPress: refresh,
-      },
-    ];
-    if (refreshError !== null && !refreshing) {
-      catalogRows.push({
-        kind: 'info',
-        key: 'catalogError',
-        title: t('dataTransfer.catalogFailed'),
-        subtitle: t(
-          isOfflineFailure(refreshError) ? 'dataTransfer.catalogFailedOffline' : 'dataTransfer.catalogFailedOther',
-        ),
-      });
-    }
-
     return [
       { key: 'export', title: t('dataTransfer.exportTitle'), footer: t('dataTransfer.exportFooter'), rows: exportRows },
       { key: 'import', title: t('dataTransfer.importTitle'), footer: t('dataTransfer.importFooter'), rows: importRows },
@@ -165,29 +125,8 @@ export function useDataPageLogic() {
           },
         ],
       },
-      {
-        key: 'catalog',
-        title: t('dataTransfer.catalogTitle'),
-        footer: t('dataTransfer.catalogFooter'),
-        rows: catalogRows,
-      },
     ];
-  }, [
-    catalog,
-    copied,
-    copyPrompt,
-    exportFailed,
-    exporting,
-    importIssue,
-    locale,
-    readImport,
-    reading,
-    refresh,
-    refreshError,
-    refreshing,
-    runExport,
-    t,
-  ]);
+  }, [copied, copyPrompt, exportFailed, exporting, importIssue, readImport, reading, runExport, t]);
 
   return { derived: { title: t('dataTransfer.title'), sections } };
 }

@@ -14,7 +14,7 @@ describe('RecordRepositoryLive', () => {
 
       yield* repository.upsertBests([aRecord({ previousValue: 100 })]);
 
-      expect(yield* repository.forExercise('wger:73')).toEqual([aRecord()]);
+      expect(yield* repository.forExercise('ex:barbell-bench-press')).toEqual([aRecord()]);
     }),
     layer(),
   );
@@ -27,7 +27,7 @@ describe('RecordRepositoryLive', () => {
 
       yield* repository.upsertBests([aRecord({ value: 120, achievedAt: WORKOUT_TIME + 1 })]);
 
-      expect((yield* repository.forExercise('wger:73')).map(record => record.value)).toEqual([120]);
+      expect((yield* repository.forExercise('ex:barbell-bench-press')).map(record => record.value)).toEqual([120]);
     }),
     layer(),
   );
@@ -40,7 +40,7 @@ describe('RecordRepositoryLive', () => {
 
       yield* repository.upsertBests([aRecord({ value: 110, achievedAt: WORKOUT_TIME + 1 })]);
 
-      expect(yield* repository.forExercise('wger:73')).toEqual([aRecord({ value: 120 })]);
+      expect(yield* repository.forExercise('ex:barbell-bench-press')).toEqual([aRecord({ value: 120 })]);
     }),
     layer(),
   );
@@ -54,7 +54,9 @@ describe('RecordRepositoryLive', () => {
       yield* repository.upsertBests([aRecord({ achievedAt: WORKOUT_TIME + 5 })]);
       yield* repository.upsertBests([aRecord({ achievedAt: WORKOUT_TIME - 5 })]);
 
-      expect((yield* repository.forExercise('wger:73')).map(record => record.achievedAt)).toEqual([WORKOUT_TIME + 5]);
+      expect((yield* repository.forExercise('ex:barbell-bench-press')).map(record => record.achievedAt)).toEqual([
+        WORKOUT_TIME + 5,
+      ]);
     }),
     layer(),
   );
@@ -67,10 +69,13 @@ describe('RecordRepositoryLive', () => {
       yield* repository.upsertBests([
         aRecord(),
         aRecord({ kind: 'maxReps', value: 10 }),
-        aRecord({ exerciseId: 'wger:74', exerciseName: 'Overhead Press', value: 60 }),
+        aRecord({ exerciseId: 'ex:barbell-squat', exerciseName: 'Overhead Press', value: 60 }),
       ]);
 
-      expect((yield* repository.forExercise('wger:73')).map(record => record.kind)).toEqual(['est1rm', 'maxReps']);
+      expect((yield* repository.forExercise('ex:barbell-bench-press')).map(record => record.kind)).toEqual([
+        'est1rm',
+        'maxReps',
+      ]);
     }),
     layer(),
   );

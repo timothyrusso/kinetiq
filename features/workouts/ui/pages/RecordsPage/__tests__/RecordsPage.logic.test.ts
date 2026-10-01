@@ -11,9 +11,9 @@ describe('useRecordsPageLogic', () => {
     const { result } = await renderHook(useRecordsPageLogic);
 
     expect(result.current.derived.rows).toEqual([
-      { key: 'wger:73-est1rm', name: 'Bench Press', label: tr('records.est1rm'), value: '116.5 kg' },
+      { key: 'ex:barbell-bench-press-est1rm', name: 'Bench Press', label: tr('records.est1rm'), value: '116.5 kg' },
       {
-        key: 'wger:73-maxReps',
+        key: 'ex:barbell-bench-press-maxReps',
         name: 'Bench Press',
         label: tr('records.maxReps'),
         value: tr('details.repsValue', { reps: 12 }),

@@ -7,7 +7,7 @@ final class WorkoutTests: XCTestCase {
     private func routine() -> Routine {
         Routine(id: "rtn_1", name: "Push", items: [
             RoutineItem(
-                id: "rit_1", exerciseId: "wger:73", exerciseName: "Bench Press",
+                id: "rit_1", exerciseId: "ex:barbell-bench-press", exerciseName: "Bench Press",
                 sets: Fixtures.sets(3, reps: 8, weightKg: 60), restSeconds: 90, notes: "Pause"
             ),
             RoutineItem(

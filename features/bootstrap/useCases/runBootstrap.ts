@@ -19,32 +19,21 @@ const syncReminder = Effect.gen(function* () {
 }).pipe(logBackgroundFailure('training reminder sync'));
 
 /**
- * The exercise catalog, refreshed in the background when it is more than 30 days old and the
- * device is online. The catalog on the device is what renders; a failed download leaves it as it
- * was, and the next launch or return to the foreground tries again.
- */
-const refreshCatalog = Effect.gen(function* () {
-  const environment = yield* LaunchEnvironment;
-  const refreshed = yield* (yield* ExerciseCatalog).refreshIfStale(yield* environment.online);
-  if (refreshed) yield* environment.catalogChanged;
-}).pipe(logBackgroundFailure('catalog refresh'));
-
-/**
  * Follows the app in and out of the foreground. The workout clock sees every transition; a
  * return to the foreground also reconciles the reminder (the user may have changed the permission
- * in the OS), syncs the watch and refreshes a stale catalog.
+ * in the OS) and syncs the watch.
  */
 const installLifecycle = Effect.gen(function* () {
   const environment = yield* LaunchEnvironment;
   const sync = yield* BackgroundSync;
-  const run = Runtime.runFork(yield* Effect.runtime<TrainingReminder | ExerciseCatalog | LaunchEnvironment | Logger>());
+  const run = Runtime.runFork(yield* Effect.runtime<TrainingReminder | Logger>());
   const backgrounded = yield* Ref.make((yield* environment.appState) !== 'active');
   const changed = (next: AppState) =>
     Effect.gen(function* () {
       sessionLifecycle.appStateChanged(next);
       const wasAway = yield* Ref.getAndSet(backgrounded, next !== 'active');
       if (next !== 'active' || !wasAway) return;
-      yield* Effect.all([syncReminder, sync.sync, refreshCatalog], { concurrency: 'unbounded', discard: true });
+      yield* Effect.all([syncReminder, sync.sync], { concurrency: 'unbounded', discard: true });
     });
   yield* environment.onAppStateChange(next => run(changed(next)));
 });
@@ -59,10 +48,10 @@ const installLifecycle = Effect.gen(function* () {
  * 3. The notification handler, before anything is scheduled.
  * 4. Settings into the store before the first component reads them, with the device's own answer
  *    about notifications; the chrome is painted from the same value.
- * 5. The two slow steps (fonts, header icons) overlap with the bundled catalog's first-launch
- *    install and the workout restore, and the first frame waits for them.
- * 6. Then, not awaited: the reminder, the watch sync, the catalog refresh, and the app-state
- *    events. A workout open when the process died comes back paused, never running: the clock
+ * 5. The two slow steps (fonts, header icons) overlap with the bundled catalog's install (on the
+ *    first launch, and on the first launch of a build with a newer dataset) and the workout
+ *    restore, and the first frame waits for them.
+ * 6. Then, not awaited: the reminder, the watch sync and the app-state events. A workout open when the process died comes back paused, never running: the clock
  *    has been reading a stored value for hours the user did not train.
  */
 export const runBootstrap = (systemDark: boolean) =>
@@ -91,7 +80,7 @@ export const runBootstrap = (systemDark: boolean) =>
     const slowSteps = yield* Effect.fork(
       Effect.all([environment.loadFonts, environment.prefetchHeaderIcons], { concurrency: 'unbounded', discard: true }),
     );
-    yield* (yield* ExerciseCatalog).installBundledIfMissing;
+    yield* (yield* ExerciseCatalog).installBundledIfNewer;
     const session = yield* (yield* SessionRepository).active.pipe(
       Effect.catchAll(error => Effect.fail(error).pipe(logBackgroundFailure('workout restore'), Effect.as(undefined))),
     );
@@ -100,7 +89,6 @@ export const runBootstrap = (systemDark: boolean) =>
 
     yield* Effect.forkDaemon(syncReminder);
     yield* (yield* BackgroundSync).install;
-    yield* Effect.forkDaemon(refreshCatalog);
     if (session !== undefined) sessionLifecycle.pause();
     yield* installLifecycle;
 

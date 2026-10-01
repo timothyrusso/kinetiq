@@ -22,9 +22,9 @@ const latest = anActivity({
 
 describe('indexPreviousLifts', () => {
   it('keeps the most recent workout of each exercise', () => {
-    const previous = indexPreviousLifts([latest, anActivity()], new Set(['wger:73']));
+    const previous = indexPreviousLifts([latest, anActivity()], new Set(['ex:barbell-bench-press']));
 
-    expect(previous.get('wger:73')).toMatchObject({
+    expect(previous.get('ex:barbell-bench-press')).toMatchObject({
       performedAt: WORKOUT_TIME + 1,
       bestEstimated1rm: 122.5,
       sets: [{ reps: 5, weightKg: 105, estimated1rm: 122.5 }],
@@ -41,7 +41,7 @@ describe('indexPreviousLifts', () => {
       },
     });
 
-    expect([...indexPreviousLifts([both], new Set(['wger:74'])).keys()]).toEqual(['wger:74']);
+    expect([...indexPreviousLifts([both], new Set(['ex:barbell-squat'])).keys()]).toEqual(['ex:barbell-squat']);
   });
 
   it('indexes every exercise when none is asked for', () => {
@@ -54,7 +54,7 @@ describe('indexPreviousLifts', () => {
       },
     });
 
-    expect([...indexPreviousLifts([both], new Set()).keys()]).toEqual(['wger:73', 'wger:74']);
+    expect([...indexPreviousLifts([both], new Set()).keys()]).toEqual(['ex:barbell-bench-press', 'ex:barbell-squat']);
   });
 
   it('counts only the ticked sets, as the history does', () => {
@@ -67,7 +67,9 @@ describe('indexPreviousLifts', () => {
       },
     });
 
-    expect(indexPreviousLifts([partly], new Set(['wger:73'])).get('wger:73')).toMatchObject({
+    expect(
+      indexPreviousLifts([partly], new Set(['ex:barbell-bench-press'])).get('ex:barbell-bench-press'),
+    ).toMatchObject({
       sets: [{ reps: 5, weightKg: 80 }],
       totalVolumeKg: 400,
     });
@@ -88,7 +90,7 @@ describe('indexPreviousLifts', () => {
       },
     });
 
-    expect(indexPreviousLifts([planned, done], new Set(['wger:74'])).get('wger:74')).toMatchObject({
+    expect(indexPreviousLifts([planned, done], new Set(['ex:barbell-squat'])).get('ex:barbell-squat')).toMatchObject({
       performedAt: WORKOUT_TIME,
       sets: [{ reps: 8, weightKg: 40 }],
     });
@@ -99,6 +101,6 @@ describe('indexPreviousLifts', () => {
       strength: { entries: [anotherEntry()], totalVolumeKg: 0, totalSets: 0, personalRecords: [] },
     });
 
-    expect(indexPreviousLifts([planned], new Set(['wger:74'])).has('wger:74')).toBe(false);
+    expect(indexPreviousLifts([planned], new Set(['ex:barbell-squat'])).has('ex:barbell-squat')).toBe(false);
   });
 });

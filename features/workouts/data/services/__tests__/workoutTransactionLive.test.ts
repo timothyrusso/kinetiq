@@ -11,7 +11,7 @@ const insertRecord = (value: number) =>
   Effect.flatMap(SqliteClient, db =>
     Effect.promise(() =>
       db.runAsync(
-        `INSERT INTO records (exercise_id, kind, exercise_name, value, achieved_at) VALUES ('wger:73', 'est1rm', 'Bench Press', ?, 0)
+        `INSERT INTO records (exercise_id, kind, exercise_name, value, achieved_at) VALUES ('ex:barbell-bench-press', 'est1rm', 'Bench Press', ?, 0)
          ON CONFLICT(exercise_id, kind) DO UPDATE SET value = excluded.value`,
         [value],
       ),

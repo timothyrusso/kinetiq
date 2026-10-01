@@ -19,8 +19,8 @@ export const HTTP_RETRY_BUDGET: Readonly<Record<HttpErrorKind, number>> = {
 
 /**
  * The longest a `Retry-After` is honoured. A server asking for an hour is saying "not now": waiting
- * that long would hold a catalog refresh (and its spinner) for the whole budget of retries, so the
- * wait is capped and a still-limited server fails the request, which the next launch tries again.
+ * that long would hold a request (and its spinner) for the whole budget of retries, so the wait is
+ * capped and a still-limited server fails the request, which the user can try again.
  */
 const RETRY_AFTER_CAP_MS = 60_000;
 

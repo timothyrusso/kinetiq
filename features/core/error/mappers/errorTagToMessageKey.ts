@@ -19,7 +19,6 @@ export const errorTagToMessageKey = appErrors.assertExhaustiveMessageKeys<TKey>(
   NotificationScheduleFailed: 'errors.notificationScheduleFailed',
   WatchUnavailable: 'errors.watchUnavailable',
   CatalogNotInstalled: 'errors.catalogNotInstalled',
-  CatalogFetchFailed: 'errors.catalogFetchFailed',
   RoutineNotFound: 'errors.routineNotFound',
   RoutineNameTaken: 'errors.routineNameTaken',
   SessionAlreadyActive: 'errors.sessionAlreadyActive',

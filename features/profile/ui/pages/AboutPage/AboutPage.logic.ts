@@ -6,14 +6,6 @@ import { useDataSummary } from '@/features/profile/facades/useDataSummary';
 import { useEraseAllData } from '@/features/profile/facades/useEraseAllData';
 
 /**
- * `CATALOG_PROVIDER` is a machine identifier ('wger'): right for data, wrong for a sentence.
- * Mapped here rather than changed at the source: human labels are not the catalog's job.
- */
-const LABELLED_PROVIDERS: Record<string, string> = {
-  wger: 'wger Workout Manager',
-};
-
-/**
  * About: what this build is, where the exercise data comes from, and how to get rid of it. The
  * catalog is named because it is someone else's data, and because exercises are stored as local
  * snapshots precisely so it can vanish without taking the user's routines with it. Erasing is
@@ -67,7 +59,7 @@ export function useAboutPageLogic() {
           {
             kind: 'info',
             key: 'provider',
-            title: LABELLED_PROVIDERS[summary.catalogProvider] ?? summary.catalogProvider,
+            title: summary.catalogProvider,
             subtitle: t('about.catalogLicence'),
           },
         ],

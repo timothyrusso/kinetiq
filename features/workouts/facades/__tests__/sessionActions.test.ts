@@ -90,7 +90,7 @@ describe('sessionActions', () => {
   });
 
   it('adds an exercise at the end', () => {
-    sessionActions.addExercise(anEntry({ exerciseId: 'wger:99', exerciseName: 'Dips' }));
+    sessionActions.addExercise(anEntry({ exerciseId: 'ex:pullups', exerciseName: 'Dips' }));
 
     expect(live()?.entries.at(-1)?.exerciseName).toBe('Dips');
   });

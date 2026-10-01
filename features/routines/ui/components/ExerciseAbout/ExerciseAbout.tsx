@@ -23,8 +23,8 @@ export function ExerciseAbout({ exerciseId }: { exerciseId: string }) {
       {derived.image !== null ? (
         <View style={styles.art}>
           <Image
-            source={{ uri: derived.image }}
-            recyclingKey={derived.image}
+            source={derived.image}
+            recyclingKey={String(derived.image)}
             cachePolicy={EXERCISE_IMAGE_CACHE}
             contentFit="contain"
             style={styles.image}

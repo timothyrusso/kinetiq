@@ -1,38 +1,33 @@
 import {
-  externalIdOf,
+  isCatalogExerciseId,
   isLocalExerciseId,
   provisionalExerciseName,
-  remoteExerciseId,
 } from '@/features/exercises/domain/utils/exerciseId';
 
-describe('remoteExerciseId', () => {
-  it('names a wger id in the app namespace', () => {
-    expect(remoteExerciseId(46)).toBe('wger:46');
-  });
-});
-
-describe('externalIdOf', () => {
-  it('reads the wger id back', () => {
-    expect(externalIdOf('wger:46')).toBe(46);
+describe('isCatalogExerciseId', () => {
+  it('accepts an ex: slug', () => {
+    expect(isCatalogExerciseId('ex:barbell-bench-press')).toBe(true);
+    expect(isCatalogExerciseId('ex:3-4-sit-up')).toBe(true);
   });
 
-  it('is null for a local id, a malformed id and a non-positive id', () => {
-    expect(externalIdOf('local:bench-press')).toBeNull();
-    expect(externalIdOf('wger:abc')).toBeNull();
-    expect(externalIdOf('wger:0')).toBeNull();
+  it('rejects a local id, an id from the previous catalog and a malformed slug', () => {
+    expect(isCatalogExerciseId('local:bench-press')).toBe(false);
+    expect(isCatalogExerciseId('legacy:73')).toBe(false);
+    expect(isCatalogExerciseId('ex:')).toBe(false);
+    expect(isCatalogExerciseId('ex:Bench Press')).toBe(false);
   });
 });
 
 describe('isLocalExerciseId', () => {
   it('tells a local id from a catalog one', () => {
     expect(isLocalExerciseId('local:bench-press')).toBe(true);
-    expect(isLocalExerciseId('wger:46')).toBe(false);
+    expect(isLocalExerciseId('ex:bench-press')).toBe(false);
   });
 });
 
 describe('provisionalExerciseName', () => {
-  it('names a catalog id by its number, as the catalog does', () => {
-    expect(provisionalExerciseName('wger:1234')).toBe('Exercise 1234');
+  it('names a catalog id by its slug, as the catalog does', () => {
+    expect(provisionalExerciseName('ex:barbell-bench-press')).toBe('Barbell Bench Press');
   });
 
   it('title-cases a local key', () => {
@@ -41,6 +36,7 @@ describe('provisionalExerciseName', () => {
 
   it('falls back to a plain title for an empty key or an unknown id', () => {
     expect(provisionalExerciseName('local:')).toBe('Exercise');
+    expect(provisionalExerciseName('legacy:1234')).toBe('Exercise');
     expect(provisionalExerciseName('mystery')).toBe('Exercise');
   });
 });

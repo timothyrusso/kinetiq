@@ -76,7 +76,7 @@ describe('readInboxEntry', () => {
       aWatchDocument({
         entries: [
           {
-            exerciseId: 'wger:73',
+            exerciseId: 'ex:barbell-bench-press',
             exerciseName: 'Bench',
             restSeconds: 60,
             notes: null,

@@ -111,7 +111,7 @@ describe('the session store editing a workout', () => {
   });
 
   it('keeps the exercise a rest follows as the list closes up, and drops it with that exercise', () => {
-    store().addExercise(anEntry({ exerciseId: 'wger:99' }), NOW + 1);
+    store().addExercise(anEntry({ exerciseId: 'ex:pullups' }), NOW + 1);
     store().setRest(90, 2, NOW + 2);
 
     store().removeExercise(0, NOW + 3);
@@ -123,9 +123,13 @@ describe('the session store editing a workout', () => {
   });
 
   it('adds an exercise at the end of the list', () => {
-    store().addExercise(anEntry({ exerciseId: 'wger:99' }), NOW + 1);
+    store().addExercise(anEntry({ exerciseId: 'ex:pullups' }), NOW + 1);
 
-    expect(store().session?.entries.map(entry => entry.exerciseId)).toEqual(['wger:73', 'wger:74', 'wger:99']);
+    expect(store().session?.entries.map(entry => entry.exerciseId)).toEqual([
+      'ex:barbell-bench-press',
+      'ex:barbell-squat',
+      'ex:pullups',
+    ]);
   });
 });
 

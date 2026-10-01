@@ -3,7 +3,7 @@ import type { AccessibilityActionEvent, AccessibilityActionInfo } from 'react-na
 import type { Tag } from '@/features/core/design-system';
 import { useT } from '@/features/core/translations';
 import type { UnitSystem } from '@/features/core/utils';
-import type { ExerciseSnapshot } from '@/features/exercises';
+import { type ExerciseSnapshot, exerciseImageSource } from '@/features/exercises';
 import type { RoutineItem } from '@/features/routines/domain/schemas/RoutineSchema';
 import { itemMeta } from '@/features/routines/mappers/itemMeta';
 
@@ -74,7 +74,10 @@ export function useRoutineItemRowLogic({
     derived: {
       meta,
       tags,
-      thumbnail: snapshot === null ? null : (snapshot.thumbnailUrl ?? snapshot.imageUrl),
+      thumbnail:
+        snapshot === null
+          ? null
+          : (exerciseImageSource(snapshot.thumbnailUrl) ?? exerciseImageSource(snapshot.imageUrl)),
       accessibilityActions: actions,
     },
     effects: { open, up, down, remove, onAccessibilityAction: onAction },

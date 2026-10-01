@@ -1,25 +1,35 @@
-import { Effect, Layer, Schema } from 'effect';
+import { Effect, Layer } from 'effect';
 import { SqliteClient, type SqliteDatabase, trySql } from '@/features/core/sqlite';
 import {
   CountRow,
   decodeRows,
-  EquipmentNameRow,
+  EquipmentRow,
   type ExerciseRow,
   ExerciseRow as ExerciseRowSchema,
+  KeyRow,
   MetaRow,
-  MuscleNameRow,
+  MuscleRow,
   metaFromRows,
+  stringList,
 } from '@/features/exercises/data/adapters/catalogRows';
 import { toSearchKey } from '@/features/exercises/data/adapters/searchKey';
 import { taxonName } from '@/features/exercises/data/adapters/taxonNames';
-import type { CatalogWriteKind } from '@/features/exercises/domain/entities/CatalogMeta';
+import { CATALOG_ASSET_ROOT } from '@/features/exercises/domain/entities/catalogAssets';
+import {
+  BODY_AREAS,
+  FORCES,
+  LEVELS,
+  MECHANICS,
+  TRAINING_TYPES,
+} from '@/features/exercises/domain/entities/catalogTaxonomy';
 import type { TaxonKind } from '@/features/exercises/domain/entities/taxonKeys';
 import { CatalogRepository } from '@/features/exercises/domain/repositories/CatalogRepository';
 import { CATALOG_LANGUAGES, type CatalogLanguage } from '@/features/exercises/domain/schemas/CatalogLanguage';
-import type { CatalogPayload } from '@/features/exercises/domain/schemas/CatalogPayloadSchema';
+import { CATALOG_FORMAT_VERSION, type CatalogPayload } from '@/features/exercises/domain/schemas/CatalogPayloadSchema';
 import type { ExerciseFilter } from '@/features/exercises/domain/schemas/ExerciseFilterSchema';
 import type { Exercise } from '@/features/exercises/domain/schemas/ExerciseSchema';
-import { type Taxon, TaxonSchema } from '@/features/exercises/domain/schemas/ExerciseTaxonomySchema';
+import type { Taxon } from '@/features/exercises/domain/schemas/ExerciseTaxonomySchema';
+import { provisionalExerciseName } from '@/features/exercises/domain/utils/exerciseId';
 
 /**
  * Bound parameters per statement. SQLite builds before 3.32 cap a statement at 999, and a batch
@@ -57,15 +67,10 @@ const CATALOG_TABLES = [
   'catalog_exercise_muscles',
   'catalog_translations',
   'catalog_exercises',
-  'catalog_muscles',
-  'catalog_equipment',
-  'catalog_categories',
   'catalog_meta',
 ] as const;
 
 const SELECT_META = 'SELECT key, value FROM catalog_meta';
-
-const decodeMetaSync = Schema.decodeUnknownSync(Schema.Array(MetaRow));
 
 /** Every row of `payload`, flattened into the tables' column order. */
 function catalogRows(payload: CatalogPayload) {
@@ -76,66 +81,51 @@ function catalogRows(payload: CatalogPayload) {
   for (const exercise of payload.exercises) {
     exercises.push([
       exercise.id,
-      exercise.externalId,
-      exercise.uuid,
-      exercise.variationGroup,
-      exercise.categoryId,
-      exercise.imageUrl,
-      exercise.thumbnailUrl,
-      exercise.videoUrl,
+      exercise.bodyArea,
+      exercise.trainingType,
+      exercise.level,
+      exercise.force,
+      exercise.mechanic,
+      `${CATALOG_ASSET_ROOT}${exercise.images.start}`,
+      `${CATALOG_ASSET_ROOT}${exercise.images.end}`,
+      `${CATALOG_ASSET_ROOT}${exercise.images.thumb}`,
     ]);
     for (const language of CATALOG_LANGUAGES) {
-      const translation = exercise.translations[language];
-      const name = translation?.name.trim() ?? '';
+      const name = exercise.name[language].trim();
       if (name.length === 0) continue;
-      translations.push([exercise.id, language, name, toSearchKey(name), translation?.instructions ?? null]);
+      translations.push([
+        exercise.id,
+        language,
+        name,
+        toSearchKey(name),
+        JSON.stringify(exercise.instructions[language]),
+      ]);
     }
-    // NOTE: a Set per role: wger has listed the same muscle twice on one exercise, and the primary
-    // key would reject the whole batch over it.
-    for (const id of new Set(exercise.primaryMuscleIds)) muscles.push([exercise.id, id, 'primary']);
-    for (const id of new Set(exercise.secondaryMuscleIds)) muscles.push([exercise.id, id, 'secondary']);
-    for (const id of new Set(exercise.equipmentIds)) equipment.push([exercise.id, id]);
+    // NOTE: a Set per role, so a muscle a hand edit lists twice cannot fail the whole batch on the
+    // primary key; the position is the muscle's place in the dataset's list.
+    [...new Set(exercise.primaryMuscles)].forEach((muscle, position) => {
+      muscles.push([exercise.id, muscle, 'primary', position]);
+    });
+    [...new Set(exercise.secondaryMuscles)].forEach((muscle, position) => {
+      muscles.push([exercise.id, muscle, 'secondary', position]);
+    });
+    equipment.push([exercise.id, exercise.equipment]);
   }
   return { exercises, translations, muscles, equipment };
 }
 
 /**
  * Writes `payload` over the catalog on the transaction's connection: delete everything, insert
- * everything, stamp `catalog_meta`. A meta row that does not decode throws, which rolls the
- * transaction back like any failed statement.
+ * everything, stamp `catalog_meta`.
  */
-async function writeCatalog(
-  txn: SqliteDatabase,
-  payload: CatalogPayload,
-  kind: CatalogWriteKind,
-  now: number,
-): Promise<void> {
+async function writeCatalog(txn: SqliteDatabase, payload: CatalogPayload, now: number): Promise<void> {
   const rows = catalogRows(payload);
-  const previous = metaFromRows(decodeMetaSync(await txn.getAllAsync<unknown>(SELECT_META)));
   for (const table of CATALOG_TABLES) await txn.execAsync(`DELETE FROM ${table};`);
 
   await insertRows(
     txn,
-    'catalog_categories',
-    ['id', 'name'],
-    payload.categories.map(c => [c.id, c.name]),
-  );
-  await insertRows(
-    txn,
-    'catalog_equipment',
-    ['id', 'name'],
-    payload.equipment.map(e => [e.id, e.name]),
-  );
-  await insertRows(
-    txn,
-    'catalog_muscles',
-    ['id', 'name', 'name_en', 'is_front'],
-    payload.muscles.map(m => [m.id, m.name, m.nameEn, m.isFront ? 1 : 0]),
-  );
-  await insertRows(
-    txn,
     'catalog_exercises',
-    ['id', 'external_id', 'uuid', 'variation_group', 'category_id', 'image_url', 'thumbnail_url', 'video_url'],
+    ['id', 'body_area', 'training_type', 'level', 'force', 'mechanic', 'image_start', 'image_end', 'thumbnail'],
     rows.exercises,
   );
   await insertRows(
@@ -144,48 +134,45 @@ async function writeCatalog(
     ['exercise_id', 'language', 'name', 'name_search', 'instructions'],
     rows.translations,
   );
-  await insertRows(txn, 'catalog_exercise_muscles', ['exercise_id', 'muscle_id', 'role'], rows.muscles);
-  await insertRows(txn, 'catalog_exercise_equipment', ['exercise_id', 'equipment_id'], rows.equipment);
+  await insertRows(txn, 'catalog_exercise_muscles', ['exercise_id', 'muscle', 'role', 'position'], rows.muscles);
+  await insertRows(txn, 'catalog_exercise_equipment', ['exercise_id', 'equipment'], rows.equipment);
 
-  const installedAt = kind === 'install' ? now : (previous.installedAt ?? now);
-  const meta: [string, string | number | null][] = [
-    ['source', payload.source],
-    ['generated_at', payload.generatedAt],
-    ['installed_at', installedAt],
-    ['refreshed_at', kind === 'refresh' ? now : null],
+  const meta: [string, number][] = [
+    ['dataset_version', payload.datasetVersion],
+    ['installed_at', now],
     ['exercise_count', payload.exercises.length],
-    ['format_version', payload.formatVersion],
+    ['format_version', CATALOG_FORMAT_VERSION],
   ];
   await insertRows(
     txn,
     'catalog_meta',
     ['key', 'value'],
-    meta.filter(([, value]) => value !== null).map(([key, value]) => [key, String(value)]),
+    meta.map(([key, value]) => [key, String(value)]),
   );
 }
 
 /**
- * The row in `language`, English where that translation is missing. Parameters, in order: the
- * language. Everything after `WHERE` is appended by the caller.
+ * The row in `language`, English where that translation is missing (and the steps in English
+ * where the language has none). Parameters, in order: the language. Everything after `WHERE` is
+ * appended by the caller.
  */
 const SELECT_EXERCISE = `
-  SELECT e.id, e.external_id,
+  SELECT e.id,
          COALESCE(tl.name, te.name) AS name,
-         COALESCE(tl.instructions, te.instructions) AS instructions,
-         c.id AS category_id, c.name AS category,
-         e.image_url, e.thumbnail_url, e.video_url
+         COALESCE(NULLIF(tl.instructions, '[]'), te.instructions) AS instructions,
+         e.body_area, e.training_type, e.level, e.force, e.mechanic,
+         e.image_start, e.image_end, e.thumbnail
     FROM catalog_exercises e
     LEFT JOIN catalog_translations tl ON tl.exercise_id = e.id AND tl.language = ?
-    LEFT JOIN catalog_translations te ON te.exercise_id = e.id AND te.language = 'en'
-    LEFT JOIN catalog_categories c ON c.id = e.category_id`;
+    LEFT JOIN catalog_translations te ON te.exercise_id = e.id AND te.language = 'en'`;
 
-const ORDER_BY_NAME = `ORDER BY COALESCE(tl.name_search, te.name_search), e.external_id`;
+const ORDER_BY_NAME = `ORDER BY COALESCE(tl.name_search, te.name_search), e.id`;
 
 /**
  * Relevance for a search, best first: the whole name, then the start of the name, then the start
  * of any word, then anywhere; at each step a match in the render language before a match in
- * English. Without it "squat" would list "1 Leg Box Squat" first, and the routine importer, which
- * takes the top row as the closest match for a name it cannot find exactly, would pick it.
+ * English. Without it "squat" would list "Barbell Full Squat" first, and the routine importer,
+ * which takes the top row as the closest match for a name it cannot find exactly, would pick it.
  * Parameters: the term twice, then the escaped term four times.
  */
 const SEARCH_RANK = `
@@ -204,10 +191,7 @@ function escapeLike(term: string): string {
   return term.replace(/[\\%_]/g, char => `\\${char}`);
 }
 
-/**
- * The WHERE clause and its parameters for `filter`. The muscle filter matches primary muscles
- * only, which is what wger's own `muscles` filter did.
- */
+/** The WHERE clause and its parameters for `filter`. The muscle filter matches primary muscles only. */
 function filterClause(filter: ExerciseFilter, language: CatalogLanguage, term: string, escaped: string) {
   const where = ['(tl.name IS NOT NULL OR te.name IS NOT NULL)'];
   const params: (string | number)[] = [language];
@@ -215,32 +199,55 @@ function filterClause(filter: ExerciseFilter, language: CatalogLanguage, term: s
     where.push(`(tl.name_search LIKE '%' || ? || '%' ESCAPE '\\' OR te.name_search LIKE '%' || ? || '%' ESCAPE '\\')`);
     params.push(escaped, escaped);
   }
-  if (filter.categoryId !== null) {
-    where.push('e.category_id = ?');
-    params.push(filter.categoryId);
+  if (filter.bodyArea !== null) {
+    where.push('e.body_area = ?');
+    params.push(filter.bodyArea);
   }
-  if (filter.equipmentId !== null) {
-    where.push('EXISTS (SELECT 1 FROM catalog_exercise_equipment q WHERE q.exercise_id = e.id AND q.equipment_id = ?)');
-    params.push(filter.equipmentId);
+  if (filter.equipment !== null) {
+    where.push('EXISTS (SELECT 1 FROM catalog_exercise_equipment q WHERE q.exercise_id = e.id AND q.equipment = ?)');
+    params.push(filter.equipment);
   }
-  if (filter.muscleId !== null) {
+  if (filter.muscle !== null) {
     where.push(
       `EXISTS (SELECT 1 FROM catalog_exercise_muscles m
-                WHERE m.exercise_id = e.id AND m.muscle_id = ? AND m.role = 'primary')`,
+                WHERE m.exercise_id = e.id AND m.muscle = ? AND m.role = 'primary')`,
     );
-    params.push(filter.muscleId);
+    params.push(filter.muscle);
   }
   return { clause: `WHERE ${where.join(' AND ')}`, params };
 }
 
+/**
+ * The exercises sharing the target's first primary muscle, ranked as `similar` documents.
+ * Parameters: the language, then the target id four times.
+ */
+const SELECT_SIMILAR = `${SELECT_EXERCISE}
+  WHERE e.id <> ?
+    AND (tl.name IS NOT NULL OR te.name IS NOT NULL)
+    AND EXISTS (
+      SELECT 1 FROM catalog_exercise_muscles m
+       WHERE m.exercise_id = e.id AND m.role = 'primary'
+         AND m.muscle = (SELECT muscle FROM catalog_exercise_muscles
+                          WHERE exercise_id = ? AND role = 'primary' ORDER BY position LIMIT 1))
+  ORDER BY
+    (e.mechanic IS NOT NULL AND e.mechanic = (SELECT mechanic FROM catalog_exercises WHERE id = ?)) DESC,
+    (SELECT COUNT(*) FROM catalog_exercise_equipment q
+      WHERE q.exercise_id = e.id
+        AND q.equipment IN (SELECT equipment FROM catalog_exercise_equipment WHERE exercise_id = ?)) DESC,
+    COALESCE(tl.name_search, te.name_search), e.id
+  LIMIT 5`;
+
 const decodeExercises = decodeRows(ExerciseRowSchema, 'catalog_exercises');
-const decodeMuscleNames = decodeRows(MuscleNameRow, 'catalog_exercise_muscles');
-const decodeEquipmentNames = decodeRows(EquipmentNameRow, 'catalog_exercise_equipment');
+const decodeMuscles = decodeRows(MuscleRow, 'catalog_exercise_muscles');
+const decodeEquipment = decodeRows(EquipmentRow, 'catalog_exercise_equipment');
+const decodeKeys = decodeRows(KeyRow, 'catalog_exercises');
 const decodeCount = decodeRows(CountRow, 'catalog_exercises');
 const decodeMeta = decodeRows(MetaRow, 'catalog_meta');
-const decodeCategories = decodeRows(TaxonSchema, 'catalog_categories');
-const decodeEquipment = decodeRows(TaxonSchema, 'catalog_equipment');
-const decodeMuscles = decodeRows(TaxonSchema, 'catalog_muscles');
+
+/** `value` when it is one of `values`, else null: a column the dataset vocabulary does not know. */
+function oneOf<T extends string>(values: readonly T[], value: string | null): T | null {
+  return values.find(candidate => candidate === value) ?? null;
+}
 
 function pushName(map: Map<string, string[]>, id: string, name: string): void {
   const list = map.get(id);
@@ -249,12 +256,12 @@ function pushName(map: Map<string, string[]>, id: string, name: string): void {
 }
 
 /**
- * `taxa` named in `language` and ordered by that name, compared as SQLite's default collation
- * compares, so an English list reads in the order the tables' own `ORDER BY name` gave.
+ * `keys` named in `language` and ordered by that name, compared as SQLite's default collation
+ * compares, so a list reads in the order an `ORDER BY name` would give.
  */
-function namedTaxa(kind: TaxonKind, taxa: readonly Taxon[], language: CatalogLanguage): readonly Taxon[] {
-  return taxa
-    .map(taxon => ({ id: taxon.id, name: taxonName(kind, taxon.id, taxon.name, language) }))
+function namedTaxa(kind: TaxonKind, keys: readonly string[], language: CatalogLanguage): readonly Taxon[] {
+  return keys
+    .map(key => ({ id: key, name: taxonName(kind, key, language) }))
     .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
 }
 
@@ -264,7 +271,7 @@ export const CatalogRepositoryLive = Layer.effect(
   Effect.gen(function* () {
     const db = yield* SqliteClient;
 
-    // NOTE: muscle and equipment names for a set of rows, in two queries rather than two per row.
+    // NOTE: muscle and equipment keys for a set of rows, in two queries rather than two per row.
     const hydrate = (rows: readonly ExerciseRow[], language: CatalogLanguage) =>
       Effect.gen(function* () {
         if (rows.length === 0) return [];
@@ -274,25 +281,20 @@ export const CatalogRepositoryLive = Layer.effect(
           [
             trySql('read exercise muscles', () =>
               db.getAllAsync<unknown>(
-                `SELECT m.exercise_id, m.muscle_id, m.role,
-                        COALESCE(NULLIF(TRIM(mu.name_en), ''), mu.name) AS name
-                   FROM catalog_exercise_muscles m
-                   JOIN catalog_muscles mu ON mu.id = m.muscle_id
-                  WHERE m.exercise_id IN (${placeholders})
-                  ORDER BY mu.id`,
+                `SELECT exercise_id, muscle, role FROM catalog_exercise_muscles
+                  WHERE exercise_id IN (${placeholders})
+                  ORDER BY position`,
                 ids,
               ),
-            ).pipe(Effect.flatMap(decodeMuscleNames)),
+            ).pipe(Effect.flatMap(decodeMuscles)),
             trySql('read exercise equipment', () =>
               db.getAllAsync<unknown>(
-                `SELECT q.exercise_id, q.equipment_id, eq.name
-                   FROM catalog_exercise_equipment q
-                   JOIN catalog_equipment eq ON eq.id = q.equipment_id
-                  WHERE q.exercise_id IN (${placeholders})
-                  ORDER BY eq.id`,
+                `SELECT exercise_id, equipment FROM catalog_exercise_equipment
+                  WHERE exercise_id IN (${placeholders})
+                  ORDER BY equipment`,
                 ids,
               ),
-            ).pipe(Effect.flatMap(decodeEquipmentNames)),
+            ).pipe(Effect.flatMap(decodeEquipment)),
           ],
           { concurrency: 'unbounded' },
         );
@@ -301,39 +303,47 @@ export const CatalogRepositoryLive = Layer.effect(
         const secondary = new Map<string, string[]>();
         const equipment = new Map<string, string[]>();
         for (const row of muscleRows) {
-          const name = taxonName('muscle', row.muscle_id, row.name, language);
-          pushName(row.role === 'primary' ? primary : secondary, row.exercise_id, name);
+          pushName(
+            row.role === 'primary' ? primary : secondary,
+            row.exercise_id,
+            taxonName('muscle', row.muscle, language),
+          );
         }
         for (const row of equipmentRows) {
-          pushName(equipment, row.exercise_id, taxonName('equipment', row.equipment_id, row.name, language));
+          pushName(equipment, row.exercise_id, taxonName('equipment', row.equipment, language));
         }
 
         return rows.map(
           (row): Exercise => ({
             id: row.id,
-            name: row.name ?? `Exercise ${row.external_id}`,
-            instructions: row.instructions,
-            category:
-              row.category === null || row.category_id === null
-                ? row.category
-                : taxonName('category', row.category_id, row.category, language),
+            name: row.name ?? provisionalExerciseName(row.id),
+            instructions: stringList(row.instructions),
+            category: taxonName('bodyArea', row.body_area, language),
+            bodyArea: oneOf(BODY_AREAS, row.body_area),
+            trainingType: oneOf(TRAINING_TYPES, row.training_type),
+            level: oneOf(LEVELS, row.level),
+            force: oneOf(FORCES, row.force),
+            mechanic: oneOf(MECHANICS, row.mechanic),
             primaryMuscles: primary.get(row.id) ?? [],
             secondaryMuscles: secondary.get(row.id) ?? [],
             equipment: equipment.get(row.id) ?? [],
-            imageUrl: row.image_url,
-            thumbnailUrl: row.thumbnail_url ?? row.image_url,
-            videoUrl: row.video_url,
-            source: 'remote',
-            externalId: row.external_id,
+            imageUrl: row.image_start,
+            imageEndUrl: row.image_end,
+            thumbnailUrl: row.thumbnail ?? row.image_start,
+            source: 'catalog',
           }),
         );
       });
 
+    const keysOf = (label: string, sql: string) =>
+      trySql(label, () => db.getAllAsync<unknown>(sql)).pipe(
+        Effect.flatMap(decodeKeys),
+        Effect.map(rows => rows.map(row => row.key)),
+      );
+
     return {
-      replaceCatalog: (payload, kind, now) =>
-        trySql('replace the catalog', () =>
-          db.withExclusiveTransactionAsync(txn => writeCatalog(txn, payload, kind, now)),
-        ),
+      replaceCatalog: (payload, now) =>
+        trySql('replace the catalog', () => db.withExclusiveTransactionAsync(txn => writeCatalog(txn, payload, now))),
 
       readMeta: trySql('read the catalog meta', () => db.getAllAsync<unknown>(SELECT_META)).pipe(
         Effect.flatMap(decodeMeta),
@@ -372,26 +382,18 @@ export const CatalogRepositoryLive = Layer.effect(
           return { items: yield* hydrate(rows, language), total: count[0]?.n ?? 0 };
         }),
 
-      byId: (externalId, language) =>
+      byId: (id, language) =>
         trySql('read a catalog exercise', () =>
-          db.getAllAsync<unknown>(`${SELECT_EXERCISE} WHERE e.external_id = ?`, [language, externalId]),
+          db.getAllAsync<unknown>(`${SELECT_EXERCISE} WHERE e.id = ?`, [language, id]),
         ).pipe(
           Effect.flatMap(decodeExercises),
           Effect.flatMap(rows => hydrate(rows.slice(0, 1), language)),
           Effect.map(([exercise]) => exercise),
         ),
 
-      variations: (externalId, language) =>
-        trySql('read exercise variations', () =>
-          db.getAllAsync<unknown>(
-            `${SELECT_EXERCISE}
-              WHERE e.variation_group IS NOT NULL
-                AND e.variation_group = (SELECT variation_group FROM catalog_exercises WHERE external_id = ?)
-                AND e.external_id <> ?
-                AND (tl.name IS NOT NULL OR te.name IS NOT NULL)
-              ${ORDER_BY_NAME}`,
-            [language, externalId, externalId],
-          ),
+      similar: (id, language) =>
+        trySql('read similar exercises', () =>
+          db.getAllAsync<unknown>(SELECT_SIMILAR, [language, id, id, id, id]),
         ).pipe(
           Effect.flatMap(decodeExercises),
           Effect.flatMap(rows => hydrate(rows, language)),
@@ -400,26 +402,17 @@ export const CatalogRepositoryLive = Layer.effect(
       taxonomy: language =>
         Effect.all(
           {
-            categories: trySql('read the categories', () =>
-              db.getAllAsync<unknown>('SELECT id, name FROM catalog_categories'),
-            ).pipe(
-              Effect.flatMap(decodeCategories),
-              Effect.map(taxa => namedTaxa('category', taxa, language)),
+            bodyAreas: keysOf('read the body areas', 'SELECT DISTINCT body_area AS key FROM catalog_exercises').pipe(
+              Effect.map(keys => namedTaxa('bodyArea', keys, language)),
             ),
-            equipment: trySql('read the equipment', () =>
-              db.getAllAsync<unknown>('SELECT id, name FROM catalog_equipment'),
-            ).pipe(
-              Effect.flatMap(decodeEquipment),
-              Effect.map(taxa => namedTaxa('equipment', taxa, language)),
-            ),
-            muscles: trySql('read the muscles', () =>
-              db.getAllAsync<unknown>(
-                `SELECT id, COALESCE(NULLIF(TRIM(name_en), ''), name) AS name FROM catalog_muscles`,
-              ),
-            ).pipe(
-              Effect.flatMap(decodeMuscles),
-              Effect.map(taxa => namedTaxa('muscle', taxa, language)),
-            ),
+            equipment: keysOf(
+              'read the equipment',
+              'SELECT DISTINCT equipment AS key FROM catalog_exercise_equipment',
+            ).pipe(Effect.map(keys => namedTaxa('equipment', keys, language))),
+            muscles: keysOf(
+              'read the muscles',
+              `SELECT DISTINCT muscle AS key FROM catalog_exercise_muscles WHERE role = 'primary'`,
+            ).pipe(Effect.map(keys => namedTaxa('muscle', keys, language))),
           },
           { concurrency: 'unbounded' },
         ),

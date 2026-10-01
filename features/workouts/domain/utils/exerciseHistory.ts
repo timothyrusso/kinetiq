@@ -19,8 +19,8 @@ export const EMPTY_EXERCISE_HISTORY: ExerciseHistory = {
 
 /**
  * The entry for this exercise within a workout, matched on id alone. No name or suffix fallback:
- * the session copies the id it was given, and a looser match would let `wger:46` report the
- * numbers of `wger:146`, or a renamed custom exercise claim another's history.
+ * the session copies the id it was given, and a looser match would let `ex:push-press` report the
+ * numbers of `ex:push-press-behind-the-neck`, or a renamed custom exercise claim another's history.
  */
 function findEntry(activity: Activity, exerciseId: string): StrengthEntry | null {
   const entries = activity.strength?.entries;
