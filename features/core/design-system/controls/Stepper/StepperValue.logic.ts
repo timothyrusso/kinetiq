@@ -30,6 +30,7 @@ export function useStepperField(value: number, onChange: (next: number) => void,
   const { locale } = useT();
   const separator = useMemo(() => decimalSeparator(locale), [locale]);
   const [draft, setDraft] = useState<StepperDraft | null>(null);
+  const [focused, setFocused] = useState(false);
   const input = useRef<TextInput>(null);
   const keyboard = useRef<EmitterSubscription | null>(null);
   const latest = useRef({ draft, value, onChange, bounds });
@@ -49,6 +50,7 @@ export function useStepperField(value: number, onChange: (next: number) => void,
     setDraft(kept =>
       kept !== null && kept.base === current ? kept : { text: fieldText(current, separator), base: current },
     );
+    setFocused(true);
     // NOTE: Android's back key hides the keyboard but leaves the field focused, so nothing would commit.
     keyboard.current?.remove();
     keyboard.current = Keyboard.addListener('keyboardDidHide', () => input.current?.blur());
@@ -63,6 +65,7 @@ export function useStepperField(value: number, onChange: (next: number) => void,
   const blur = useCallback(() => {
     keyboard.current?.remove();
     keyboard.current = null;
+    setFocused(false);
     const before = latest.current.value;
     const next = flush();
     // NOTE: Until the write comes back the field keeps showing what it committed, not the old number.
@@ -78,7 +81,10 @@ export function useStepperField(value: number, onChange: (next: number) => void,
   );
 
   return {
-    state: { text: stepperText(draft, value, separator), input },
+    // NOTE: Select-on-focus is switched off while focused. Android's field selects all again on its
+    // first layout after focus, and a field that widens as it is typed in lays out mid-typing: the
+    // third digit replaced the first two.
+    state: { text: stepperText(draft, value, separator), input, selectOnFocus: !focused },
     effects: { focus, changeText, blur, flush },
   };
 }

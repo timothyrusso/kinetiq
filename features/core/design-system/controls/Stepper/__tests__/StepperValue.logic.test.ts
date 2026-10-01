@@ -101,6 +101,17 @@ describe('useStepperField', () => {
     expect(changes).toEqual([70]);
   });
 
+  it('stops selecting on focus while focused, so a layout mid-typing cannot select the digits', async () => {
+    const changes: number[] = [];
+    const { result } = await renderField(60, changes);
+
+    expect(result.current.state.selectOnFocus).toBe(true);
+    await act(async () => result.current.effects.focus());
+    expect(result.current.state.selectOnFocus).toBe(false);
+    await act(async () => result.current.effects.blur());
+    expect(result.current.state.selectOnFocus).toBe(true);
+  });
+
   it('commits what was typed when the field goes away mid-typing', async () => {
     const changes: number[] = [];
     const { result, unmount } = await renderField(60, changes);

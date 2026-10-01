@@ -27,6 +27,7 @@ import { useAppTheme } from '@/features/core/theme';
 type Props = {
   text: string;
   input: RefObject<TextInput | null>;
+  selectOnFocus: boolean;
   onFocus: () => void;
   onChangeText: (typed: string) => void;
   onBlur: () => void;
@@ -40,6 +41,7 @@ type Props = {
 export const StepperValue = memo(function StepperValue({
   text,
   input,
+  selectOnFocus,
   onFocus,
   onChangeText,
   onBlur,
@@ -63,7 +65,7 @@ export const StepperValue = memo(function StepperValue({
         onChangeText={onChangeText}
         onFocus={onFocus}
         onBlur={onBlur}
-        selectTextOnFocus
+        selectTextOnFocus={selectOnFocus}
         returnKeyType="done"
         keyboardType={decimal ? 'decimal-pad' : 'number-pad'}
         accessibilityLabel={label}

@@ -64,6 +64,7 @@ export const Stepper = memo(function Stepper({
         <StepperValue
           text={field.state.text}
           input={field.state.input}
+          selectOnFocus={field.state.selectOnFocus}
           onFocus={field.effects.focus}
           onChangeText={field.effects.changeText}
           onBlur={field.effects.blur}
