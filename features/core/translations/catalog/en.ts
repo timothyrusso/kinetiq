@@ -239,16 +239,13 @@ export const en = {
     neverLogged: 'You have not logged this exercise yet. Finish a session with it and your numbers will appear here.',
     records: 'Records',
     personalBests: 'Personal bests',
-    variations: 'Variations',
-    sameFamily: 'Same movement family',
-    thisExercise: 'This exercise',
-    variation: 'Variation',
-    noImage: 'No image in the library',
-    imageUnavailable: 'Picture not available right now',
-    illustrationFor: 'Illustration for {name}',
+    similar: 'Similar exercises',
+    similarEyebrow: 'Same main muscle',
+    noImage: 'No photo for this exercise yet',
+    imageUnavailable: 'The photo could not be shown',
+    photoOf: 'Photos of {name}',
     offlineCopy: 'Offline copy saved on this device',
     offlineCopyDated: 'Offline copy saved {date}',
-    fromLibrary: 'From the wger exercise library, saved on this device',
     builtIn: 'Built-in exercise',
     bodyweightTimes: 'Bodyweight × {reps}',
     openSession: 'Opens the session',
@@ -269,11 +266,11 @@ export const en = {
     appIdHint: 'Worth quoting if something breaks.',
     storageNote: 'Everything is stored on this device. Kinetiq has no account, no sign-in, and no server of its own.',
     catalog: 'Exercise catalog',
-    catalogLicence: 'Exercise data licensed CC BY-SA 4.0',
+    catalogLicence: 'Public domain (Unlicense)',
     catalogNote:
-      'The exercise library comes from wger and is stored on this device, so searching and browsing work offline. When you are online it refreshes itself every 30 days. Photos load the first time you open them and are kept for offline use after that.',
+      'The exercise library and its photos come from free-exercise-db and ship inside the app, so searching, browsing and every photo work offline from the first launch. Nothing is downloaded and nothing refreshes: the library changes only with an app update.',
     localNote:
-      'Your own data never depends on it. Every exercise you add to a routine is stored as a snapshot, so a refresh never renames anything in your routines or history.',
+      'Your own data never depends on it. Every exercise you add to a routine is stored as a snapshot, so an update of the library never renames anything in your routines or history.',
     onThisDevice: 'On this device',
     activities: 'Workouts',
     counting: 'counting…',
@@ -654,6 +651,28 @@ export const en = {
     ezBar: 'EZ bar',
   },
 
+  // NOTE: the badges on an exercise detail, by the keys `BADGE_KEYS` in `taxonKeys.ts` maps.
+  exerciseTrainingTypes: {
+    strength: 'Strength',
+    stretching: 'Stretching',
+    plyometrics: 'Plyometrics',
+    strongman: 'Strongman',
+    powerlifting: 'Powerlifting',
+    cardio: 'Cardio',
+    olympicWeightlifting: 'Olympic weightlifting',
+  },
+
+  exerciseLevels: {
+    beginner: 'Beginner',
+    intermediate: 'Intermediate',
+    expert: 'Expert',
+  },
+
+  exerciseMechanics: {
+    compound: 'Compound',
+    isolation: 'Isolation',
+  },
+
   misc: {
     loading: 'Loading',
     notFoundBody:
@@ -695,14 +714,14 @@ export const en = {
     timeoutTitle: 'The server took too long',
     genericTitle: 'Could not load this',
     offlineMessage:
-      'Anything you have saved is still here. Remote exercises and new images will come back as soon as you reconnect.',
+      'Anything you have saved is still here, and the exercise library works offline. Whatever needed the network comes back as soon as you reconnect.',
     genericMessage: 'This one did not respond. Trying again usually works.',
     autoStartOn: 'Counting down the moment you complete a set.',
     autoStartOff: 'You tap to begin resting, so a phone call between sets costs you nothing.',
     pickerNoMatch: 'Nothing matches that',
     pickerStart: 'Start typing',
     pickerNoMatchBody:
-      'The library is a real remote catalogue, so an unusual name may simply not be in it. Try a plainer word, or clear the filter.',
+      'The library is a fixed list stored on this device, so an unusual name may simply not be in it. Try a plainer word, or clear the filter.',
     pickerStartBody: 'Type part of an exercise name and results appear as you go.',
     alreadyInRoutine: 'Already in this routine',
     addsToRoutine: 'Adds this exercise to the routine',

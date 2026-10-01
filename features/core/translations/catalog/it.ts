@@ -245,16 +245,13 @@ export const it: Copy = {
       'Non hai ancora registrato questo esercizio. Completa una sessione con esso e i tuoi numeri appariranno qui.',
     records: 'Record',
     personalBests: 'Migliori personali',
-    variations: 'Varianti',
-    sameFamily: 'Stessa famiglia di movimento',
-    thisExercise: 'Questo esercizio',
-    variation: 'Variante',
-    noImage: 'Nessuna immagine nella libreria',
-    imageUnavailable: 'Immagine non disponibile ora',
-    illustrationFor: 'Illustrazione per {name}',
+    similar: 'Esercizi simili',
+    similarEyebrow: 'Stesso muscolo principale',
+    noImage: 'Ancora nessuna foto per questo esercizio',
+    imageUnavailable: 'Non è stato possibile mostrare la foto',
+    photoOf: 'Foto di {name}',
     offlineCopy: 'Copia offline salvata su questo dispositivo',
     offlineCopyDated: 'Copia offline salvata il {date}',
-    fromLibrary: 'Dalla libreria esercizi wger, salvata su questo dispositivo',
     builtIn: 'Esercizio interno',
     bodyweightTimes: 'Corpo libero × {reps}',
     openSession: 'Apre la sessione',
@@ -276,11 +273,11 @@ export const it: Copy = {
     storageNote:
       'Tutto è salvato su questo dispositivo. Kinetiq non ha account, non ha accessi e non ha un server proprio.',
     catalog: 'Catalogo esercizi',
-    catalogLicence: 'Dati degli esercizi con licenza CC BY-SA 4.0',
+    catalogLicence: 'Pubblico dominio (Unlicense)',
     catalogNote:
-      'La libreria esercizi viene da wger ed è salvata su questo dispositivo, così ricerca e navigazione funzionano offline. Quando sei online si aggiorna da sola ogni 30 giorni. Le foto si caricano la prima volta che le apri e restano disponibili offline da quel momento.',
+      "La libreria esercizi e le sue foto vengono da free-exercise-db e sono incluse nell'app, così ricerca, navigazione e ogni foto funzionano offline fin dal primo avvio. Non si scarica nulla e nulla si aggiorna da solo: la libreria cambia solo con un aggiornamento dell'app.",
     localNote:
-      'I tuoi dati non dipendono da essa. Ogni esercizio che aggiungi a una scheda viene salvato come copia, così un aggiornamento non rinomina mai nulla nelle tue schede o nella cronologia.',
+      'I tuoi dati non dipendono da essa. Ogni esercizio che aggiungi a una scheda viene salvato come copia, così un aggiornamento della libreria non rinomina mai nulla nelle tue schede o nella cronologia.',
     onThisDevice: 'Su questo dispositivo',
     activities: 'Allenamenti',
     counting: 'conteggio…',
@@ -660,6 +657,27 @@ export const it: Copy = {
     ezBar: 'Bilanciere EZ',
   },
 
+  exerciseTrainingTypes: {
+    strength: 'Forza',
+    stretching: 'Stretching',
+    plyometrics: 'Pliometria',
+    strongman: 'Strongman',
+    powerlifting: 'Powerlifting',
+    cardio: 'Cardio',
+    olympicWeightlifting: 'Sollevamento olimpico',
+  },
+
+  exerciseLevels: {
+    beginner: 'Principiante',
+    intermediate: 'Intermedio',
+    expert: 'Esperto',
+  },
+
+  exerciseMechanics: {
+    compound: 'Multiarticolare',
+    isolation: 'Monoarticolare',
+  },
+
   misc: {
     loading: 'Caricamento',
     notFoundBody:
@@ -701,14 +719,14 @@ export const it: Copy = {
     timeoutTitle: 'Il server ci ha messo troppo',
     genericTitle: 'Non è stato possibile caricarlo',
     offlineMessage:
-      'Tutto quello che hai salvato è ancora qui. Gli esercizi remoti e le immagini nuove tornano appena ti ricolleghi.',
+      'Tutto quello che hai salvato è ancora qui, e la libreria esercizi funziona offline. Quello che richiedeva la rete torna appena ti ricolleghi.',
     genericMessage: 'Questo non ha risposto. Riprovare di solito funziona.',
     autoStartOn: 'Parte il conto alla rovescia nel momento in cui completi una serie.',
     autoStartOff: 'Il recupero lo avvii tu, così una telefonata tra le serie non ti costa nulla.',
     pickerNoMatch: 'Nessun risultato',
     pickerStart: 'Comincia a scrivere',
     pickerNoMatchBody:
-      'La libreria è un catalogo remoto vero, quindi un nome insolito può semplicemente non esserci. Prova una parola più comune, oppure cancella il filtro.',
+      'La libreria è un elenco fisso salvato su questo dispositivo, quindi un nome insolito può semplicemente non esserci. Prova una parola più comune, oppure cancella il filtro.',
     pickerStartBody: 'Scrivi una parte del nome di un esercizio e i risultati compaiono mentre scrivi.',
     alreadyInRoutine: 'Già in questa scheda',
     addsToRoutine: 'Aggiunge questo esercizio alla scheda',

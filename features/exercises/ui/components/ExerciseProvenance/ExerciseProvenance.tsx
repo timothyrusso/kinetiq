@@ -6,9 +6,10 @@ import type { ExerciseSourceKind } from '@/features/exercises/domain/entities/Ex
 import { createStyles } from '@/features/exercises/ui/components/ExerciseProvenance/ExerciseProvenance.style';
 
 /**
- * One line under the hero saying where the exercise on screen came from. A stored copy is dated,
- * which explains why it shows less than the library would. The library is bundled, so there is
- * nothing to check a stored copy against: the catalog either has the exercise or never will.
+ * One line under the hero when the exercise on screen is not the library's own row. A stored copy
+ * is dated, which explains why it shows less than the library would. The library is bundled, so
+ * there is nothing to check a stored copy against: the catalog either has the exercise or never
+ * will. The library's row needs no line: it is what every other exercise on screen is too.
  */
 export function ExerciseProvenance({ from, storedAt }: { from: ExerciseSourceKind; storedAt: number | null }) {
   const { t } = useT();
@@ -28,16 +29,7 @@ export function ExerciseProvenance({ from, storedAt }: { from: ExerciseSourceKin
     );
   }
 
-  if (from === 'catalog') {
-    return (
-      <Row gap="sm" align="center">
-        <Icon name="layers" size={ICON_SIZE.micro} color={theme.colors.textFaint} />
-        <Txt variant="caption" tone="muted">
-          {t('exerciseDetail.fromLibrary')}
-        </Txt>
-      </Row>
-    );
-  }
+  if (from === 'catalog') return null;
 
   return (
     <Row gap="sm" align="center">

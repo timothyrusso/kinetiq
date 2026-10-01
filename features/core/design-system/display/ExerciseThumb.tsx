@@ -1,7 +1,6 @@
 import { Image } from 'expo-image';
 import { memo, useState } from 'react';
 import { View } from 'react-native';
-import { exerciseThumbTile } from '@/features/core/design-system/display/exerciseThumbTile';
 import { EXERCISE_IMAGE_CACHE } from '@/features/core/design-system/display/imageCache';
 import { CellText } from '@/features/core/design-system/text/CellText';
 import { radius, type Theme } from '@/features/core/theme';
@@ -28,12 +27,13 @@ export const ExerciseThumb = memo(function ExerciseThumb({
   rounded?: number;
 }) {
   const [failed, setFailed] = useState(false);
-  const showsArt = source !== null && !failed;
+  // NOTE: the photos fill the square, so the placeholder shows only while one decodes, or as the
+  // tile under the initials.
   const shared = {
     width: size,
     height: size,
     borderRadius: rounded,
-    backgroundColor: exerciseThumbTile(theme, showsArt),
+    backgroundColor: theme.colors.placeholder,
   } as const;
   if (source === null || failed) {
     return (

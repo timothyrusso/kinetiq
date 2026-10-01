@@ -20,7 +20,7 @@ Every feature declares `FEATURE_TIER` in its `index.ts`; `npm run arch` checks t
 | --- | --- | --- |
 | 0 | `core/*` (below) | the shared concerns |
 | 1 | `settings`, `watch-bridge` | the settings store and its SQLite rows; the WatchConnectivity bridge, its envelopes and `bounds.json` |
-| 2 | `exercises`, `notifications` | the SQLite exercise catalog, its bundled install, 30-day refresh and wger source, the stored snapshots; local notifications, the training reminder and the rest alert |
+| 2 | `exercises`, `notifications` | the SQLite exercise catalog, its bundled install (reinstalled when the bundled dataset is newer), the bundled photos, the stored snapshots; local notifications, the training reminder and the rest alert |
 | 3 | `routines`, `workouts` | routines, items and the routine draft; the session engine, history, records and progress |
 | 4 | `bootstrap`, `home`, `profile`, `transfer`, `watch-sync` | the launch; the Home and Workout tabs and the pickers; the profile tab and its settings screens; import and export; the watch mirror and inbox |
 | 5 | `core/runtime` | the app Layer and the one runtime |
@@ -44,7 +44,7 @@ Every feature declares `FEATURE_TIER` in its `index.ts`; `npm run arch` checks t
 | Concern | What it holds |
 | --- | --- |
 | `core/error` | the `AppError` union over `AppErrorRegistry`, `errorTagToMessageKey`, `useErrorMessage`, the HTTP retry budget and delay (`httpRetryDelayMs`, which caps an honoured `Retry-After` at one minute) |
-| `core/config` | `AppConfig` from `makeConfig`, decoding `extra` in `app.json` (the wger base URL) |
+| `core/config` | `AppConfig` from `makeConfig`, decoding `extra` in `app.json` (empty while the app calls no server) |
 | `core/logger` | `LoggerLive` and `logBackgroundFailure`, the one logging helper outside the boundary (see Exceptions) |
 | `core/sqlite` | `SqliteLive` (expo-sqlite, WAL, foreign keys), the per-version migrations `v001` to `v011`, `SchemaStatus`, `clearAllUserData` and `resetLocalData` |
 | `core/lifecycle` | `BackgroundSync`, the port the bootstrap installs and `watch-sync` fills (below) |
@@ -189,8 +189,6 @@ What the kit (0.1.1) does not cover yet, and what Kinetiq does meanwhile:
 - No `useEffectInfiniteQuery`: the exercise search widens one query instead (above).
 - `makeTestWrapper` needs a runtime of the full `AppServices`: `renderWithLayer` casts a partial
   test runtime to `ProvidedRuntime`, with a `// NOTE:` saying so.
-- The `core/error` and `core/config` indexes do not load under `tsx` (the kit's ES modules and the
-  `@/` alias), so `scripts/build-catalog.ts` imports the modules it needs directly.
 - `arch/no-inline-comments` rejects `{/* NOTE: */}` in JSX: such a note moves to the TSDoc of the
   component or a `// NOTE:` above the JSX expression.
 - The installed jest preset spreads its `withKitTransforms` helper into the config (a jest

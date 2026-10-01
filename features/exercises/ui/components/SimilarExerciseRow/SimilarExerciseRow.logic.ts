@@ -1,23 +1,15 @@
 import { useCallback, useMemo } from 'react';
 import type { Tag } from '@/features/core/design-system';
-import { useT } from '@/features/core/translations';
 import type { Exercise } from '@/features/exercises/domain/schemas/ExerciseSchema';
 import { exerciseImageSource } from '@/features/exercises/mappers/exerciseImageSource';
 
-/**
- * A similar exercise's one tag (its body area, or "this exercise" for the one on screen), its
- * bundled thumbnail and its press.
- */
-export function useExerciseVariationRowLogic(exercise: Exercise, current: boolean, onOpen: (id: string) => void) {
-  const { t } = useT();
+const NO_TAGS: Tag[] = [];
+
+/** A similar exercise's one tag (its body area), its bundled start-frame thumbnail and its press. */
+export function useSimilarExerciseRowLogic(exercise: Exercise, onOpen: (id: string) => void) {
   const tags = useMemo<Tag[]>(
-    () => [
-      {
-        key: 'kind',
-        label: current ? t('exerciseDetail.thisExercise') : (exercise.category ?? t('exerciseDetail.variation')),
-      },
-    ],
-    [current, exercise.category, t],
+    () => (exercise.category === null ? NO_TAGS : [{ key: 'area', label: exercise.category }]),
+    [exercise.category],
   );
   const image = useMemo(
     () => exerciseImageSource(exercise.thumbnailUrl) ?? exerciseImageSource(exercise.imageUrl),

@@ -2,31 +2,27 @@ import { memo } from 'react';
 import { ExerciseRow } from '@/features/core/design-system';
 import type { Theme } from '@/features/core/theme';
 import type { Exercise } from '@/features/exercises/domain/schemas/ExerciseSchema';
-import { useExerciseVariationRowLogic } from '@/features/exercises/ui/components/ExerciseVariationRow/ExerciseVariationRow.logic';
+import { useSimilarExerciseRowLogic } from '@/features/exercises/ui/components/SimilarExerciseRow/SimilarExerciseRow.logic';
 
 /** One similar exercise; opens its own detail. */
-export const ExerciseVariationRow = memo(function ExerciseVariationRow({
+export const SimilarExerciseRow = memo(function SimilarExerciseRow({
   exercise,
-  current,
   theme,
   topDivider,
   onOpen,
 }: {
   exercise: Exercise;
-  /** The exercise on screen: dimmed, and a tap does nothing. */
-  current: boolean;
   theme: Theme;
   topDivider: boolean;
   onOpen: (exerciseId: string) => void;
 }) {
-  const { derived, effects } = useExerciseVariationRowLogic(exercise, current, onOpen);
+  const { derived, effects } = useSimilarExerciseRowLogic(exercise, onOpen);
   return (
     <ExerciseRow
       name={exercise.name}
       image={derived.image}
       tags={derived.tags}
       theme={theme}
-      dimmed={current}
       topDivider={topDivider}
       onPress={effects.open}
     />
