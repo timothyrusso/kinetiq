@@ -31,6 +31,10 @@ import { useT } from '@/features/core/translations';
  * A write can take a moment to come back as `value`. Until it does, the field stands for the
  * number it wrote (`state.value`): a draft started in that moment is typed over that number, so the
  * write landing does not retire it, and a draft that only repeats it writes nothing again.
+ *
+ * The number is held only while `value` is still the one it was written over. Whatever `value`
+ * moves to next is what the write came back as, and it wins even when it differs: a pound weight
+ * rounded to its step (102.5 lb comes back as 102), or a failed write rolled back.
  */
 export function useStepperField(value: number, onChange: (next: number) => void, bounds: FieldBounds) {
   const { locale } = useT();
@@ -39,14 +43,17 @@ export function useStepperField(value: number, onChange: (next: number) => void,
   const [focused, setFocused] = useState(false);
   const input = useRef<TextInput>(null);
   const keyboard = useRef<EmitterSubscription | null>(null);
-  const inFlight = useRef<number | null>(null);
-  if (inFlight.current === value) inFlight.current = null;
-  const shown = inFlight.current ?? value;
-  const latest = useRef({ draft, value: shown, onChange, bounds });
-  latest.current = { draft, value: shown, onChange, bounds };
+  const [inFlight, setInFlight] = useState<{ next: number; over: number } | null>(null);
+  const shown = inFlight !== null && inFlight.over === value ? inFlight.next : value;
+  const latest = useRef({ draft, value: shown, prop: value, onChange, bounds });
+  latest.current = { draft, value: shown, prop: value, onChange, bounds };
+
+  useEffect(() => {
+    setInFlight(held => (held !== null && held.over !== value ? null : held));
+  }, [value]);
 
   const write = useCallback((next: number) => {
-    inFlight.current = next;
+    setInFlight({ next, over: latest.current.prop });
     latest.current.value = next;
     latest.current.onChange(next);
   }, []);

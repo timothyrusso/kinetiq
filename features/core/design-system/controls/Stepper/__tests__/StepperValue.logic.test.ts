@@ -159,6 +159,33 @@ describe('useStepperField', () => {
     expect(changes).toEqual([80]);
   });
 
+  it('shows the number a write came back as, even when it differs', async () => {
+    const changes: number[] = [];
+    const { result, rerender } = await renderField(100, changes);
+
+    await act(async () => result.current.effects.write(102.5));
+    expect(result.current.state.value).toBe(102.5);
+    await act(async () => rerender({ at: 102 }));
+
+    expect(result.current.state.value).toBe(102);
+    expect(result.current.state.text).toBe('102');
+  });
+
+  it('shows the number put back after a failed write', async () => {
+    const changes: number[] = [];
+    const { result, rerender } = await renderField(60, changes);
+
+    await act(async () => result.current.effects.focus());
+    await act(async () => result.current.effects.changeText('80'));
+    await act(async () => result.current.effects.blur());
+    await act(async () => rerender({ at: 80 }));
+    await act(async () => rerender({ at: 60 }));
+
+    expect(changes).toEqual([80]);
+    expect(result.current.state.value).toBe(60);
+    expect(result.current.state.text).toBe('60');
+  });
+
   it('commits what was typed when the field goes away mid-typing', async () => {
     const changes: number[] = [];
     const { result, unmount } = await renderField(60, changes);
