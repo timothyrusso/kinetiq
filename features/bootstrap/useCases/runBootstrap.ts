@@ -51,8 +51,9 @@ const installLifecycle = Effect.gen(function* () {
  * 5. The two slow steps (fonts, header icons) overlap with the bundled catalog's install (on the
  *    first launch, and on the first launch of a build with a newer dataset) and the workout
  *    restore, and the first frame waits for them.
- * 6. Then, not awaited: the reminder, the watch sync and the app-state events. A workout open when the process died comes back paused, never running: the clock
- *    has been reading a stored value for hours the user did not train.
+ * 6. Then, not awaited: the reminder, the watch sync and the app-state events. A workout open
+ *    when the process died comes back paused, never running: the clock has been reading a stored
+ *    value for hours the user did not train.
  */
 export const runBootstrap = (systemDark: boolean) =>
   Effect.gen(function* () {

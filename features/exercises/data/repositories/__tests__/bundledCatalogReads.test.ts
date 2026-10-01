@@ -33,18 +33,15 @@ describe('CatalogRepositoryLive over the bundled dataset', () => {
   );
 
   itEffect(
-    'finds bench presses at the top for "panca" in Italian, and among the first names starting "bench" in English',
+    'finds bench press variants first for "bench" in English and "panca" in Italian',
     Effect.gen(function* () {
       const { repository } = yield* installed;
 
+      const english = yield* repository.page({ ...ALL, query: 'bench' }, 'en', 0, 3);
       const italian = yield* repository.page({ ...ALL, query: 'panca' }, 'it', 0, 5);
-      // NOTE: "Bench Dips" and "Bench Jump" also start with "bench", and name order puts them
-      // first; the ranking is the one the picker has always had.
-      const english = yield* repository.page({ ...ALL, query: 'bench' }, 'en', 0, 6);
 
-      for (const exercise of italian.items) expect(exercise.id).toMatch(/press/);
-      expect(english.items.filter(exercise => exercise.id.includes('bench-press')).length).toBeGreaterThanOrEqual(3);
-      for (const exercise of english.items) expect(exercise.name.toLowerCase().startsWith('bench')).toBe(true);
+      for (const exercise of english.items) expect(exercise.id).toMatch(/bench-press/);
+      for (const exercise of italian.items) expect(exercise.id).toMatch(/bench|press/);
     }),
     layer(),
   );

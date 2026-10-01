@@ -91,7 +91,7 @@ export const SCHEMA_V12 = [
     type: 'table',
     name: 'catalog_translations',
     tbl_name: 'catalog_translations',
-    sql: 'CREATE TABLE catalog_translations (\n    exercise_id  TEXT NOT NULL REFERENCES catalog_exercises(id) ON DELETE CASCADE,\n    language     TEXT NOT NULL,\n    name         TEXT NOT NULL,\n    name_search  TEXT NOT NULL,\n    instructions TEXT NOT NULL,\n    PRIMARY KEY (exercise_id, language)\n  )',
+    sql: 'CREATE TABLE catalog_translations (\n    exercise_id  TEXT NOT NULL REFERENCES catalog_exercises(id) ON DELETE CASCADE,\n    language     TEXT NOT NULL,\n    name         TEXT NOT NULL,\n    name_search  TEXT NOT NULL,\n    lead_count   INTEGER NOT NULL,\n    instructions TEXT NOT NULL,\n    PRIMARY KEY (exercise_id, language)\n  )',
   },
   {
     type: 'table',

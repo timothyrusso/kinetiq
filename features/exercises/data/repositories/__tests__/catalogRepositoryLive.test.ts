@@ -190,12 +190,42 @@ describe('CatalogRepositoryLive.page', () => {
       );
 
       // NOTE: rendering in Italian, box-squat is a name prefix there ("Squat box"), which outranks
-      // squatting-hold's English-only prefix, and both outrank the word-start match.
+      // squatting-hold's English-only prefix, and both outrank the word-start matches. In English
+      // box-squat and one-leg-box-squat are both word starts, and "box squat" is the bigger family.
       const italian = yield* repository.page({ ...ALL, query: 'squat' }, 'it', 0, 50);
       const english = yield* repository.page({ ...ALL, query: 'squat' }, 'en', 0, 50);
 
       expect(slugs(italian.items)).toEqual(['squat', 'box-squat', 'squatting-hold', 'one-leg-box-squat', 'backsquat']);
-      expect(slugs(english.items)).toEqual(['squat', 'squatting-hold', 'one-leg-box-squat', 'box-squat', 'backsquat']);
+      expect(slugs(english.items)).toEqual(['squat', 'squatting-hold', 'box-squat', 'one-leg-box-squat', 'backsquat']);
+    }),
+    layer(),
+  );
+
+  itEffect(
+    'puts the bigger family first inside a rank, and an exact name ahead of any family',
+    Effect.gen(function* () {
+      const repository = yield* CatalogRepository;
+      yield* replaceWith(
+        aCatalogPayload([
+          aCatalogExercise('bench-dips', { en: 'Bench Dips' }),
+          aCatalogExercise('bench-jump', { en: 'Bench Jump' }),
+          aCatalogExercise('bench-press-bands', { en: 'Bench Press With Bands' }),
+          aCatalogExercise('bench-press-chains', { en: 'Bench Press With Chains' }),
+          aCatalogExercise('close-grip-bench-press', { en: 'Close Grip Bench Press' }),
+          aCatalogExercise('bench', { en: 'Bench' }),
+        ]),
+      );
+
+      const { items } = yield* repository.page({ ...ALL, query: 'bench' }, 'en', 0, 50);
+
+      expect(slugs(items)).toEqual([
+        'bench',
+        'bench-press-bands',
+        'bench-press-chains',
+        'bench-dips',
+        'bench-jump',
+        'close-grip-bench-press',
+      ]);
     }),
     layer(),
   );

@@ -72,6 +72,24 @@ const CATALOG_TABLES = [
 
 const SELECT_META = 'SELECT key, value FROM catalog_meta';
 
+/** The first two words of a search key: the phrase that names an exercise's family. */
+function leadPhrase(searchKey: string): string {
+  return searchKey.split(' ').slice(0, 2).join(' ');
+}
+
+/**
+ * For each search key, how many keys in the list contain its lead phrase. "bench press" heads a
+ * family of twenty, "bench dips" is a one-off, so within one search rank the family comes first.
+ * Computed once, at install, over a list of a few hundred names.
+ */
+function leadCounts(searchKeys: readonly string[]): number[] {
+  const counts = new Map<string, number>();
+  for (const phrase of new Set(searchKeys.map(leadPhrase))) {
+    counts.set(phrase, searchKeys.filter(key => key.includes(phrase)).length);
+  }
+  return searchKeys.map(key => counts.get(leadPhrase(key)) ?? 0);
+}
+
 /** Every row of `payload`, flattened into the tables' column order. */
 function catalogRows(payload: CatalogPayload) {
   const exercises: Row[] = [];
@@ -90,17 +108,6 @@ function catalogRows(payload: CatalogPayload) {
       `${CATALOG_ASSET_ROOT}${exercise.images.end}`,
       `${CATALOG_ASSET_ROOT}${exercise.images.thumb}`,
     ]);
-    for (const language of CATALOG_LANGUAGES) {
-      const name = exercise.name[language].trim();
-      if (name.length === 0) continue;
-      translations.push([
-        exercise.id,
-        language,
-        name,
-        toSearchKey(name),
-        JSON.stringify(exercise.instructions[language]),
-      ]);
-    }
     // NOTE: a Set per role, so a muscle a hand edit lists twice cannot fail the whole batch on the
     // primary key; the position is the muscle's place in the dataset's list.
     [...new Set(exercise.primaryMuscles)].forEach((muscle, position) => {
@@ -110,6 +117,23 @@ function catalogRows(payload: CatalogPayload) {
       muscles.push([exercise.id, muscle, 'secondary', position]);
     });
     equipment.push([exercise.id, exercise.equipment]);
+  }
+  for (const language of CATALOG_LANGUAGES) {
+    const named = payload.exercises
+      .map(exercise => ({ exercise, name: exercise.name[language].trim() }))
+      .filter(({ name }) => name.length > 0);
+    const keys = named.map(({ name }) => toSearchKey(name));
+    const leads = leadCounts(keys);
+    named.forEach(({ exercise, name }, index) => {
+      translations.push([
+        exercise.id,
+        language,
+        name,
+        keys[index] ?? '',
+        leads[index] ?? 0,
+        JSON.stringify(exercise.instructions[language]),
+      ]);
+    });
   }
   return { exercises, translations, muscles, equipment };
 }
@@ -131,7 +155,7 @@ async function writeCatalog(txn: SqliteDatabase, payload: CatalogPayload, now: n
   await insertRows(
     txn,
     'catalog_translations',
-    ['exercise_id', 'language', 'name', 'name_search', 'instructions'],
+    ['exercise_id', 'language', 'name', 'name_search', 'lead_count', 'instructions'],
     rows.translations,
   );
   await insertRows(txn, 'catalog_exercise_muscles', ['exercise_id', 'muscle', 'role', 'position'], rows.muscles);
@@ -171,7 +195,7 @@ const ORDER_BY_NAME = `ORDER BY COALESCE(tl.name_search, te.name_search), e.id`;
 /**
  * Relevance for a search, best first: the whole name, then the start of the name, then the start
  * of any word, then anywhere; at each step a match in the render language before a match in
- * English. Without it "squat" would list "Barbell Full Squat" first, and the routine importer,
+ * English. Inside a step, the bigger family first (`SEARCH_FAMILY`), then the name. Without it "squat" would list "Barbell Full Squat" first, and the routine importer,
  * which takes the top row as the closest match for a name it cannot find exactly, would pick it.
  * Parameters: the term twice, then the escaped term four times.
  */
@@ -185,6 +209,12 @@ const SEARCH_RANK = `
     WHEN te.name_search LIKE '% ' || ? || '%' ESCAPE '\\' THEN 5
     ELSE 6
   END`;
+
+/**
+ * The tiebreak inside a rank: the name's family size in the render language, else in English, so
+ * "bench" lists the bench presses before "Bench Dips".
+ */
+const SEARCH_FAMILY = 'COALESCE(tl.lead_count, te.lead_count) DESC';
 
 /** `%` and `_` in what the user typed are text, not wildcards. */
 function escapeLike(term: string): string {
@@ -355,7 +385,10 @@ export const CatalogRepositoryLive = Layer.effect(
           const term = toSearchKey(filter.query);
           const escaped = escapeLike(term);
           const { clause, params } = filterClause(filter, language, term, escaped);
-          const order = term.length > 0 ? ORDER_BY_NAME.replace('ORDER BY', `ORDER BY ${SEARCH_RANK},`) : ORDER_BY_NAME;
+          const order =
+            term.length > 0
+              ? ORDER_BY_NAME.replace('ORDER BY', `ORDER BY ${SEARCH_RANK}, ${SEARCH_FAMILY},`)
+              : ORDER_BY_NAME;
           const rankParams = term.length > 0 ? [term, term, escaped, escaped, escaped, escaped] : [];
           const [rows, count] = yield* Effect.all(
             [

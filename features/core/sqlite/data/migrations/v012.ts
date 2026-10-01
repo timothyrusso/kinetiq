@@ -21,7 +21,8 @@ const V9_CATALOG_TABLES = [
  * Muscles and equipment are junction tables keyed by the dataset's text keys, indexed for the
  * picker's filters; a muscle keeps its position, so "the first primary muscle" is a read. There is
  * no taxonomy table: the labels are the translation catalog's. Instructions are the steps as a
- * JSON list. Images are asset paths into the bundle.
+ * JSON list. `lead_count` is how many names in the language share the name's first two words, the
+ * search's tiebreak inside a rank. Images are asset paths into the bundle.
  */
 const CATALOG_SCHEMA = `
   CREATE TABLE catalog_meta (
@@ -47,6 +48,7 @@ const CATALOG_SCHEMA = `
     language     TEXT NOT NULL,
     name         TEXT NOT NULL,
     name_search  TEXT NOT NULL,
+    lead_count   INTEGER NOT NULL,
     instructions TEXT NOT NULL,
     PRIMARY KEY (exercise_id, language)
   );
