@@ -655,6 +655,8 @@ export const it: Copy = {
     medicineBall: 'Palla medica',
     exerciseBall: 'Fitball',
     ezBar: 'Bilanciere EZ',
+    suspension: 'Cinghie da sospensione',
+    rings: 'Anelli',
   },
 
   exerciseTrainingTypes: {

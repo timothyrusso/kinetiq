@@ -64,6 +64,8 @@ const EQUIPMENT = new Set([
   'medicine-ball',
   'exercise-ball',
   'ez-bar',
+  'suspension',
+  'rings',
 ]);
 
 /** The body area rule: cardio wins, then the first primary muscle, then the first secondary, then abs. */
