@@ -16,7 +16,7 @@ and watch your training history grow. Everything stays on your device.
 ## Features
 
 - **Routines**: create and edit your workouts, or start an empty one.
-- **Exercise library**: the [free-exercise-db](https://github.com/yuhonas/free-exercise-db) catalog, over 900 exercises in English and Italian with start and end photos, numbered steps and similar exercises. It ships inside the app, so search, filters and photos work offline from the first launch.
+- **Exercise library**: the [free-exercise-db](https://github.com/yuhonas/free-exercise-db) catalog plus hand-written gym exercises, 917 in all, in English and Italian with numbered steps and similar exercises. 873 have start and end photos; the other 44, mostly the hand-written additions, do not have photos yet. It ships inside the app, so search, filters and photos work offline from the first launch.
 - **Live workout**: log weight and reps per set, with a rest timer and haptic feedback.
 - **History**: a 20-week training heatmap, weekly goal, streaks, personal records and per-exercise progress.
 - **Apple Watch**: run a full workout from your wrist; it syncs back to the phone when you finish.

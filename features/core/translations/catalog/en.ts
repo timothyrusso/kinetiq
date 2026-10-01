@@ -649,6 +649,8 @@ export const en = {
     medicineBall: 'Medicine ball',
     exerciseBall: 'Swiss ball',
     ezBar: 'EZ bar',
+    suspension: 'Suspension trainer',
+    rings: 'Rings',
   },
 
   // NOTE: the badges on an exercise detail, by the keys `BADGE_KEYS` in `taxonKeys.ts` maps.

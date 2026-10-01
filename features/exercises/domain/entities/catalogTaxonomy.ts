@@ -45,6 +45,8 @@ export const EQUIPMENT = [
   'medicine-ball',
   'exercise-ball',
   'ez-bar',
+  'suspension',
+  'rings',
 ] as const;
 
 export type Equipment = (typeof EQUIPMENT)[number];

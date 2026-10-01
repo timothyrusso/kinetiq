@@ -54,6 +54,8 @@ const EQUIPMENT = {
   'medicine-ball': 'exerciseEquipment.medicineBall',
   'exercise-ball': 'exerciseEquipment.exerciseBall',
   'ez-bar': 'exerciseEquipment.ezBar',
+  suspension: 'exerciseEquipment.suspension',
+  rings: 'exerciseEquipment.rings',
 } as const satisfies Record<Equipment, string>;
 
 /** The catalog key naming a taxon: a key of the app's translation catalog. */
