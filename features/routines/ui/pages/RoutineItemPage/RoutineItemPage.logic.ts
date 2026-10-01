@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { closeSheet } from '@/features/core/design-system';
 import { haptics } from '@/features/core/haptics';
 import { useT } from '@/features/core/translations';
-import type { ItemTarget } from '@/features/routines/domain/entities/ItemTarget';
+import type { ItemChange } from '@/features/routines/domain/entities/ItemTarget';
 import { routineIdOf } from '@/features/routines/domain/utils/routineId';
 import { useRoutine } from '@/features/routines/facades/useRoutine';
 import { useRoutineDraft } from '@/features/routines/facades/useRoutineDraft';
@@ -37,16 +37,16 @@ export function useRoutineItemPageLogic() {
     return draft.snapshots.find(row => row.exerciseId === item.exerciseId) ?? null;
   }, [draft.snapshots, item, routineId, saved.snapshots]);
 
-  const { mutate: writeItem } = setItem;
+  const { change: writeItem } = setItem;
   const change = useCallback(
-    (patch: Partial<ItemTarget>) => {
+    (update: ItemChange) => {
       if (routineId === null) {
-        actions.updateItem(itemId, patch);
+        actions.updateItem(itemId, update);
         return;
       }
       // NOTE: fire and forget: a stepper fires on every tap, and a pending state per press would
       // make the sheet feel broken for a one-row update.
-      writeItem({ routineId, itemId, patch }, { onError: () => haptics.warning() });
+      writeItem({ routineId, itemId, change: update }, { onError: () => haptics.warning() });
     },
     [actions, itemId, routineId, writeItem],
   );

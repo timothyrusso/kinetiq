@@ -3,6 +3,7 @@ import { labelsHidden } from '@expo/ui/swift-ui/modifiers';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { StepperValue } from '@/features/core/design-system/controls/Stepper/StepperValue';
+import { useStepperField } from '@/features/core/design-system/controls/Stepper/StepperValue.logic';
 import { type StepperProps, stepClamp } from '@/features/core/design-system/controls/Stepper/types';
 import { haptics } from '@/features/core/haptics';
 import { spacing, useAppTheme } from '@/features/core/theme';
@@ -28,18 +29,22 @@ export const Stepper = memo(function Stepper({
   decimal = false,
 }: StepperProps) {
   const theme = useAppTheme();
+  const typesDecimals = decimal || !Number.isInteger(step);
+  const field = useStepperField(value, onChange, { min, max, decimal: typesDecimals });
   return (
     <View style={styles.row}>
       <View accessibilityLiveRegion="polite" style={styles.value}>
         <StepperValue
-          value={value}
-          onChange={onChange}
-          min={min}
-          max={max}
+          text={field.state.text}
+          input={field.state.input}
+          selectOnFocus={field.state.selectOnFocus}
+          onFocus={field.effects.focus}
+          onChangeText={field.effects.changeText}
+          onBlur={field.effects.blur}
           suffix={suffix}
           label={label}
           compact={compact}
-          decimal={decimal || !Number.isInteger(step)}
+          decimal={typesDecimals}
           align="left"
         />
       </View>
@@ -52,10 +57,11 @@ export const Stepper = memo(function Stepper({
           max={max}
           modifiers={[labelsHidden()]}
           onValueChange={next => {
-            const clamped = stepClamp(next, { min, max, step });
-            if (clamped === value) return;
+            const from = field.effects.take() ?? field.state.value;
+            const clamped = stepClamp(from + next - value, { min, max, step });
+            if (clamped === field.state.value) return;
             haptics.selection();
-            onChange(clamped);
+            field.effects.write(clamped);
           }}
         />
       </Host>

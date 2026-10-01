@@ -7,7 +7,7 @@ import {
   snapshotOf,
   useCatalogLanguage,
 } from '@/features/exercises';
-import type { ItemTarget } from '@/features/routines/domain/entities/ItemTarget';
+import type { ItemChange, ItemTarget } from '@/features/routines/domain/entities/ItemTarget';
 import { defaultItemTarget } from '@/features/routines/domain/utils/itemTargets';
 import { EMPTY_DRAFT, type RoutineDraft, useRoutineDraftStore } from '@/features/routines/state/routineDraftStore';
 import type { NewRoutine } from '@/features/routines/useCases/createRoutine';
@@ -68,8 +68,9 @@ function addExercise(exercise: Exercise, target?: Partial<ItemTarget>): void {
   });
 }
 
-function updateItem(itemId: string, patch: Partial<ItemTarget>): void {
-  write({ items: draft().items.map(item => (item.id === itemId ? { ...item, ...patch } : item)) });
+/** Applies `change` to the row as the draft holds it now. */
+function updateItem(itemId: string, change: ItemChange): void {
+  write({ items: draft().items.map(item => (item.id === itemId ? { ...item, ...change(item) } : item)) });
 }
 
 /** Moves a row; a destination off the list moves nothing. */

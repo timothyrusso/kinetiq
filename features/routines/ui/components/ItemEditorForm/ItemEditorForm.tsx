@@ -4,7 +4,7 @@ import { useAppTheme } from '@/features/core/theme';
 import { useT } from '@/features/core/translations';
 import type { UnitSystem } from '@/features/core/utils';
 import type { ExerciseSnapshot } from '@/features/exercises';
-import type { ItemTarget } from '@/features/routines/domain/entities/ItemTarget';
+import type { ItemChange } from '@/features/routines/domain/entities/ItemTarget';
 import type { RoutineItem } from '@/features/routines/domain/schemas/RoutineSchema';
 import { ExerciseAbout } from '@/features/routines/ui/components/ExerciseAbout/ExerciseAbout';
 import { useItemEditorFormLogic } from '@/features/routines/ui/components/ItemEditorForm/ItemEditorForm.logic';
@@ -26,7 +26,7 @@ export const ItemEditorForm = memo(function ItemEditorForm({
   item: RoutineItem;
   snapshot: ExerciseSnapshot | null;
   units: UnitSystem;
-  onChange: (patch: Partial<ItemTarget>) => void;
+  onChange: (change: ItemChange) => void;
   onRemove?: () => void;
 }) {
   const { derived, effects } = useItemEditorFormLogic(item, snapshot, units, onChange);

@@ -42,7 +42,7 @@ describe('useRoutineItemPageLogic on a saved routine', () => {
   it('writes a change to the saved item', async () => {
     const { result, read, done } = await renderSavedItem();
 
-    await act(async () => result.current.effects.change({ sets: uniformSets(5, 6, 40) }));
+    await act(async () => result.current.effects.change(() => ({ sets: uniformSets(5, 6, 40) })));
 
     await waitFor(() => expect(result.current.state.item?.sets).toHaveLength(5));
     expect((await read())?.routine.items.find(item => item.id === 'rit_press')?.sets).toEqual(uniformSets(5, 6, 40));
@@ -82,7 +82,7 @@ describe('useRoutineItemPageLogic on the builder’s draft', () => {
   it('writes a change into the draft, not the database', async () => {
     const { result, itemId, done } = await renderDraftItem();
 
-    await act(async () => result.current.page.effects.change({ sets: uniformSets(3, 5, 0) }));
+    await act(async () => result.current.page.effects.change(() => ({ sets: uniformSets(3, 5, 0) })));
 
     expect(result.current.draft.draft.items.find(item => item.id === itemId)?.sets).toEqual(uniformSets(3, 5, 0));
     await done();

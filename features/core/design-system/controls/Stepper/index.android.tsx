@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useStepperPress } from '@/features/core/design-system/controls/Stepper/Stepper.logic';
 import { StepperValue } from '@/features/core/design-system/controls/Stepper/StepperValue';
+import { useStepperField } from '@/features/core/design-system/controls/Stepper/StepperValue.logic';
 import { formatStepperValue, type StepperProps } from '@/features/core/design-system/controls/Stepper/types';
 import { ICON_SIZE, Icon, type IconName } from '@/features/core/design-system/icons/icons';
 import { radius, spacing, touchTarget, useAppTheme } from '@/features/core/theme';
@@ -25,11 +26,13 @@ export const Stepper = memo(function Stepper({
   decimal = false,
 }: StepperProps) {
   const theme = useAppTheme();
-  const { effects } = useStepperPress(value, onChange, { min, max, step });
+  const typesDecimals = decimal || !Number.isInteger(step);
+  const field = useStepperField(value, onChange, { min, max, decimal: typesDecimals });
+  const { effects } = useStepperPress(field.state.value, field.effects.write, { min, max, step }, field.effects.take);
 
   const size = compact ? 32 : touchTarget - spacing.xs;
   const button = (delta: number, icon: IconName) => {
-    const atEdge = delta > 0 ? value >= max : value <= min;
+    const atEdge = delta > 0 ? field.state.value >= max : field.state.value <= min;
     return (
       <Pressable
         onPressIn={() => effects.press(delta)}
@@ -59,14 +62,16 @@ export const Stepper = memo(function Stepper({
       {button(-step, 'minus')}
       <View accessibilityLiveRegion="polite" style={[styles.value, { minWidth: compact ? 46 : 60 }]}>
         <StepperValue
-          value={value}
-          onChange={onChange}
-          min={min}
-          max={max}
+          text={field.state.text}
+          input={field.state.input}
+          selectOnFocus={field.state.selectOnFocus}
+          onFocus={field.effects.focus}
+          onChangeText={field.effects.changeText}
+          onBlur={field.effects.blur}
           suffix={suffix}
           label={label}
           compact={compact}
-          decimal={decimal || !Number.isInteger(step)}
+          decimal={typesDecimals}
           align="center"
         />
       </View>
