@@ -85,7 +85,7 @@ describe('useStepperField', () => {
     expect(result.current.state.text).toBe('102,5');
   });
 
-  it('hands a press the typed number, written once', async () => {
+  it('hands a press the typed number without writing it', async () => {
     const changes: number[] = [];
     const { result } = await renderField(60, changes);
 
@@ -93,12 +93,12 @@ describe('useStepperField', () => {
     await act(async () => result.current.effects.changeText('70'));
     let from: number | null = null;
     await act(async () => {
-      from = result.current.effects.flush();
+      from = result.current.effects.take();
     });
     await act(async () => result.current.effects.blur());
 
     expect(from).toBe(70);
-    expect(changes).toEqual([70]);
+    expect(changes).toEqual([]);
   });
 
   it('stops selecting on focus while focused, so a layout mid-typing cannot select the digits', async () => {

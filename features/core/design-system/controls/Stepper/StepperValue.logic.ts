@@ -21,8 +21,8 @@ import { useT } from '@/features/core/translations';
  * two differed the field snapped to the old number, and the next key landed on that: digits lost,
  * zeros that were never typed.
  *
- * `flush` commits a pending draft and returns the number it wrote (nothing when there was none to
- * write), for a − or + press to step from the typed number rather than the one under it. The field
+ * `take` retires a pending draft and returns the number it would commit (nothing when there is none
+ * to write), for a − or + press to step from the typed number rather than the one under it. The field
  * going away commits too: a sheet swiped shut mid-typing, or iOS's number pad, which has no done
  * key.
  */
@@ -36,14 +36,17 @@ export function useStepperField(value: number, onChange: (next: number) => void,
   const latest = useRef({ draft, value, onChange, bounds });
   latest.current = { draft, value, onChange, bounds };
 
-  const flush = useCallback((): number | null => {
-    const { draft: pending, value: current, onChange: write, bounds: range } = latest.current;
+  const take = useCallback((): number | null => {
+    const { draft: pending, value: current, bounds: range } = latest.current;
     latest.current.draft = null;
     setDraft(null);
-    const next = committedValue(pending, current, range);
-    if (next !== null) write(next);
-    return next;
+    return committedValue(pending, current, range);
   }, []);
+  const commit = useCallback((): number | null => {
+    const next = take();
+    if (next !== null) latest.current.onChange(next);
+    return next;
+  }, [take]);
 
   const focus = useCallback(() => {
     const current = latest.current.value;
@@ -67,17 +70,17 @@ export function useStepperField(value: number, onChange: (next: number) => void,
     keyboard.current = null;
     setFocused(false);
     const before = latest.current.value;
-    const next = flush();
+    const next = commit();
     // NOTE: Until the write comes back the field keeps showing what it committed, not the old number.
     if (next !== null) setDraft({ text: fieldText(next, separator), base: before });
-  }, [flush, separator]);
+  }, [commit, separator]);
 
   useEffect(
     () => () => {
       keyboard.current?.remove();
-      flush();
+      commit();
     },
-    [flush],
+    [commit],
   );
 
   return {
@@ -85,6 +88,6 @@ export function useStepperField(value: number, onChange: (next: number) => void,
     // first layout after focus, and a field that widens as it is typed in lays out mid-typing: the
     // third digit replaced the first two.
     state: { text: stepperText(draft, value, separator), input, selectOnFocus: !focused },
-    effects: { focus, changeText, blur, flush },
+    effects: { focus, changeText, blur, take },
   };
 }

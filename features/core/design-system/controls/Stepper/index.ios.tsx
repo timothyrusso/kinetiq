@@ -57,9 +57,9 @@ export const Stepper = memo(function Stepper({
           max={max}
           modifiers={[labelsHidden()]}
           onValueChange={next => {
-            const from = field.effects.flush() ?? value;
+            const from = field.effects.take() ?? value;
             const clamped = stepClamp(from + next - value, { min, max, step });
-            if (clamped === from) return;
+            if (clamped === value) return;
             haptics.selection();
             onChange(clamped);
           }}

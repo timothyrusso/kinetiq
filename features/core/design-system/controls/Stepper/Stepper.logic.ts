@@ -20,14 +20,14 @@ type Bounds = Required<Pick<StepperProps, 'min' | 'max' | 'step'>>;
  * The tick reads the latest value from a ref, not from the closure: the classic stepper bug is a
  * hold that keeps adding to whatever number was under the finger when it started.
  *
- * `flush` commits whatever is typed in the field and returns the number it wrote, so a press made
- * mid-typing steps from the typed number.
+ * `take` hands over whatever is typed in the field, unwritten, so a press made mid-typing steps
+ * from the typed number in one write: two writes in flight can land out of order.
  */
 export function useStepperPress(
   value: number,
   onChange: (next: number) => void,
   { min, max, step }: Bounds,
-  flush: () => number | null,
+  take: () => number | null,
 ) {
   const delay = useRef<ReturnType<typeof setTimeout> | null>(null);
   const repeat = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -35,8 +35,8 @@ export function useStepperPress(
   valueRef.current = value;
 
   const commit = useCallback(
-    (delta: number) => {
-      const next = stepClamp(valueRef.current + delta, { min, max, step });
+    (delta: number, from = valueRef.current) => {
+      const next = stepClamp(from + delta, { min, max, step });
       if (next === valueRef.current) return;
       valueRef.current = next;
       haptics.selection();
@@ -53,14 +53,13 @@ export function useStepperPress(
   const press = useCallback(
     (delta: number) => {
       release();
-      valueRef.current = flush() ?? valueRef.current;
-      commit(delta);
+      commit(delta, take() ?? valueRef.current);
       delay.current = setTimeout(() => {
         delay.current = null;
         repeat.current = setInterval(() => commit(delta), REPEAT_INTERVAL_MS);
       }, REPEAT_DELAY_MS);
     },
-    [commit, flush, release],
+    [commit, release, take],
   );
   // NOTE: Unmounted mid-hold (navigating away, a re-key): no timer may outlive the control.
   useEffect(() => release, [release]);
