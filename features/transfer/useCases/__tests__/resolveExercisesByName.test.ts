@@ -27,7 +27,7 @@ describe('resolveExercisesByName', () => {
   itEffect(
     'matches an id the device has stored, with no catalog read',
     Effect.gen(function* () {
-      expect(yield* matchOf(anItem({ exerciseId: 'wger:73' }))).toEqual({
+      expect(yield* matchOf(anItem({ exerciseId: 'ex:barbell-bench-press-medium-grip' }))).toEqual({
         status: 'stored',
         snapshot: anExerciseSnapshot(),
       });
@@ -38,9 +38,12 @@ describe('resolveExercisesByName', () => {
   itEffect(
     'matches an id the catalog has, frozen as a snapshot now',
     Effect.gen(function* () {
-      const match = yield* matchOf(anItem({ exerciseId: 'wger:73' }));
+      const match = yield* matchOf(anItem({ exerciseId: 'ex:barbell-bench-press-medium-grip' }));
 
-      expect(match).toMatchObject({ status: 'catalog', snapshot: { exerciseId: 'wger:73', name: 'Bench Press' } });
+      expect(match).toMatchObject({
+        status: 'catalog',
+        snapshot: { exerciseId: 'ex:barbell-bench-press-medium-grip', name: 'Bench Press' },
+      });
     }),
     layer([], [anExercise()]),
   );
@@ -48,7 +51,7 @@ describe('resolveExercisesByName', () => {
   itEffect(
     'falls through an unknown id to the name, among stored exercises first',
     Effect.gen(function* () {
-      const match = yield* matchOf(anItem({ exerciseId: 'wger:9999', exerciseName: 'bench press' }));
+      const match = yield* matchOf(anItem({ exerciseId: 'ex:not-in-the-catalog', exerciseName: 'bench press' }));
 
       expect(match).toEqual({ status: 'stored', snapshot: anExerciseSnapshot() });
     }),
@@ -60,9 +63,18 @@ describe('resolveExercisesByName', () => {
     Effect.gen(function* () {
       const match = yield* matchOf(anItem({ exerciseName: 'Bench-Press' }));
 
-      expect(match).toMatchObject({ status: 'catalog', snapshot: { exerciseId: 'wger:73' } });
+      expect(match).toMatchObject({
+        status: 'catalog',
+        snapshot: { exerciseId: 'ex:barbell-bench-press-medium-grip' },
+      });
     }),
-    layer([], [anExercise({ id: 'wger:80', name: 'Bench Press Incline' }), anExercise({ name: 'Bench Press' })]),
+    layer(
+      [],
+      [
+        anExercise({ id: 'ex:barbell-incline-bench-press-medium-grip', name: 'Bench Press Incline' }),
+        anExercise({ name: 'Bench Press' }),
+      ],
+    ),
   );
 
   itEffect(
@@ -70,9 +82,18 @@ describe('resolveExercisesByName', () => {
     Effect.gen(function* () {
       const match = yield* matchOf(anItem({ exerciseName: 'Bench' }));
 
-      expect(match).toMatchObject({ status: 'closest', snapshot: { exerciseId: 'wger:80' } });
+      expect(match).toMatchObject({
+        status: 'closest',
+        snapshot: { exerciseId: 'ex:barbell-incline-bench-press-medium-grip' },
+      });
     }),
-    layer([], [anExercise({ id: 'wger:80', name: 'Bench Press Incline' }), anExercise({ name: 'Bench Press' })]),
+    layer(
+      [],
+      [
+        anExercise({ id: 'ex:barbell-incline-bench-press-medium-grip', name: 'Bench Press Incline' }),
+        anExercise({ name: 'Bench Press' }),
+      ],
+    ),
   );
 
   itEffect(
@@ -87,7 +108,12 @@ describe('resolveExercisesByName', () => {
     'reports an item as missing when the catalog search fails, keeping the rest of the import',
     Effect.gen(function* () {
       const resolved = yield* resolveExercisesByName(
-        [{ name: 'Push', items: [anItem({ exerciseName: 'Row' }), anItem({ exerciseId: 'wger:73' })] }],
+        [
+          {
+            name: 'Push',
+            items: [anItem({ exerciseName: 'Row' }), anItem({ exerciseId: 'ex:barbell-bench-press-medium-grip' })],
+          },
+        ],
         'en',
       );
 

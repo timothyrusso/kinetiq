@@ -16,7 +16,7 @@
       "totalSets": 1,
       "exercises": [
         {
-          "exerciseId": "wger:73",
+          "exerciseId": "ex:barbell-bench-press-medium-grip",
           "exerciseName": "Bench Press",
           "muscleGroup": "Chest",
           "restSeconds": 120,
@@ -52,7 +52,7 @@
       "totalSets": 3,
       "exercises": [
         {
-          "exerciseId": "wger:111",
+          "exerciseId": "ex:barbell-squat",
           "exerciseName": "Squat, Back",
           "muscleGroup": null,
           "restSeconds": 180,
