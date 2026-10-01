@@ -2,7 +2,7 @@ Here is your routine:
 ```json
 {"routines": [
   {"name": "Upper", "items": [
-    {"exerciseName": "Bench Press", "wgerId": 73, "sets": 99, "reps": "8\u201312", "weightKg": 61.3, "restSeconds": 5000},
+    {"exerciseName": "Bench Press", "exerciseId": "ex:barbell-bench-press-medium-grip", "sets": 99, "reps": "8\u201312", "weightKg": 61.3, "restSeconds": 5000},
     {"exercise": "Row", "reps": "10x"},
     {"exerciseId": "local:band-pull", "exerciseName": "Band pull-apart", "sets": "3", "reps": 15, "notes": "Slow"},
     {"notes": "no name"},

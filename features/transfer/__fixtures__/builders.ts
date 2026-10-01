@@ -9,7 +9,7 @@ export const EXPORTED_AT = Date.UTC(2026, 8, 25, 10, 0, 0);
 
 /** Bench press: two sets of five at 100 kg, the second not done, resting 120 s. */
 const aBenchEntry = (overrides: Partial<StrengthEntry> = {}): StrengthEntry => ({
-  exerciseId: 'wger:73',
+  exerciseId: 'ex:barbell-bench-press-medium-grip',
   exerciseName: 'Bench Press',
   muscleGroup: 'Chest',
   restSeconds: 120,
@@ -50,7 +50,7 @@ export const someActivities = (): Activity[] => [
     strength: {
       entries: [
         aBenchEntry({
-          exerciseId: 'wger:111',
+          exerciseId: 'ex:barbell-squat',
           exerciseName: 'Squat, Back',
           muscleGroup: null,
           restSeconds: 180,
@@ -90,7 +90,7 @@ const setsOf = (count: number, reps: number, weightKg: number): RoutineSet[] =>
 /** One item: bench press, three sets of eight at 60 kg, resting 90 s. */
 const anItem = (overrides: Partial<RoutineItem> = {}): RoutineItem => ({
   id: 'rit_bench',
-  exerciseId: 'wger:73',
+  exerciseId: 'ex:barbell-bench-press-medium-grip',
   exerciseName: 'Bench Press',
   sets: setsOf(3, 8, 60),
   restSeconds: 90,
@@ -106,7 +106,7 @@ const aRoutine = (overrides: Partial<Routine> = {}): Routine => ({
     anItem(),
     anItem({
       id: 'rit_press',
-      exerciseId: 'wger:74',
+      exerciseId: 'ex:barbell-shoulder-press',
       exerciseName: 'Overhead Press',
       sets: setsOf(4, 6, 40),
       restSeconds: 60,
@@ -131,7 +131,7 @@ export const someRoutines = (): Routine[] => [
     items: [
       anItem({
         id: 'rit_squat',
-        exerciseId: 'wger:111',
+        exerciseId: 'ex:barbell-squat',
         exerciseName: 'Squat, Back',
         sets: [
           { index: 0, reps: 5, weightKg: 130, targetRpe: null },
@@ -160,7 +160,7 @@ export const someRoutines = (): Routine[] => [
 
 /** The bench press as the catalog reads it. */
 export const anExercise = (overrides: Partial<Exercise> = {}): Exercise => ({
-  id: 'wger:73',
+  id: 'ex:barbell-bench-press-medium-grip',
   name: 'Bench Press',
   instructions: ['Lower the bar to the chest, then press.'],
   category: 'Chest',
@@ -181,7 +181,7 @@ export const anExercise = (overrides: Partial<Exercise> = {}): Exercise => ({
 
 /** The stored copy of the bench press. */
 export const anExerciseSnapshot = (overrides: Partial<ExerciseSnapshot> = {}): ExerciseSnapshot => ({
-  exerciseId: 'wger:73',
+  exerciseId: 'ex:barbell-bench-press-medium-grip',
   name: 'Bench Press',
   instructions: ['Lower the bar to the chest, then press.'],
   category: 'Chest',

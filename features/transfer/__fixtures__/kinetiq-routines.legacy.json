@@ -1,12 +1,16 @@
 {
-  "ok": true,
+  "format": "kinetiq.routines",
+  "version": 2,
+  "exportedAt": "2026-09-25T10:00:00.000Z",
   "routines": [
     {
       "name": "Legs · Heavy",
       "items": [
         {
-          "exerciseId": "ex:barbell-squat",
+          "exerciseId": "wger:111",
           "exerciseName": "Squat, Back",
+          "restSeconds": 180,
+          "notes": "Belt on top sets",
           "sets": [
             {
               "reps": 5,
@@ -33,13 +37,13 @@
               "weightKg": 142.5,
               "targetRpe": 9
             }
-          ],
-          "restSeconds": 180,
-          "notes": "Belt on top sets"
+          ]
         },
         {
           "exerciseId": "local:hip-thrust",
           "exerciseName": "Hip thrust",
+          "restSeconds": 90,
+          "notes": null,
           "sets": [
             {
               "reps": 10,
@@ -56,9 +60,7 @@
               "weightKg": 60.25,
               "targetRpe": null
             }
-          ],
-          "restSeconds": 90,
-          "notes": null
+          ]
         }
       ]
     },
@@ -66,8 +68,10 @@
       "name": "Push Day",
       "items": [
         {
-          "exerciseId": "ex:barbell-bench-press-medium-grip",
+          "exerciseId": "wger:73",
           "exerciseName": "Bench Press",
+          "restSeconds": 90,
+          "notes": null,
           "sets": [
             {
               "reps": 8,
@@ -84,13 +88,13 @@
               "weightKg": 60,
               "targetRpe": null
             }
-          ],
-          "restSeconds": 90,
-          "notes": null
+          ]
         },
         {
-          "exerciseId": "ex:barbell-shoulder-press",
+          "exerciseId": "wger:74",
           "exerciseName": "Overhead Press",
+          "restSeconds": 60,
+          "notes": "Brace first",
           "sets": [
             {
               "reps": 6,
@@ -112,12 +116,9 @@
               "weightKg": 40,
               "targetRpe": null
             }
-          ],
-          "restSeconds": 60,
-          "notes": "Brace first"
+          ]
         }
       ]
     }
-  ],
-  "issues": []
+  ]
 }
