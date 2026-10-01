@@ -8,8 +8,8 @@ import {
 /** The shortest a `Pressable` press lasts: it holds `onPressOut` until 130 ms after `onPressIn`. */
 const PRESSABLE_MIN_PRESS_MS = 130;
 
-const renderPress = (value: number, changes: number[]) =>
-  renderHook(() => useStepperPress(value, next => void changes.push(next), { min: 0, max: 20, step: 1 }));
+const renderPress = (value: number, changes: number[], flush: () => number | null = () => null) =>
+  renderHook(() => useStepperPress(value, next => void changes.push(next), { min: 0, max: 20, step: 1 }, flush));
 
 describe('useStepperPress', () => {
   beforeEach(() => jest.useFakeTimers());
@@ -67,6 +67,18 @@ describe('useStepperPress', () => {
     await act(async () => void jest.advanceTimersByTime(REPEAT_DELAY_MS + REPEAT_INTERVAL_MS * 5));
 
     expect(changes).toEqual([20]);
+  });
+
+  it('steps from the number typed in the field, not the one under it', async () => {
+    const changes: number[] = [];
+    const { result } = await renderPress(10, changes, () => 15);
+
+    await act(async () => {
+      result.current.effects.press(1);
+      result.current.effects.release();
+    });
+
+    expect(changes).toEqual([16]);
   });
 
   it('leaves no repeat running once unmounted mid-hold', async () => {

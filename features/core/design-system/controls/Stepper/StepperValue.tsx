@@ -5,14 +5,12 @@
  * 90 to 240 s is ten presses. Tapping the number opens the number pad instead, and both paths
  * write through the same `onChange`.
  *
- * ## Typing writes as you type
+ * ## Typing commits once
  *
- * Each keystroke that parses commits, clamped to the range, so there is no Done button to
- * miss: iOS's number pad has no return key, and a value that only lands on blur is a value lost
- * when the sheet is swiped away. What the field SHOWS while focused is what was typed, so
- * clearing "12" to type "8" does not flash the minimum in between. On blur it shows the value
- * that was kept, and so it does the moment − or + moves the value away from what was typed: Android
- * can hand this field focus as a sheet opens, and a press the field did not show looked ignored.
+ * While focused the field shows exactly what was typed and writes nothing; the number is parsed
+ * and clamped when typing ends (blur, the done key, or the field going away), and a − or + press
+ * steps from the typed number. See `useStepperField`, which the stepper owns so its press can
+ * reach the draft.
  *
  * Typed values are clamped but not snapped to the step: the step is the size of a nudge, not
  * the set of legal answers, and 75 s of rest is a real choice.
@@ -21,22 +19,17 @@
  * the Expo UI field: this sits inside a row next to the native stepper, where a second native
  * host would be a second view boundary for one number.
  */
-import { memo, useState } from 'react';
+import { memo, type RefObject } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
-import {
-  type StepperDraft,
-  stepperText,
-  typedDraft,
-} from '@/features/core/design-system/controls/Stepper/stepperDraft';
-import { formatStepperValue } from '@/features/core/design-system/controls/Stepper/types';
 import { fontFamilyOf, fontSizeOf, Txt, type TxtVariant } from '@/features/core/design-system/text/Text';
 import { useAppTheme } from '@/features/core/theme';
 
 type Props = {
-  value: number;
-  onChange: (next: number) => void;
-  min: number;
-  max: number;
+  text: string;
+  input: RefObject<TextInput | null>;
+  onFocus: () => void;
+  onChangeText: (typed: string) => void;
+  onBlur: () => void;
   decimal: boolean;
   suffix?: string;
   label: string;
@@ -45,10 +38,11 @@ type Props = {
 };
 
 export const StepperValue = memo(function StepperValue({
-  value,
-  onChange,
-  min,
-  max,
+  text,
+  input,
+  onFocus,
+  onChangeText,
+  onBlur,
   decimal,
   suffix,
   label,
@@ -56,27 +50,21 @@ export const StepperValue = memo(function StepperValue({
   align,
 }: Props) {
   const theme = useAppTheme();
-  const [draft, setDraft] = useState<StepperDraft | null>(null);
   const variant: TxtVariant = compact ? 'numeralSm' : 'numeral';
-  const text = stepperText(draft, value);
   // NOTE: A text field does not size to its text the way a label does, so it is given the width of
   // what it holds: display numerals run about 0.62 em, plus room for the caret.
   const width = Math.ceil(Math.max(text.length, 1) * fontSizeOf(variant) * 0.62) + 4;
 
-  const onChangeText = (typed: string) => {
-    const next = typedDraft(typed, value, { min, max, decimal });
-    setDraft(next);
-    if (next.value !== value) onChange(next.value);
-  };
-
   return (
     <View style={[styles.row, align === 'center' ? styles.center : null]}>
       <TextInput
+        ref={input}
         value={text}
         onChangeText={onChangeText}
-        onFocus={() => setDraft({ text: formatStepperValue(value), value })}
-        onBlur={() => setDraft(null)}
+        onFocus={onFocus}
+        onBlur={onBlur}
         selectTextOnFocus
+        returnKeyType="done"
         keyboardType={decimal ? 'decimal-pad' : 'number-pad'}
         accessibilityLabel={label}
         maxLength={6}

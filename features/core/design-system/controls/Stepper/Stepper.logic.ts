@@ -19,8 +19,16 @@ type Bounds = Required<Pick<StepperProps, 'min' | 'max' | 'step'>>;
  *
  * The tick reads the latest value from a ref, not from the closure: the classic stepper bug is a
  * hold that keeps adding to whatever number was under the finger when it started.
+ *
+ * `flush` commits whatever is typed in the field and returns the number it wrote, so a press made
+ * mid-typing steps from the typed number.
  */
-export function useStepperPress(value: number, onChange: (next: number) => void, { min, max, step }: Bounds) {
+export function useStepperPress(
+  value: number,
+  onChange: (next: number) => void,
+  { min, max, step }: Bounds,
+  flush: () => number | null,
+) {
   const delay = useRef<ReturnType<typeof setTimeout> | null>(null);
   const repeat = useRef<ReturnType<typeof setInterval> | null>(null);
   const valueRef = useRef(value);
@@ -45,13 +53,14 @@ export function useStepperPress(value: number, onChange: (next: number) => void,
   const press = useCallback(
     (delta: number) => {
       release();
+      valueRef.current = flush() ?? valueRef.current;
       commit(delta);
       delay.current = setTimeout(() => {
         delay.current = null;
         repeat.current = setInterval(() => commit(delta), REPEAT_INTERVAL_MS);
       }, REPEAT_DELAY_MS);
     },
-    [commit, release],
+    [commit, flush, release],
   );
   // NOTE: Unmounted mid-hold (navigating away, a re-key): no timer may outlive the control.
   useEffect(() => release, [release]);
