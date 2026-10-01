@@ -10,7 +10,7 @@ type Item = WatchRoutinesDocument['routines'][number]['items'][number];
 
 const item: Item = {
   id: 'rit_1',
-  exerciseId: 'wger:73',
+  exerciseId: 'ex:barbell-bench-press',
   exerciseName: 'Bench Press',
   sets: [
     { reps: 10, weightKg: 60, targetRpe: null },
@@ -33,7 +33,7 @@ const snapshot: WatchRoutinesDocument = {
 /** The bytes the watch's Swift core decodes (`targets/watch-tests`). */
 const WIRE_JSON =
   '{"format":"kinetiq.watch-routines","version":2,"exportedAt":"2026-09-25T10:00:00.000Z","unitSystem":"imperial",' +
-  '"routines":[{"id":"rtn_1","name":"Push","items":[{"id":"rit_1","exerciseId":"wger:73","exerciseName":"Bench Press",' +
+  '"routines":[{"id":"rtn_1","name":"Push","items":[{"id":"rit_1","exerciseId":"ex:barbell-bench-press","exerciseName":"Bench Press",' +
   '"sets":[{"reps":10,"weightKg":60,"targetRpe":null},{"reps":8,"weightKg":65,"targetRpe":8},' +
   '{"reps":6,"weightKg":70,"targetRpe":9.5}],"restSeconds":120,"notes":null}]}]}';
 

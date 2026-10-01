@@ -1,34 +1,36 @@
-import { Effect, Schema } from 'effect';
+import { Effect, Either, Schema } from 'effect';
 import { DecodeError } from '@/features/core/error';
 import type { CatalogMeta } from '@/features/exercises/domain/entities/CatalogMeta';
 
 /** A row of the exercise select: the name and instructions already resolved to one language. */
 export const ExerciseRow = Schema.Struct({
   id: Schema.String,
-  external_id: Schema.Number,
   name: Schema.NullOr(Schema.String),
   instructions: Schema.NullOr(Schema.String),
-  category_id: Schema.NullOr(Schema.Number),
-  category: Schema.NullOr(Schema.String),
-  image_url: Schema.NullOr(Schema.String),
-  thumbnail_url: Schema.NullOr(Schema.String),
-  video_url: Schema.NullOr(Schema.String),
+  body_area: Schema.String,
+  training_type: Schema.String,
+  level: Schema.String,
+  force: Schema.NullOr(Schema.String),
+  mechanic: Schema.NullOr(Schema.String),
+  image_start: Schema.NullOr(Schema.String),
+  image_end: Schema.NullOr(Schema.String),
+  thumbnail: Schema.NullOr(Schema.String),
 });
 
 export type ExerciseRow = typeof ExerciseRow.Type;
 
-export const MuscleNameRow = Schema.Struct({
+export const MuscleRow = Schema.Struct({
   exercise_id: Schema.String,
-  muscle_id: Schema.Number,
+  muscle: Schema.String,
   role: Schema.String,
-  name: Schema.String,
 });
 
-export const EquipmentNameRow = Schema.Struct({
+export const EquipmentRow = Schema.Struct({
   exercise_id: Schema.String,
-  equipment_id: Schema.Number,
-  name: Schema.String,
+  equipment: Schema.String,
 });
+
+export const KeyRow = Schema.Struct({ key: Schema.String });
 
 export const CountRow = Schema.Struct({ n: Schema.Number });
 
@@ -50,11 +52,23 @@ export function metaFromRows(rows: readonly (typeof MetaRow.Type)[]): CatalogMet
     return values.has(key) && Number.isFinite(parsed) ? parsed : null;
   };
   return {
-    source: values.get('source') ?? null,
-    generatedAt: number('generated_at'),
+    datasetVersion: number('dataset_version'),
     installedAt: number('installed_at'),
-    refreshedAt: number('refreshed_at'),
     exerciseCount: number('exercise_count'),
     formatVersion: number('format_version'),
   };
+}
+
+const parseList = Schema.decodeUnknownEither(Schema.parseJson(Schema.Array(Schema.Unknown)));
+
+/**
+ * A JSON list column as its strings. A column that does not parse, or is not a list, reads as
+ * empty, and a value that is not a string is dropped: one damaged row degrades to a missing field
+ * rather than blanking the screen.
+ */
+export function stringList(raw: string | null): string[] {
+  if (raw === null) return [];
+  const parsed = parseList(raw);
+  if (Either.isLeft(parsed)) return [];
+  return parsed.right.filter((value): value is string => typeof value === 'string');
 }

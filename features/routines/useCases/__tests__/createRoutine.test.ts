@@ -34,7 +34,7 @@ describe('createRoutine', () => {
     Effect.gen(function* () {
       yield* createRoutine(aNewRoutine());
 
-      expect(yield* (yield* ExerciseSnapshotRepository).byId('wger:73')).toEqual(anExerciseSnapshot());
+      expect(yield* (yield* ExerciseSnapshotRepository).byId('ex:barbell-bench-press')).toEqual(anExerciseSnapshot());
     }),
     makeRoutinesFake(),
   );
@@ -78,7 +78,7 @@ describe('createRoutine', () => {
 
       expect(Either.isLeft(result) && result.left._tag).toBe('RoutineNameTaken');
       expect(yield* (yield* RoutineRepository).list).toEqual([aRoutine()]);
-      expect(yield* (yield* ExerciseSnapshotRepository).byId('wger:73')).toBeUndefined();
+      expect(yield* (yield* ExerciseSnapshotRepository).byId('ex:barbell-bench-press')).toBeUndefined();
     }),
     makeRoutinesFake([aRoutine()]),
   );
@@ -89,7 +89,7 @@ describe('createRoutine', () => {
       const result = yield* Effect.either(createRoutine(aNewRoutine()));
 
       expect(Either.isLeft(result) && result.left._tag).toBe('SqlError');
-      expect(yield* (yield* ExerciseSnapshotRepository).byId('wger:73')).toBeUndefined();
+      expect(yield* (yield* ExerciseSnapshotRepository).byId('ex:barbell-bench-press')).toBeUndefined();
     }),
     Layer.merge(makeRoutineRepositoryFake([], 'list'), makeSnapshotRepositoryFake()),
   );

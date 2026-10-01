@@ -84,8 +84,8 @@ export type Theme = {
     /** Skeleton/placeholder shimmer. */
     placeholder: string;
     /**
-     * The tile behind an exercise illustration, light in both modes: wger's drawings are black line
-     * art, many on a transparent background, made for white paper. On a dark tile they vanish.
+     * The tile behind an exercise photo, light in both modes: the photos are shot on white, and on a
+     * dark tile their margins read as a hole cut in the screen.
      */
     illustration: string;
     /** Scrim behind modals and confirmations. */

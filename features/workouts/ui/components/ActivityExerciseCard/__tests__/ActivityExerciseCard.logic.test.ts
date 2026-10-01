@@ -102,6 +102,6 @@ describe('useActivityExerciseCardLogic', () => {
 
     await act(async () => result.current.effects.open());
 
-    expect(opened).toEqual(['wger:73']);
+    expect(opened).toEqual(['ex:barbell-bench-press']);
   });
 });

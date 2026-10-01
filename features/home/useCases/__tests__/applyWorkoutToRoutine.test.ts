@@ -19,7 +19,7 @@ const row = (index: number, reps: number, weightKg: number, targetRpe: number | 
 const BENCH = aRoutineItem({ sets: [row(0, 8, 60), row(1, 8, 60), row(2, 8, 60)] });
 const PRESS = aRoutineItem({
   id: 'rit_press',
-  exerciseId: 'wger:74',
+  exerciseId: 'ex:barbell-squat',
   exerciseName: 'Overhead Press',
   sets: [row(0, 6, 40, 8), row(1, 6, 40, 8)],
   restSeconds: 60,
@@ -27,7 +27,7 @@ const PRESS = aRoutineItem({
 });
 const DIPS = aRoutineItem({
   id: 'rit_dips',
-  exerciseId: 'wger:75',
+  exerciseId: 'ex:dips',
   exerciseName: 'Dips',
   sets: [row(0, 10, 0), row(1, 10, 0)],
 });
@@ -206,7 +206,7 @@ describe('applyWorkoutToRoutine', () => {
     'adds an exercise added during the workout with its done sets, its rest and no note, and not one never done',
     Effect.gen(function* () {
       const flyes: StrengthEntry = {
-        exerciseId: 'wger:80',
+        exerciseId: 'ex:incline-bench-press',
         exerciseName: 'Cable Flyes',
         muscleGroup: null,
         sets: [
@@ -219,7 +219,7 @@ describe('applyWorkoutToRoutine', () => {
       };
       const curls: StrengthEntry = {
         ...flyes,
-        exerciseId: 'wger:81',
+        exerciseId: 'ex:overhead-press',
         exerciseName: 'Curls',
         sets: [set(0, { reps: 10, weightKg: 12, completed: false })],
       };
@@ -229,7 +229,7 @@ describe('applyWorkoutToRoutine', () => {
       const items = lastWrite(addedExercise);
       expect(items).toHaveLength(4);
       expect(items[3]).toMatchObject({
-        exerciseId: 'wger:80',
+        exerciseId: 'ex:incline-bench-press',
         exerciseName: 'Cable Flyes',
         sets: [row(0, 12, 15, 8), row(1, 10, 17.5)],
         restSeconds: 75,
@@ -264,7 +264,9 @@ describe('applyWorkoutToRoutine', () => {
     routinesOver(reordered),
   );
 
-  const editedMeanwhile = storing(aPushDay([BENCH, DIPS, aRoutineItem({ id: 'rit_row', exerciseId: 'wger:90' })]));
+  const editedMeanwhile = storing(
+    aPushDay([BENCH, DIPS, aRoutineItem({ id: 'rit_row', exerciseId: 'ex:bent-over-row' })]),
+  );
   itEffect(
     'never brings back an exercise removed from the routine during the workout, and keeps one added meanwhile',
     Effect.gen(function* () {

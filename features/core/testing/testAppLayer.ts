@@ -6,7 +6,7 @@ import { makeHapticsFake } from '@/features/core/testing/hapticsFake';
 import { makeMigratedSqliteLayer } from '@/features/core/testing/sqliteTestLayer';
 
 /** The config tests run with: the values `app.json` ships. */
-const TEST_CONFIG = { wgerBaseUrl: 'https://wger.de/api/v2/' } as const;
+const TEST_CONFIG = {} as const;
 
 /**
  * What the core provides in tests, in place of `AppLayer`'s core: a migrated in-memory

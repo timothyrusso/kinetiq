@@ -18,10 +18,6 @@ export class LaunchEnvironment extends Context.Tag('bootstrap/LaunchEnvironment'
     readonly prefetchHeaderIcons: Effect.Effect<void, UnexpectedError>;
     /** Paints the root view and the status bar for the resolved theme, never the preference. */
     readonly paintChrome: (mode: 'light' | 'dark') => Effect.Effect<void>;
-    /** Whether the device is online, waiting for the probe's first answer when it has none yet. */
-    readonly online: Effect.Effect<boolean>;
-    /** The catalog on the device changed: every catalog read re-reads. */
-    readonly catalogChanged: Effect.Effect<void>;
     /** The app-state now. */
     readonly appState: Effect.Effect<AppState>;
     /** Calls `listener` on every app-state change, for the life of the process; a second call replaces it. */

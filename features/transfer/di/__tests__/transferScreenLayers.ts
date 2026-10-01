@@ -60,7 +60,7 @@ export const makeDataScreenLayer = () => {
 };
 
 /** The squat as the catalog reads it: what a loose "Squat" finds. */
-const SQUAT = anExercise({ id: 'wger:111', name: 'Squat, Back', externalId: 111 });
+const SQUAT = anExercise({ id: 'wger:111', name: 'Squat, Back' });
 
 const unused = () => Effect.die(new Error('not used by the import'));
 

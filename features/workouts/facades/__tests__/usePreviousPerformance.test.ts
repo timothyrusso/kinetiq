@@ -7,7 +7,7 @@ import { WorkoutsTestLayer } from '@/features/workouts/di/__tests__/workoutsTest
 import { usePreviousPerformance } from '@/features/workouts/facades/usePreviousPerformance';
 import { invalidateAfterWatchWorkouts, invalidateAfterWorkout } from '@/features/workouts/facades/workoutQueryKeys';
 
-const BENCH = ['wger:73'];
+const BENCH = ['ex:barbell-bench-press'];
 
 /** Which opening of the session screen this is: a new one mounts the hook afresh. */
 let opening = 0;
@@ -28,7 +28,7 @@ describe('usePreviousPerformance', () => {
     // NOTE: as the app's client (`core/query/queryClient.ts`), which does not refetch on mount.
     client.setDefaultOptions({ queries: { ...client.getDefaultOptions().queries, refetchOnMount: false } });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.get('wger:73')).toBeUndefined();
+    expect(result.current.get('ex:barbell-bench-press')).toBeUndefined();
 
     await act(async () => rerender({ routineId: null }));
     await recordHistory(runtime, [aCompletedWorkout()]);
@@ -36,7 +36,7 @@ describe('usePreviousPerformance', () => {
     opening += 1;
     await act(async () => rerender({ routineId: 'rtn_push' }));
 
-    await waitFor(() => expect(result.current.get('wger:73')?.sets).toHaveLength(2));
+    await waitFor(() => expect(result.current.get('ex:barbell-bench-press')?.sets).toHaveLength(2));
     await done();
   });
 
@@ -49,7 +49,7 @@ describe('usePreviousPerformance', () => {
     );
     client.setDefaultOptions({ queries: { ...client.getDefaultOptions().queries, refetchOnMount: false } });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.get('wger:73')).toBeUndefined();
+    expect(result.current.get('ex:barbell-bench-press')).toBeUndefined();
 
     await act(async () => rerender({ routineId: null }));
     await recordHistory(runtime, [aCompletedWorkout()]);
@@ -57,7 +57,7 @@ describe('usePreviousPerformance', () => {
     opening += 1;
     await act(async () => rerender({ routineId: 'rtn_push' }));
 
-    await waitFor(() => expect(result.current.get('wger:73')?.sets).toHaveLength(2));
+    await waitFor(() => expect(result.current.get('ex:barbell-bench-press')?.sets).toHaveLength(2));
     await done();
   });
 });

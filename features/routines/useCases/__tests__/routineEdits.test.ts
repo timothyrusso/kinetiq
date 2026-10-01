@@ -40,9 +40,12 @@ describe('getRoutineDetail', () => {
       const detail = yield* getRoutineDetail(PUSH.id);
 
       expect(detail?.routine).toEqual(PUSH);
-      expect([...(detail?.snapshots.keys() ?? [])]).toEqual(['wger:73']);
+      expect([...(detail?.snapshots.keys() ?? [])]).toEqual(['ex:barbell-bench-press']);
     }),
-    makeRoutinesFake([PUSH], [anExerciseSnapshot(), anExerciseSnapshot({ exerciseId: 'wger:1', name: 'Squat' })]),
+    makeRoutinesFake(
+      [PUSH],
+      [anExerciseSnapshot(), anExerciseSnapshot({ exerciseId: 'ex:front-squat', name: 'Squat' })],
+    ),
   );
 
   itEffect(

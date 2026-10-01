@@ -29,8 +29,8 @@ describe('usePickIntoRoutineLogic', () => {
   it('marks the exercises the routine already has as included', async () => {
     const { result, done } = await renderPicker();
 
-    expect(result.current.picker.effects.isIncluded('wger:73')).toBe(true);
-    expect(result.current.picker.effects.isIncluded('wger:13')).toBe(false);
+    expect(result.current.picker.effects.isIncluded('ex:barbell-bench-press')).toBe(true);
+    expect(result.current.picker.effects.isIncluded('ex:goblet-squat')).toBe(false);
     await done();
   });
 
@@ -42,7 +42,7 @@ describe('usePickIntoRoutineLogic', () => {
     await waitFor(() =>
       expect(result.current.saved.routine?.items.map(item => item.exerciseName)).toEqual(['Bench Press', 'Squat']),
     );
-    expect(result.current.picker.effects.isIncluded('wger:13')).toBe(true);
+    expect(result.current.picker.effects.isIncluded('ex:goblet-squat')).toBe(true);
     expect(result.current.picker.state.error).toBeNull();
     await done();
   });

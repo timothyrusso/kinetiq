@@ -4,8 +4,8 @@ import { EXERCISE_GC_MS, exerciseQueryKeys } from '@/features/exercises/facades/
 import { useCatalogLanguage } from '@/features/exercises/facades/useCatalogLanguage';
 import { getTaxonomy } from '@/features/exercises/useCases/getTaxonomy';
 
-/** One stable empty value, so filter rows reading `categories` do not re-render. */
-const EMPTY_TAXONOMY: ExerciseTaxonomy = { categories: [], equipment: [], muscles: [] };
+/** One stable empty value, so filter rows reading `muscles` do not re-render. */
+const EMPTY_TAXONOMY: ExerciseTaxonomy = { bodyAreas: [], equipment: [], muscles: [] };
 
 /**
  * The filter vocabulary, a few dozen rows that change only with the catalog. Filters are optional,

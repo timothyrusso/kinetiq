@@ -9,10 +9,9 @@
  *    never refetch on foreground. `adapters.ts` beside this file feeds both managers
  *    from `expo-network` and `AppState`.
  *
- * 2. wger sends no `ETag` or `Cache-Control` (checked against live responses), so
- *    there is no HTTP cache to lean on. The in-memory cache here *is* the cache:
- *    it has to survive navigation, and it is what makes an offline launch after
- *    the exercise list has been browsed once still show results.
+ * 2. The app's data is local (SQLite and the bundled exercise catalog), so there is
+ *    no HTTP cache to lean on. The in-memory cache here *is* the cache: it has to
+ *    survive navigation, so a screen opened twice reads the database once.
  */
 import { focusManager, MutationCache, onlineManager, QueryClient } from '@tanstack/react-query';
 import { HTTP_RETRY_BUDGET, HttpError, httpRetryDelayMs, isAppError } from '@/features/core/error';

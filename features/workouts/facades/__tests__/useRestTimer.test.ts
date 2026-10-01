@@ -66,7 +66,7 @@ describe('useRestTimer', () => {
 
   describe('for a set ticked outside the current exercise', () => {
     const squat = anEntry({
-      exerciseId: 'wger:111',
+      exerciseId: 'ex:barbell-deadlift',
       exerciseName: 'Squat',
       sets: [anOpenSet(), anOpenSet({ index: 1 })],
     });
@@ -102,7 +102,7 @@ describe('useRestTimer', () => {
     it('points back up the list when the ticked exercise is done and only earlier ones are open', async () => {
       const bench = anEntry({ sets: [anOpenSet()] });
       sessionLifecycle.restore(
-        aSession({ entries: [bench, anEntry({ exerciseId: 'wger:74', exerciseName: 'Overhead Press' })] }),
+        aSession({ entries: [bench, anEntry({ exerciseId: 'ex:barbell-squat', exerciseName: 'Overhead Press' })] }),
       );
       const { result, scheduled, done } = await renderTimer();
 
@@ -115,7 +115,7 @@ describe('useRestTimer', () => {
 
     it('says the workout is done when nothing is left open', async () => {
       sessionLifecycle.restore(
-        aSession({ entries: [anEntry(), anEntry({ exerciseId: 'wger:74', exerciseName: 'Overhead Press' })] }),
+        aSession({ entries: [anEntry(), anEntry({ exerciseId: 'ex:barbell-squat', exerciseName: 'Overhead Press' })] }),
       );
       const { result, scheduled, done } = await renderTimer();
 

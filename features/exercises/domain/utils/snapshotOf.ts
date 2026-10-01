@@ -3,7 +3,8 @@ import type { ExerciseSnapshot } from '@/features/exercises/domain/schemas/Exerc
 
 /**
  * The storable copy of `exercise`, captured at `capturedAt`. A list row with only full-size art
- * still needs something, so the thumbnail falls back to the image.
+ * still needs something, so the thumbnail falls back to the image. The images stay the asset
+ * paths the catalog reads, so the copy resolves to the bundled files in any later build.
  */
 export function snapshotOf(exercise: Exercise, capturedAt: number): ExerciseSnapshot {
   return {
@@ -16,7 +17,6 @@ export function snapshotOf(exercise: Exercise, capturedAt: number): ExerciseSnap
     equipment: exercise.equipment,
     imageUrl: exercise.imageUrl,
     thumbnailUrl: exercise.thumbnailUrl ?? exercise.imageUrl,
-    externalId: exercise.externalId,
     capturedAt,
   };
 }

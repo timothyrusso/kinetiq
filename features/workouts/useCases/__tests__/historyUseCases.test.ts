@@ -91,7 +91,7 @@ describe('exerciseHistory and exerciseRecords', () => {
   itEffect(
     'summarises every workout of the exercise',
     Effect.gen(function* () {
-      const summary = yield* exerciseHistory('wger:73');
+      const summary = yield* exerciseHistory('ex:barbell-bench-press');
 
       expect(summary.sessionsCount).toBe(2);
       expect(summary.lastPerformedAt).toBe(WORKOUT_TIME);
@@ -102,9 +102,9 @@ describe('exerciseHistory and exerciseRecords', () => {
   itEffect(
     'reads the records held for the exercise',
     Effect.gen(function* () {
-      expect(yield* exerciseRecords('wger:73')).toEqual([aRecord()]);
+      expect(yield* exerciseRecords('ex:barbell-bench-press')).toEqual([aRecord()]);
     }),
-    makeWorkoutsFake(makeFakeWorkoutsDb({ records: new Map([['wger:73:est1rm', aRecord()]]) })),
+    makeWorkoutsFake(makeFakeWorkoutsDb({ records: new Map([['ex:barbell-bench-press:est1rm', aRecord()]]) })),
   );
 });
 
@@ -125,9 +125,9 @@ describe('previousPerformance', () => {
   itEffect(
     'reads what was lifted last time on each exercise asked for',
     Effect.gen(function* () {
-      const previous = yield* previousPerformance(['wger:73']);
+      const previous = yield* previousPerformance(['ex:barbell-bench-press']);
 
-      expect(previous.get('wger:73')?.performedAt).toBe(WORKOUT_TIME);
+      expect(previous.get('ex:barbell-bench-press')?.performedAt).toBe(WORKOUT_TIME);
     }),
     makeWorkoutsFake(history()),
   );
@@ -135,7 +135,7 @@ describe('previousPerformance', () => {
   itEffect(
     'knows nothing of an exercise never trained',
     Effect.gen(function* () {
-      expect((yield* previousPerformance(['wger:999'])).size).toBe(0);
+      expect((yield* previousPerformance(['ex:retired-exercise'])).size).toBe(0);
     }),
     makeWorkoutsFake(
       makeFakeWorkoutsDb({

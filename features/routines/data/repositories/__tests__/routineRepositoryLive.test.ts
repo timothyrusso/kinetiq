@@ -31,9 +31,9 @@ const storeExercise = (id: string, name: string) =>
   );
 
 const storeExercises = Effect.all([
-  storeExercise('wger:73', 'Bench Press'),
-  storeExercise('wger:74', 'Overhead Press'),
-  storeExercise('wger:75', 'Dips'),
+  storeExercise('ex:barbell-bench-press', 'Bench Press'),
+  storeExercise('ex:barbell-squat', 'Overhead Press'),
+  storeExercise('ex:dips', 'Dips'),
 ]);
 
 /** A routine saved at `NOW` with the builder's two items. */
@@ -55,7 +55,7 @@ const published = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
   );
 
 const PUSH = RoutineId.make('rtn_push');
-const DIPS: RoutineItem = aRoutineItem({ id: 'rit_dips', exerciseId: 'wger:75', exerciseName: 'Dips' });
+const DIPS: RoutineItem = aRoutineItem({ id: 'rit_dips', exerciseId: 'ex:dips', exerciseName: 'Dips' });
 
 describe('RoutineRepositoryLive save and reads', () => {
   itEffect(
@@ -326,7 +326,9 @@ describe('RoutineRepositoryLive edits', () => {
       yield* savePushDay;
       const repo = yield* RoutineRepository;
 
-      const result = yield* Effect.either(repo.addItem(PUSH, aRoutineItem({ id: 'rit_row', exerciseId: 'wger:99' })));
+      const result = yield* Effect.either(
+        repo.addItem(PUSH, aRoutineItem({ id: 'rit_row', exerciseId: 'ex:pullups' })),
+      );
 
       expect(Either.isLeft(result) && result.left._tag).toBe('SqlError');
       expect((yield* repo.byId(PUSH))?.items).toHaveLength(2);

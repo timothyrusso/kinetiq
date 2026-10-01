@@ -292,8 +292,15 @@ describe('addSessionExercise', () => {
 
       const entry = yield* addSessionExercise(anExercise(), TARGET);
 
-      expect(stored.snapshots.get('wger:73')).toMatchObject({ name: 'Bench Press', capturedAt: WORKOUT_TIME });
-      expect(entry).toMatchObject({ exerciseId: 'wger:73', exerciseName: 'Bench Press', restSeconds: 120 });
+      expect(stored.snapshots.get('ex:barbell-bench-press')).toMatchObject({
+        name: 'Bench Press',
+        capturedAt: WORKOUT_TIME,
+      });
+      expect(entry).toMatchObject({
+        exerciseId: 'ex:barbell-bench-press',
+        exerciseName: 'Bench Press',
+        restSeconds: 120,
+      });
       expect(entry.sets.map(set => set.reps)).toEqual([8, 8, 8]);
     }),
     makeWorkoutsFake(stored),

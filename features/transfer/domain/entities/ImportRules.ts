@@ -19,6 +19,6 @@ export interface ImportRules {
     readonly restSeconds: Bounds;
     readonly notesLength: number;
   };
-  /** A `wger:` or a `local:` id, as the app stores them. */
+  /** An `ex:` or a `local:` id, as the app stores them. */
   readonly isExerciseId: (id: string) => boolean;
 }

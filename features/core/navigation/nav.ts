@@ -74,9 +74,9 @@ function tabIndexOf(key: TabKey): number {
  *
  * `params` rather than string interpolation because it is the same cast count with one
  * less correctness hazard: interpolating into a path means the caller must remember to
- * encode, and an exercise id from wger is a plain integer today but the local fallback
- * ids are UUIDs: a shape that would change under a future import path. Passing params
- * as data lets the router do the encoding itself.
+ * encode, and an exercise id carries a colon (`ex:barbell-squat`, `local:` ids) in a
+ * shape a future import path could change. Passing params as data lets the router do
+ * the encoding itself.
  */
 export const routes = {
   activityDetail: (id: string) => ({ pathname: '/activity/[id]', params: { id } }) as Href,

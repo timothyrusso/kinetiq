@@ -5,7 +5,7 @@
       "name": "Legs · Heavy",
       "items": [
         {
-          "exerciseId": "wger:111",
+          "exerciseId": null,
           "exerciseName": "Squat, Back",
           "sets": [
             {
@@ -66,7 +66,7 @@
       "name": "Push Day",
       "items": [
         {
-          "exerciseId": "wger:73",
+          "exerciseId": null,
           "exerciseName": "Bench Press",
           "sets": [
             {
@@ -89,7 +89,7 @@
           "notes": null
         },
         {
-          "exerciseId": "wger:74",
+          "exerciseId": null,
           "exerciseName": "Overhead Press",
           "sets": [
             {

@@ -1,5 +1,5 @@
 import { Effect, Layer } from 'effect';
-import { HttpError, SqlError } from '@/features/core/error';
+import { SqlError } from '@/features/core/error';
 import { aCatalogPayload } from '@/features/exercises/__fixtures__/builders';
 import type { CatalogMeta } from '@/features/exercises/domain/entities/CatalogMeta';
 import { CatalogNotInstalled } from '@/features/exercises/domain/errors/CatalogNotInstalled';
@@ -9,13 +9,10 @@ import type { CatalogPayload } from '@/features/exercises/domain/schemas/Catalog
 import type { Exercise } from '@/features/exercises/domain/schemas/ExerciseSchema';
 import type { ExerciseSnapshot } from '@/features/exercises/domain/schemas/ExerciseSnapshotSchema';
 import { BundledCatalog } from '@/features/exercises/domain/services/BundledCatalog';
-import { CatalogSource } from '@/features/exercises/domain/services/CatalogSource';
 
 const NEVER_WRITTEN: CatalogMeta = {
-  source: null,
-  generatedAt: null,
+  datasetVersion: null,
   installedAt: null,
-  refreshedAt: null,
   exerciseCount: null,
   formatVersion: null,
 };
@@ -45,17 +42,15 @@ export const makeCatalogRepositoryFake = ({
   const matching = (query: string) =>
     exercises.filter(exercise => exercise.name.toLowerCase().includes(query.trim().toLowerCase()));
   return Layer.succeed(CatalogRepository, {
-    replaceCatalog: (payload, kind, now) =>
+    replaceCatalog: (payload, now) =>
       failingWrites
         ? Effect.fail(new SqlError({ message: 'replace the catalog: database or disk is full' }))
         : Effect.sync(() => {
             current = {
-              source: payload.source,
-              generatedAt: payload.generatedAt,
-              installedAt: kind === 'install' ? now : (current.installedAt ?? now),
-              refreshedAt: kind === 'refresh' ? now : null,
+              datasetVersion: payload.datasetVersion,
+              installedAt: now,
               exerciseCount: payload.exercises.length,
-              formatVersion: payload.formatVersion,
+              formatVersion: 2,
             };
           }),
     readMeta: Effect.sync(() => current),
@@ -66,26 +61,27 @@ export const makeCatalogRepositoryFake = ({
             const rows = matching(filter.query);
             return { items: rows.slice(offset, offset + limit), total: rows.length };
           }),
-    byId: externalId => Effect.sync(() => exercises.find(exercise => exercise.externalId === externalId)),
-    variations: externalId => Effect.sync(() => exercises.filter(exercise => exercise.externalId !== externalId)),
-    taxonomy: () => Effect.succeed({ categories: [{ id: 1, name: 'Chest' }], equipment: [], muscles: [] }),
+    byId: id => Effect.sync(() => exercises.find(exercise => exercise.id === id)),
+    similar: id => Effect.sync(() => exercises.filter(exercise => exercise.id !== id).slice(0, 5)),
+    taxonomy: () => Effect.succeed({ bodyAreas: [{ id: 'chest', name: 'Chest' }], equipment: [], muscles: [] }),
   });
 };
 
-/** A `CatalogSource` that answers `payload`, or fails as wger would with `failure`. */
-export const makeCatalogSourceFake = (payload: CatalogPayload = aCatalogPayload(), failure?: HttpError) =>
-  Layer.succeed(CatalogSource, {
-    fetch: failure === undefined ? Effect.succeed(payload) : Effect.fail(failure),
+/**
+ * A `BundledCatalog` holding `payload`, or one whose files do not decode. `loads` counts the
+ * reads of the dataset itself, which a launch with a current catalog must not make.
+ */
+export const makeBundledCatalogFake = (payload: CatalogPayload | 'corrupt' = aCatalogPayload()) => {
+  const reads = { loads: 0 };
+  const layer = Layer.succeed(BundledCatalog, {
+    version: payload === 'corrupt' ? Effect.fail(new CatalogNotInstalled()) : Effect.succeed(payload.datasetVersion),
+    load: Effect.suspend(() => {
+      reads.loads += 1;
+      return payload === 'corrupt' ? Effect.fail(new CatalogNotInstalled()) : Effect.succeed(payload);
+    }),
   });
-
-/** A `BundledCatalog` holding `payload`, or one whose file does not decode. */
-export const makeBundledCatalogFake = (payload: CatalogPayload | 'corrupt' = aCatalogPayload()) =>
-  Layer.succeed(BundledCatalog, {
-    load: payload === 'corrupt' ? Effect.fail(new CatalogNotInstalled()) : Effect.succeed(payload),
-  });
-
-/** wger answering with a server error. */
-export const serverError = () => new HttpError({ kind: 'server', status: 503, retryAfterSeconds: null });
+  return { layer, reads };
+};
 
 /** An `ExerciseSnapshotRepository` holding `snapshots`. */
 export const makeExerciseSnapshotRepositoryFake = (snapshots: readonly ExerciseSnapshot[] = []) =>

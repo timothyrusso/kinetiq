@@ -22,7 +22,7 @@ enum Fixtures {
     static func item(_ overrides: [String: Any] = [:]) -> [String: Any] {
         var item: [String: Any] = [
             "id": "rit_1",
-            "exerciseId": "wger:73",
+            "exerciseId": "ex:barbell-bench-press",
             "exerciseName": "Bench Press",
             "sets": [
                 set(["reps": 10, "weightKg": 60]),

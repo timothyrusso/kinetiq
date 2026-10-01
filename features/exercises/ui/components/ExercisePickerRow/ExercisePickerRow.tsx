@@ -38,7 +38,7 @@ export const ExercisePickerRow = memo(function ExercisePickerRow({
       disabled={included}
       style={dimmed ? [styles.row, styles.dimmed] : styles.row}
       accessibilityHint={t(included ? 'states.alreadyInRoutine' : 'states.addsToRoutine')}
-      leading={<ExerciseThumb uri={derived.uri} name={exercise.name} size={44} theme={theme} />}
+      leading={<ExerciseThumb source={derived.image} name={exercise.name} size={44} theme={theme} />}
       trailing={
         <Icon
           name={included ? 'check' : 'plus'}

@@ -18,11 +18,11 @@ import { useExerciseHeroLogic } from '@/features/exercises/ui/components/Exercis
 import { createStyles } from '@/features/exercises/ui/components/ExerciseHero/ExerciseHero.style';
 
 /**
- * The art is the header, not a section: a full-width drawing under a transparent bar, starting
+ * The art is the header, not a section: a full-width photo under a transparent bar, starting
  * where the bar ends and fitted whole, never cropped. With no art, the slot keeps roughly the same
  * proportions and holds a composition instead: the initials plaque the rest of the app uses,
- * blown up, with a caption that says which absence it is (no art in the library, or art that
- * cannot load right now, which offline means an image this device has never seen).
+ * blown up, with a caption that says which absence it is (no photo bundled for this exercise, or a
+ * bundled one that failed to load).
  */
 export function ExerciseHero({ exercise, topInset }: { exercise: Exercise; topInset: number }) {
   const { state, derived, effects } = useExerciseHeroLogic(exercise, topInset);
@@ -30,7 +30,7 @@ export function ExerciseHero({ exercise, topInset }: { exercise: Exercise; topIn
   const theme = useAppTheme();
   const styles = useStyles(createStyles);
 
-  if (state.uri === null) {
+  if (state.source === null) {
     return (
       <LinearGradient
         colors={[theme.colors.surfaceRaised, theme.colors.canvas]}
@@ -40,7 +40,7 @@ export function ExerciseHero({ exercise, topInset }: { exercise: Exercise; topIn
           {exercise.category ?? t('exerciseDetail.fallbackTitle')}
         </Txt>
         <Gap size={spacing.lg} />
-        <ExerciseThumb uri={null} name={exercise.name} size={96} theme={theme} rounded={radius.xl} />
+        <ExerciseThumb source={null} name={exercise.name} size={96} theme={theme} rounded={radius.xl} />
         <Gap size={spacing.lg} />
         <Row gap="xs" align="center">
           <Icon name="image" size={ICON_SIZE.micro} color={theme.colors.textFaint} />
@@ -55,11 +55,11 @@ export function ExerciseHero({ exercise, topInset }: { exercise: Exercise; topIn
   return (
     <View style={derived.artStyle}>
       <Image
-        source={{ uri: state.uri }}
+        source={state.source}
         style={styles.image}
         contentFit="contain"
         transition={220}
-        recyclingKey={state.uri}
+        recyclingKey={String(state.source)}
         cachePolicy={EXERCISE_IMAGE_CACHE}
         onError={effects.markFailed}
         accessibilityLabel={t('exerciseDetail.illustrationFor', { name: exercise.name })}

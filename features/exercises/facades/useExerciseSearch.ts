@@ -7,13 +7,13 @@ import { useCatalogLanguage } from '@/features/exercises/facades/useCatalogLangu
 import { EXERCISE_PAGE_SIZE, searchExercises } from '@/features/exercises/useCases/searchExercises';
 
 const sameFilter = (a: ExerciseFilter, b: ExerciseFilter) =>
-  a.query === b.query && a.categoryId === b.categoryId && a.equipmentId === b.equipmentId && a.muscleId === b.muscleId;
+  a.query === b.query && a.bodyArea === b.bodyArea && a.equipment === b.equipment && a.muscle === b.muscle;
 
 /**
  * A catalog search, a page at a time.
  *
- * Every read is answered from SQLite, and the catalog changes only when a refresh swaps it and
- * invalidates `exercises`, hence `staleTime: Infinity`. Loading more widens one read (the first
+ * Every read is answered from SQLite, and the catalog changes only when a launch installs a newer
+ * dataset, before anything has read it, hence `staleTime: Infinity`. Loading more widens one read (the first
  * `n` rows) rather than appending pages, so the list is always one consistent read: a catalog
  * swapped mid-scroll cannot repeat a row across pages. While a new filter is read, the previous
  * rows stay on screen and `isPlaceholder` says so, so the UI can dim instead of flashing a

@@ -9,8 +9,8 @@ export function TaxonFilterRail({
   onToggle,
 }: {
   taxa: readonly Taxon[];
-  selectedId: number | null;
-  onToggle: (id: number) => void;
+  selectedId: string | null;
+  onToggle: (id: string) => void;
 }) {
   return (
     <Rail>
