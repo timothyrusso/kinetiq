@@ -6,6 +6,7 @@ import { useScreenContentBottom, useTransparentHeaderInset } from '@/features/co
 import { routes } from '@/features/core/navigation';
 import { spacing } from '@/features/core/theme';
 import { useT } from '@/features/core/translations';
+import { BADGE_KEYS } from '@/features/exercises/domain/entities/taxonKeys';
 import type { Exercise } from '@/features/exercises/domain/schemas/ExerciseSchema';
 import { provisionalExerciseName } from '@/features/exercises/domain/utils/exerciseId';
 import { useExercise } from '@/features/exercises/facades/useExercise';
@@ -49,14 +50,20 @@ export function useExerciseDetailPageLogic() {
     [exercise],
   );
 
-  const currentId = exercise?.id ?? null;
-  const openSimilar = useCallback(
-    (similarId: string) => {
-      if (similarId === currentId) return;
-      router.push(routes.exerciseDetail(similarId));
-    },
-    [currentId],
-  );
+  // NOTE: strength is what nearly every exercise is, so only the other training types are worth a
+  // badge.
+  const badgeTags = useMemo<Tag[]>(() => {
+    if (exercise === null) return [];
+    const tags: Tag[] = [];
+    if (exercise.trainingType !== null && exercise.trainingType !== 'strength') {
+      tags.push({ key: 'type', label: t(BADGE_KEYS.trainingType[exercise.trainingType]), tone: 'accent' });
+    }
+    if (exercise.level !== null) tags.push({ key: 'level', label: t(BADGE_KEYS.level[exercise.level]) });
+    if (exercise.mechanic !== null) tags.push({ key: 'mechanic', label: t(BADGE_KEYS.mechanic[exercise.mechanic]) });
+    return tags;
+  }, [exercise, t]);
+
+  const openSimilar = useCallback((similarId: string) => router.push(routes.exerciseDetail(similarId)), []);
 
   // NOTE: iOS only. The bar floats over the art because the system blurs what scrolls under it;
   // Android's top app bar has no blur, so a transparent one let the text scroll under the title
@@ -74,10 +81,9 @@ export function useExerciseDetailPageLogic() {
 
   const title =
     exercise?.name ?? (exerciseId === null ? t('exerciseDetail.fallbackTitle') : provisionalExerciseName(exerciseId));
-  // NOTE: the steps as paragraphs until the screen numbers them.
-  const instructions = useMemo(() => {
-    const steps = (exercise?.instructions ?? []).map(step => step.trim()).filter(step => step.length > 0);
-    return steps.length === 0 ? null : steps.join('\n\n');
+  const steps = useMemo(() => {
+    const trimmed = (exercise?.instructions ?? []).map(step => step.trim()).filter(step => step.length > 0);
+    return trimmed.length === 0 ? null : trimmed;
   }, [exercise]);
 
   return {
@@ -100,7 +106,9 @@ export function useExerciseDetailPageLogic() {
       primaryTags,
       secondaryTags,
       equipmentTags,
-      instructions,
+      badgeTags,
+      hasLead: badgeTags.length > 0 || detail.from !== 'catalog',
+      steps,
     },
     effects: { retry: detail.retry, goBack, openSimilar },
   };

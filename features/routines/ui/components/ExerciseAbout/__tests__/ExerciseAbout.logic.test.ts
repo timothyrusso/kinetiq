@@ -31,8 +31,8 @@ describe('useExerciseAboutLogic', () => {
   it('shows the stored exercise’s bundled picture and trimmed steps', async () => {
     const { result, done } = await renderAbout();
 
-    await waitFor(() => expect(result.current.about.derived.described).toBe(true));
-    expect(result.current.about.derived.description).toBe('Drive through the heels.\n\nSqueeze at the top.');
+    await waitFor(() => expect(result.current.about.derived.steps).not.toBeNull());
+    expect(result.current.about.derived.steps).toEqual(['Drive through the heels.', 'Squeeze at the top.']);
     expect(result.current.about.derived.image).not.toBeNull();
     await done();
   });
@@ -44,7 +44,7 @@ describe('useExerciseAboutLogic', () => {
       thumbnailUrl: null,
     });
 
-    await waitFor(() => expect(result.current.about.derived.described).toBe(true));
+    await waitFor(() => expect(result.current.about.derived.steps).not.toBeNull());
     expect(result.current.about.derived.image).toBeNull();
     await done();
   });
@@ -53,8 +53,8 @@ describe('useExerciseAboutLogic', () => {
     const { result, done } = await renderAbout({ ...HIP_THRUST, instructions: [] });
 
     await waitFor(() => expect(result.current.about.state.isLoading).toBe(false));
-    expect(result.current.about.derived.described).toBe(false);
-    expect(result.current.about.derived.description).toBe(tr('exerciseDetail.unknownBuiltIn'));
+    expect(result.current.about.derived.steps).toBeNull();
+    expect(result.current.about.derived.fallback).toBe(tr('exerciseDetail.unknownBuiltIn'));
     await done();
   });
 });

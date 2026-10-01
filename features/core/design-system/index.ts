@@ -2,7 +2,7 @@ import type { FeatureTier } from '@timothyrusso/arch-rules';
 
 export const FEATURE_TIER: FeatureTier = 0;
 
-export { usePulse } from '@/features/core/design-system/animation/animation';
+export { useCrossFade, usePulse } from '@/features/core/design-system/animation/animation';
 export { HeatmapCalendar, type HeatmapDay } from '@/features/core/design-system/charts/HeatmapCalendar';
 export { LineChart, type LinePoint } from '@/features/core/design-system/charts/LineChart';
 export { ProgressRing } from '@/features/core/design-system/charts/ProgressRing';
@@ -29,11 +29,11 @@ export { Badge } from '@/features/core/design-system/display/Badge';
 export { ExerciseRow } from '@/features/core/design-system/display/ExerciseRow';
 export { ExerciseThumb } from '@/features/core/design-system/display/ExerciseThumb';
 export { exerciseTags } from '@/features/core/design-system/display/exerciseTags';
-export { illustrationBackdrop } from '@/features/core/design-system/display/exerciseThumbTile';
 export { EXERCISE_IMAGE_CACHE } from '@/features/core/design-system/display/imageCache';
 export { ListRow } from '@/features/core/design-system/display/ListRow';
 export { MetaLine } from '@/features/core/design-system/display/MetaLine';
 export { NavRow } from '@/features/core/design-system/display/NavRow';
+export { NumberedSteps } from '@/features/core/design-system/display/NumberedSteps';
 export { RoutineRow } from '@/features/core/design-system/display/RoutineRow';
 export { SectionHeader } from '@/features/core/design-system/display/SectionHeader';
 export { StatTile } from '@/features/core/design-system/display/StatTile';
