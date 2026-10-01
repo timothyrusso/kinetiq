@@ -11,7 +11,7 @@ const rules: ImportRules = {
     restSeconds: { min: 0, max: 600 },
     notesLength: 10,
   },
-  isExerciseId: id => id.startsWith('wger:') || id.startsWith('local:'),
+  isExerciseId: id => id.startsWith('ex:') || id.startsWith('local:'),
 };
 
 const routinesOf = (raw: string) => {
@@ -29,12 +29,12 @@ describe('parseRoutines', () => {
     expect(routinesOf('{"exercises": [{"name": "Row"}]}').routines).toHaveLength(1);
   });
 
-  it('turns a bare catalog number into a wger id and drops an id it does not know', () => {
+  it('keeps a catalog id and drops a bare number or an id it does not know', () => {
     const { routines } = routinesOf(
-      '[{"items": [{"exerciseId": 192, "name": "A"}, {"exerciseId": "abc", "name": "B"}]}]',
+      '[{"items": [{"exerciseId": "ex:row", "name": "A"}, {"exerciseId": 192, "name": "B"}]}, {"items": [{"exerciseId": "abc", "name": "C"}]}]',
     );
 
-    expect(routines[0]?.items.map(item => item.exerciseId)).toEqual(['wger:192', null]);
+    expect(routines.flatMap(routine => routine.items.map(item => item.exerciseId))).toEqual(['ex:row', null, null]);
   });
 
   it('rounds the weight to a quarter kilo and clamps it to the bounds', () => {

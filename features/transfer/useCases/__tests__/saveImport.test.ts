@@ -28,7 +28,7 @@ describe('saveImport', () => {
       expect(routine?.name).toBe('Push');
       expect(routine?.items.map(({ id: _id, ...item }) => item)).toEqual([
         {
-          exerciseId: 'wger:73',
+          exerciseId: 'ex:barbell-bench-press-medium-grip',
           exerciseName: 'Bench Press',
           sets: [
             { index: 0, reps: 10, weightKg: 50, targetRpe: null },
@@ -92,7 +92,7 @@ describe('saveImport', () => {
   itEffect(
     'stores the snapshot of an exercise found in the catalog before an item points at it',
     Effect.gen(function* () {
-      const fromCatalog = anExerciseSnapshot({ exerciseId: 'wger:111', name: 'Squat' });
+      const fromCatalog = anExerciseSnapshot({ exerciseId: 'ex:barbell-squat', name: 'Squat' });
 
       yield* saveImport(
         [aRoutine({ items: [anItem({ match: { status: 'catalog', snapshot: fromCatalog } })] })],
@@ -100,9 +100,9 @@ describe('saveImport', () => {
         120,
       );
 
-      expect(yield* Effect.flatMap(ExerciseSnapshotRepository, repository => repository.byId('wger:111'))).toEqual(
-        fromCatalog,
-      );
+      expect(
+        yield* Effect.flatMap(ExerciseSnapshotRepository, repository => repository.byId('ex:barbell-squat')),
+      ).toEqual(fromCatalog);
     }),
     layer(),
   );
@@ -110,7 +110,7 @@ describe('saveImport', () => {
 
 function anItem(overrides: Partial<ResolvedItem<ExerciseSnapshot>> = {}): ResolvedItem<ExerciseSnapshot> {
   return {
-    exerciseId: 'wger:73',
+    exerciseId: 'ex:barbell-bench-press-medium-grip',
     exerciseName: 'Bench Press',
     sets: [
       { reps: 10, weightKg: 50, targetRpe: null },

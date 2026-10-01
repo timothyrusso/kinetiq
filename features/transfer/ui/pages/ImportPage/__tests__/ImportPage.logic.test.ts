@@ -13,7 +13,7 @@ import { useStagedImportStore } from '@/features/transfer/state/stagedImportStor
 import { useImportPageLogic } from '@/features/transfer/ui/pages/ImportPage/ImportPage.logic';
 
 const anItem = (overrides: Partial<ParsedItem> = {}): ParsedItem => ({
-  exerciseId: 'wger:73',
+  exerciseId: 'ex:barbell-bench-press-medium-grip',
   exerciseName: 'Bench Press',
   sets: [10, 10, 8, 8].map(reps => ({ reps, weightKg: 60, targetRpe: null })),
   restSeconds: 120,

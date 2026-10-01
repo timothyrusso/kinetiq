@@ -15,7 +15,7 @@ const RoutineFileSetSchema = Schema.Struct({
  * exercise up.
  */
 const RoutineFileItemSchema = Schema.Struct({
-  // NOTE: `wger:<id>` from the public catalog, or a `local:` id from an export. Optional on import.
+  // NOTE: `ex:<slug>` from the bundled catalog, or a `local:` id from an export. Optional on import.
   exerciseId: Schema.String,
   exerciseName: Schema.String,
   restSeconds: Schema.Number,
