@@ -1,9 +1,7 @@
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import { View } from 'react-native';
 import {
-  EXERCISE_IMAGE_CACHE,
+  CrossFadeImage,
   ExerciseThumb,
   Gap,
   ICON_SIZE,
@@ -56,35 +54,14 @@ export function ExerciseHero({ exercise, topInset }: { exercise: Exercise; topIn
 
   return (
     <View style={derived.artStyle}>
-      <View
+      <CrossFadeImage
+        start={state.start}
+        end={state.end}
+        active={state.animating}
+        label={t('exerciseDetail.photoOf', { name: exercise.name })}
         style={styles.frame}
-        accessible
-        accessibilityRole="image"
-        accessibilityLabel={t('exerciseDetail.photoOf', { name: exercise.name })}
-      >
-        <Image
-          source={state.start}
-          style={StyleSheet.absoluteFill}
-          contentFit="cover"
-          transition={220}
-          recyclingKey={String(state.start)}
-          cachePolicy={EXERCISE_IMAGE_CACHE}
-          onError={effects.markFailed}
-          accessibilityIgnoresInvertColors
-        />
-        {state.end !== null ? (
-          <Animated.View style={[StyleSheet.absoluteFill, derived.fade]} pointerEvents="none">
-            <Image
-              source={state.end}
-              style={StyleSheet.absoluteFill}
-              contentFit="cover"
-              recyclingKey={String(state.end)}
-              cachePolicy={EXERCISE_IMAGE_CACHE}
-              accessibilityIgnoresInvertColors
-            />
-          </Animated.View>
-        ) : null}
-      </View>
+        onError={effects.markFailed}
+      />
     </View>
   );
 }
