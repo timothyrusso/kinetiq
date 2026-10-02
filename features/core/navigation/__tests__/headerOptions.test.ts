@@ -63,13 +63,25 @@ describe('useLargeTitleOptions', () => {
   });
 });
 
+const DARK = themeFor('dark');
+const LIGHT = themeFor('light');
+
 describe('formSheet', () => {
   it('sizes a short form to its content', () => {
-    expect(formSheet('fit').sheetAllowedDetents).toBe('fitToContents');
+    expect(formSheet('fit', DARK).sheetAllowedDetents).toBe('fitToContents');
+  });
+
+  it('dims the page at every detent and draws the sheet on the lifted sheet surface', () => {
+    expect(formSheet('fit', DARK)).toMatchObject({
+      sheetLargestUndimmedDetentIndex: 'none',
+      contentStyle: { backgroundColor: DARK.colors.sheet },
+    });
+    expect(DARK.colors.sheet).not.toBe(DARK.colors.background);
+    expect(formSheet('picker', LIGHT).contentStyle).toEqual({ backgroundColor: LIGHT.colors.sheet });
   });
 
   it('opens a picker at half height with the full list a drag away', () => {
-    expect(formSheet('picker')).toMatchObject({
+    expect(formSheet('picker', DARK)).toMatchObject({
       presentation: 'formSheet',
       headerShown: false,
       sheetAllowedDetents: [0.5, 1],
