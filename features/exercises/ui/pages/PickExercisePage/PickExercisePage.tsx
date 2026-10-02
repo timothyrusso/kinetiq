@@ -26,6 +26,7 @@ export function PickExercisePage(props: PickExercisePageProps) {
       rows={state.rows}
       theme={theme}
       isIncluded={effects.isIncluded}
+      removable={derived.removable}
       dimmed={state.isPlaceholder}
       onSelect={effects.select}
       onInfo={effects.openDetail}

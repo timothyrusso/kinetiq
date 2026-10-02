@@ -19,5 +19,5 @@ export { defaultItemTarget } from '@/features/routines/domain/utils/itemTargets'
 export { routineQueryKeys } from '@/features/routines/facades/routineQueryKeys';
 export { useRoutine } from '@/features/routines/facades/useRoutine';
 export { useRoutineDraft } from '@/features/routines/facades/useRoutineDraft';
-export { useAddRoutineExercise } from '@/features/routines/facades/useRoutineMutations';
+export { useAddRoutineExercise, useRemoveRoutineItem } from '@/features/routines/facades/useRoutineMutations';
 export { useRoutines } from '@/features/routines/facades/useRoutines';

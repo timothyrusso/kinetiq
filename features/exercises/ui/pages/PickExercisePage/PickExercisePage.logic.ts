@@ -28,6 +28,12 @@ export interface PickExercisePageProps {
    * you type reads as a broken search.
    */
   readonly isIncluded: (exerciseId: string) => boolean;
+  /**
+   * Removes an included exercise, so a second tap undoes a mistaken add without leaving the
+   * sheet. A routine passes it; the live workout does not, because removing there could drop
+   * logged sets, and its included rows stay inert.
+   */
+  readonly onUnpick?: (exerciseId: string) => void;
   /** Why the last pick did not land, shown above the results. */
   readonly error: string | null;
   readonly destination: PickDestination;
@@ -45,7 +51,7 @@ export interface PickExercisePageProps {
  * rendering. An explicit Load more widens the read by one catalog page and gives it a visible
  * state, which `onEndReached` cannot at the end of a short list.
  */
-export function usePickExercisePageLogic({ onPick, isIncluded, destination }: PickExercisePageProps) {
+export function usePickExercisePageLogic({ onPick, onUnpick, isIncluded, destination }: PickExercisePageProps) {
   const { t } = useT();
   const [query, setQuery] = useState('');
   const [muscleId, setMuscleId] = useState<string | null>(null);
@@ -69,10 +75,14 @@ export function usePickExercisePageLogic({ onPick, isIncluded, destination }: Pi
   const select = useCallback(
     (exerciseId: string) => {
       if (isPlaceholder) return;
+      if (isIncluded(exerciseId)) {
+        onUnpick?.(exerciseId);
+        return;
+      }
       const exercise = items.find(item => item.id === exerciseId);
       if (exercise !== undefined) onPick(exercise);
     },
-    [isPlaceholder, items, onPick],
+    [isIncluded, isPlaceholder, items, onPick, onUnpick],
   );
   // NOTE: pushed over the sheet, which stays mounted under it, so back returns to the same search.
   const openDetail = useCallback((exerciseId: string) => router.push(routes.exerciseDetail(exerciseId, true)), []);
@@ -105,6 +115,7 @@ export function usePickExercisePageLogic({ onPick, isIncluded, destination }: Pi
       searching: query.trim().length > 0,
       filtered: muscleId !== null || equipmentId !== null,
       includedCount,
+      removable: onUnpick !== undefined,
       // NOTE: no count until the library has answered; a placeholder number would be read aloud.
       libraryHint: settling
         ? t('exerciseList.searching')
