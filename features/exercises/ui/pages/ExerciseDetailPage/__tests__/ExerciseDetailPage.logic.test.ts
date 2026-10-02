@@ -137,7 +137,6 @@ describe('useExerciseDetailPageLogic', () => {
 
     await waitFor(() => expect(result.current.state.exercise).toEqual(PICTURED));
     expect(result.current.derived.transparent).toBe(true);
-    expect(result.current.derived.topInset).toBeGreaterThan(0);
     await done();
   });
 
@@ -156,7 +155,6 @@ describe('useExerciseDetailPageLogic', () => {
 
     await waitFor(() => expect(result.current.state.exercise).toEqual(PICTURED));
     expect(result.current.derived.transparent).toBe(false);
-    expect(result.current.derived.topInset).toBe(0);
     await done();
   });
 });

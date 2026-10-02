@@ -118,6 +118,11 @@ export function FormSheetList<T>({
       keyboardDismissMode="on-drag"
       keyboardShouldPersistTaps="handled"
       contentInsetAdjustmentBehavior="automatic"
+      // NOTE: FlashList 2 keeps the first visible row in place across a data change by default. A
+      // sheet's rows are replaced, not prepended to, by a search or a filter, so that row reappears
+      // further down the new results and the list scrolled to follow it: clearing a filter jumped
+      // the list away from the top. The scroll offset is left alone instead.
+      maintainVisibleContentPosition={MVCP_OFF}
       data={data}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
@@ -132,6 +137,9 @@ export function FormSheetList<T>({
     />
   );
 }
+
+/** One object, so the list's props keep their identity between renders. */
+const MVCP_OFF = { disabled: true } as const;
 
 function FormSheetBar({ title, doneLabel, onDone, doneDisabled = false }: FormSheetBarProps) {
   const { t } = useT();

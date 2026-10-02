@@ -5,9 +5,6 @@ import type { Exercise } from '@/features/exercises/domain/schemas/ExerciseSchem
 import { isCatalogExerciseId } from '@/features/exercises/domain/utils/exerciseId';
 import { exerciseImageSource } from '@/features/exercises/mappers/exerciseImageSource';
 
-/** The no-art composition's height: close to a 3:2 photo across a phone, so content below does not jump. */
-const NO_ART_HEIGHT = 270;
-
 /**
  * The caption under the no-art composition. A bundled photo that failed to load says so; a
  * catalog exercise without one may get it in a later dataset, so it says "yet"; a custom
@@ -25,7 +22,7 @@ export function noArtCaptionKey(id: string, hasArt: boolean): TKey {
  * failure. The loop runs only while this screen is the focused one, and only when there is an end
  * frame to fade to (`CrossFadeImage` checks that).
  */
-export function useExerciseHeroLogic(exercise: Exercise, topInset: number) {
+export function useExerciseHeroLogic(exercise: Exercise) {
   const start = useMemo(
     () => exerciseImageSource(exercise.imageUrl) ?? exerciseImageSource(exercise.thumbnailUrl),
     [exercise.imageUrl, exercise.thumbnailUrl],
@@ -35,8 +32,6 @@ export function useExerciseHeroLogic(exercise: Exercise, topInset: number) {
   const markFailed = useCallback(() => setFailedSource(start), [start]);
   const shown = start !== null && failedSource !== start ? start : null;
   const focused = useIsFocused();
-  const artStyle = useMemo(() => ({ paddingTop: topInset }), [topInset]);
-  const noArtStyle = useMemo(() => ({ height: topInset + NO_ART_HEIGHT, paddingTop: topInset }), [topInset]);
 
   return {
     state: {
@@ -45,7 +40,6 @@ export function useExerciseHeroLogic(exercise: Exercise, topInset: number) {
       animating: focused,
       caption: noArtCaptionKey(exercise.id, start !== null),
     },
-    derived: { artStyle, noArtStyle },
     effects: { markFailed },
   };
 }

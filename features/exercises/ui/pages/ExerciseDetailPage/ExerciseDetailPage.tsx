@@ -10,6 +10,7 @@ import {
   Icon,
   NumberedSteps,
   Row,
+  SCROLL_INSETS,
   ScreenHeader,
   SectionHeader,
   SkeletonCard,
@@ -66,14 +67,14 @@ export function ExerciseDetailPage({ renderHistory }: { renderHistory?: (exercis
           })}
         </HeaderToolbar>
       ) : null}
-      <ScrollView contentContainerStyle={derived.contentStyle}>
+      <ScrollView {...SCROLL_INSETS} contentContainerStyle={derived.contentStyle}>
         {state.isLoading ? (
-          <Column gap="lg" style={[styles.section, derived.statusStyle]}>
+          <Column gap="lg" style={[styles.section, styles.status]}>
             <SkeletonCard lines={2} />
             <SkeletonCard lines={5} />
           </Column>
         ) : exercise === null ? (
-          <View style={derived.statusStyle}>
+          <View style={styles.status}>
             {state.error !== null ? (
               <ErrorState error={state.error} onRetry={effects.retry} title={t('exerciseDetail.loadError')} />
             ) : (
@@ -88,7 +89,7 @@ export function ExerciseDetailPage({ renderHistory }: { renderHistory?: (exercis
           </View>
         ) : (
           <Column gap="xxl">
-            <ExerciseHero exercise={exercise} topInset={derived.topInset} />
+            <ExerciseHero exercise={exercise} />
 
             {derived.hasLead ? (
               <Column gap="md" style={styles.section}>
