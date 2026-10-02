@@ -46,7 +46,7 @@ Every feature declares `FEATURE_TIER` in its `index.ts`; `npm run arch` checks t
 | `core/error` | the `AppError` union over `AppErrorRegistry`, `errorTagToMessageKey`, `useErrorMessage`, the HTTP retry budget and delay (`httpRetryDelayMs`, which caps an honoured `Retry-After` at one minute) |
 | `core/config` | `AppConfig` from `makeConfig`, decoding `extra` in `app.json` (empty while the app calls no server) |
 | `core/logger` | `LoggerLive` and `logBackgroundFailure`, the one logging helper outside the boundary (see Exceptions) |
-| `core/sqlite` | `SqliteLive` (expo-sqlite, WAL, foreign keys), the per-version migrations `v001` to `v011`, `SchemaStatus`, `clearAllUserData` and `resetLocalData` |
+| `core/sqlite` | `SqliteLive` (expo-sqlite, WAL, foreign keys), the per-version migrations `v001` to `v012`, `SchemaStatus`, `clearAllUserData` and `resetLocalData` |
 | `core/lifecycle` | `BackgroundSync`, the port the bootstrap installs and `watch-sync` fills (below) |
 | `core/query` | `queryClient` (no TanStack retry for app errors), `useEffectQuery` and `useEffectMutation` re-exported for facades, the app-state and network adapters |
 | `core/state` | `createStore`, `createSelectors`, `resetAllStores` |
@@ -80,8 +80,8 @@ Every feature declares `FEATURE_TIER` in its `index.ts`; `npm run arch` checks t
 - **A service Tag over a lower feature's use cases.** A tier-4 use case that needs a lower
   feature's behaviour gets it through a Tag the lower feature declares in `domain/services/` and
   fills in `di/` over its own use cases, never by importing the use cases (they are not public
-  API): `ExerciseCatalog` (install, refresh, find, search), `TrainingReminder`, `WorkoutRecorder`.
-  The runBootstrap and watch-sync tests fake the Tag.
+  API): `ExerciseCatalog` (install the bundled dataset, find, search), `TrainingReminder`,
+  `WorkoutRecorder`. The runBootstrap and watch-sync tests fake the Tag.
 - **Writing a finished workout back into its routine.** Matching is by identity, never by
   exercise id: `planFromRoutine` puts each item's id on the plan, the entry it opens carries it as
   `routineItemId` and each set its row as `routineSetIndex`; an exercise or set added during the
@@ -118,8 +118,8 @@ Every feature declares `FEATURE_TIER` in its `index.ts`; `npm run arch` checks t
   reads with it empty (rest defaults to 90 s), an entry with no exercise or no sets is dropped
   alone, and a `records.kind` this build does not know is left out, not failed. Writes are
   unchanged byte for byte.
-- **Device capabilities are Tags.** Opening a web page (`exercises` `ExternalPages`) and keeping
-  the screen on (`workouts` `ScreenWake`) run through the boundary, which logs a refusal once.
+- **Device capabilities are Tags.** Keeping the screen on (`workouts` `ScreenWake`) runs through
+  the boundary, which logs a refusal once.
 - **The training reminder** is re-scheduled on every sync. A `cancelAll` that fails does not stop
   the schedule (as on `main`); its `NotificationScheduleFailed` is the result once the reminder is
   scheduled, so the boundary logs it.

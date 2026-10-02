@@ -24,7 +24,7 @@ import { createStyles } from '@/features/exercises/ui/components/ExerciseHero/Ex
  * it, so the photo reads as the movement; the pair is one image to a screen reader, named once.
  * With no art, the slot keeps roughly the same proportions and holds a composition instead: the
  * initials plaque the rest of the app uses, blown up, with a caption that says which absence it is
- * (no photo bundled for this exercise, or a bundled one that failed to load).
+ * (no photo bundled yet, none ever for a custom exercise, or a bundled one that failed to load).
  */
 export function ExerciseHero({ exercise, topInset }: { exercise: Exercise; topInset: number }) {
   const { state, derived, effects } = useExerciseHeroLogic(exercise, topInset);
@@ -47,7 +47,7 @@ export function ExerciseHero({ exercise, topInset }: { exercise: Exercise; topIn
         <Row gap="xs" align="center">
           <Icon name="image" size={ICON_SIZE.micro} color={theme.colors.textFaint} />
           <Txt variant="micro" tone="faint" uppercase tracking={0.8}>
-            {t(state.hasArt ? 'exerciseDetail.imageUnavailable' : 'exerciseDetail.noImage')}
+            {t(state.caption)}
           </Txt>
         </Row>
       </LinearGradient>
