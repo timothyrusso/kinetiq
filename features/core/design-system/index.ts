@@ -35,6 +35,7 @@ export { MetaLine } from '@/features/core/design-system/display/MetaLine';
 export { NavRow } from '@/features/core/design-system/display/NavRow';
 export { NumberedSteps } from '@/features/core/design-system/display/NumberedSteps';
 export { RoutineRow } from '@/features/core/design-system/display/RoutineRow';
+export { RowButton } from '@/features/core/design-system/display/RowButton';
 export { SectionHeader } from '@/features/core/design-system/display/SectionHeader';
 export { StatTile } from '@/features/core/design-system/display/StatTile';
 export { SwipeToDelete } from '@/features/core/design-system/display/SwipeToDelete';
