@@ -12,8 +12,8 @@ export type BundledImage = {
 };
 
 /**
- * The blur for a photo that has no blurhash of its own: one flat light grey, the backdrop of the
- * catalog's photos, so the photo lands on a tone it already has.
+ * The blur for a photo that has no blurhash of its own: one flat neutral grey, which reads as
+ * "loading" on either theme without guessing at the photo's colours.
  */
 const DEFAULT_BLURHASH = '00Q0XJ';
 
