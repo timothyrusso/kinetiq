@@ -6,7 +6,7 @@ import { RoutineId } from '@/features/routines/domain/schemas/RoutineId';
 import { makeRoutineRepositoryFake } from '@/features/routines/useCases/__tests__/routineFakes';
 import { reorderRoutine } from '@/features/routines/useCases/reorderRoutine';
 
-const DIPS = aRoutineItem({ id: 'rit_dips', exerciseId: 'wger:75', exerciseName: 'Dips' });
+const DIPS = aRoutineItem({ id: 'rit_dips', exerciseId: 'ex:dips', exerciseName: 'Dips' });
 const PUSH = aRoutine({ items: [aRoutineItem(), anotherRoutineItem(), DIPS] });
 
 const itemIds = Effect.map(

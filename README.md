@@ -16,7 +16,7 @@ and watch your training history grow. Everything stays on your device.
 ## Features
 
 - **Routines**: create and edit your workouts, or start an empty one.
-- **Exercise library**: the full [wger](https://wger.de) catalog, over 900 exercises in English and Italian, stored on the device so search and filters work offline. It refreshes itself every 30 days.
+- **Exercise library**: the [free-exercise-db](https://github.com/yuhonas/free-exercise-db) catalog plus hand-written gym exercises, 917 in all, in English and Italian with numbered steps and similar exercises. 873 have start and end photos; the other 44, mostly the hand-written additions, do not have photos yet. It ships inside the app, so search, filters and photos work offline from the first launch.
 - **Live workout**: log weight and reps per set, with a rest timer and haptic feedback.
 - **History**: a 20-week training heatmap, weekly goal, streaks, personal records and per-exercise progress.
 - **Apple Watch**: run a full workout from your wrist; it syncs back to the phone when you finish.
@@ -57,10 +57,12 @@ npm install
 npm run ios       # or: npm run android
 ```
 
-`npm run catalog:update` regenerates the bundled exercise catalog (`assets/catalog/wger.json`) from
-wger. Run it before a release: a fresh install starts from that snapshot.
+The exercise catalog is `assets/catalog/exercises.json`, edited by hand, with its photos under
+`assets/catalog/images/`. After every edit of it or of `pendingPhotos.json`, `npm run
+catalog:images` regenerates the image map the app bundles; bump `datasetVersion` so existing
+installs pick the change up.
 
 ## Credits
 
-Exercise data comes from [wger Workout Manager](https://wger.de) and is licensed
-[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+Exercise data and photos come from [free-exercise-db](https://github.com/yuhonas/free-exercise-db),
+released into the public domain under the [Unlicense](https://unlicense.org/).

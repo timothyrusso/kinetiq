@@ -1,9 +1,10 @@
 import { Context, type Effect } from 'effect';
 import type { DecodeError, SqlError } from '@/features/core/error';
-import type { CatalogMeta, CatalogWriteKind } from '@/features/exercises/domain/entities/CatalogMeta';
+import type { CatalogMeta } from '@/features/exercises/domain/entities/CatalogMeta';
 import type { CatalogLanguage } from '@/features/exercises/domain/schemas/CatalogLanguage';
 import type { CatalogPayload } from '@/features/exercises/domain/schemas/CatalogPayloadSchema';
 import type { ExerciseFilter } from '@/features/exercises/domain/schemas/ExerciseFilterSchema';
+import type { ExerciseId } from '@/features/exercises/domain/schemas/ExerciseId';
 import type { Exercise } from '@/features/exercises/domain/schemas/ExerciseSchema';
 import type { ExerciseTaxonomy } from '@/features/exercises/domain/schemas/ExerciseTaxonomySchema';
 
@@ -12,8 +13,7 @@ type CatalogReadError = SqlError | DecodeError;
 
 /**
  * The exercise catalog on the device. Every read names its rows in `language` and falls back to
- * English per row (categories, muscles and equipment through the app's own names for them); a row with neither is left out of lists and named `Exercise <n>` when asked for
- * by id.
+ * English per row; body areas, muscles and equipment are named through the app's own catalog.
  */
 export class CatalogRepository extends Context.Tag('exercises/CatalogRepository')<
   CatalogRepository,
@@ -22,11 +22,7 @@ export class CatalogRepository extends Context.Tag('exercises/CatalogRepository'
      * Swaps the whole catalog for `payload` in one exclusive transaction, the only write the
      * catalog tables get: a failure anywhere leaves the previous catalog as it was.
      */
-    readonly replaceCatalog: (
-      payload: CatalogPayload,
-      kind: CatalogWriteKind,
-      now: number,
-    ) => Effect.Effect<void, SqlError>;
+    readonly replaceCatalog: (payload: CatalogPayload, now: number) => Effect.Effect<void, SqlError>;
     readonly readMeta: Effect.Effect<CatalogMeta, CatalogReadError>;
     /**
      * `limit` rows of the filtered list from `offset`, ordered by name in `language` (by relevance
@@ -38,20 +34,17 @@ export class CatalogRepository extends Context.Tag('exercises/CatalogRepository'
       offset: number,
       limit: number,
     ) => Effect.Effect<{ readonly items: readonly Exercise[]; readonly total: number }, CatalogReadError>;
-    /** The exercise with wger id `externalId`, or `undefined` when the catalog has none. */
-    readonly byId: (
-      externalId: number,
-      language: CatalogLanguage,
-    ) => Effect.Effect<Exercise | undefined, CatalogReadError>;
-    /** The other members of the exercise's variation group; never the exercise itself. */
-    readonly variations: (
-      externalId: number,
+    /** The exercise `id`, or `undefined` when the catalog has none. */
+    readonly byId: (id: ExerciseId, language: CatalogLanguage) => Effect.Effect<Exercise | undefined, CatalogReadError>;
+    /**
+     * Up to five other exercises with `id`'s first primary muscle among their primary muscles:
+     * the same mechanic first, then the most equipment in common, then by name. Never `id` itself.
+     */
+    readonly similar: (
+      id: ExerciseId,
       language: CatalogLanguage,
     ) => Effect.Effect<readonly Exercise[], CatalogReadError>;
-    /**
-     * Categories, equipment and muscles, each named and ordered in `language`: by the app's name for
-     * the wger ids it knows, else by the stored name, muscles by their common name where wger has one.
-     */
+    /** The body areas, equipment and muscles the catalog uses, each named and ordered in `language`. */
     readonly taxonomy: (language: CatalogLanguage) => Effect.Effect<ExerciseTaxonomy, CatalogReadError>;
   }
 >() {}

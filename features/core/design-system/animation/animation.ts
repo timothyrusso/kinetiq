@@ -20,13 +20,16 @@ import { useCallback, useEffect } from 'react';
 import { Pressable, type ViewStyle } from 'react-native';
 import {
   type AnimatedStyle,
+  cancelAnimation,
   createAnimatedComponent,
   Easing,
   ReduceMotion,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withDelay,
   withRepeat,
+  withSequence,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
@@ -84,6 +87,36 @@ export function usePulse(period = 1500, min = 0.32): AnimatedStyle<ViewStyle> {
     };
   }, [phase, period]);
   return useAnimatedStyle(() => ({ opacity: min + phase.value * (1 - min) }));
+}
+
+/**
+ * Two frames of a movement read as one: the opacity of the second frame, laid over the first,
+ * holding each frame for `hold` and fading between them in a loop. It runs only while `active`
+ * (the screen is focused), and never with reduced motion on: stopped, the first frame shows. One
+ * shared value on the UI thread, so a loop costs no render.
+ */
+export function useCrossFade(active: boolean, hold = 1000, fade = 450): AnimatedStyle<ViewStyle> {
+  const reduced = useReducedMotion();
+  const running = active && !reduced;
+  const phase = useSharedValue(0);
+  useEffect(() => {
+    if (!running) {
+      cancelAnimation(phase);
+      phase.value = 0;
+      return;
+    }
+    const timing = { duration: fade, easing: easeInOut };
+    phase.value = withRepeat(
+      withSequence(withDelay(hold, withTiming(1, timing)), withDelay(hold, withTiming(0, timing))),
+      -1,
+      false,
+    );
+    return () => {
+      cancelAnimation(phase);
+      phase.value = 0;
+    };
+  }, [running, phase, hold, fade]);
+  return useAnimatedStyle(() => ({ opacity: phase.value }));
 }
 
 /**

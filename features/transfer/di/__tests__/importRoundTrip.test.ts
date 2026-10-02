@@ -29,8 +29,7 @@ const layer = (clipboard: string) =>
 const importClipboard = Effect.gen(function* () {
   const snapshots = yield* ExerciseSnapshotRepository;
   for (const item of someRoutines().flatMap(routine => routine.items)) {
-    const externalId = item.exerciseId.startsWith('wger:') ? Number(item.exerciseId.slice(5)) : null;
-    yield* snapshots.upsert(anExerciseSnapshot({ exerciseId: item.exerciseId, name: item.exerciseName, externalId }));
+    yield* snapshots.upsert(anExerciseSnapshot({ exerciseId: item.exerciseId, name: item.exerciseName }));
   }
   const read = yield* readImport('clipboard');
   const resolved = yield* resolveExercisesByName(read?.routines ?? [], 'en');
@@ -56,6 +55,16 @@ describe('importing an exported routines file', () => {
   );
 
   itEffect(
+    'matches a file from the retired catalog by name, its old ids dropped',
+    Effect.gen(function* () {
+      const routines = yield* importClipboard;
+
+      expect(routines.map(planOf)).toEqual(someRoutines().map(planOf).sort(byName));
+    }),
+    layer(fixture('kinetiq-routines.legacy.json')),
+  );
+
+  itEffect(
     'reads a v1 export from before per-set routines into identical sets on the bottom of each range',
     Effect.gen(function* () {
       const routines = yield* importClipboard;
@@ -65,7 +74,7 @@ describe('importing an exported routines file', () => {
           name: 'Legs · Heavy',
           items: [
             {
-              exerciseId: 'wger:111',
+              exerciseId: 'ex:barbell-squat',
               exerciseName: 'Squat, Back',
               sets: sets(5, 5, 142.5),
               restSeconds: 180,
@@ -83,9 +92,15 @@ describe('importing an exported routines file', () => {
         {
           name: 'Push Day',
           items: [
-            { exerciseId: 'wger:73', exerciseName: 'Bench Press', sets: sets(3, 8, 60), restSeconds: 90, notes: null },
             {
-              exerciseId: 'wger:74',
+              exerciseId: 'ex:barbell-bench-press-medium-grip',
+              exerciseName: 'Bench Press',
+              sets: sets(3, 8, 60),
+              restSeconds: 90,
+              notes: null,
+            },
+            {
+              exerciseId: 'ex:barbell-shoulder-press',
               exerciseName: 'Overhead Press',
               sets: sets(4, 6, 40),
               restSeconds: 60,

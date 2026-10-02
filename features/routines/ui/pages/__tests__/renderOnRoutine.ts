@@ -12,10 +12,7 @@ import { listRoutines } from '@/features/routines/useCases/listRoutines';
 export const aPushDay = (overrides: Partial<NewRoutine> = {}): NewRoutine => ({
   name: 'Push Day',
   items: [aRoutineItem(), anotherRoutineItem()],
-  snapshots: [
-    anExerciseSnapshot(),
-    anExerciseSnapshot({ exerciseId: 'wger:74', name: 'Overhead Press', externalId: 74 }),
-  ],
+  snapshots: [anExerciseSnapshot(), anExerciseSnapshot({ exerciseId: 'ex:barbell-squat', name: 'Overhead Press' })],
   ...overrides,
 });
 

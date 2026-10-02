@@ -44,7 +44,7 @@ export const RoutineItemRow = memo(function RoutineItemRow(
       {...(derived.accessibilityActions.length > 0
         ? { accessibilityActions: derived.accessibilityActions, onAccessibilityAction: effects.onAccessibilityAction }
         : {})}
-      leading={<ExerciseThumb uri={derived.thumbnail} name={item.exerciseName} size={44} theme={theme} />}
+      leading={<ExerciseThumb source={derived.thumbnail} name={item.exerciseName} size={44} theme={theme} />}
       trailing={
         <View style={styles.trailing}>
           {onMove ? (

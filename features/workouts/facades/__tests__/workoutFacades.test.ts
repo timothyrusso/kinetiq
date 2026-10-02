@@ -127,7 +127,7 @@ describe('the workout facades', () => {
     await startPlan(result);
     await tickAndFinish(result);
 
-    await rerender({ ...NOTHING_OPEN, exerciseId: 'wger:73' });
+    await rerender({ ...NOTHING_OPEN, exerciseId: 'ex:barbell-bench-press' });
 
     await waitFor(() => expect(result.current.exercise.history.sessionsCount).toBe(1));
     expect(result.current.exercise.records.map(record => record.kind)).toEqual(['est1rm', 'maxReps']);

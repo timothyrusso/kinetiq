@@ -8,10 +8,8 @@ import {
 } from '@/features/exercises/ui/pages/PickExercisePage/PickExercisePage.logic';
 
 const BENCH = anExercise();
-const SQUAT = anExercise({ id: 'wger:13', externalId: 13, name: 'Squat', category: 'Legs' });
-const ROWS = Array.from({ length: 60 }, (_, i) =>
-  anExercise({ id: `wger:${100 + i}`, externalId: 100 + i, name: `Curl ${i}` }),
-);
+const SQUAT = anExercise({ id: 'ex:barbell-squat', name: 'Squat', category: 'Legs' });
+const ROWS = Array.from({ length: 60 }, (_, i) => anExercise({ id: `ex:curl-${i}`, name: `Curl ${i}` }));
 
 const renderPicker = (
   picked: Exercise[] = [],
@@ -100,10 +98,10 @@ describe('usePickExercisePageLogic', () => {
     const { result, done } = await renderPicker();
     await waitFor(() => expect(result.current.state.rows).toHaveLength(50));
 
-    await act(async () => result.current.effects.toggleMuscle(4));
-    expect(result.current.state.muscleId).toBe(4);
+    await act(async () => result.current.effects.toggleMuscle('chest'));
+    expect(result.current.state.muscleId).toBe('chest');
     expect(result.current.derived.filtered).toBe(true);
-    await act(async () => result.current.effects.toggleMuscle(4));
+    await act(async () => result.current.effects.toggleMuscle('chest'));
 
     expect(result.current.state.muscleId).toBeNull();
     await done();

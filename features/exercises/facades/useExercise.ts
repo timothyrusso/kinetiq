@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useEffectQuery } from '@/features/core/query';
 import type { ExerciseSourceKind } from '@/features/exercises/domain/entities/ExerciseSourceKind';
 import { exerciseFromSnapshot } from '@/features/exercises/domain/utils/exerciseFromSnapshot';
-import { externalIdOf, isLocalExerciseId } from '@/features/exercises/domain/utils/exerciseId';
+import { isCatalogExerciseId } from '@/features/exercises/domain/utils/exerciseId';
 import { EXERCISE_GC_MS, exerciseQueryKeys } from '@/features/exercises/facades/exerciseQueryKeys';
 import { useCatalogLanguage } from '@/features/exercises/facades/useCatalogLanguage';
 import { snapshotInLanguage } from '@/features/exercises/mappers/snapshotInLanguage';
@@ -13,14 +13,15 @@ import { getStoredExercise } from '@/features/exercises/useCases/getStoredExerci
  * What the app knows about exercise `id`.
  *
  * Two sources, and the screen says which one it used. The catalog row is the complete answer,
- * including the video only the catalog carries. A stored snapshot exists for everything the user
- * ever added to a routine or trained, and stands in when the catalog has no row: an exercise wger
- * has since retired, or a `local:` exercise that never came from the catalog. Precedence is
- * catalog, then snapshot, and `from` names whichever is on screen.
+ * including the end frame and the dataset's keys only the catalog carries. A stored snapshot
+ * exists for everything the user ever added to a routine or trained, and stands in when the
+ * catalog has no row: an exercise a dataset edit retired, one from the previous catalog, or a
+ * `local:` exercise that never came from the catalog. Precedence is catalog, then snapshot, and
+ * `from` names whichever is on screen.
  */
 export function useExercise(id: string | null) {
   const language = useCatalogLanguage();
-  const fetchable = id !== null && !isLocalExerciseId(id) && externalIdOf(id) !== null;
+  const isCatalogId = id !== null && isCatalogExerciseId(id);
 
   // NOTE: no `staleTime`: a single indexed row, and being wrong about an exercise the user added to
   // a routine two seconds ago costs more than re-reading it on every open.
@@ -33,7 +34,7 @@ export function useExercise(id: string | null) {
   const catalog = useEffectQuery({
     queryKey: exerciseQueryKeys.detail(id ?? 'none', language),
     queryFn: getExercise(id ?? '', language),
-    enabled: fetchable,
+    enabled: isCatalogId,
     staleTime: Infinity,
     gcTime: EXERCISE_GC_MS,
   });
@@ -50,20 +51,20 @@ export function useExercise(id: string | null) {
   const { refetch: refetchCatalog } = catalog;
   const retry = useCallback(() => {
     void refetchStored();
-    if (fetchable) void refetchCatalog();
-  }, [fetchable, refetchCatalog, refetchStored]);
+    if (isCatalogId) void refetchCatalog();
+  }, [isCatalogId, refetchCatalog, refetchStored]);
 
   return {
     // NOTE: the best row there is; null means nothing is known about this id.
     exercise,
     from,
-    // NOTE: whether this id can be in the catalog at all: false for `local:` ids.
-    fetchable,
+    // NOTE: whether this id can be in the catalog at all: false for `local:` and older ids.
+    isCatalogId,
     // NOTE: `id !== null` first: with no id both queries are disabled, and a disabled query with no
     // data stays pending forever, which held the screen on its skeleton for good.
     // NOTE: true only while there is nothing to show; with content up, read `isFetching`.
     isLoading:
-      id !== null && exercise === null && (stored.isPending || stored.isFetching || (fetchable && catalog.isPending)),
+      id !== null && exercise === null && (stored.isPending || stored.isFetching || (isCatalogId && catalog.isPending)),
     isFetching: catalog.isFetching,
     error: exercise === null ? (catalog.error ?? stored.error) : null,
     // NOTE: the stored row, so the screen can date its own copy.

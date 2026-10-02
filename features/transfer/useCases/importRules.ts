@@ -1,4 +1,4 @@
-import { externalIdOf, isLocalExerciseId } from '@/features/exercises';
+import { isCatalogExerciseId, isLocalExerciseId } from '@/features/exercises';
 import type { ImportRules } from '@/features/transfer/domain/entities/ImportRules';
 import { IMPORT_LIMITS, ITEM_BOUNDS } from '@/features/watch-bridge';
 
@@ -16,5 +16,5 @@ export const IMPORT_RULES: ImportRules = {
     restSeconds: ITEM_BOUNDS.restSeconds,
     notesLength: ITEM_BOUNDS.notesLength,
   },
-  isExerciseId: id => externalIdOf(id) !== null || isLocalExerciseId(id),
+  isExerciseId: id => isCatalogExerciseId(id) || isLocalExerciseId(id),
 };

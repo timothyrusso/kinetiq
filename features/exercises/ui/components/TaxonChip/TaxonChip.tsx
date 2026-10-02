@@ -9,10 +9,10 @@ export const TaxonChip = memo(function TaxonChip({
   selected,
   onToggle,
 }: {
-  id: number;
+  id: string;
   label: string;
   selected: boolean;
-  onToggle: (id: number) => void;
+  onToggle: (id: string) => void;
 }) {
   const { effects } = useTaxonChipLogic(id, onToggle);
   return <Chip label={label} size="sm" selected={selected} onPress={effects.toggle} />;

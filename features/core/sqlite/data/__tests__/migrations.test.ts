@@ -3,6 +3,7 @@ import { itEffect, makeNodeSqliteLayer } from '@timothyrusso/effect-core/testing
 import { Effect } from 'effect';
 import { SCHEMA_V10 } from '@/features/core/sqlite/data/__tests__/schemaV10';
 import { SCHEMA_V11 } from '@/features/core/sqlite/data/__tests__/schemaV11';
+import { SCHEMA_V12 } from '@/features/core/sqlite/data/__tests__/schemaV12';
 import { migrations } from '@/features/core/sqlite/data/migrations';
 
 const lastVersion = Math.max(...migrations.map(migration => migration.version));
@@ -29,8 +30,8 @@ const upTo = (version: number) => migrations.filter(migration => migration.versi
 const all = <T>(db: SqliteDatabase, sql: string) => Effect.promise(() => db.getAllAsync<T>(sql));
 
 describe('migrations', () => {
-  it('declares one step per version, 1 to 11, in order', () => {
-    expect(migrations.map(migration => migration.version)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+  it('declares one step per version, 1 to 12, in order', () => {
+    expect(migrations.map(migration => migration.version)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
   });
 
   itEffect(
@@ -45,13 +46,24 @@ describe('migrations', () => {
   );
 
   itEffect(
-    'bring an empty database to the last version with the v11 schema, and run again as a no-op',
+    'bring an empty database to the v11 schema at v11',
+    Effect.gen(function* () {
+      const db = yield* SqliteClient;
+      yield* runMigrations(db, upTo(11));
+      expect(yield* userVersion(db)).toBe(11);
+      expect(yield* schemaOf(db)).toEqual(SCHEMA_V11);
+    }),
+    makeNodeSqliteLayer(),
+  );
+
+  itEffect(
+    'bring an empty database to the last version with the v12 schema, and run again as a no-op',
     Effect.gen(function* () {
       const db = yield* SqliteClient;
       const first = yield* runMigrations(db, migrations);
       expect(first).toEqual({ from: 0, to: lastVersion, applied: migrations.map(migration => migration.version) });
-      expect(yield* userVersion(db)).toBe(11);
-      expect(yield* schemaOf(db)).toEqual(SCHEMA_V11);
+      expect(yield* userVersion(db)).toBe(12);
+      expect(yield* schemaOf(db)).toEqual(SCHEMA_V12);
       const second = yield* runMigrations(db, migrations);
       expect(second.applied).toEqual([]);
     }),
@@ -59,7 +71,7 @@ describe('migrations', () => {
   );
 
   itEffect(
-    'bring a v7 database to the last version, keeping its rows and dropping what v8 to v11 remove',
+    'bring a v7 database to the last version, keeping its rows and dropping what v8 to v12 remove',
     Effect.gen(function* () {
       const db = yield* SqliteClient;
       yield* runMigrations(
@@ -83,9 +95,9 @@ describe('migrations', () => {
 
       const report = yield* runMigrations(db, migrations);
 
-      expect(report).toEqual({ from: 7, to: 11, applied: [8, 9, 10, 11] });
-      expect(yield* userVersion(db)).toBe(11);
-      expect(yield* schemaOf(db)).toEqual(SCHEMA_V11);
+      expect(report).toEqual({ from: 7, to: 12, applied: [8, 9, 10, 11, 12] });
+      expect(yield* userVersion(db)).toBe(12);
+      expect(yield* schemaOf(db)).toEqual(SCHEMA_V12);
       expect(yield* columnsOf(db, 'routines')).not.toEqual(expect.arrayContaining(['description']));
       expect(yield* columnsOf(db, 'routines')).not.toEqual(expect.arrayContaining(['seeded']));
       expect(yield* columnsOf(db, 'activities')).not.toEqual(expect.arrayContaining(['seeded']));
@@ -113,7 +125,7 @@ describe('migrations', () => {
       const db = yield* SqliteClient;
       yield* runMigrations(db, migrations);
       const broken: Migration = {
-        version: 12,
+        version: 13,
         up: async txn => {
           await txn.execAsync('CREATE TABLE half_done (id TEXT PRIMARY KEY);');
           await txn.execAsync('ALTER TABLE no_such_table ADD COLUMN x TEXT;');
@@ -123,7 +135,7 @@ describe('migrations', () => {
       const failure = yield* Effect.flip(runMigrations(db, [...migrations, broken]));
 
       expect(failure).toBeInstanceOf(SqlError);
-      expect(yield* userVersion(db)).toBe(11);
+      expect(yield* userVersion(db)).toBe(12);
       const tables = yield* Effect.promise(() =>
         db.getAllAsync<{ name: string }>("SELECT name FROM sqlite_master WHERE name = 'half_done'"),
       );
@@ -201,7 +213,7 @@ describe('migration 11: per-set routine targets', () => {
         'SELECT (SELECT COUNT(*) FROM routine_items) + (SELECT COUNT(*) FROM activities) AS n',
       ))[0]?.n;
 
-      const report = yield* runMigrations(db, migrations);
+      const report = yield* runMigrations(db, upTo(11));
 
       expect(report).toEqual({ from: 10, to: 11, applied: [11] });
       const after = [];
@@ -223,7 +235,7 @@ describe('migration 11: per-set routine targets', () => {
     Effect.gen(function* () {
       const db = yield* seededV10;
 
-      yield* runMigrations(db, migrations);
+      yield* runMigrations(db, upTo(11));
 
       const sets = yield* all<SetRow>(db, 'SELECT * FROM routine_item_sets ORDER BY item_id, position');
       const planned = (count: number, reps: number, weightKg: number) =>
@@ -242,7 +254,7 @@ describe('migration 11: per-set routine targets', () => {
     Effect.gen(function* () {
       const db = yield* seededV10;
 
-      yield* runMigrations(db, migrations);
+      yield* runMigrations(db, upTo(11));
 
       expect(yield* columnsOf(db, 'routine_items')).toEqual([
         'id',
@@ -309,7 +321,7 @@ describe('migration 11: per-set routine targets', () => {
     Effect.gen(function* () {
       const db = yield* seededV10;
 
-      yield* runMigrations(db, migrations);
+      yield* runMigrations(db, upTo(11));
 
       expect(yield* columnsOf(db, 'activities')).toEqual([
         'id',
@@ -360,11 +372,97 @@ describe('migration 11: per-set routine targets', () => {
     'takes an item’s sets with it when the item is deleted',
     Effect.gen(function* () {
       const db = yield* seededV10;
-      yield* runMigrations(db, migrations);
+      yield* runMigrations(db, upTo(11));
 
       yield* Effect.promise(() => db.execAsync("DELETE FROM routines WHERE id = 'r1';"));
 
       expect(yield* all(db, 'SELECT * FROM routine_item_sets')).toEqual([]);
+    }),
+    makeNodeSqliteLayer(),
+  );
+});
+
+/** The catalog tables v12 recreates empty, for the launch to install the bundled dataset into. */
+const V12_CATALOG_TABLES = [
+  'catalog_meta',
+  'catalog_exercises',
+  'catalog_translations',
+  'catalog_exercise_muscles',
+  'catalog_exercise_equipment',
+] as const;
+
+/** The user tables a v11 database holds rows in, which v12 keeps exactly as they were. */
+const USER_TABLES = [
+  'routines',
+  'routine_items',
+  'routine_item_sets',
+  'exercises',
+  'activities',
+  'sessions',
+  'records',
+  'settings',
+  'app_state',
+] as const;
+
+/** A v11 database whose routine names an exercise of the previous catalog, with that catalog installed. */
+const seededV11 = Effect.gen(function* () {
+  const db = yield* SqliteClient;
+  yield* runMigrations(db, upTo(10));
+  yield* Effect.promise(() => db.execAsync(V10_ROWS));
+  yield* runMigrations(db, upTo(11));
+  yield* Effect.promise(() =>
+    db.execAsync(`
+      INSERT INTO exercises (id, name, external_id, instructions, category, primary_muscles, equipment, image_url, source, captured_at)
+        VALUES ('legacy:73', 'Bench Press', 73, 'Lower the bar.', 'Chest', '["Chest"]', '["SZ-Bar"]', 'https://example.com/b.png', 'remote', 5);
+      INSERT INTO routine_items (id, routine_id, exercise_id, position, rest_seconds, exercise_name)
+        VALUES ('i_legacy', 'r1', 'legacy:73', 5, 90, 'Bench Press');
+      INSERT INTO catalog_equipment (id, name) VALUES (1, 'Barbell');
+      INSERT INTO catalog_muscles (id, name, name_en, is_front) VALUES (4, 'Pectoralis major', 'Chest', 1);
+      INSERT INTO catalog_exercises (id, external_id, category_id) VALUES ('legacy:73', 73, 10);
+      INSERT INTO catalog_translations (exercise_id, language, name, name_search) VALUES ('legacy:73', 'en', 'Bench Press', 'bench press');
+      INSERT INTO catalog_exercise_muscles (exercise_id, muscle_id, role) VALUES ('legacy:73', 4, 'primary');
+      INSERT INTO catalog_exercise_equipment (exercise_id, equipment_id) VALUES ('legacy:73', 1);
+    `),
+  );
+  return db;
+});
+
+describe('migration 12: the catalog on the bundled dataset', () => {
+  itEffect(
+    'keeps every row of every user table, a routine naming an exercise of the previous catalog included',
+    Effect.gen(function* () {
+      const db = yield* seededV11;
+      const before = [];
+      for (const table of USER_TABLES) before.push(yield* all(db, `SELECT * FROM ${table} ORDER BY rowid`));
+
+      const report = yield* runMigrations(db, migrations);
+
+      expect(report).toEqual({ from: 11, to: 12, applied: [12] });
+      const after = [];
+      for (const table of USER_TABLES) after.push(yield* all(db, `SELECT * FROM ${table} ORDER BY rowid`));
+      expect(after).toEqual(before);
+      expect(yield* schemaOf(db)).toEqual(SCHEMA_V12);
+    }),
+    makeNodeSqliteLayer(),
+  );
+
+  itEffect(
+    'drops the previous catalog and leaves the new tables empty for the launch to install',
+    Effect.gen(function* () {
+      const db = yield* seededV11;
+
+      yield* runMigrations(db, migrations);
+
+      const tables = (yield* all<{ name: string }>(db, "SELECT name FROM sqlite_master WHERE type = 'table'")).map(
+        row => row.name,
+      );
+      expect(tables).not.toEqual(expect.arrayContaining(['catalog_categories']));
+      expect(tables).not.toEqual(expect.arrayContaining(['catalog_equipment']));
+      expect(tables).not.toEqual(expect.arrayContaining(['catalog_muscles']));
+      for (const table of V12_CATALOG_TABLES) {
+        const rows = yield* all<{ n: number }>(db, `SELECT COUNT(*) AS n FROM ${table}`);
+        expect([table, rows[0]?.n]).toEqual([table, 0]);
+      }
     }),
     makeNodeSqliteLayer(),
   );

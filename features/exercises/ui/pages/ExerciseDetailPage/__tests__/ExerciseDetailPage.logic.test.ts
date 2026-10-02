@@ -7,9 +7,25 @@ import { anExercise } from '@/features/exercises/__fixtures__/builders';
 import { renderWithCatalog } from '@/features/exercises/facades/__tests__/renderWithCatalog';
 import { useExerciseDetailPageLogic } from '@/features/exercises/ui/pages/ExerciseDetailPage/ExerciseDetailPage.logic';
 
-const BENCH = anExercise();
+const BENCH = anExercise({ instructions: ['Lower the bar to the chest.', '  ', 'Press it back up.'] });
 
-const PICTURED = anExercise({ imageUrl: 'https://wger.de/media/bench.png' });
+const STRETCH = anExercise({
+  id: 'ex:90-90-hamstring',
+  name: '90/90 Hamstring',
+  trainingType: 'stretching',
+  level: 'beginner',
+  mechanic: null,
+  instructions: [],
+});
+
+const PICTURED = anExercise({
+  id: 'ex:barbell-squat',
+  name: 'Barbell Squat',
+  imageUrl: 'assets/catalog/images/barbell-squat/0.webp',
+});
+
+/** A stored copy from the previous catalog: its image is a URL this build does not bundle. */
+const UNBUNDLED = anExercise({ id: 'ex:retired-press', imageUrl: 'https://example.com/press.png' });
 
 const renderDetail = (id?: string, exercise = BENCH) => {
   if (id !== undefined) routerFake.setParams({ id });
@@ -17,12 +33,43 @@ const renderDetail = (id?: string, exercise = BENCH) => {
 };
 
 describe('useExerciseDetailPageLogic', () => {
-  it('titles the screen with the catalog exercise and offers its wger page', async () => {
+  it('titles the screen with the catalog exercise and lists its non-blank steps in order', async () => {
     const { result, done } = await renderDetail(BENCH.id);
 
     await waitFor(() => expect(result.current.state.exercise).toEqual(BENCH));
     expect(result.current.derived.title).toBe(BENCH.name);
-    expect(result.current.derived.hasExternalPage).toBe(true);
+    expect(result.current.derived.steps).toEqual(['Lower the bar to the chest.', 'Press it back up.']);
+    await done();
+  });
+
+  it('badges the level and mechanic, and no training type for a strength exercise', async () => {
+    const { result, done } = await renderDetail(BENCH.id);
+
+    await waitFor(() => expect(result.current.state.exercise).toEqual(BENCH));
+    expect(result.current.derived.badgeTags.map(tag => tag.label)).toEqual([
+      tr('exerciseLevels.beginner'),
+      tr('exerciseMechanics.compound'),
+    ]);
+    expect(result.current.derived.hasLead).toBe(true);
+    await done();
+  });
+
+  it('badges a stretching exercise as one, and keeps the fallback for no steps', async () => {
+    const { result, done } = await renderDetail(STRETCH.id, STRETCH);
+
+    await waitFor(() => expect(result.current.state.exercise).toEqual(STRETCH));
+    expect(result.current.derived.badgeTags.map(tag => tag.label)).toEqual([
+      tr('exerciseTrainingTypes.stretching'),
+      tr('exerciseLevels.beginner'),
+    ]);
+    expect(result.current.derived.steps).toBeNull();
+    await done();
+  });
+
+  it('titles an exercise it has not read yet by its slug', async () => {
+    const { result, done } = await renderDetail('ex:barbell-squat', BENCH);
+
+    expect(result.current.derived.title).toBe('Barbell Squat');
     await done();
   });
 
@@ -34,20 +81,19 @@ describe('useExerciseDetailPageLogic', () => {
     await done();
   });
 
-  it('opens a variation, and not the exercise already on screen', async () => {
+  it('opens a similar exercise', async () => {
     const { result, done } = await renderDetail(BENCH.id);
     await waitFor(() => expect(result.current.state.exercise).toEqual(BENCH));
 
-    await act(async () => result.current.effects.openVariation(BENCH.id));
-    await act(async () => result.current.effects.openVariation('wger:13'));
+    await act(async () => result.current.effects.openSimilar('ex:barbell-squat'));
 
-    expect(routerFake.history).toEqual([{ verb: 'push', href: routes.exerciseDetail('wger:13') }]);
+    expect(routerFake.history).toEqual([{ verb: 'push', href: routes.exerciseDetail('ex:barbell-squat') }]);
     await done();
   });
 
   it('goes Home when there is nothing to go back to', async () => {
     routerFake.setCanGoBack(false);
-    const { result, done } = await renderDetail('wger:999');
+    const { result, done } = await renderDetail('ex:no-such-exercise');
 
     await act(async () => result.current.effects.goBack());
 
@@ -62,6 +108,15 @@ describe('useExerciseDetailPageLogic', () => {
     await waitFor(() => expect(result.current.state.exercise).toEqual(PICTURED));
     expect(result.current.derived.transparent).toBe(true);
     expect(result.current.derived.topInset).toBeGreaterThan(0);
+    await done();
+  });
+
+  it('keeps the opaque header for an image this build does not bundle', async () => {
+    jest.replaceProperty(Platform, 'OS', 'ios');
+    const { result, done } = await renderDetail(UNBUNDLED.id, UNBUNDLED);
+
+    await waitFor(() => expect(result.current.state.exercise).toEqual(UNBUNDLED));
+    expect(result.current.derived.transparent).toBe(false);
     await done();
   });
 

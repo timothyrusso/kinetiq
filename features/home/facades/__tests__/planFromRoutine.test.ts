@@ -9,7 +9,7 @@ describe('planFromRoutine', () => {
       items: [
         {
           id: 'rit_bench',
-          exerciseId: 'wger:73',
+          exerciseId: 'ex:barbell-bench-press',
           exerciseName: 'Bench Press',
           sets: [
             { index: 0, reps: 10, weightKg: 60, targetRpe: null },
@@ -20,7 +20,7 @@ describe('planFromRoutine', () => {
         },
         {
           id: 'rit_press',
-          exerciseId: 'wger:74',
+          exerciseId: 'ex:barbell-squat',
           exerciseName: 'Overhead Press',
           sets: [{ index: 0, reps: 6, weightKg: 40, targetRpe: 9 }],
           restSeconds: 60,
@@ -39,7 +39,7 @@ describe('planFromRoutine', () => {
       items: [
         {
           itemId: 'rit_bench',
-          exerciseId: 'wger:73',
+          exerciseId: 'ex:barbell-bench-press',
           exerciseName: 'Bench Press',
           sets: [
             { reps: 10, weightKg: 60, targetRpe: null },
@@ -50,7 +50,7 @@ describe('planFromRoutine', () => {
         },
         {
           itemId: 'rit_press',
-          exerciseId: 'wger:74',
+          exerciseId: 'ex:barbell-squat',
           exerciseName: 'Overhead Press',
           sets: [{ reps: 6, weightKg: 40, targetRpe: 9 }],
           restSeconds: 60,

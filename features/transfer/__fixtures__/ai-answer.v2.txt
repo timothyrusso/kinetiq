@@ -8,7 +8,7 @@ Sure! Here is a push day with a ramp on the bench:
     {
       "name": "Push",
       "items": [
-        {"exerciseId": "wger:73", "exerciseName": "Bench Press", "restSeconds": 150, "notes": "Pause on the chest", "sets": [
+        {"exerciseId": "ex:barbell-bench-press-medium-grip", "exerciseName": "Bench Press", "restSeconds": 150, "notes": "Pause on the chest", "sets": [
           {"reps": 10, "weightKg": 50, "targetRpe": null},
           {"reps": 8, "weightKg": 61.3, "targetRpe": 7},
           {"reps": "6-8", "weightKg": 70, "targetRpe": 8.6},

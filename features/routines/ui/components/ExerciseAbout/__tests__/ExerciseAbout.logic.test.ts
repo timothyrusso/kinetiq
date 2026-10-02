@@ -8,8 +8,7 @@ import { useExerciseAboutLogic } from '@/features/routines/ui/components/Exercis
 const HIP_THRUST = anExerciseSnapshot({
   exerciseId: 'local:hip-thrust',
   name: 'Hip Thrust',
-  instructions: '  Drive through the heels.  ',
-  externalId: null,
+  instructions: ['  Drive through the heels.  ', 'Squeeze at the top.'],
 });
 
 const useAbout = (exerciseId: string) => ({ about: useExerciseAboutLogic(exerciseId), save: useSaveRoutine() });
@@ -29,21 +28,33 @@ const renderAbout = async (snapshot = HIP_THRUST) => {
 };
 
 describe('useExerciseAboutLogic', () => {
-  it('shows the stored exercise’s picture and trimmed description', async () => {
+  it('shows the stored exercise’s bundled picture and trimmed steps', async () => {
     const { result, done } = await renderAbout();
 
-    await waitFor(() => expect(result.current.about.derived.described).toBe(true));
-    expect(result.current.about.derived.description).toBe('Drive through the heels.');
-    expect(result.current.about.derived.image).toBe('https://wger.de/media/bench.png');
+    await waitFor(() => expect(result.current.about.derived.steps).not.toBeNull());
+    expect(result.current.about.derived.steps).toEqual(['Drive through the heels.', 'Squeeze at the top.']);
+    expect(result.current.about.derived.image).not.toBeNull();
+    await done();
+  });
+
+  it('shows no picture for an image path this build does not bundle', async () => {
+    const { result, done } = await renderAbout({
+      ...HIP_THRUST,
+      imageUrl: 'https://example.com/hip.png',
+      thumbnailUrl: null,
+    });
+
+    await waitFor(() => expect(result.current.about.derived.steps).not.toBeNull());
+    expect(result.current.about.derived.image).toBeNull();
     await done();
   });
 
   it('says a built-in exercise has no stored description instead of hiding it', async () => {
-    const { result, done } = await renderAbout({ ...HIP_THRUST, instructions: null });
+    const { result, done } = await renderAbout({ ...HIP_THRUST, instructions: [] });
 
     await waitFor(() => expect(result.current.about.state.isLoading).toBe(false));
-    expect(result.current.about.derived.described).toBe(false);
-    expect(result.current.about.derived.description).toBe(tr('exerciseDetail.unknownBuiltIn'));
+    expect(result.current.about.derived.steps).toBeNull();
+    expect(result.current.about.derived.fallback).toBe(tr('exerciseDetail.unknownBuiltIn'));
     await done();
   });
 });

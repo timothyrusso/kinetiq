@@ -1,10 +1,10 @@
 /**
- * An exercise's taxonomy as tags: its primary muscles, then its category when no muscle
- * already says the same thing.
+ * An exercise's taxonomy as tags: its primary muscles, then its category (its body area) when no
+ * muscle already says the same thing.
  *
- * wger's two taxonomies overlap ("Arnold Shoulder Press" is category Shoulders with primary
- * muscle Shoulders), and printing both reads as a duplication bug rather than as two facts that
- * coincide. Compared case-insensitively: the taxonomies are maintained separately.
+ * The two overlap (a shoulder press is body area Shoulders with primary muscle Shoulders), and
+ * printing both reads as a duplication bug rather than as two facts that coincide. Compared
+ * case-insensitively: a stored copy may spell either its own way.
  */
 import type { Tag } from '@/features/core/design-system/display/types';
 

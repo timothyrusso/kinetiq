@@ -32,7 +32,7 @@ export interface PickExercisePageProps {
 }
 
 /**
- * The picker's search. It owns its term and taxon ids locally rather than in a shared store, so
+ * The picker's search. It owns its term and taxon keys locally rather than in a shared store, so
  * building a routine never rewires another screen's filter behind the modal.
  *
  * The query key is built from the debounced filter, so typing "roman", "romanian", "romanian
@@ -46,13 +46,13 @@ export interface PickExercisePageProps {
 export function usePickExercisePageLogic({ onPick, isIncluded, destination }: PickExercisePageProps) {
   const { t } = useT();
   const [query, setQuery] = useState('');
-  const [muscleId, setMuscleId] = useState<number | null>(null);
-  const [equipmentId, setEquipmentId] = useState<number | null>(null);
+  const [muscleId, setMuscleId] = useState<string | null>(null);
+  const [equipmentId, setEquipmentId] = useState<string | null>(null);
   const debounced = useDebouncedValue(query);
   const settling = useIsSettling(query, debounced);
 
   const filter = useMemo<ExerciseFilter>(
-    () => ({ query: debounced, categoryId: null, muscleId, equipmentId }),
+    () => ({ query: debounced, bodyArea: null, muscle: muscleId, equipment: equipmentId }),
     [debounced, muscleId, equipmentId],
   );
   const search = useExerciseSearch(filter);
@@ -72,8 +72,8 @@ export function usePickExercisePageLogic({ onPick, isIncluded, destination }: Pi
     },
     [isPlaceholder, items, onPick],
   );
-  const toggleMuscle = useCallback((id: number) => setMuscleId(current => (current === id ? null : id)), []);
-  const toggleEquipment = useCallback((id: number) => setEquipmentId(current => (current === id ? null : id)), []);
+  const toggleMuscle = useCallback((id: string) => setMuscleId(current => (current === id ? null : id)), []);
+  const toggleEquipment = useCallback((id: string) => setEquipmentId(current => (current === id ? null : id)), []);
   const clearFilters = useCallback(() => {
     setMuscleId(null);
     setEquipmentId(null);

@@ -2,13 +2,13 @@ import { Stack } from 'expo-router';
 import type { ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
 import {
-  ActionRow,
   Card,
   Stack as Column,
   EmptyState,
   ErrorState,
   ICON_SIZE,
   Icon,
+  NumberedSteps,
   Row,
   ScreenHeader,
   SectionHeader,
@@ -21,7 +21,7 @@ import { useAppTheme } from '@/features/core/theme';
 import { useT } from '@/features/core/translations';
 import { ExerciseHero } from '@/features/exercises/ui/components/ExerciseHero/ExerciseHero';
 import { ExerciseProvenance } from '@/features/exercises/ui/components/ExerciseProvenance/ExerciseProvenance';
-import { ExerciseVariationRow } from '@/features/exercises/ui/components/ExerciseVariationRow/ExerciseVariationRow';
+import { SimilarExerciseRow } from '@/features/exercises/ui/components/SimilarExerciseRow/SimilarExerciseRow';
 import { TaxonomyTagGroup } from '@/features/exercises/ui/components/TaxonomyTagGroup/TaxonomyTagGroup';
 import { useExerciseDetailPageLogic } from '@/features/exercises/ui/pages/ExerciseDetailPage/ExerciseDetailPage.logic';
 import { createStyles } from '@/features/exercises/ui/pages/ExerciseDetailPage/ExerciseDetailPage.style';
@@ -32,14 +32,15 @@ const SCREEN_OPTIONS = { animation: 'fade_from_bottom' } as const;
 /**
  * Exercise detail: what the library says about one movement, and what the user has done with it.
  *
- * The screen is a provenance report as much as a description: one line under the hero says
- * whether this is the library's row or a stored copy, which explains a missing video before the
- * user goes looking for one. Nothing is inferred to fill a gap: a missing description is a named
+ * Under the hero sit the badges (training type when it is not strength, level, mechanic) and, for
+ * a stored copy, one line saying so, which explains a missing photo before the user goes looking
+ * for one. Nothing is inferred to fill a gap: a missing description is a named
  * silence, missing art a designed composition. Muscle and equipment chips are labels and go
  * nowhere: the library is reached only to pick an exercise.
  *
  * What the user has done with the exercise belongs to the workouts, a feature above this one, so
- * the route hands that section in as `renderHistory`, drawn between the how-to and the variations.
+ * the route hands that section in as `renderHistory`, drawn between the how-to and the similar
+ * exercises.
  */
 export function ExerciseDetailPage({ renderHistory }: { renderHistory?: (exerciseId: string | null) => ReactNode }) {
   const { state, derived, effects } = useExerciseDetailPageLogic();
@@ -66,9 +67,9 @@ export function ExerciseDetailPage({ renderHistory }: { renderHistory?: (exercis
               <EmptyState
                 icon="info"
                 title={t('exerciseDetail.unknownTitle')}
-                message={t(state.fetchable ? 'exerciseDetail.unknownFetchable' : 'exerciseDetail.unknownBuiltIn')}
-                actionLabel={t(state.fetchable ? 'common.retry' : 'exerciseDetail.backToLibrary')}
-                onAction={state.fetchable ? effects.retry : effects.goBack}
+                message={t(state.isCatalogId ? 'exerciseDetail.unknownFetchable' : 'exerciseDetail.unknownBuiltIn')}
+                actionLabel={t(state.isCatalogId ? 'common.retry' : 'exerciseDetail.backToLibrary')}
+                onAction={state.isCatalogId ? effects.retry : effects.goBack}
               />
             )}
           </View>
@@ -76,14 +77,12 @@ export function ExerciseDetailPage({ renderHistory }: { renderHistory?: (exercis
           <Column gap="xxl">
             <ExerciseHero exercise={exercise} topInset={derived.topInset} />
 
-            <Column gap="md" style={styles.section}>
-              <ExerciseProvenance
-                from={state.from}
-                storedAt={state.storedAt}
-                isFetching={state.isFetching}
-                onRetry={state.fetchable ? effects.retry : null}
-              />
-            </Column>
+            {derived.hasLead ? (
+              <Column gap="md" style={styles.section}>
+                <TagRow tags={derived.badgeTags} theme={theme} />
+                <ExerciseProvenance from={state.from} storedAt={state.storedAt} />
+              </Column>
+            ) : null}
 
             {derived.primaryTags.length + derived.secondaryTags.length > 0 ? (
               <Column gap="md" style={styles.section}>
@@ -102,7 +101,7 @@ export function ExerciseDetailPage({ renderHistory }: { renderHistory?: (exercis
 
             <Column gap="md" style={styles.section}>
               <SectionHeader title={t('exerciseDetail.howTo')} />
-              {derived.instructions === null ? (
+              {derived.steps === null ? (
                 <Card tone="sunken">
                   <Row gap="md" align="start">
                     <Icon name="info" size={ICON_SIZE.inline} color={theme.colors.textFaint} />
@@ -117,46 +116,34 @@ export function ExerciseDetailPage({ renderHistory }: { renderHistory?: (exercis
                 </Card>
               ) : (
                 <Card>
-                  <Txt variant="bodyLg">{derived.instructions}</Txt>
+                  <NumberedSteps steps={derived.steps} variant="bodyLg" />
                 </Card>
               )}
             </Column>
 
             {renderHistory?.(state.exerciseId)}
 
-            {state.variations.length > 0 ? (
+            {state.similar.length > 0 ? (
               <>
                 <Column gap="md" style={styles.section}>
                   <SectionHeader
-                    title={t('exerciseDetail.variations')}
-                    counter={state.variations.length}
-                    eyebrow={t('exerciseDetail.sameFamily')}
+                    title={t('exerciseDetail.similar')}
+                    counter={state.similar.length}
+                    eyebrow={t('exerciseDetail.similarEyebrow')}
                   />
                 </Column>
                 <View>
-                  {state.variations.map((sibling, index) => (
-                    <ExerciseVariationRow
+                  {state.similar.map((sibling, index) => (
+                    <SimilarExerciseRow
                       key={sibling.id}
                       exercise={sibling}
-                      current={sibling.id === exercise.id}
                       theme={theme}
                       topDivider={index > 0}
-                      onOpen={effects.openVariation}
+                      onOpen={effects.openSimilar}
                     />
                   ))}
                 </View>
               </>
-            ) : null}
-
-            {derived.hasExternalPage ? (
-              <Column style={styles.section}>
-                <ActionRow
-                  title={t('exerciseDetail.viewOnWger')}
-                  subtitle={t('exerciseDetail.wgerSubtitle')}
-                  icon="link"
-                  onPress={effects.openExternal}
-                />
-              </Column>
             ) : null}
           </Column>
         )}

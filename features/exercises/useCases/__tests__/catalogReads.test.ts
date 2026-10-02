@@ -1,20 +1,17 @@
 import { Effect } from 'effect';
 import { itEffect } from '@/features/core/testing';
-import { aCatalogMeta, anExercise } from '@/features/exercises/__fixtures__/builders';
+import { anExercise } from '@/features/exercises/__fixtures__/builders';
 import { makeCatalogRepositoryFake } from '@/features/exercises/useCases/__tests__/catalogFakes';
-import { getCatalogMeta } from '@/features/exercises/useCases/getCatalogMeta';
 import { getExercise } from '@/features/exercises/useCases/getExercise';
+import { getSimilarExercises } from '@/features/exercises/useCases/getSimilarExercises';
 import { getTaxonomy } from '@/features/exercises/useCases/getTaxonomy';
-import { getVariations } from '@/features/exercises/useCases/getVariations';
 import { searchExercises } from '@/features/exercises/useCases/searchExercises';
 
-const ALL = { query: '', categoryId: null, equipmentId: null, muscleId: null };
+const ALL = { query: '', bodyArea: null, equipment: null, muscle: null };
 const bench = anExercise();
-const squat = anExercise({ id: 'wger:13', externalId: 13, name: 'Squat', category: 'Legs' });
-const rows = Array.from({ length: 5 }, (_, i) =>
-  anExercise({ id: `wger:${100 + i}`, externalId: 100 + i, name: `Press ${i}` }),
-);
-const catalog = makeCatalogRepositoryFake({ exercises: [bench, squat, ...rows], meta: aCatalogMeta() });
+const squat = anExercise({ id: 'ex:barbell-squat', name: 'Squat', category: 'Legs' });
+const rows = Array.from({ length: 5 }, (_, i) => anExercise({ id: `ex:press-${i}`, name: `Press ${i}` }));
+const catalog = makeCatalogRepositoryFake({ exercises: [bench, squat, ...rows] });
 
 describe('searchExercises', () => {
   itEffect(
@@ -50,7 +47,7 @@ describe('getExercise', () => {
   itEffect(
     'returns the catalog row for a catalog id',
     Effect.gen(function* () {
-      expect(yield* getExercise('wger:13', 'en')).toEqual(squat);
+      expect(yield* getExercise('ex:barbell-squat', 'en')).toEqual(squat);
     }),
     catalog,
   );
@@ -58,25 +55,28 @@ describe('getExercise', () => {
   itEffect(
     'answers null, without failing, for an id the catalog does not have',
     Effect.gen(function* () {
-      expect(yield* getExercise('wger:999', 'en')).toBeNull();
+      expect(yield* getExercise('ex:no-such-exercise', 'en')).toBeNull();
     }),
     catalog,
   );
 
   itEffect(
-    'answers null for a local id, which the catalog cannot have',
+    'answers null for a local id or an id from the previous catalog, which the catalog cannot have',
     Effect.gen(function* () {
       expect(yield* getExercise('local:bench-press', 'en')).toBeNull();
+      expect(yield* getExercise('legacy:13', 'en')).toBeNull();
     }),
     catalog,
   );
 });
 
-describe('getVariations', () => {
+describe('getSimilarExercises', () => {
   itEffect(
-    'returns the family of a catalog exercise',
+    'returns the exercises like a catalog exercise, never the exercise itself',
     Effect.gen(function* () {
-      expect((yield* getVariations('wger:13', 'en')).map(exercise => exercise.id)).not.toContain('wger:13');
+      expect((yield* getSimilarExercises('ex:barbell-squat', 'en')).map(exercise => exercise.id)).not.toContain(
+        'ex:barbell-squat',
+      );
     }),
     catalog,
   );
@@ -84,18 +84,17 @@ describe('getVariations', () => {
   itEffect(
     'returns nothing for a local id',
     Effect.gen(function* () {
-      expect(yield* getVariations('local:bench-press', 'en')).toEqual([]);
+      expect(yield* getSimilarExercises('local:bench-press', 'en')).toEqual([]);
     }),
     catalog,
   );
 });
 
-describe('getTaxonomy and getCatalogMeta', () => {
+describe('getTaxonomy', () => {
   itEffect(
-    'read the repository as it is',
+    'reads the repository as it is',
     Effect.gen(function* () {
-      expect((yield* getTaxonomy('en')).categories).toEqual([{ id: 1, name: 'Chest' }]);
-      expect(yield* getCatalogMeta).toEqual(aCatalogMeta());
+      expect((yield* getTaxonomy('en')).bodyAreas).toEqual([{ id: 'chest', name: 'Chest' }]);
     }),
     catalog,
   );

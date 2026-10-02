@@ -16,7 +16,7 @@ describe('detectPersonalRecords', () => {
 
     expect(records).toEqual([
       {
-        exerciseId: 'wger:73',
+        exerciseId: 'ex:barbell-bench-press',
         exerciseName: 'Bench Press',
         kind: 'est1rm',
         value: 116.5,

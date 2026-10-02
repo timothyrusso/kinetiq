@@ -60,7 +60,7 @@ export const makeDataScreenLayer = () => {
 };
 
 /** The squat as the catalog reads it: what a loose "Squat" finds. */
-const SQUAT = anExercise({ id: 'wger:111', name: 'Squat, Back', externalId: 111 });
+const SQUAT = anExercise({ id: 'ex:barbell-squat', name: 'Squat, Back' });
 
 const unused = () => Effect.die(new Error('not used by the import'));
 
@@ -96,6 +96,6 @@ export const importScreenLayer = (
           byName: () => Effect.fail(new SqlError({ message: 'read a snapshot' })),
           upsert: unused,
         })
-      : ExerciseSnapshotRepositoryFake(new Map([['wger:73', anExerciseSnapshot()]])),
+      : ExerciseSnapshotRepositoryFake(new Map([['ex:barbell-bench-press-medium-grip', anExerciseSnapshot()]])),
     ExerciseCatalogFake([SQUAT]),
   );

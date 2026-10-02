@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { View } from 'react-native';
-import { EXERCISE_IMAGE_CACHE, Txt, useStyles } from '@/features/core/design-system';
+import { EXERCISE_IMAGE_CACHE, NumberedSteps, Txt, useStyles } from '@/features/core/design-system';
 import { useT } from '@/features/core/translations';
 import { useExerciseAboutLogic } from '@/features/routines/ui/components/ExerciseAbout/ExerciseAbout.logic';
 import { createStyles } from '@/features/routines/ui/components/ExerciseAbout/ExerciseAbout.style';
@@ -21,20 +21,23 @@ export function ExerciseAbout({ exerciseId }: { exerciseId: string }) {
   return (
     <View style={styles.about}>
       {derived.image !== null ? (
-        <View style={styles.art}>
-          <Image
-            source={{ uri: derived.image }}
-            recyclingKey={derived.image}
-            cachePolicy={EXERCISE_IMAGE_CACHE}
-            contentFit="contain"
-            style={styles.image}
-            accessibilityLabel={derived.imageLabel}
-          />
-        </View>
+        <Image
+          source={derived.image}
+          recyclingKey={String(derived.image)}
+          cachePolicy={EXERCISE_IMAGE_CACHE}
+          contentFit="cover"
+          style={styles.image}
+          accessibilityLabel={derived.imageLabel}
+          accessibilityIgnoresInvertColors
+        />
       ) : null}
-      <Txt variant="caption" tone={derived.described ? 'muted' : 'faint'}>
-        {derived.description}
-      </Txt>
+      {derived.steps === null ? (
+        <Txt variant="caption" tone="faint">
+          {derived.fallback}
+        </Txt>
+      ) : (
+        <NumberedSteps steps={derived.steps} variant="caption" tone="muted" />
+      )}
     </View>
   );
 }

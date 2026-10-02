@@ -19,7 +19,7 @@ describe('usePickIntoDraftLogic', () => {
     await act(async () => result.current.picker.effects.pick(aSquat()));
 
     expect(result.current.draft.draft.items.map(item => item.exerciseName)).toEqual(['Squat']);
-    expect(result.current.picker.effects.isIncluded('wger:13')).toBe(true);
+    expect(result.current.picker.effects.isIncluded('ex:goblet-squat')).toBe(true);
     await done();
   });
 
@@ -36,7 +36,7 @@ describe('usePickIntoDraftLogic', () => {
   it('includes nothing in an empty draft', async () => {
     const { result, done } = await renderWithLayer(HomeTestLayer, usePicker, undefined);
 
-    expect(result.current.picker.effects.isIncluded('wger:13')).toBe(false);
+    expect(result.current.picker.effects.isIncluded('ex:goblet-squat')).toBe(false);
     await done();
   });
 

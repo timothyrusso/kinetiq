@@ -1,86 +1,66 @@
 import type { CatalogMeta } from '@/features/exercises/domain/entities/CatalogMeta';
 import type { CatalogExercise, CatalogPayload } from '@/features/exercises/domain/schemas/CatalogPayloadSchema';
+import { ExerciseId } from '@/features/exercises/domain/schemas/ExerciseId';
 import type { Exercise } from '@/features/exercises/domain/schemas/ExerciseSchema';
-import { remoteExerciseId } from '@/features/exercises/domain/utils/exerciseId';
 
-type Names = { readonly en?: string; readonly it?: string };
+type Names = { readonly en: string; readonly it?: string };
 
-/** A catalog row named in the given languages, each with its own instructions. */
+/**
+ * A dataset entry `ex:<slug>`, named in English and, when given, Italian (else the English name
+ * again, as an untranslated entry would be), each with its own steps.
+ */
 export const aCatalogExercise = (
-  externalId = 10,
-  names: Names = { en: 'Bench Press', it: 'Panca piana' },
+  slug = 'barbell-bench-press',
+  names: Names = { en: 'Barbell Bench Press', it: 'Panca piana con bilanciere' },
   overrides: Partial<CatalogExercise> = {},
 ): CatalogExercise => ({
-  id: remoteExerciseId(externalId),
-  externalId,
-  uuid: null,
-  variationGroup: null,
-  categoryId: 11,
-  primaryMuscleIds: [],
-  secondaryMuscleIds: [],
-  equipmentIds: [],
-  imageUrl: null,
-  thumbnailUrl: null,
-  videoUrl: null,
-  translations: {
-    ...(names.en === undefined ? {} : { en: { name: names.en, instructions: `${names.en}, how` } }),
-    ...(names.it === undefined ? {} : { it: { name: names.it, instructions: `${names.it}, come` } }),
-  },
+  id: ExerciseId.make(`ex:${slug}`),
+  name: { en: names.en, it: names.it ?? names.en },
+  instructions: { en: [`${names.en}, step one`, 'Then press.'], it: [`${names.it ?? names.en}, primo passo`] },
+  bodyArea: 'chest',
+  trainingType: 'strength',
+  level: 'beginner',
+  force: 'push',
+  mechanic: 'compound',
+  primaryMuscles: ['chest'],
+  secondaryMuscles: [],
+  equipment: 'barbell',
+  images: { start: `images/${slug}/0.webp`, end: `images/${slug}/1.webp`, thumb: `images/${slug}/thumb.webp` },
   ...overrides,
 });
 
-/**
- * A payload over a small taxonomy: two categories, two pieces of equipment, three muscles. The ids
- * are wger's own, which the app names in its catalog, except muscle 99, which it does not.
- */
+/** A dataset of `exercises` at `datasetVersion` 1. */
 export const aCatalogPayload = (
   exercises: readonly CatalogExercise[] = [aCatalogExercise()],
   overrides: Partial<CatalogPayload> = {},
-): CatalogPayload => ({
-  formatVersion: 1,
-  source: 'wger',
-  generatedAt: 1_000,
-  categories: [
-    { id: 11, name: 'Chest' },
-    { id: 9, name: 'Legs' },
-  ],
-  equipment: [
-    { id: 1, name: 'Barbell' },
-    { id: 3, name: 'Dumbbell' },
-  ],
-  muscles: [
-    { id: 4, name: 'Pectoralis major', nameEn: 'Chest', isFront: true },
-    { id: 99, name: 'Triceps brachii', nameEn: '', isFront: false },
-    { id: 10, name: 'Quadriceps femoris', nameEn: 'Quads', isFront: true },
-  ],
-  exercises,
-  ...overrides,
-});
+): CatalogPayload => ({ datasetVersion: 1, exercises, ...overrides });
 
 /** An exercise as the catalog reads it back. */
 export const anExercise = (overrides: Partial<Exercise> = {}): Exercise => ({
-  id: 'wger:10',
-  name: 'Bench Press',
-  instructions: 'Lower the bar to the chest, then press.',
+  id: 'ex:barbell-bench-press',
+  name: 'Barbell Bench Press',
+  instructions: ['Lower the bar to the chest, then press.'],
   category: 'Chest',
+  bodyArea: 'chest',
+  trainingType: 'strength',
+  level: 'beginner',
+  force: 'push',
+  mechanic: 'compound',
   primaryMuscles: ['Chest'],
-  secondaryMuscles: ['Triceps brachii'],
+  secondaryMuscles: ['Triceps'],
   equipment: ['Barbell'],
   imageUrl: null,
+  imageEndUrl: null,
   thumbnailUrl: null,
-  videoUrl: null,
-  source: 'remote',
-  externalId: 10,
+  source: 'catalog',
   ...overrides,
 });
 
-/** The meta of a catalog installed from a snapshot generated at `generatedAt`. */
+/** The meta of the bundled dataset at version 1, installed at 5 000. */
 export const aCatalogMeta = (overrides: Partial<CatalogMeta> = {}): CatalogMeta => ({
-  source: 'wger',
-  generatedAt: 1_000,
+  datasetVersion: 1,
   installedAt: 5_000,
-  refreshedAt: null,
   exerciseCount: 1,
-  formatVersion: 1,
+  formatVersion: 2,
   ...overrides,
 });

@@ -29,11 +29,14 @@ function number(value: unknown): number | null {
 }
 
 /**
- * A line only the app's own AI instructions carry, in every language: the wger search they tell the
- * AI to use. A routines document never contains it, so text that does is the instructions pasted
- * back (by mistake, or echoed by the AI), and the example routine inside them is not an answer.
+ * The link to the public exercise index, which the app's own AI instructions carry in every
+ * language. An answer may cite it too, in the prose around its JSON, so the link alone proves
+ * nothing: what marks the instructions is the link in text that does not read as JSON. Their
+ * example routine is followed by the rules, which hold the link and a bracketed column list, so
+ * the slice `jsonSlice` takes runs from the example into the rules and never parses. An answer's
+ * slice is its JSON alone, and parses whatever its prose says.
  */
-const AI_PROMPT_SIGNATURE = 'wger.de/api/v2/exerciseinfo/?name__search=';
+const AI_PROMPT_SIGNATURE = 'timothyrusso/kinetiq/main/assets/catalog/index.json';
 
 /** The JSON inside a code fence or a sentence, or the text itself. */
 function jsonSlice(raw: string): string {
@@ -50,14 +53,13 @@ function routineList(doc: unknown): unknown[] | null {
   return null;
 }
 
-/** `wger:192`, `local:bench-press`, or a bare catalog number (192). */
+/**
+ * `ex:barbell-squat` or `local:bench-press`. Anything else, an id from a retired catalog
+ * included, is no id: the item is matched by its name.
+ */
 function exerciseIdOf(item: Json, rules: ImportRules): string | null {
-  const raw = item.exerciseId ?? item.wgerId;
-  if (typeof raw === 'number' && Number.isInteger(raw) && raw > 0) return `wger:${raw}`;
-  const id = text(raw);
-  if (id === null) return null;
-  if (/^\d+$/.test(id)) return `wger:${id}`;
-  return rules.isExerciseId(id) ? id : null;
+  const id = text(item.exerciseId);
+  return id !== null && rules.isExerciseId(id) ? id : null;
 }
 
 /** A v1 rep text: digits and one hyphen. AIs like en and em dashes, and "x". */
@@ -156,8 +158,9 @@ function parseItem(
  * default and is reported, an out-of-range one is clamped to the editor's bounds, and an item
  * with neither an exercise id nor a name is dropped and reported.
  *
- * The app's own AI instructions are refused before any of that (`AI_PROMPT_SIGNATURE`): they
- * hold an example routine that would otherwise read as one to import.
+ * Text that is not JSON and carries the index link is the app's own AI instructions pasted back
+ * (by mistake, or echoed by the AI around its answer), and is refused as such rather than as text
+ * that is not JSON (`AI_PROMPT_SIGNATURE`).
  *
  * Pure and total: it never throws and never touches the database. Matching items to real
  * exercises is `resolveExercisesByName`.
@@ -165,13 +168,13 @@ function parseItem(
 export function parseRoutines(raw: string, rules: ImportRules): ParseResult {
   if (raw.length > rules.limits.bytes) return { ok: false, issue: { key: 'dataTransfer.errorTooLarge' } };
   if (raw.trim() === '') return { ok: false, issue: { key: 'dataTransfer.errorEmpty' } };
-  if (raw.includes(AI_PROMPT_SIGNATURE)) return { ok: false, issue: { key: 'dataTransfer.errorIsPrompt' } };
 
   let doc: unknown;
   try {
     doc = JSON.parse(jsonSlice(raw));
   } catch {
-    return { ok: false, issue: { key: 'dataTransfer.errorNotJson' } };
+    const isPrompt = raw.includes(AI_PROMPT_SIGNATURE);
+    return { ok: false, issue: { key: isPrompt ? 'dataTransfer.errorIsPrompt' : 'dataTransfer.errorNotJson' } };
   }
 
   const list = routineList(doc);

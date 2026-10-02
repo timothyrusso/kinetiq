@@ -83,11 +83,6 @@ export type Theme = {
     hairline: string;
     /** Skeleton/placeholder shimmer. */
     placeholder: string;
-    /**
-     * The tile behind an exercise illustration, light in both modes: wger's drawings are black line
-     * art, many on a transparent background, made for white paper. On a dark tile they vanish.
-     */
-    illustration: string;
     /** Scrim behind modals and confirmations. */
     scrim: string;
     /** Ring/tint on focused inputs. */
@@ -166,7 +161,6 @@ const darkColors = {
   borderStrong: palette.ink400,
   hairline: palette.inkHairline,
   placeholder: palette.ink600,
-  illustration: palette.paper200,
   scrim: 'rgba(0, 0, 0, 0.72)',
   focusRing: 'rgba(198, 242, 78, 0.45)',
 
@@ -218,7 +212,6 @@ const lightColors = {
   borderStrong: palette.slate300,
   hairline: palette.paperHairline,
   placeholder: palette.paper200,
-  illustration: palette.paper200,
   scrim: 'rgba(10, 14, 24, 0.36)',
   focusRing: 'rgba(94, 140, 11, 0.30)',
 

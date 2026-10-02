@@ -56,7 +56,7 @@ describe('useActivityStrengthLogic', () => {
 
     expect(result.current.derived.recordRows).toEqual([
       {
-        key: 'wger:73-est1rm',
+        key: 'ex:barbell-bench-press-est1rm',
         name: 'Bench Press',
         detail: tr('records.est1rm') + tr('activity.firstOfKind'),
         value: '116.5 kg',
@@ -88,14 +88,17 @@ describe('useActivityStrengthLogic', () => {
 
     const { result } = await renderStrength(activity);
 
-    expect(result.current.derived.cards.map(card => card.key)).toEqual(['wger:73-0', 'wger:73-1']);
+    expect(result.current.derived.cards.map(card => card.key)).toEqual([
+      'ex:barbell-bench-press-0',
+      'ex:barbell-bench-press-1',
+    ]);
   });
 
   it('opens an exercise on its detail screen', async () => {
     const { result } = await renderStrength();
 
-    await act(async () => result.current.effects.openExercise('wger:73'));
+    await act(async () => result.current.effects.openExercise('ex:barbell-bench-press'));
 
-    expect(routerFake.history).toEqual([{ verb: 'push', href: routes.exerciseDetail('wger:73') }]);
+    expect(routerFake.history).toEqual([{ verb: 'push', href: routes.exerciseDetail('ex:barbell-bench-press') }]);
   });
 });

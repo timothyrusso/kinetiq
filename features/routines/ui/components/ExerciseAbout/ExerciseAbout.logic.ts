@@ -1,24 +1,29 @@
+import { useMemo } from 'react';
 import { useT } from '@/features/core/translations';
-import { useExercise } from '@/features/exercises';
+import { exerciseImageSource, useExercise } from '@/features/exercises';
 
 /**
  * What the library says about the exercise, read through `useExercise` rather than the snapshot
- * alone: a snapshot captured from a search row often has no description and only a thumbnail,
- * and the catalog (or the stored copy) fills both in. A missing description is said, not hidden.
+ * alone: the catalog row has the steps and the start frame a stored copy may lack. The image is
+ * the bundled start frame the stored path names, resolved here, and never animated: the editor
+ * is for adjusting targets, the detail for watching the movement. A missing description is said,
+ * not hidden.
  */
 export function useExerciseAboutLogic(exerciseId: string) {
   const { t } = useT();
   const detail = useExercise(exerciseId);
   const exercise = detail.exercise;
-  const instructions = exercise?.instructions?.trim() || null;
+  const steps = useMemo(() => {
+    const trimmed = (exercise?.instructions ?? []).map(step => step.trim()).filter(step => step.length > 0);
+    return trimmed.length === 0 ? null : trimmed;
+  }, [exercise]);
   return {
     state: { isLoading: detail.isLoading },
     derived: {
-      image: exercise?.imageUrl ?? exercise?.thumbnailUrl ?? null,
+      image: exerciseImageSource(exercise?.imageUrl ?? null) ?? exerciseImageSource(exercise?.thumbnailUrl ?? null),
       imageLabel: t('itemEditor.imageA11y', { name: exercise?.name ?? '' }),
-      description:
-        instructions ?? t(detail.fetchable ? 'exerciseDetail.noDescription' : 'exerciseDetail.unknownBuiltIn'),
-      described: instructions !== null,
+      steps,
+      fallback: t(detail.isCatalogId ? 'exerciseDetail.noDescription' : 'exerciseDetail.unknownBuiltIn'),
     },
   };
 }

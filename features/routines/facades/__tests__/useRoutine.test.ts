@@ -63,7 +63,7 @@ describe('useRoutine', () => {
       category: 'Petto',
       primaryMuscles: ['Petto'],
       secondaryMuscles: [],
-      equipment: ['Panca'],
+      equipment: ['Manubrio'],
     });
     let id = RoutineId.make('none');
     await act(async () => {
@@ -73,10 +73,10 @@ describe('useRoutine', () => {
     await act(async () => rerender(id));
 
     await waitFor(() =>
-      expect(result.current.detail.snapshots.get('wger:73')).toMatchObject({
+      expect(result.current.detail.snapshots.get('ex:barbell-bench-press')).toMatchObject({
         category: 'Chest',
         primaryMuscles: ['Chest'],
-        equipment: ['Bench'],
+        equipment: ['Dumbbell'],
       }),
     );
     await done();

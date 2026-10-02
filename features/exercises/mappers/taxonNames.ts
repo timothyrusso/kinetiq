@@ -4,9 +4,8 @@ import { CATALOG_LANGUAGES, type CatalogLanguage } from '@/features/exercises/do
 
 /**
  * The catalog key of the taxon `name` names, in any catalog language, or `undefined` for a name
- * the app does not know. A stored snapshot keeps names, not ids, and each name came either from
- * the catalog in the language of the day or, before the app named the taxonomy, from wger's
- * English, which the English catalog keeps word for word.
+ * the app does not know. A stored snapshot keeps names, not keys, each in the language of the day
+ * it was stored, and a copy from the previous catalog may hold a name the app no longer has.
  */
 function taxonKeyOf(kind: TaxonKind, name: string): TaxonKey | undefined {
   for (const key of TAXON_KEYS[kind].values()) {

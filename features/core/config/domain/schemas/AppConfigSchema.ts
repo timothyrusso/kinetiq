@@ -2,11 +2,9 @@ import { Schema } from 'effect';
 
 /**
  * What the `extra` block of `app.json` must hold. A missing or invalid field fails the boot.
- * `wgerBaseUrl` is the wger REST API root the exercise catalog downloads from, with its trailing
- * slash.
+ * Nothing yet: the exercise catalog is bundled and the app calls no server, so there is no
+ * endpoint to configure. The block itself must still be an object.
  */
-export const AppConfigSchema = Schema.Struct({
-  wgerBaseUrl: Schema.String.pipe(Schema.pattern(/^https:\/\/.+\/$/)),
-});
+export const AppConfigSchema = Schema.Struct({});
 
 export type AppConfigValues = typeof AppConfigSchema.Type;

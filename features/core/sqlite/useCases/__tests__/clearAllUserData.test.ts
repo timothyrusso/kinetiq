@@ -24,8 +24,8 @@ describe('clearAllUserData', () => {
             VALUES ('a1', 'lift', 'Push day', 1, 3600, 1);
           INSERT INTO settings (key, value_json, updated_at) VALUES ('settings.units', '"metric"', 1);
           INSERT INTO app_state (key, value_json) VALUES ('session.active', '"s1"');
-          INSERT INTO catalog_meta (key, value) VALUES ('version', '1');
-          INSERT INTO catalog_categories (id, name) VALUES (10, 'Chest');
+          INSERT INTO catalog_meta (key, value) VALUES ('dataset_version', '1');
+          INSERT INTO catalog_exercises (id, body_area, training_type, level) VALUES ('ex:dips', 'arms', 'strength', 'beginner');
         `),
       );
 
@@ -45,7 +45,7 @@ describe('clearAllUserData', () => {
         expect([table, yield* countOf(table)]).toEqual([table, 0]);
       }
       expect(yield* countOf('catalog_meta')).toBe(1);
-      expect(yield* countOf('catalog_categories')).toBe(1);
+      expect(yield* countOf('catalog_exercises')).toBe(1);
     }),
     makeMigratedSqliteLayer(),
   );

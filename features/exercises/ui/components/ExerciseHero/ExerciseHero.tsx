@@ -1,6 +1,7 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import {
   EXERCISE_IMAGE_CACHE,
   ExerciseThumb,
@@ -18,11 +19,12 @@ import { useExerciseHeroLogic } from '@/features/exercises/ui/components/Exercis
 import { createStyles } from '@/features/exercises/ui/components/ExerciseHero/ExerciseHero.style';
 
 /**
- * The art is the header, not a section: a full-width drawing under a transparent bar, starting
- * where the bar ends and fitted whole, never cropped. With no art, the slot keeps roughly the same
- * proportions and holds a composition instead: the initials plaque the rest of the app uses,
- * blown up, with a caption that says which absence it is (no art in the library, or art that
- * cannot load right now, which offline means an image this device has never seen).
+ * The art is the header, not a section: a full-width 3:2 photo under a transparent bar, starting
+ * where the bar ends. The start and end frames are stacked and the end one fades in and out over
+ * it, so the photo reads as the movement; the pair is one image to a screen reader, named once.
+ * With no art, the slot keeps roughly the same proportions and holds a composition instead: the
+ * initials plaque the rest of the app uses, blown up, with a caption that says which absence it is
+ * (no photo bundled yet, none ever for a custom exercise, or a bundled one that failed to load).
  */
 export function ExerciseHero({ exercise, topInset }: { exercise: Exercise; topInset: number }) {
   const { state, derived, effects } = useExerciseHeroLogic(exercise, topInset);
@@ -30,7 +32,7 @@ export function ExerciseHero({ exercise, topInset }: { exercise: Exercise; topIn
   const theme = useAppTheme();
   const styles = useStyles(createStyles);
 
-  if (state.uri === null) {
+  if (state.start === null) {
     return (
       <LinearGradient
         colors={[theme.colors.surfaceRaised, theme.colors.canvas]}
@@ -40,12 +42,12 @@ export function ExerciseHero({ exercise, topInset }: { exercise: Exercise; topIn
           {exercise.category ?? t('exerciseDetail.fallbackTitle')}
         </Txt>
         <Gap size={spacing.lg} />
-        <ExerciseThumb uri={null} name={exercise.name} size={96} theme={theme} rounded={radius.xl} />
+        <ExerciseThumb source={null} name={exercise.name} size={96} theme={theme} rounded={radius.xl} />
         <Gap size={spacing.lg} />
         <Row gap="xs" align="center">
           <Icon name="image" size={ICON_SIZE.micro} color={theme.colors.textFaint} />
           <Txt variant="micro" tone="faint" uppercase tracking={0.8}>
-            {t(state.hasArt ? 'exerciseDetail.imageUnavailable' : 'exerciseDetail.noImage')}
+            {t(state.caption)}
           </Txt>
         </Row>
       </LinearGradient>
@@ -54,17 +56,35 @@ export function ExerciseHero({ exercise, topInset }: { exercise: Exercise; topIn
 
   return (
     <View style={derived.artStyle}>
-      <Image
-        source={{ uri: state.uri }}
-        style={styles.image}
-        contentFit="contain"
-        transition={220}
-        recyclingKey={state.uri}
-        cachePolicy={EXERCISE_IMAGE_CACHE}
-        onError={effects.markFailed}
-        accessibilityLabel={t('exerciseDetail.illustrationFor', { name: exercise.name })}
-        accessibilityIgnoresInvertColors
-      />
+      <View
+        style={styles.frame}
+        accessible
+        accessibilityRole="image"
+        accessibilityLabel={t('exerciseDetail.photoOf', { name: exercise.name })}
+      >
+        <Image
+          source={state.start}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          transition={220}
+          recyclingKey={String(state.start)}
+          cachePolicy={EXERCISE_IMAGE_CACHE}
+          onError={effects.markFailed}
+          accessibilityIgnoresInvertColors
+        />
+        {state.end !== null ? (
+          <Animated.View style={[StyleSheet.absoluteFill, derived.fade]} pointerEvents="none">
+            <Image
+              source={state.end}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+              recyclingKey={String(state.end)}
+              cachePolicy={EXERCISE_IMAGE_CACHE}
+              accessibilityIgnoresInvertColors
+            />
+          </Animated.View>
+        ) : null}
+      </View>
     </View>
   );
 }

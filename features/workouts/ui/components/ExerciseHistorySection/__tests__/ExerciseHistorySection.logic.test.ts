@@ -29,7 +29,7 @@ const renderHistory = async (count: number) => {
     ),
     count > 0 ? [aRecord()] : [],
   );
-  await act(async () => rendered.rerender('wger:73'));
+  await act(async () => rendered.rerender('ex:barbell-bench-press'));
   await waitFor(() => expect(rendered.result.current.state.isLoading).toBe(false));
   return rendered;
 };

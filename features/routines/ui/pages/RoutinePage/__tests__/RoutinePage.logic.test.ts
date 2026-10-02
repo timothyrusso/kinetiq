@@ -19,7 +19,7 @@ describe('useRoutinePageLogic', () => {
     const { result, done } = await renderRoutine();
 
     expect(result.current.derived.items.map(item => item.exerciseName)).toEqual(['Bench Press', 'Overhead Press']);
-    expect(result.current.state.snapshots.get('wger:74')?.name).toBe('Overhead Press');
+    expect(result.current.state.snapshots.get('ex:barbell-squat')?.name).toBe('Overhead Press');
     await done();
   });
 
