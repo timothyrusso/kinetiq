@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { haptics } from '@/features/core/haptics';
 import { useT } from '@/features/core/translations';
 import type { Exercise } from '@/features/exercises';
@@ -19,7 +19,8 @@ const DESTINATION: PickDestination = 'routine';
  * same function the draft store calls, so a row added here and a row added in the builder cannot
  * start out different. A tap on an included exercise removes its item with the routine screen's
  * own remove mutation, so the positions behind it renumber the same way; with the exercise in
- * twice, the later item goes, the one a mistaken add would have made.
+ * twice, the later item goes, the one a mistaken add would have made. A second tap on an item
+ * whose remove is still saving is ignored, so a quick double tap sends one remove, not two.
  */
 export function usePickIntoRoutineLogic(routineId: RoutineId) {
   const { t } = useT();
@@ -45,17 +46,20 @@ export function usePickIntoRoutineLogic(routineId: RoutineId) {
   );
   const items = routine?.items;
   const { mutateAsync: dropItem } = removeItem;
+  const removing = useRef(new Set<string>());
   const unpick = useCallback(
     (exerciseId: string) => {
       const item = items?.findLast(row => row.exerciseId === exerciseId);
-      if (item === undefined) return;
+      if (item === undefined || removing.current.has(item.id)) return;
+      removing.current.add(item.id);
       setError(null);
       dropItem({ routineId, itemId: item.id })
         .then(() => haptics.light())
         .catch(() => {
           setError(t('routine.removeFailed'));
           haptics.warning();
-        });
+        })
+        .finally(() => removing.current.delete(item.id));
     },
     [dropItem, items, routineId, t],
   );
