@@ -17,6 +17,7 @@ import {
   Txt,
   useStyles,
 } from '@/features/core/design-system';
+import { HeaderToolbar, headerAction } from '@/features/core/navigation';
 import { useAppTheme } from '@/features/core/theme';
 import { useT } from '@/features/core/translations';
 import { ExerciseHero } from '@/features/exercises/ui/components/ExerciseHero/ExerciseHero';
@@ -53,6 +54,18 @@ export function ExerciseDetailPage({ renderHistory }: { renderHistory?: (exercis
     <>
       <Stack.Screen options={SCREEN_OPTIONS} />
       <ScreenHeader title={derived.title} transparent={derived.transparent} />
+      {derived.closable ? (
+        <HeaderToolbar placement="right">
+          {headerAction({
+            action: 'save',
+            label: 'headerActions.done',
+            onPress: effects.close,
+            t,
+            variant: 'done',
+            tint: theme.colors.accent,
+          })}
+        </HeaderToolbar>
+      ) : null}
       <ScrollView contentContainerStyle={derived.contentStyle}>
         {state.isLoading ? (
           <Column gap="lg" style={[styles.section, derived.statusStyle]}>

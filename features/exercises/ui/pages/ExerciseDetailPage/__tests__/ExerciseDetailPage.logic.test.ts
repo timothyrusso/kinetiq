@@ -91,6 +91,36 @@ describe('useExerciseDetailPageLogic', () => {
     await done();
   });
 
+  it('opened over a sheet on iOS, carries a Done that goes back, and opens similar ones the same way', async () => {
+    jest.replaceProperty(Platform, 'OS', 'ios');
+    routerFake.setParams({ id: BENCH.id, sheet: '1' });
+    const { result, done } = await renderWithCatalog(useExerciseDetailPageLogic, { exercises: [BENCH] }, undefined);
+    await waitFor(() => expect(result.current.state.exercise).toEqual(BENCH));
+
+    expect(result.current.derived.closable).toBe(true);
+    await act(async () => result.current.effects.close());
+    await act(async () => result.current.effects.openSimilar('ex:barbell-squat'));
+
+    expect(routerFake.history).toEqual([
+      { verb: 'back', href: null },
+      { verb: 'push', href: routes.exerciseDetail('ex:barbell-squat', true) },
+    ]);
+    await done();
+  });
+
+  it('has no Done when pushed as a card, or on Android, where the back arrow is there', async () => {
+    jest.replaceProperty(Platform, 'OS', 'ios');
+    const card = await renderDetail(BENCH.id);
+    expect(card.result.current.derived.closable).toBe(false);
+    await card.done();
+
+    jest.replaceProperty(Platform, 'OS', 'android');
+    routerFake.setParams({ id: BENCH.id, sheet: '1' });
+    const android = await renderWithCatalog(useExerciseDetailPageLogic, { exercises: [BENCH] }, undefined);
+    expect(android.result.current.derived.closable).toBe(false);
+    await android.done();
+  });
+
   it('goes Home when there is nothing to go back to', async () => {
     routerFake.setCanGoBack(false);
     const { result, done } = await renderDetail('ex:no-such-exercise');

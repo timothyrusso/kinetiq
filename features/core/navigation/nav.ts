@@ -80,7 +80,10 @@ function tabIndexOf(key: TabKey): number {
  */
 export const routes = {
   activityDetail: (id: string) => ({ pathname: '/activity/[id]', params: { id } }) as Href,
-  exerciseDetail: (id: string) => ({ pathname: '/exercise/[id]', params: { id } }) as Href,
+  // NOTE: `overSheet` for a push from a form sheet. iOS presents a screen pushed over a sheet as a
+  // sheet of its own, the first screen of its own stack, so it has no back button and needs a Done.
+  exerciseDetail: (id: string, overSheet = false) =>
+    ({ pathname: '/exercise/[id]', params: overSheet ? { id, sheet: '1' } : { id } }) as Href,
   routine: (id: string) => ({ pathname: '/routine/[id]', params: { id } }) as Href,
 
   // NOTE: The parameterless routes, as functions rather than string literals at call sites.
