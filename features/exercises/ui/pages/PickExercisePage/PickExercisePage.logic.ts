@@ -1,4 +1,6 @@
+import { router } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
+import { routes } from '@/features/core/navigation';
 import { type TKey, useT } from '@/features/core/translations';
 import { useDebouncedValue, useIsSettling } from '@/features/core/utils';
 import type { ExerciseFilter } from '@/features/exercises/domain/schemas/ExerciseFilterSchema';
@@ -72,6 +74,8 @@ export function usePickExercisePageLogic({ onPick, isIncluded, destination }: Pi
     },
     [isPlaceholder, items, onPick],
   );
+  // NOTE: pushed over the sheet, which stays mounted under it, so back returns to the same search.
+  const openDetail = useCallback((exerciseId: string) => router.push(routes.exerciseDetail(exerciseId, true)), []);
   const toggleMuscle = useCallback((id: string) => setMuscleId(current => (current === id ? null : id)), []);
   const toggleEquipment = useCallback((id: string) => setEquipmentId(current => (current === id ? null : id)), []);
   const clearFilters = useCallback(() => {
@@ -112,6 +116,7 @@ export function usePickExercisePageLogic({ onPick, isIncluded, destination }: Pi
     effects: {
       setQuery,
       select,
+      openDetail,
       toggleMuscle,
       toggleEquipment,
       clearFilters,

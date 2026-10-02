@@ -22,7 +22,7 @@ const NO_SIMILAR: readonly Exercise[] = [];
  */
 export function useExerciseDetailPageLogic() {
   const { t } = useT();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, sheet } = useLocalSearchParams<{ id: string; sheet?: string }>();
   const bottom = useScreenContentBottom();
   const transparentInset = useTransparentHeaderInset();
 
@@ -63,7 +63,18 @@ export function useExerciseDetailPageLogic() {
     return tags;
   }, [exercise, t]);
 
-  const openSimilar = useCallback((similarId: string) => router.push(routes.exerciseDetail(similarId)), []);
+  // NOTE: iOS only. Opened from a form sheet, this page is presented as a sheet over it, with no back
+  // button, so it carries a Done that dismisses it back to where the user was; Android pushes it
+  // with its own back arrow. A similar exercise opened from here is presented the same way, so it
+  // inherits the flag.
+  const overSheet = sheet === '1';
+  const closable = Platform.OS === 'ios' && overSheet;
+  const close = useCallback(() => router.back(), []);
+
+  const openSimilar = useCallback(
+    (similarId: string) => router.push(routes.exerciseDetail(similarId, overSheet)),
+    [overSheet],
+  );
 
   // NOTE: iOS only. The bar floats over the art because the system blurs what scrolls under it;
   // Android's top app bar has no blur, so a transparent one let the text scroll under the title
@@ -109,7 +120,8 @@ export function useExerciseDetailPageLogic() {
       badgeTags,
       hasLead: badgeTags.length > 0 || detail.from !== 'catalog',
       steps,
+      closable,
     },
-    effects: { retry: detail.retry, goBack, openSimilar },
+    effects: { retry: detail.retry, goBack, close, openSimilar },
   };
 }

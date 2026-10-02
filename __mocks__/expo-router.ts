@@ -14,4 +14,5 @@ module.exports = {
   useGlobalSearchParams: () => routerFake.params,
   usePathname: () => routerFake.pathname,
   useNavigation: () => routerFake.navigation,
+  useIsFocused: () => routerFake.navigation.isFocused(),
 };

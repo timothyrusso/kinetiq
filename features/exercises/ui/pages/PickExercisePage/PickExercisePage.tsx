@@ -28,6 +28,7 @@ export function PickExercisePage(props: PickExercisePageProps) {
       isIncluded={effects.isIncluded}
       dimmed={state.isPlaceholder}
       onSelect={effects.select}
+      onInfo={effects.openDetail}
       header={
         <>
           <Txt variant="caption" tone="muted">

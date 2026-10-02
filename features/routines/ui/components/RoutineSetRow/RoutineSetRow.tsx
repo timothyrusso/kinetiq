@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { View } from 'react-native';
-import { Stepper, Txt, useStyles } from '@/features/core/design-system';
+import { RowButton, Stepper, Txt, useStyles } from '@/features/core/design-system';
 import type { Theme } from '@/features/core/theme';
 import { useT } from '@/features/core/translations';
 import {
@@ -8,7 +8,6 @@ import {
   useRoutineSetRowLogic,
 } from '@/features/routines/ui/components/RoutineSetRow/RoutineSetRow.logic';
 import { createStyles } from '@/features/routines/ui/components/RoutineSetRow/RoutineSetRow.style';
-import { RowButton } from '@/features/routines/ui/components/RowButton/RowButton';
 
 type Bounds = { readonly min: number; readonly max: number };
 

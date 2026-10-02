@@ -1,6 +1,14 @@
 import { memo } from 'react';
 import { View } from 'react-native';
-import { ExerciseThumb, ICON_SIZE, Icon, ListRow, SwipeToDelete, useStyles } from '@/features/core/design-system';
+import {
+  ExerciseThumb,
+  ICON_SIZE,
+  Icon,
+  ListRow,
+  RowButton,
+  SwipeToDelete,
+  useStyles,
+} from '@/features/core/design-system';
 import type { Theme } from '@/features/core/theme';
 import { useT } from '@/features/core/translations';
 import {
@@ -8,7 +16,6 @@ import {
   useRoutineItemRowLogic,
 } from '@/features/routines/ui/components/RoutineItemRow/RoutineItemRow.logic';
 import { createStyles } from '@/features/routines/ui/components/RoutineItemRow/RoutineItemRow.style';
-import { RowButton } from '@/features/routines/ui/components/RowButton/RowButton';
 
 /**
  * One exercise of a routine: thumbnail, name, sets, reps and load, the primary muscle as a tag.
