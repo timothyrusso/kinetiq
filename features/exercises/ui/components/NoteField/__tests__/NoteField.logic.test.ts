@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react-native';
 import { tr } from '@/features/core/translations';
-import { useNoteFieldLogic } from '@/features/routines/ui/components/NoteField/NoteField.logic';
+import { useNoteFieldLogic } from '@/features/exercises/ui/components/NoteField/NoteField.logic';
 
 const renderNote = (note: string | null, commits: (string | null)[]) =>
   renderHook(() => useNoteFieldLogic(note, notes => void commits.push(notes)));

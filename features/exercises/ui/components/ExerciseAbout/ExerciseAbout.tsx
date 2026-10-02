@@ -2,8 +2,8 @@ import { Pressable, View } from 'react-native';
 import { CrossFadeImage, ICON_SIZE, Icon, NumberedSteps, Row, Txt, useStyles } from '@/features/core/design-system';
 import { useAppTheme } from '@/features/core/theme';
 import { useT } from '@/features/core/translations';
-import { useExerciseAboutLogic } from '@/features/routines/ui/components/ExerciseAbout/ExerciseAbout.logic';
-import { createStyles } from '@/features/routines/ui/components/ExerciseAbout/ExerciseAbout.style';
+import { useExerciseAboutLogic } from '@/features/exercises/ui/components/ExerciseAbout/ExerciseAbout.logic';
+import { createStyles } from '@/features/exercises/ui/components/ExerciseAbout/ExerciseAbout.style';
 
 /**
  * The exercise's picture and description, under the targets so adjusting never scrolls past them.

@@ -1,15 +1,22 @@
 import { memo } from 'react';
-import { Button, FormFooter, FormSection, MetaLine, Stepper, TagRow, Txt } from '@/features/core/design-system';
+import {
+  Button,
+  FormFooter,
+  FormSection,
+  MetaLine,
+  SetStepperRow,
+  Stepper,
+  TagRow,
+  Txt,
+} from '@/features/core/design-system';
 import { useAppTheme } from '@/features/core/theme';
 import { useT } from '@/features/core/translations';
 import type { UnitSystem } from '@/features/core/utils';
 import type { ExerciseSnapshot } from '@/features/exercises';
+import { ExerciseAbout, NoteField } from '@/features/exercises/pages';
 import type { ItemChange } from '@/features/routines/domain/entities/ItemTarget';
 import type { RoutineItem } from '@/features/routines/domain/schemas/RoutineSchema';
-import { ExerciseAbout } from '@/features/routines/ui/components/ExerciseAbout/ExerciseAbout';
 import { useItemEditorFormLogic } from '@/features/routines/ui/components/ItemEditorForm/ItemEditorForm.logic';
-import { NoteField } from '@/features/routines/ui/components/NoteField/NoteField';
-import { RoutineSetRow } from '@/features/routines/ui/components/RoutineSetRow/RoutineSetRow';
 
 /**
  * Editing one exercise's targets. Every stepper press commits, so the sheet is a surface for
@@ -38,7 +45,7 @@ export const ItemEditorForm = memo(function ItemEditorForm({
       <MetaLine items={derived.meta} theme={theme} wrap />
       <FormSection title={t('itemEditor.sets')}>
         {derived.rows.map((row, at) => (
-          <RoutineSetRow
+          <SetStepperRow
             key={row.key}
             index={row.index}
             reps={row.reps}
@@ -49,8 +56,11 @@ export const ItemEditorForm = memo(function ItemEditorForm({
             rpeBounds={derived.rpe}
             weightMax={derived.weightMax}
             weightStep={derived.weightStep}
+            rpeKind="target"
+            completed={false}
             canRemove={derived.canRemoveSet}
             topDivider={at > 0}
+            highlighted={false}
             theme={theme}
             onReps={effects.setReps}
             onWeight={effects.setWeight}

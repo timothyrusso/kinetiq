@@ -1,33 +1,29 @@
 import { act, waitFor } from '@testing-library/react-native';
 import { routes } from '@/features/core/navigation';
-import { routerFake } from '@/features/core/testing';
+import { renderWithLayer, routerFake } from '@/features/core/testing';
 import { tr } from '@/features/core/translations';
-import { anExerciseSnapshot, aRoutineItem } from '@/features/routines/__fixtures__/builders';
-import { renderWithRoutines } from '@/features/routines/facades/__tests__/renderWithRoutines';
-import { useSaveRoutine } from '@/features/routines/facades/useSaveRoutine';
-import { useExerciseAboutLogic } from '@/features/routines/ui/components/ExerciseAbout/ExerciseAbout.logic';
+import type { ExerciseSnapshot } from '@/features/exercises/domain/schemas/ExerciseSnapshotSchema';
+import { useExerciseAboutLogic } from '@/features/exercises/ui/components/ExerciseAbout/ExerciseAbout.logic';
+import { makeCatalogReadsFake } from '@/features/exercises/useCases/__tests__/catalogFakes';
 
-const HIP_THRUST = anExerciseSnapshot({
+const HIP_THRUST: ExerciseSnapshot = {
   exerciseId: 'local:hip-thrust',
   name: 'Hip Thrust',
   instructions: ['  Drive through the heels.  ', 'Squeeze at the top.'],
-});
-
-const useAbout = (exerciseId: string) => ({ about: useExerciseAboutLogic(exerciseId), save: useSaveRoutine() });
-
-/** Stores `snapshot` the way the builder does: by saving a routine that uses it. */
-const renderAbout = async (snapshot = HIP_THRUST) => {
-  const rendered = await renderWithRoutines(useAbout, 'none');
-  await act(async () => {
-    await rendered.result.current.save.mutateAsync({
-      name: 'Glutes',
-      items: [aRoutineItem({ exerciseId: snapshot.exerciseId, exerciseName: snapshot.name })],
-      snapshots: [snapshot],
-    });
-  });
-  await rendered.rerender(snapshot.exerciseId);
-  return rendered;
+  category: 'Glutes',
+  primaryMuscles: ['Glutes'],
+  secondaryMuscles: [],
+  equipment: ['Barbell'],
+  imageUrl: 'assets/catalog/images/barbell-bench-press-medium-grip/0.webp',
+  thumbnailUrl: 'assets/catalog/images/barbell-bench-press-medium-grip/thumb.webp',
+  capturedAt: 1_700_000_000_000,
 };
+
+const useAbout = (exerciseId: string) => ({ about: useExerciseAboutLogic(exerciseId) });
+
+/** Renders the block over a catalog with no rows and `snapshot` stored, as a routine leaves it. */
+const renderAbout = (snapshot = HIP_THRUST) =>
+  renderWithLayer(makeCatalogReadsFake({ exercises: [] }, [snapshot]), useAbout, snapshot.exerciseId);
 
 describe('useExerciseAboutLogic', () => {
   it('shows the stored exercise’s bundled picture and trimmed steps', async () => {

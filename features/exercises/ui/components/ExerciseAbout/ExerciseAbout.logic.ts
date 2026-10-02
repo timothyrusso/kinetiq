@@ -2,7 +2,8 @@ import { router, useIsFocused } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { routes } from '@/features/core/navigation';
 import { useT } from '@/features/core/translations';
-import { exerciseImageSource, useExercise } from '@/features/exercises';
+import { useExercise } from '@/features/exercises/facades/useExercise';
+import { exerciseImageSource } from '@/features/exercises/mappers/exerciseImageSource';
 
 /**
  * What the library says about the exercise, read through `useExercise` rather than the snapshot

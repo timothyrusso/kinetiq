@@ -1,6 +1,6 @@
 import { TextInput } from '@/features/core/design-system';
 import { useT } from '@/features/core/translations';
-import { useNoteFieldLogic } from '@/features/routines/ui/components/NoteField/NoteField.logic';
+import { useNoteFieldLogic } from '@/features/exercises/ui/components/NoteField/NoteField.logic';
 
 /**
  * The exercise's note, the cue shown on it mid-workout. Unlike the steppers it does not write on
