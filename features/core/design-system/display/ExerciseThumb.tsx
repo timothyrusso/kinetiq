@@ -1,7 +1,6 @@
-import { Image } from 'expo-image';
 import { memo, useState } from 'react';
 import { View } from 'react-native';
-import { EXERCISE_IMAGE_CACHE } from '@/features/core/design-system/display/imageCache';
+import { type BundledImage, BundledPhoto } from '@/features/core/design-system/display/BundledPhoto';
 import { CellText } from '@/features/core/design-system/text/CellText';
 import { radius, type Theme } from '@/features/core/theme';
 
@@ -10,7 +9,7 @@ import { radius, type Theme } from '@/features/core/theme';
  *
  * `source` is a bundled image, as the caller resolved it from the stored path. Some exercises
  * have no photo yet and a stored copy may name one this build does not bundle, so "no image" is
- * one of the layouts rather than an error to apologise for. The initials tile is exactly the
+ * one of the layouts rather than an error to apologise for. A photo shows its blur until it decodes. The initials tile is exactly the
  * size of the image it replaces, so a list does not reflow as art lands.
  */
 export const ExerciseThumb = memo(function ExerciseThumb({
@@ -20,15 +19,15 @@ export const ExerciseThumb = memo(function ExerciseThumb({
   theme,
   rounded = radius.md,
 }: {
-  source: number | null;
+  source: BundledImage | null;
   name: string;
   size: number;
   theme: Theme;
   rounded?: number;
 }) {
   const [failed, setFailed] = useState(false);
-  // NOTE: the photos fill the square, so the placeholder shows only while one decodes, or as the
-  // tile under the initials.
+  // NOTE: the photos fill the square, so the placeholder colour shows only as the tile under the
+  // initials, or for the instant before the blur is drawn.
   const shared = {
     width: size,
     height: size,
@@ -46,17 +45,13 @@ export const ExerciseThumb = memo(function ExerciseThumb({
     );
   }
   return (
-    <Image
-      source={source}
+    <BundledPhoto
+      image={source}
       style={shared}
-      contentFit="cover"
       transition={180}
-      recyclingKey={String(source)}
-      cachePolicy={EXERCISE_IMAGE_CACHE}
       // NOTE: Without this a file that fails to decode leaves a square the exact colour of the
       // background, which reads as "the app broke" rather than "this exercise has no picture".
       onError={() => setFailed(true)}
-      accessibilityIgnoresInvertColors
     />
   );
 });

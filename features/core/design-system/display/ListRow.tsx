@@ -105,7 +105,7 @@ export const ListRow = memo(function ListRow({
       accessibilityHint={accessibilityHint}
       accessibilityActions={accessibilityActions}
       onAccessibilityAction={onAccessibilityAction}
-      {...(disabled ? { accessibilityState: { disabled: true } } : {})}
+      {...(disabled || selected ? { accessibilityState: { disabled, selected } } : {})}
       style={({ pressed }) => [
         {
           paddingHorizontal: screenGutter,

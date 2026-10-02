@@ -2,7 +2,7 @@ import { act, waitFor } from '@testing-library/react-native';
 import { resetAllStores } from '@/features/core/state';
 import { renderWithLayer } from '@/features/core/testing';
 import { tr } from '@/features/core/translations';
-import { aSquat } from '@/features/home/__fixtures__/builders';
+import { anExercise, aSquat } from '@/features/home/__fixtures__/builders';
 import { HomeTestLayer, seedRoutine } from '@/features/home/di/__tests__/homeTestLayer';
 import { usePickIntoRoutineLogic } from '@/features/home/ui/components/PickInto/PickIntoRoutine.logic';
 import { RoutineId, useRoutine } from '@/features/routines';
@@ -43,6 +43,44 @@ describe('usePickIntoRoutineLogic', () => {
       expect(result.current.saved.routine?.items.map(item => item.exerciseName)).toEqual(['Bench Press', 'Squat']),
     );
     expect(result.current.picker.effects.isIncluded('ex:goblet-squat')).toBe(true);
+    expect(result.current.picker.state.error).toBeNull();
+    await done();
+  });
+
+  it("removes an included exercise on a second tap, through the routine's own remove", async () => {
+    const { result, done } = await renderPicker();
+    await act(async () => result.current.picker.effects.pick(aSquat()));
+    await waitFor(() => expect(result.current.saved.routine?.items).toHaveLength(2));
+
+    await act(async () => result.current.picker.effects.unpick('ex:barbell-bench-press'));
+
+    await waitFor(() => expect(result.current.saved.routine?.items.map(item => item.exerciseName)).toEqual(['Squat']));
+    expect(result.current.picker.effects.isIncluded('ex:barbell-bench-press')).toBe(false);
+    expect(result.current.picker.state.error).toBeNull();
+    await done();
+  });
+
+  it('adds after the remaining items once one has been removed, so the positions were renumbered', async () => {
+    const { result, done } = await renderPicker();
+    await act(async () => result.current.picker.effects.pick(aSquat()));
+    await waitFor(() => expect(result.current.saved.routine?.items).toHaveLength(2));
+    await act(async () => result.current.picker.effects.unpick('ex:barbell-bench-press'));
+    await waitFor(() => expect(result.current.saved.routine?.items).toHaveLength(1));
+
+    await act(async () => result.current.picker.effects.pick(anExercise()));
+
+    await waitFor(() =>
+      expect(result.current.saved.routine?.items.map(item => item.exerciseName)).toEqual(['Squat', 'Bench Press']),
+    );
+    await done();
+  });
+
+  it('removes nothing for an exercise the routine does not have', async () => {
+    const { result, done } = await renderPicker();
+
+    await act(async () => result.current.picker.effects.unpick('ex:goblet-squat'));
+
+    expect(result.current.saved.routine?.items.map(item => item.exerciseName)).toEqual(['Bench Press']);
     expect(result.current.picker.state.error).toBeNull();
     await done();
   });

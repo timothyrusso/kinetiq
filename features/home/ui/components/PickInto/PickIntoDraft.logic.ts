@@ -9,7 +9,8 @@ const DESTINATION: PickDestination = 'routine';
 /**
  * Picks into the routine builder's draft. Subscribed, so the included marks follow the adds:
  * `isIncluded` is rebuilt from the draft's rows, and the picker's list re-renders its rows only
- * when it changes.
+ * when it changes. A tap on an included exercise removes its row through the builder's own
+ * `removeItem`, as the row's remove action on the builder does.
  */
 export function usePickIntoDraftLogic() {
   const { draft, actions } = useRoutineDraft();
@@ -22,5 +23,14 @@ export function usePickIntoDraftLogic() {
     },
     [actions],
   );
-  return { state: { destination: DESTINATION }, effects: { pick, isIncluded } };
+  const unpick = useCallback(
+    (exerciseId: string) => {
+      const item = draft.items.findLast(row => row.exerciseId === exerciseId);
+      if (item === undefined) return;
+      actions.removeItem(item.id);
+      haptics.light();
+    },
+    [actions, draft.items],
+  );
+  return { state: { destination: DESTINATION }, effects: { pick, unpick, isIncluded } };
 }

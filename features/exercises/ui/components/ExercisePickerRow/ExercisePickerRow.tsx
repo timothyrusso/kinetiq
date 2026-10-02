@@ -12,11 +12,16 @@ import { createStyles } from '@/features/exercises/ui/components/ExercisePickerR
  * typing (which re-renders the sheet on every keystroke) does not re-render two dozen rows whose
  * exercise did not change. The info button stays live on an included row: an exercise already in
  * the routine is still one to read about.
+ *
+ * A `removable` included row is selected rather than disabled: tinted, filled check, and a tap
+ * hands its id to the same `onSelect`, which removes it. Without `removable` (the live workout)
+ * an included row is inert.
  */
 export const ExercisePickerRow = memo(function ExercisePickerRow({
   exercise,
   theme,
   included,
+  removable,
   dimmed,
   onSelect,
   onInfo,
@@ -24,6 +29,7 @@ export const ExercisePickerRow = memo(function ExercisePickerRow({
   exercise: Exercise;
   theme: Theme;
   included: boolean;
+  removable: boolean;
   dimmed: boolean;
   onSelect: (exerciseId: string) => void;
   onInfo: (exerciseId: string) => void;
@@ -31,6 +37,8 @@ export const ExercisePickerRow = memo(function ExercisePickerRow({
   const { derived, effects } = useExercisePickerRowLogic(exercise, onSelect, onInfo);
   const { t } = useT();
   const styles = useStyles(createStyles);
+  const selected = included && removable;
+  const inert = included && !removable;
 
   return (
     <ListRow
@@ -38,10 +46,13 @@ export const ExercisePickerRow = memo(function ExercisePickerRow({
       title={exercise.name}
       tags={derived.tags}
       tagsMax={2}
-      {...(included ? {} : { onPress: effects.select })}
-      disabled={included}
+      {...(inert ? {} : { onPress: effects.select })}
+      disabled={inert}
+      selected={selected}
       style={dimmed ? [styles.row, styles.dimmed] : styles.row}
-      accessibilityHint={t(included ? 'states.alreadyInRoutine' : 'states.addsToRoutine')}
+      accessibilityHint={t(
+        selected ? 'states.removesFromRoutine' : inert ? 'states.alreadyInRoutine' : 'states.addsToRoutine',
+      )}
       accessibilityActions={derived.accessibilityActions}
       onAccessibilityAction={effects.onAccessibilityAction}
       leading={<ExerciseThumb source={derived.image} name={exercise.name} size={44} theme={theme} />}
@@ -49,7 +60,7 @@ export const ExercisePickerRow = memo(function ExercisePickerRow({
         <View style={styles.trailing}>
           <RowButton icon="info" label={derived.infoLabel} theme={theme} onPress={effects.info} />
           <Icon
-            name={included ? 'check' : 'plus'}
+            name={selected ? 'checkCircle' : included ? 'check' : 'plus'}
             size={ICON_SIZE.inline}
             color={included ? theme.colors.accent : theme.colors.textMuted}
           />

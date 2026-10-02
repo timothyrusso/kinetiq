@@ -731,6 +731,7 @@ export const en = {
     pickerStartBody: 'Type part of an exercise name and results appear as you go.',
     alreadyInRoutine: 'Already in this routine',
     addsToRoutine: 'Adds this exercise to the routine',
+    removesFromRoutine: 'Removes this exercise from the routine',
     resetFailedBody:
       'Kinetiq still could not open local storage, and clearing it did not help. Reinstalling the app is the remaining option; your data has already been removed.',
     stillStartingBody:

@@ -45,6 +45,12 @@ export type Theme = {
     surfaceRaised: string;
     /** Pressed/dragged state for surfaces. */
     surfacePressed: string;
+    /**
+     * A presented sheet's surface, lifted off the page it covers. The dark page is black, and a
+     * black sheet over it has no edge however the page is dimmed; iOS lifts its own sheets the
+     * same way in dark mode.
+     */
+    sheet: string;
     /** Frosted overlays (tab bar, sticky headers). */
     overlay: string;
     overlayBorder: string;
@@ -127,6 +133,7 @@ const darkColors = {
   surface: palette.ink700,
   surfaceRaised: palette.ink600,
   surfacePressed: palette.ink500,
+  sheet: palette.ink700,
   overlay: 'rgba(0, 0, 0, 0.82)',
   overlayBorder: 'rgba(255, 255, 255, 0.09)',
 
@@ -177,6 +184,7 @@ const lightColors = {
   surface: palette.white,
   surfaceRaised: palette.white,
   surfacePressed: palette.paper200,
+  sheet: palette.white,
   overlay: 'rgba(251, 251, 248, 0.86)',
   overlayBorder: 'rgba(10, 14, 24, 0.08)',
 

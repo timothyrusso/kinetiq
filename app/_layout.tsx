@@ -68,13 +68,13 @@ function ThemedRoot() {
             <Stack.Screen name="(tabs)" options={tabsOptions} />
             <Stack.Screen name="workout/session" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
             <Stack.Screen name="routine/new" options={{ presentation: 'modal' }} />
-            <Stack.Screen name="pick-exercise" options={formSheet('picker')} />
-            <Stack.Screen name="edit-profile" options={formSheet('fit')} />
-            <Stack.Screen name="routine/item" options={formSheet('picker')} />
-            <Stack.Screen name="routine/rename" options={formSheet('fit')} />
-            <Stack.Screen name="workout/set" options={formSheet('fit')} />
-            <Stack.Screen name="workout/finish" options={formSheet('fit')} />
-            <Stack.Screen name="workout/records" options={formSheet('fit')} />
+            <Stack.Screen name="pick-exercise" options={formSheet('picker', theme)} />
+            <Stack.Screen name="edit-profile" options={formSheet('fit', theme)} />
+            <Stack.Screen name="routine/item" options={formSheet('picker', theme)} />
+            <Stack.Screen name="routine/rename" options={formSheet('fit', theme)} />
+            <Stack.Screen name="workout/set" options={formSheet('fit', theme)} />
+            <Stack.Screen name="workout/finish" options={formSheet('fit', theme)} />
+            <Stack.Screen name="workout/records" options={formSheet('fit', theme)} />
             <Stack.Screen name="+not-found" options={{ presentation: 'card' }} />
           </Stack>
         </ThemeProvider>

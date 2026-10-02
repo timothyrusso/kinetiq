@@ -17,14 +17,18 @@ const renderPicker = (
     exercises = [BENCH, SQUAT, ...ROWS],
     included = [SQUAT.id],
     destination = 'routine',
+    unpicked,
   }: {
     exercises?: Exercise[];
     included?: string[];
     destination?: PickExercisePageProps['destination'];
+    /** Where removals land; left out, the picker is add-only, as for the live workout. */
+    unpicked?: string[];
   } = {},
 ) => {
   const props: PickExercisePageProps = {
     onPick: exercise => void picked.push(exercise),
+    ...(unpicked === undefined ? {} : { onUnpick: (id: string) => void unpicked.push(id) }),
     isIncluded: id => included.includes(id),
     error: null,
     destination,
@@ -91,6 +95,45 @@ describe('usePickExercisePageLogic', () => {
     await act(async () => result.current.effects.select(BENCH.id));
 
     expect(picked).toEqual([BENCH]);
+    await done();
+  });
+
+  it('removes an included row on a second tap when the destination allows it', async () => {
+    const picked: Exercise[] = [];
+    const unpicked: string[] = [];
+    const { result, done } = await renderPicker(picked, { unpicked });
+    await waitFor(() => expect(result.current.state.rows).toHaveLength(50));
+
+    await act(async () => result.current.effects.select(SQUAT.id));
+
+    expect(unpicked).toEqual([SQUAT.id]);
+    expect(picked).toEqual([]);
+    expect(result.current.derived.removable).toBe(true);
+    await done();
+  });
+
+  it('leaves an included row alone when the destination is add-only', async () => {
+    const picked: Exercise[] = [];
+    const { result, done } = await renderPicker(picked, { destination: 'workout' });
+    await waitFor(() => expect(result.current.state.rows).toHaveLength(50));
+
+    await act(async () => result.current.effects.select(SQUAT.id));
+
+    expect(picked).toEqual([]);
+    expect(result.current.derived.removable).toBe(false);
+    await done();
+  });
+
+  it('still adds a row that is not included when removing is allowed', async () => {
+    const picked: Exercise[] = [];
+    const unpicked: string[] = [];
+    const { result, done } = await renderPicker(picked, { unpicked });
+    await waitFor(() => expect(result.current.state.rows).toHaveLength(50));
+
+    await act(async () => result.current.effects.select(BENCH.id));
+
+    expect(picked).toEqual([BENCH]);
+    expect(unpicked).toEqual([]);
     await done();
   });
 

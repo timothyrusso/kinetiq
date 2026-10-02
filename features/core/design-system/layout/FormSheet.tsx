@@ -12,6 +12,9 @@
  * draw one there), so the title and the only Save button vanished; and on iOS a `fit` body
  * cannot be inset by a header it cannot measure, so the header sat over the first field.
  *
+ * The sheet is the theme's `sheet` surface, lifted off the page behind, and on Android the bar
+ * starts with Material's drag handle (`SheetHandle`), the grabber that platform's sheet lacks.
+ *
  * `fit` bodies are plain views so a `fitToContents` detent can measure them. Taller editors
  * scroll; a sheet whose body is a long list uses `FormSheetList` instead, so the list is the
  * sheet's only scroll container.
@@ -23,6 +26,7 @@ import { memo, type ReactElement, type ReactNode, useMemo } from 'react';
 import { ScrollView, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/features/core/design-system/controls/Button';
+import { SheetHandle } from '@/features/core/design-system/layout/SheetHandle';
 import { Txt } from '@/features/core/design-system/text/Text';
 import { screenGutter, spacing, useAppTheme } from '@/features/core/theme';
 import type { TKey } from '@/features/core/translations';
@@ -57,7 +61,7 @@ export function FormSheet({
           // with nested scrolling on; without it every downward drag moved the sheet, so the list
           // could not scroll back up. At the top of the list a drag still moves the sheet.
           nestedScrollEnabled
-          style={{ backgroundColor: theme.colors.background }}
+          style={{ backgroundColor: theme.colors.sheet }}
           contentContainerStyle={styles.gutter}
           keyboardShouldPersistTaps="handled"
           contentInsetAdjustmentBehavior="automatic"
@@ -66,7 +70,7 @@ export function FormSheet({
           {body}
         </ScrollView>
       ) : (
-        <View style={[styles.gutter, { backgroundColor: theme.colors.background }]}>
+        <View style={[styles.gutter, { backgroundColor: theme.colors.sheet }]}>
           {bar}
           {body}
         </View>
@@ -111,7 +115,7 @@ export function FormSheetList<T>({
       // NOTE: the list is the sheet's scrolling child, so it carries the nested scrolling that
       // Android's sheet needs before it yields a drag (see `FormSheet`).
       nestedScrollEnabled
-      style={{ backgroundColor: theme.colors.background }}
+      style={{ backgroundColor: theme.colors.sheet }}
       contentContainerStyle={contentContainerStyle}
       // NOTE: a drag that scrolls the rows puts the keyboard away, and a tap on a row with the
       // keyboard up reaches the row on the first tap rather than only closing the keyboard.
@@ -144,17 +148,20 @@ const MVCP_OFF = { disabled: true } as const;
 function FormSheetBar({ title, doneLabel, onDone, doneDisabled = false }: FormSheetBarProps) {
   const { t } = useT();
   return (
-    <View style={styles.bar}>
-      <Txt variant="subhead" weight="600" accessibilityRole="header" numberOfLines={1} style={styles.flex}>
-        {title}
-      </Txt>
-      <Button
-        label={t(doneLabel ?? 'headerActions.done')}
-        onPress={onDone ?? closeSheet}
-        disabled={doneDisabled}
-        size="sm"
-      />
-    </View>
+    <>
+      <SheetHandle />
+      <View style={styles.bar}>
+        <Txt variant="subhead" weight="600" accessibilityRole="header" numberOfLines={1} style={styles.flex}>
+          {title}
+        </Txt>
+        <Button
+          label={t(doneLabel ?? 'headerActions.done')}
+          onPress={onDone ?? closeSheet}
+          disabled={doneDisabled}
+          size="sm"
+        />
+      </View>
+    </>
   );
 }
 

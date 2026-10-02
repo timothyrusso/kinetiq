@@ -10,7 +10,8 @@ const keyExtractor = (exercise: Exercise) => exercise.id;
 /**
  * The picker's sheet: its results as a `FlashList` under the search, so the list is the sheet's
  * only scroll container and scrolling back up always reaches the search. Every row shares one
- * `onSelect` and one `onInfo`, each taking the exercise's id.
+ * `onSelect` and one `onInfo`, each taking the exercise's id; `onSelect` adds or, on a removable
+ * included row, removes.
  */
 export function ExercisePickerList({
   title,
@@ -18,6 +19,7 @@ export function ExercisePickerList({
   rows,
   theme,
   isIncluded,
+  removable,
   dimmed,
   onSelect,
   onInfo,
@@ -30,6 +32,8 @@ export function ExercisePickerList({
   rows: readonly Exercise[];
   theme: Theme;
   isIncluded: (exerciseId: string) => boolean;
+  /** Whether a tap on an included row removes it; otherwise included rows are inert. */
+  removable: boolean;
   /**
    * Rows from the previous filter while the new one is read: dimmed, because they are about to be
    * wrong, and inert, so a tap cannot add the wrong exercise.
@@ -48,12 +52,13 @@ export function ExercisePickerList({
         exercise={item}
         theme={theme}
         included={isIncluded(item.id)}
+        removable={removable}
         dimmed={dimmed}
         onSelect={onSelect}
         onInfo={onInfo}
       />
     ),
-    [dimmed, isIncluded, onInfo, onSelect, theme],
+    [dimmed, isIncluded, onInfo, onSelect, removable, theme],
   );
 
   return (

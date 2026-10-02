@@ -1,5 +1,6 @@
 import { useIsFocused } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
+import type { BundledImage } from '@/features/core/design-system';
 import type { TKey } from '@/features/core/translations';
 import type { Exercise } from '@/features/exercises/domain/schemas/ExerciseSchema';
 import { isCatalogExerciseId } from '@/features/exercises/domain/utils/exerciseId';
@@ -28,7 +29,7 @@ export function useExerciseHeroLogic(exercise: Exercise) {
     [exercise.imageUrl, exercise.thumbnailUrl],
   );
   const end = useMemo(() => exerciseImageSource(exercise.imageEndUrl), [exercise.imageEndUrl]);
-  const [failedSource, setFailedSource] = useState<number | null>(null);
+  const [failedSource, setFailedSource] = useState<BundledImage | null>(null);
   const markFailed = useCallback(() => setFailedSource(start), [start]);
   const shown = start !== null && failedSource !== start ? start : null;
   const focused = useIsFocused();

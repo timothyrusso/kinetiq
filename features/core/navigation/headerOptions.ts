@@ -15,7 +15,7 @@ import { getFocusedRouteNameFromRoute, type ParamListBase, type RouteProp } from
 import { useCallback, useMemo } from 'react';
 import { Platform } from 'react-native';
 import { tabTitleKey } from '@/features/core/navigation/nav';
-import { radius, useAppTheme } from '@/features/core/theme';
+import { radius, type Theme, useAppTheme } from '@/features/core/theme';
 import { useT } from '@/features/core/translations';
 
 export function useHeaderOptions(): NativeStackNavigationOptions {
@@ -75,14 +75,22 @@ export function useLargeTitleOptions(): NativeStackNavigationOptions {
  * `[0.5, 1]` for pickers (a glance at half height, the whole list a drag away); `fit` for short
  * forms, which size to their content. The grabber is always shown, because a sheet you can
  * resize should say so. The radius is the app's largest, the same one the drawn sheets used.
+ *
+ * The page behind is dimmed at every detent, and the sheet is the theme's `sheet` surface rather
+ * than the page's background, so its top edge shows in both themes. Android's sheet takes its
+ * colour from this `contentStyle`, under the corner radius. Neither dim is tunable: iOS draws its
+ * own, and react-native-screens fixes Android's at black, 30 percent. A blur of the page behind
+ * is not offered by either presentation.
  */
-export function formSheet(detents: 'fit' | 'picker'): NativeStackNavigationOptions {
+export function formSheet(detents: 'fit' | 'picker', theme: Theme): NativeStackNavigationOptions {
   return {
     presentation: 'formSheet',
     // NOTE: `FormSheet` draws its own title bar: Android's form sheet has no native header.
     headerShown: false,
     sheetGrabberVisible: true,
     sheetAllowedDetents: detents === 'fit' ? 'fitToContents' : [0.5, 1],
+    sheetLargestUndimmedDetentIndex: 'none',
     sheetCornerRadius: radius.xxl,
+    contentStyle: { backgroundColor: theme.colors.sheet },
   };
 }

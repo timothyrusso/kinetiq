@@ -736,6 +736,7 @@ export const it: Copy = {
     pickerStartBody: 'Scrivi una parte del nome di un esercizio e i risultati compaiono mentre scrivi.',
     alreadyInRoutine: 'Già in questa scheda',
     addsToRoutine: 'Aggiunge questo esercizio alla scheda',
+    removesFromRoutine: 'Toglie questo esercizio dalla scheda',
     resetFailedBody:
       "Kinetiq non è comunque riuscita ad aprire l'archivio locale, e svuotarlo non è bastato. Reinstallare l'app è l'opzione che resta; i tuoi dati sono già stati rimossi.",
     stillStartingBody:
