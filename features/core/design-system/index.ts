@@ -58,11 +58,7 @@ export {
   FormSheetList,
 } from '@/features/core/design-system/layout/FormSheet';
 export { Gap } from '@/features/core/design-system/layout/Gap';
-export {
-  useScreenContentBottom,
-  useTabContentBottom,
-  useTransparentHeaderInset,
-} from '@/features/core/design-system/layout/insets';
+export { useScreenContentBottom, useTabContentBottom } from '@/features/core/design-system/layout/insets';
 export { KeyboardAvoid } from '@/features/core/design-system/layout/KeyboardAvoid';
 export { MetricGrid } from '@/features/core/design-system/layout/MetricGrid';
 export { OverlaySurface } from '@/features/core/design-system/layout/OverlaySurface';

@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { screenGutter, type Theme } from '@/features/core/theme';
+import { screenGutter, spacing, type Theme } from '@/features/core/theme';
 
 /**
  * Row lists get no wrapper padding of their own: `ListRow` and `ExerciseRow` carry their own
@@ -10,4 +10,5 @@ export const createStyles = (_theme: Theme) =>
   StyleSheet.create({
     section: { paddingHorizontal: screenGutter },
     flex: { flex: 1 },
+    status: { paddingTop: spacing.xl },
   });

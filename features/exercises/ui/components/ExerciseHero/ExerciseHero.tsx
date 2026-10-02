@@ -1,5 +1,4 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { View } from 'react-native';
 import {
   CrossFadeImage,
   ExerciseThumb,
@@ -18,24 +17,22 @@ import { createStyles } from '@/features/exercises/ui/components/ExerciseHero/Ex
 
 /**
  * The art is the header, not a section: a full-width 3:2 photo under a transparent bar, starting
- * where the bar ends. The start and end frames are stacked and the end one fades in and out over
+ * where the bar ends (the page's scroll view takes the system's inset for the bar, so the hero
+ * pads by nothing). The start and end frames are stacked and the end one fades in and out over
  * it, so the photo reads as the movement; the pair is one image to a screen reader, named once.
  * With no art, the slot keeps roughly the same proportions and holds a composition instead: the
  * initials plaque the rest of the app uses, blown up, with a caption that says which absence it is
  * (no photo bundled yet, none ever for a custom exercise, or a bundled one that failed to load).
  */
-export function ExerciseHero({ exercise, topInset }: { exercise: Exercise; topInset: number }) {
-  const { state, derived, effects } = useExerciseHeroLogic(exercise, topInset);
+export function ExerciseHero({ exercise }: { exercise: Exercise }) {
+  const { state, effects } = useExerciseHeroLogic(exercise);
   const { t } = useT();
   const theme = useAppTheme();
   const styles = useStyles(createStyles);
 
   if (state.start === null) {
     return (
-      <LinearGradient
-        colors={[theme.colors.surfaceRaised, theme.colors.canvas]}
-        style={[styles.noArt, derived.noArtStyle]}
-      >
+      <LinearGradient colors={[theme.colors.surfaceRaised, theme.colors.canvas]} style={styles.noArt}>
         <Txt variant="micro" tone="faint" uppercase tracking={1}>
           {exercise.category ?? t('exerciseDetail.fallbackTitle')}
         </Txt>
@@ -53,15 +50,13 @@ export function ExerciseHero({ exercise, topInset }: { exercise: Exercise; topIn
   }
 
   return (
-    <View style={derived.artStyle}>
-      <CrossFadeImage
-        start={state.start}
-        end={state.end}
-        active={state.animating}
-        label={t('exerciseDetail.photoOf', { name: exercise.name })}
-        style={styles.frame}
-        onError={effects.markFailed}
-      />
-    </View>
+    <CrossFadeImage
+      start={state.start}
+      end={state.end}
+      active={state.animating}
+      label={t('exerciseDetail.photoOf', { name: exercise.name })}
+      style={styles.frame}
+      onError={effects.markFailed}
+    />
   );
 }

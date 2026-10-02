@@ -18,34 +18,10 @@
  * the device's safe area, the floating pill when a workout is running, and one unit of
  * breathing room so the last element is not flush against the chrome.
  */
-import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useSessionInProgress } from '@/features/core/state';
 import { spacing } from '@/features/core/theme';
-
-/**
- * The navigator's own compact header, excluding the top safe area.
- *
- * Only needed by screens whose header is TRANSPARENT: with an opaque one the navigator
- * already pushes content below the bar and the screen pads by nothing. A transparent bar
- * floats over full-bleed media, so the screen has to know how far down its first readable
- * row belongs.
- *
- * These are the platform's numbers, not a design choice: 44pt is the UIKit compact
- * navigation bar, 56pt the Material top app bar. Kept here so the two media screens cannot
- * drift apart, which is the rule the rest of this file exists for.
- */
-const NATIVE_HEADER_HEIGHT = Platform.OS === 'ios' ? 44 : 56;
-
-/**
- * Where the first readable content belongs under a TRANSPARENT header: the status bar plus the
- * bar itself. Opaque headers need nothing, because the navigator lays content out below them.
- */
-export function useTransparentHeaderInset(): number {
-  const insets = useSafeAreaInsets();
-  return insets.top + NATIVE_HEADER_HEIGHT;
-}
 
 /**
  * Vertical room the floating "workout in progress" pill needs above the bar: its own height
