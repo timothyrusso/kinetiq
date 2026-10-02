@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react-native';
 import { resetAllStores } from '@/features/core/state';
-import { anotherEntry, aSession } from '@/features/workouts/__fixtures__/builders';
+import { anEntry, anotherEntry, aSession } from '@/features/workouts/__fixtures__/builders';
 import { sessionActions, sessionLifecycle } from '@/features/workouts/facades/useActiveSession';
 import { useRemoveSessionExercise } from '@/features/workouts/facades/useRemoveSessionExercise';
 import { useSessionStore } from '@/features/workouts/state/sessionStore';
@@ -68,5 +68,17 @@ describe('useRemoveSessionExercise', () => {
     expect(drawn).toBe('removable');
     expect(removed).toBe(false);
     expect(result.current.removalOf('ex:barbell-squat')).toBe('hasCompletedSet');
+  });
+
+  it('keeps the current exercise current when the picker removes one above it', async () => {
+    sessionLifecycle.restore(
+      aSession({ entries: [anotherEntry(), anEntry({ exerciseId: 'ex:pullups' })], activeIndex: 1 }),
+    );
+    const { result } = await renderHook(useRemoveSessionExercise);
+
+    await act(async () => void result.current.remove('ex:barbell-squat'));
+
+    expect(live()?.activeIndex).toBe(0);
+    expect(live()?.entries[0]?.exerciseId).toBe('ex:pullups');
   });
 });

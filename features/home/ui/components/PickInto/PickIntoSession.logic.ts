@@ -9,8 +9,12 @@ import { useActiveSession, useAddSessionExercise, useRemoveSessionExercise } fro
 
 const DESTINATION: PickDestination = 'workout';
 
-/** Why an exercise stays in the workout on a second tap, by the removal's kind. */
-const LOCKED_KEY: Partial<Record<string, TKey>> = {
+type RemovalKind = ReturnType<ReturnType<typeof useRemoveSessionExercise>['removalOf']>;
+
+/** Why an exercise stays in the workout on a second tap, by the removal's kind; `null` removes. */
+const LOCKED_KEY: Record<RemovalKind, TKey | null> = {
+  removable: null,
+  absent: null,
   hasCompletedSet: 'session.pickHasCompletedSet',
   lastExercise: 'session.pickLastExercise',
 };
@@ -35,7 +39,7 @@ export function usePickIntoSessionLogic() {
   const lockedReason = useCallback(
     (exerciseId: string) => {
       const key = LOCKED_KEY[removalOf(exerciseId)];
-      return key === undefined ? null : t(key);
+      return key === null ? null : t(key);
     },
     [removalOf, t],
   );

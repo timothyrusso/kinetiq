@@ -197,6 +197,27 @@ describe('removeExercise and addExercise', () => {
     expect(next.activeIndex).toBe(0);
   });
 
+  it('keeps the current exercise current when one above it is removed', () => {
+    const three = aSession({
+      entries: [anEntry(), anotherEntry(), anEntry({ exerciseId: 'ex:pullups' })],
+      activeIndex: 2,
+    });
+
+    const next = removeExercise(three, 0, NOW);
+
+    expect(next.entries[next.activeIndex]?.exerciseId).toBe('ex:pullups');
+    expect(next.activeIndex).toBe(1);
+  });
+
+  it('leaves the current exercise alone when one below it is removed', () => {
+    const three = aSession({
+      entries: [anEntry(), anotherEntry(), anEntry({ exerciseId: 'ex:pullups' })],
+      activeIndex: 1,
+    });
+
+    expect(removeExercise(three, 2, NOW).activeIndex).toBe(1);
+  });
+
   it('keeps a session’s last exercise', () => {
     const single = aSession({ entries: [anEntry()] });
 
