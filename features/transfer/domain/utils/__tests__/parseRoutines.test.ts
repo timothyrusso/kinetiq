@@ -14,6 +14,9 @@ const rules: ImportRules = {
   isExerciseId: id => id.startsWith('ex:') || id.startsWith('local:'),
 };
 
+const INDEX_LINK = 'https://raw.githubusercontent.com/timothyrusso/kinetiq/main/assets/catalog/index.json';
+const ROUTINE = '{"name": "Push", "items": [{"exerciseName": "Bench Press", "sets": 3, "reps": "8"}]}';
+
 const routinesOf = (raw: string) => {
   const parsed = parseRoutines(raw, rules);
   if (!parsed.ok) throw new Error(parsed.issue.key);
@@ -89,6 +92,31 @@ describe('parseRoutines', () => {
 
     expect(parsed.routines.map(r => r.name)).toEqual(['R1', 'R2']);
     expect(parsed.issues).toEqual([{ key: 'dataTransfer.issueTooMany', vars: { count: 2 } }]);
+  });
+
+  it('refuses the AI instructions, whose example runs into rules that carry the index link', () => {
+    const prompt = `Reply with this shape:\n\n${ROUTINE}\n\nRules:\n- The list is at ${INDEX_LINK}: each row is [id, name].`;
+
+    expect(parseRoutines(prompt, rules)).toEqual({ ok: false, issue: { key: 'dataTransfer.errorIsPrompt' } });
+  });
+
+  it('reads an answer that cites the index link in the prose around its JSON', () => {
+    const answer = `Ids from ${INDEX_LINK}.\n\n\`\`\`json\n${ROUTINE}\n\`\`\`\nAll from ${INDEX_LINK}.`;
+
+    expect(routinesOf(answer).routines.map(r => r.name)).toEqual(['Push']);
+  });
+
+  it('calls text that is not JSON and has no index link not JSON', () => {
+    expect(parseRoutines('Here is your plan: { push day }', rules)).toEqual({
+      ok: false,
+      issue: { key: 'dataTransfer.errorNotJson' },
+    });
+  });
+
+  it('ignores a wgerId from the retired catalog, leaving the item to be matched by its name', () => {
+    const { routines } = routinesOf('[{"items": [{"wgerId": 192, "exerciseName": "Bench Press"}]}]');
+
+    expect(routines[0]?.items[0]).toMatchObject({ exerciseId: null, exerciseName: 'Bench Press' });
   });
 
   it('fails on text past the byte limit before parsing it', () => {
