@@ -1,9 +1,12 @@
 import { memo } from 'react';
 import {
   Button,
+  ExerciseAbout,
+  type ExerciseAboutContent,
   FormFooter,
   FormSection,
   MetaLine,
+  NoteField,
   SetStepperRow,
   Stepper,
   TagRow,
@@ -13,7 +16,6 @@ import { useAppTheme } from '@/features/core/theme';
 import { useT } from '@/features/core/translations';
 import type { UnitSystem } from '@/features/core/utils';
 import type { ExerciseSnapshot } from '@/features/exercises';
-import { ExerciseAbout, NoteField } from '@/features/exercises/pages';
 import type { ItemChange } from '@/features/routines/domain/entities/ItemTarget';
 import type { RoutineItem } from '@/features/routines/domain/schemas/RoutineSchema';
 import { useItemEditorFormLogic } from '@/features/routines/ui/components/ItemEditorForm/ItemEditorForm.logic';
@@ -27,12 +29,15 @@ export const ItemEditorForm = memo(function ItemEditorForm({
   item,
   snapshot,
   units,
+  about,
   onChange,
   onRemove,
 }: {
   item: RoutineItem;
   snapshot: ExerciseSnapshot | null;
   units: UnitSystem;
+  /** The library's About block, read by the page. */
+  about: ExerciseAboutContent;
   onChange: (change: ItemChange) => void;
   onRemove?: () => void;
 }) {
@@ -97,11 +102,11 @@ export const ItemEditorForm = memo(function ItemEditorForm({
         ) : null}
       </FormSection>
 
-      <NoteField note={item.notes} onCommit={effects.setNotes} />
+      <NoteField note={item.notes} maxLength={derived.noteMax} onCommit={effects.setNotes} />
 
       <FormSection title={t('itemEditor.fromLibrary')}>
         {derived.libraryTags.length > 0 ? <TagRow tags={derived.libraryTags} theme={theme} /> : null}
-        <ExerciseAbout exerciseId={item.exerciseId} />
+        <ExerciseAbout about={about} />
       </FormSection>
 
       {onRemove === undefined ? null : (

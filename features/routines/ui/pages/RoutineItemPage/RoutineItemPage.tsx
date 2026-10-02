@@ -15,6 +15,7 @@ export function RoutineItemPage() {
           item={state.item}
           snapshot={state.snapshot}
           units={state.units}
+          about={state.about}
           onChange={effects.change}
           onRemove={effects.remove}
         />

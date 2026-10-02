@@ -1,19 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useT } from '@/features/core/translations';
-import { ITEM_BOUNDS } from '@/features/watch-bridge';
 
-/** The longest cue that still reads as one line on a row and a caption on the workout card. */
-const NOTE_MAX = ITEM_BOUNDS.notesLength;
-/** The counter appears from here: a warning near the limit rather than noise throughout. */
-const NOTE_COUNT_FROM = 160;
+/** The counter appears this close to the limit: a warning near it rather than noise throughout. */
+const NOTE_COUNT_WITHIN = 40;
 const NOTE_SAVE_DELAY_MS = 500;
 
 /**
  * The note's own text, committed once typing pauses and again when the field goes away, so a
  * refresh landing mid-word never moves the caret and nothing typed is lost to a swipe. A blank
- * note is committed as no note.
+ * note is committed as no note. `maxLength` is the caller's: the bound the stored note has.
  */
-export function useNoteFieldLogic(note: string | null, onCommit: (notes: string | null) => void) {
+export function useNoteFieldLogic(note: string | null, maxLength: number, onCommit: (notes: string | null) => void) {
   const { t } = useT();
   const [text, setText] = useState(note ?? '');
   const pending = useRef<string | null>(null);
@@ -42,9 +39,9 @@ export function useNoteFieldLogic(note: string | null, onCommit: (notes: string 
   );
 
   const hint =
-    text.length >= NOTE_COUNT_FROM
-      ? t('itemEditor.noteCount', { count: text.length, max: NOTE_MAX })
+    text.length >= maxLength - NOTE_COUNT_WITHIN
+      ? t('itemEditor.noteCount', { count: text.length, max: maxLength })
       : t('itemEditor.noteHint');
 
-  return { state: { text }, derived: { hint, maxLength: NOTE_MAX }, effects: { change } };
+  return { state: { text }, derived: { hint, maxLength }, effects: { change } };
 }

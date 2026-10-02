@@ -1,4 +1,5 @@
 import { act } from '@testing-library/react-native';
+import { routes } from '@/features/core/navigation';
 import { resetAllStores } from '@/features/core/state';
 import { routerFake } from '@/features/core/testing';
 import { aSession } from '@/features/workouts/__fixtures__/builders';
@@ -62,6 +63,16 @@ describe('useSessionExercisePageLogic', () => {
     expect(entry?.sets.map(set => set.reps)).toEqual([10, 8, 8]);
     expect(entry?.restSeconds).toBe(75);
     expect(result.current.state.entry).toBe(entry);
+    await done();
+  });
+
+  it('opens the exercise page over the sheet from the About block, whose photo moves while focused', async () => {
+    const { result, done } = await renderSheet({ entry: '1' });
+
+    await act(async () => result.current.derived.about.onOpen());
+
+    expect(result.current.derived.about.animating).toBe(true);
+    expect(routerFake.history).toEqual([{ verb: 'push', href: routes.exerciseDetail('ex:barbell-squat', true) }]);
     await done();
   });
 });

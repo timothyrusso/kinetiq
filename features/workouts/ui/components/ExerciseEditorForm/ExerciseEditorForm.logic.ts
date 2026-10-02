@@ -83,6 +83,7 @@ export function useExerciseEditorFormLogic(entry: StrengthEntry, units: UnitSyst
       weightMax: units === 'imperial' ? 1000 : ITEM_BOUNDS.weightKg.max,
       unit: weightUnit(units),
       zeroRest: entry.restSeconds === 0,
+      noteMax: ITEM_BOUNDS.notesLength,
     },
     effects: { addSet, removeSet: onRemoveSet, setReps, setWeight, setRpe, setRest, setNotes },
   };

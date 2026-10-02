@@ -97,6 +97,7 @@ export function useItemEditorFormLogic(
       weightMax: units === 'imperial' ? 1000 : ITEM_BOUNDS.weightKg.max,
       unit: weightUnit(units),
       zeroRest: item.restSeconds === 0,
+      noteMax: ITEM_BOUNDS.notesLength,
     },
     effects: { addSet, removeSet: removeSetAt, setReps, setWeight, setRpe, setRest, setNotes },
   };

@@ -1,8 +1,9 @@
-import { useLocalSearchParams } from 'expo-router';
-import { useMemo, useRef } from 'react';
+import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
+import { useCallback, useMemo, useRef } from 'react';
 import type { View } from 'react-native';
-import { exerciseLibraryTags, type Tag } from '@/features/core/design-system';
-import { useExercise } from '@/features/exercises';
+import { type ExerciseAboutContent, exerciseLibraryTags, type Tag } from '@/features/core/design-system';
+import { routes } from '@/features/core/navigation';
+import { useExercise, useExerciseAbout } from '@/features/exercises';
 import { useSettings } from '@/features/settings';
 import { useExerciseEditor } from '@/features/workouts/hooks/useExerciseEditor';
 
@@ -19,7 +20,9 @@ function positionOf(param: string | undefined): number | null {
  * The exercise the route names, by position in the workout in progress, and its writers. `set`
  * names the set that was tapped, highlighted and scrolled to; the exercise's name opens the sheet
  * with none. The library's tags come from the exercise as the library knows it, the same source
- * the About block reads, since a session keeps no snapshot of its own.
+ * the About block reads, since a session keeps no snapshot of its own. The About block's photo
+ * moves while this sheet is the focused screen, and its link pushes the exercise page over the
+ * sheet, so back returns to it.
  */
 export function useSessionExercisePageLogic() {
   const params = useLocalSearchParams<{ entry: string; set?: string }>();
@@ -27,7 +30,17 @@ export function useSessionExercisePageLogic() {
   const highlightedSet = positionOf(params.set);
   const units = useSettings(settings => settings.unitSystem);
   const { entry, changeSet, addSet, removeSet, changeEntry } = useExerciseEditor(entryIndex);
-  const { exercise } = useExercise(entry?.exerciseId ?? null);
+  const exerciseId = entry?.exerciseId ?? null;
+  const { exercise } = useExercise(exerciseId);
+  const aboutContent = useExerciseAbout(exerciseId);
+  const focused = useIsFocused();
+  const openExercise = useCallback(() => {
+    if (exerciseId !== null) router.push(routes.exerciseDetail(exerciseId, true));
+  }, [exerciseId]);
+  const about = useMemo<ExerciseAboutContent>(
+    () => ({ ...aboutContent, animating: focused, onOpen: openExercise }),
+    [aboutContent, focused, openExercise],
+  );
   const tags = useMemo<readonly Tag[]>(() => (exercise === null ? NO_TAGS : exerciseLibraryTags(exercise)), [exercise]);
   const highlightRef = useRef<View>(null);
   // NOTE: the first set is already at the top of the sheet; scrolling to it would only hide the
@@ -36,7 +49,7 @@ export function useSessionExercisePageLogic() {
 
   return {
     state: { entry, units, highlightedSet },
-    derived: { title: entry?.exerciseName ?? '', tags, highlightRef, scrollTo },
+    derived: { title: entry?.exerciseName ?? '', tags, about, highlightRef, scrollTo },
     effects: { changeSet, addSet, removeSet, changeEntry },
   };
 }

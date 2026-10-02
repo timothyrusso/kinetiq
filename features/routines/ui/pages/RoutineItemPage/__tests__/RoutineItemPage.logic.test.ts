@@ -1,4 +1,5 @@
 import { act, waitFor } from '@testing-library/react-native';
+import { routes } from '@/features/core/navigation';
 import { routerFake } from '@/features/core/testing';
 import { anExercise } from '@/features/routines/__fixtures__/builders';
 import { uniformSets } from '@/features/routines/domain/utils/itemTargets';
@@ -95,6 +96,17 @@ describe('useRoutineItemPageLogic on the builder’s draft', () => {
 
     expect(result.current.draft.draft.items).toEqual([]);
     expect(routerFake.history).toEqual([{ verb: 'back', href: null }]);
+    await done();
+  });
+
+  it('opens the exercise page over the sheet from the About block, whose photo moves while focused', async () => {
+    const { result, done } = await renderSavedItem();
+    const exerciseId = result.current.state.item?.exerciseId ?? '';
+
+    await act(async () => result.current.state.about.onOpen());
+
+    expect(result.current.state.about.animating).toBe(true);
+    expect(routerFake.history).toEqual([{ verb: 'push', href: routes.exerciseDetail(exerciseId, true) }]);
     await done();
   });
 });

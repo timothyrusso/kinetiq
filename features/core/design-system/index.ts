@@ -14,6 +14,7 @@ export {
   type ContentUnavailableAction,
 } from '@/features/core/design-system/controls/ContentUnavailable';
 export { IconButton } from '@/features/core/design-system/controls/IconButton';
+export { NoteField } from '@/features/core/design-system/controls/NoteField/NoteField';
 export { SegmentedControl } from '@/features/core/design-system/controls/SegmentedControl';
 export {
   SettingsList,
@@ -28,6 +29,10 @@ export { ACTIVITY_ICON } from '@/features/core/design-system/display/activityIco
 export { Badge } from '@/features/core/design-system/display/Badge';
 export type { BundledImage } from '@/features/core/design-system/display/BundledPhoto';
 export { CrossFadeImage } from '@/features/core/design-system/display/CrossFadeImage';
+export {
+  ExerciseAbout,
+  type ExerciseAboutContent,
+} from '@/features/core/design-system/display/ExerciseAbout/ExerciseAbout';
 export { ExerciseRow } from '@/features/core/design-system/display/ExerciseRow';
 export { ExerciseThumb } from '@/features/core/design-system/display/ExerciseThumb';
 export { exerciseLibraryTags, exerciseTags } from '@/features/core/design-system/display/exerciseTags';

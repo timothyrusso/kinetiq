@@ -2,8 +2,11 @@ import { memo, type Ref } from 'react';
 import type { View } from 'react-native';
 import {
   Button,
+  ExerciseAbout,
+  type ExerciseAboutContent,
   FormSection,
   MetaLine,
+  NoteField,
   SetStepperRow,
   Stepper,
   type Tag,
@@ -13,7 +16,6 @@ import {
 import { useAppTheme } from '@/features/core/theme';
 import { useT } from '@/features/core/translations';
 import type { UnitSystem } from '@/features/core/utils';
-import { ExerciseAbout, NoteField } from '@/features/exercises/pages';
 import type { StrengthEntry } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 import {
   type ExerciseEditorWriters,
@@ -32,6 +34,7 @@ export const ExerciseEditorForm = memo(function ExerciseEditorForm({
   entry,
   units,
   tags,
+  about,
   highlightedSet,
   highlightRef,
   ...writers
@@ -40,6 +43,8 @@ export const ExerciseEditorForm = memo(function ExerciseEditorForm({
   units: UnitSystem;
   /** The library's tags for the exercise, read by the page. */
   tags: readonly Tag[];
+  /** The library's About block, read by the page. */
+  about: ExerciseAboutContent;
   highlightedSet: number | null;
   highlightRef: Ref<View>;
 }) {
@@ -103,11 +108,11 @@ export const ExerciseEditorForm = memo(function ExerciseEditorForm({
         </Txt>
       </FormSection>
 
-      <NoteField note={entry.notes} onCommit={effects.setNotes} />
+      <NoteField note={entry.notes} maxLength={derived.noteMax} onCommit={effects.setNotes} />
 
       <FormSection title={t('itemEditor.fromLibrary')}>
         {tags.length > 0 ? <TagRow tags={tags} theme={theme} /> : null}
-        <ExerciseAbout exerciseId={entry.exerciseId} />
+        <ExerciseAbout about={about} />
       </FormSection>
     </>
   );

@@ -16,6 +16,8 @@ export { isCatalogExerciseId, isLocalExerciseId } from '@/features/exercises/dom
 export { snapshotOf } from '@/features/exercises/domain/utils/snapshotOf';
 export { useCatalogLanguage } from '@/features/exercises/facades/useCatalogLanguage';
 export { useExercise } from '@/features/exercises/facades/useExercise';
+/** The About block's content, which both exercise editors draw with the design system's `ExerciseAbout`. */
+export { useExerciseAbout } from '@/features/exercises/facades/useExerciseAbout';
 /** A stored image path as the bundled image it names, for the rows that draw an exercise. */
 export { exerciseImageSource } from '@/features/exercises/mappers/exerciseImageSource';
 export { snapshotInLanguage } from '@/features/exercises/mappers/snapshotInLanguage';

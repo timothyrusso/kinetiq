@@ -1,14 +1,23 @@
-import { TextInput } from '@/features/core/design-system';
+import { useNoteFieldLogic } from '@/features/core/design-system/controls/NoteField/NoteField.logic';
+import { TextInput } from '@/features/core/design-system/controls/TextInput';
 import { useT } from '@/features/core/translations';
-import { useNoteFieldLogic } from '@/features/exercises/ui/components/NoteField/NoteField.logic';
 
 /**
  * The exercise's note, the cue shown on it mid-workout. Unlike the steppers it does not write on
  * every change: a saved routine's write refreshes the screen, and a refresh mid-word would move
  * the caret.
  */
-export function NoteField({ note, onCommit }: { note: string | null; onCommit: (notes: string | null) => void }) {
-  const { state, derived, effects } = useNoteFieldLogic(note, onCommit);
+export function NoteField({
+  note,
+  maxLength,
+  onCommit,
+}: {
+  note: string | null;
+  /** The longest note the caller stores. */
+  maxLength: number;
+  onCommit: (notes: string | null) => void;
+}) {
+  const { state, derived, effects } = useNoteFieldLogic(note, maxLength, onCommit);
   const { t } = useT();
   return (
     <TextInput
