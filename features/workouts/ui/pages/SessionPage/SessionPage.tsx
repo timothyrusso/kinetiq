@@ -209,7 +209,7 @@ export function SessionPage() {
                   onAddSet={effects.addSet}
                   onSkip={effects.skip}
                   onRequestRemove={effects.requestRemove}
-                  onFocus={effects.focus}
+                  onOpen={effects.openExercise}
                 />
               ))}
             </View>

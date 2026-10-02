@@ -2,7 +2,7 @@ import type { AppLifecycle } from '@/features/workouts/domain/entities/AppLifecy
 import type { StrengthEntry } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 import type { WorkoutSession } from '@/features/workouts/domain/schemas/WorkoutSessionSchema';
 import { isInProgress } from '@/features/workouts/domain/utils/sessionStatus';
-import type { SetPatch } from '@/features/workouts/domain/utils/sessionTransitions';
+import type { EntryPatch, SetPatch } from '@/features/workouts/domain/utils/sessionTransitions';
 import { useSessionStore } from '@/features/workouts/state/sessionStore';
 
 const store = () => useSessionStore.getState();
@@ -23,6 +23,7 @@ export const sessionActions = {
   toggleSet: (entryIndex: number, setIndex: number) => store().toggleSet(entryIndex, setIndex, Date.now()),
   updateSet: (entryIndex: number, setIndex: number, patch: SetPatch) =>
     store().updateSet(entryIndex, setIndex, patch, Date.now()),
+  updateEntry: (entryIndex: number, patch: EntryPatch) => store().updateEntry(entryIndex, patch, Date.now()),
   addSet: (entryIndex: number) => store().addSet(entryIndex, Date.now()),
   removeSet: (entryIndex: number, setIndex: number) => store().removeSet(entryIndex, setIndex, Date.now()),
   skipExercise: (entryIndex: number) => store().skipExercise(entryIndex, Date.now()),

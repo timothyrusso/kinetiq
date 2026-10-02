@@ -311,8 +311,6 @@ export const en = {
     weekOf: 'Week of {date}',
     elapsedA11y: 'Elapsed {time}',
     setsDone: '{done} of {planned} {word} done',
-    repCount_one: '{count} rep',
-    repCount_other: '{count} reps',
   },
   // NOTE: --- end group-c ---
   session: {
@@ -426,7 +424,7 @@ export const en = {
   setRow: {
     bodyweight: 'bodyweight',
     setRepsAt: 'Set {n}: {reps} reps at {weight}',
-    opensEditor: 'Opens the set editor.',
+    opensEditor: 'Opens the exercise editor on this set.',
     reps: 'Reps',
     weightIn: 'Weight ({unit})',
     setWeight: 'Set {n} weight: {weight}',
@@ -434,19 +432,14 @@ export const en = {
     markNotDone: 'Mark set {n} not done',
     completeSet: 'Complete set {n}',
     blockA11y: '{name}. {done} of {total} sets done.',
-    isCurrent: 'This is the current exercise.',
-    makeCurrent: 'Makes it the current exercise.',
+    opensCurrentExercise: 'This is the current exercise. Opens its editor.',
+    opensExercise: 'Makes it the current exercise and opens its editor.',
     addSet: 'Add a set',
     skip: 'Skip',
     skipNamed: 'Skip {name}',
     remove: 'Remove',
     removeNamed: 'Remove {name} from this workout',
-    thisSet: 'This set',
-    weightInUnit: 'Weight in {unit}',
-    bodyweightNote: 'Bodyweight: no external load recorded.',
-    rpe: 'RPE',
     rpeNote: 'Effort out of 10. Zero means you did not note it.',
-    removeThisSet: 'Remove this set',
     restLess: 'Rest fifteen seconds less',
     restMore: 'Rest fifteen seconds longer',
     skipRest: 'Skip the rest',
@@ -562,6 +555,10 @@ export const en = {
     notePlaceholder: 'A cue for mid-set: elbows tucked, pause at the chest',
     noteHint: 'Shown on this exercise during the workout.',
     noteCount: '{count} of {max}',
+  },
+
+  exerciseEditor: {
+    restAppliesNext: 'Used from the next set you tick. A rest already running keeps its time.',
   },
 
   trainingPrefs: {

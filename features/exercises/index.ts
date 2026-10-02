@@ -15,6 +15,7 @@ export { ExerciseCatalog } from '@/features/exercises/domain/services/ExerciseCa
 export { isCatalogExerciseId, isLocalExerciseId } from '@/features/exercises/domain/utils/exerciseId';
 export { snapshotOf } from '@/features/exercises/domain/utils/snapshotOf';
 export { useCatalogLanguage } from '@/features/exercises/facades/useCatalogLanguage';
+export { useExercise } from '@/features/exercises/facades/useExercise';
 /** A stored image path as the bundled image it names, for the rows that draw an exercise. */
 export { exerciseImageSource } from '@/features/exercises/mappers/exerciseImageSource';
 export { snapshotInLanguage } from '@/features/exercises/mappers/snapshotInLanguage';

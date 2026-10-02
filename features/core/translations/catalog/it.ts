@@ -318,8 +318,6 @@ export const it: Copy = {
     weekOf: 'Settimana del {date}',
     elapsedA11y: 'Tempo trascorso {time}',
     setsDone: '{done} di {planned} {word} completate',
-    repCount_one: '{count} ripetizione',
-    repCount_other: '{count} ripetizioni',
   },
   // NOTE: --- end group-c ---
   session: {
@@ -436,7 +434,7 @@ export const it: Copy = {
   setRow: {
     bodyweight: 'corpo libero',
     setRepsAt: 'Serie {n}: {reps} ripetizioni a {weight}',
-    opensEditor: "Apre l'editor della serie.",
+    opensEditor: "Apre l'editor dell'esercizio su questa serie.",
     reps: 'Rip',
     weightIn: 'Peso ({unit})',
     setWeight: 'Peso serie {n}: {weight}',
@@ -444,19 +442,14 @@ export const it: Copy = {
     markNotDone: 'Segna la serie {n} come non fatta',
     completeSet: 'Completa la serie {n}',
     blockA11y: '{name}. {done} di {total} serie fatte.',
-    isCurrent: "Questo è l'esercizio corrente.",
-    makeCurrent: "Lo rende l'esercizio corrente.",
+    opensCurrentExercise: "Questo è l'esercizio corrente. Apre il suo editor.",
+    opensExercise: "Lo rende l'esercizio corrente e apre il suo editor.",
     addSet: 'Aggiungi una serie',
     skip: 'Salta',
     skipNamed: 'Salta {name}',
     remove: 'Rimuovi',
     removeNamed: 'Rimuovi {name} da questo allenamento',
-    thisSet: 'Questa serie',
-    weightInUnit: 'Peso in {unit}',
-    bodyweightNote: 'Corpo libero: nessun carico esterno registrato.',
-    rpe: 'RPE',
     rpeNote: "Sforzo su 10. Zero significa che non l'hai annotato.",
-    removeThisSet: 'Rimuovi questa serie',
     restLess: 'Quindici secondi di recupero in meno',
     restMore: 'Quindici secondi di recupero in più',
     skipRest: 'Salta il recupero',
@@ -570,6 +563,10 @@ export const it: Copy = {
     notePlaceholder: 'Un suggerimento per la serie: gomiti stretti, pausa sul petto',
     noteHint: 'Compare su questo esercizio durante l’allenamento.',
     noteCount: '{count} di {max}',
+  },
+
+  exerciseEditor: {
+    restAppliesNext: 'Vale dalla prossima serie che spunti. Un recupero già in corso mantiene il suo tempo.',
   },
 
   trainingPrefs: {

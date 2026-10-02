@@ -5,6 +5,9 @@ import { withEstimated1rm } from '@/features/workouts/domain/utils/workoutMath';
 /** The fields a set editor may change. */
 export type SetPatch = Partial<Pick<StrengthSet, 'reps' | 'weightKg' | 'rpe'>>;
 
+/** The fields of an exercise the exercise editor may change besides its sets. */
+export type EntryPatch = Partial<Pick<StrengthEntry, 'restSeconds' | 'notes'>>;
+
 /** The shortest rest a timer can hold; less than this is no rest, which is `clearRest`. */
 const MIN_REST_SECONDS = 5;
 
@@ -92,6 +95,22 @@ export function updateSet(
   if (!entry) return session;
   const sets = entry.sets.map((set, index) => (index === setIndex ? withEstimated1rm({ ...set, ...patch }) : set));
   return withEntrySets(session, entryIndex, sets, now);
+}
+
+/**
+ * Changes the exercise's rest or note. The rest is the one the next ticked set starts: a rest
+ * already running keeps its deadline, which is the session's, not the entry's.
+ */
+export function updateEntry(
+  session: WorkoutSession,
+  entryIndex: number,
+  patch: EntryPatch,
+  now: number,
+): WorkoutSession {
+  const entry = session.entries[entryIndex];
+  if (!entry) return session;
+  const entries = session.entries.map((row, index) => (index === entryIndex ? { ...row, ...patch } : row));
+  return touch(session, { entries }, now);
 }
 
 /** Appends a set with the previous set's targets: the common case. */

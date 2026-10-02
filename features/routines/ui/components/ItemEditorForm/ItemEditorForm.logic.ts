@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { exerciseTags, type Tag } from '@/features/core/design-system';
+import { exerciseLibraryTags, type Tag } from '@/features/core/design-system';
 import {
   type UnitSystem,
   weightDisplayValue,
@@ -38,13 +38,7 @@ export function useItemEditorFormLogic(
 ) {
   const step = weightStep(units);
   const meta = useMemo(() => itemMeta(item, units), [item, units]);
-  const libraryTags = useMemo<Tag[]>(
-    () =>
-      snapshot === null
-        ? []
-        : [...exerciseTags(snapshot), ...snapshot.equipment.map(gear => ({ key: `e:${gear}`, label: gear }))],
-    [snapshot],
-  );
+  const libraryTags = useMemo<Tag[]>(() => (snapshot === null ? [] : exerciseLibraryTags(snapshot)), [snapshot]);
 
   const { sets } = item;
   const rows = useMemo<SetRowValues[]>(

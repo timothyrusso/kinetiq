@@ -16,11 +16,12 @@ import { SetRow } from '@/features/workouts/ui/components/SetRow/SetRow';
  * between sets: what they did last time and how many sets are banked; everything else is on the
  * exercise's own screen, and repeating it would push the set rows below the fold. The current
  * exercise is marked by the dot before its name, not by the card: an accent frame read as a
- * selection or an error. Tapping the head makes it current without unticking anything.
+ * selection or an error. Tapping the head, or a set's reps or weight, opens the exercise's sheet
+ * and makes it current without unticking anything.
  *
  * A cue from the routine shows as plain text and is not editable here: a keyboard over a set list
- * is the worst thing this app could show someone holding a barbell. Weight and reps change with
- * steppers, in the set editor. Sets are keyed by position: "set 3" is the third one, and a key
+ * is the worst thing this app could show someone holding a barbell. The sets, the rest and the
+ * cue change in the exercise's sheet. Sets are keyed by position: "set 3" is the third one, and a key
  * that followed content would remount the row and replay its entrance on every rep change.
  */
 export const ExerciseBlock = memo(function ExerciseBlock(
@@ -41,14 +42,14 @@ export const ExerciseBlock = memo(function ExerciseBlock(
   return (
     <View style={styles.block}>
       <Pressable
-        onPress={effects.focus}
+        onPress={effects.open}
         accessibilityRole="button"
         accessibilityLabel={t('setRow.blockA11y', {
           name: entry.exerciseName,
           done: derived.done,
           total: entry.sets.length,
         })}
-        accessibilityHint={t(isCurrent ? 'setRow.isCurrent' : 'setRow.makeCurrent')}
+        accessibilityHint={t(isCurrent ? 'setRow.opensCurrentExercise' : 'setRow.opensExercise')}
         style={derived.headStyle}
       >
         <Row gap="md" align="center">
