@@ -242,6 +242,7 @@ export const en = {
     similar: 'Similar exercises',
     similarEyebrow: 'Same main muscle',
     noImage: 'No photo for this exercise yet',
+    noBundledImage: 'No photo for this exercise',
     imageUnavailable: 'The photo could not be shown',
     photoOf: 'Photos of {name}',
     offlineCopy: 'Offline copy saved on this device',

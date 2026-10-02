@@ -248,6 +248,7 @@ export const it: Copy = {
     similar: 'Esercizi simili',
     similarEyebrow: 'Stesso muscolo principale',
     noImage: 'Ancora nessuna foto per questo esercizio',
+    noBundledImage: 'Nessuna foto per questo esercizio',
     imageUnavailable: 'Non è stato possibile mostrare la foto',
     photoOf: 'Foto di {name}',
     offlineCopy: 'Copia offline salvata su questo dispositivo',

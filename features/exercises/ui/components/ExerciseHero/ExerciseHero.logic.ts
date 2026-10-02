@@ -1,11 +1,23 @@
 import { useIsFocused } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { useCrossFade } from '@/features/core/design-system';
+import type { TKey } from '@/features/core/translations';
 import type { Exercise } from '@/features/exercises/domain/schemas/ExerciseSchema';
+import { isCatalogExerciseId } from '@/features/exercises/domain/utils/exerciseId';
 import { exerciseImageSource } from '@/features/exercises/mappers/exerciseImageSource';
 
 /** The no-art composition's height: close to a 3:2 photo across a phone, so content below does not jump. */
 const NO_ART_HEIGHT = 270;
+
+/**
+ * The caption under the no-art composition. A bundled photo that failed to load says so; a
+ * catalog exercise without one may get it in a later dataset, so it says "yet"; a custom
+ * exercise, or one the catalog no longer has, never gets a bundled photo, so it does not.
+ */
+export function noArtCaptionKey(id: string, hasArt: boolean): TKey {
+  if (hasArt) return 'exerciseDetail.imageUnavailable';
+  return isCatalogExerciseId(id) ? 'exerciseDetail.noImage' : 'exerciseDetail.noBundledImage';
+}
 
 /**
  * The hero's two bundled photos, the cross-fade between them and whether the start frame failed
@@ -29,7 +41,7 @@ export function useExerciseHeroLogic(exercise: Exercise, topInset: number) {
   const noArtStyle = useMemo(() => ({ height: topInset + NO_ART_HEIGHT, paddingTop: topInset }), [topInset]);
 
   return {
-    state: { start: shown, end: shown === null ? null : end, hasArt: start !== null },
+    state: { start: shown, end: shown === null ? null : end, caption: noArtCaptionKey(exercise.id, start !== null) },
     derived: { artStyle, noArtStyle, fade },
     effects: { markFailed },
   };
