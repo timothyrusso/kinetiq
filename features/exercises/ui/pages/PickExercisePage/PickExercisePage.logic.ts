@@ -11,6 +11,9 @@ import { useExerciseTaxonomy } from '@/features/exercises/facades/useExerciseTax
 /** One empty array, so the list's data keeps its identity while an error is shown. */
 const NO_ROWS: readonly Exercise[] = [];
 
+/** No included row is held back from removal. */
+const NOT_LOCKED = (_exerciseId: string): string | null => null;
+
 /** Where the picked exercises go, which names the list the footer counts against. */
 export type PickDestination = 'routine' | 'workout';
 
@@ -30,10 +33,14 @@ export interface PickExercisePageProps {
   readonly isIncluded: (exerciseId: string) => boolean;
   /**
    * Removes an included exercise, so a second tap undoes a mistaken add without leaving the
-   * sheet. A routine passes it; the live workout does not, because removing there could drop
-   * logged sets, and its included rows stay inert.
+   * sheet. Without it, included rows are inert.
    */
   readonly onUnpick?: (exerciseId: string) => void;
+  /**
+   * Why an included exercise cannot be removed, or `null` when it can: the live workout keeps an
+   * exercise with a logged set, and its last exercise. A row with a reason is inert and shows it.
+   */
+  readonly lockedReason?: (exerciseId: string) => string | null;
   /** Why the last pick did not land, shown above the results. */
   readonly error: string | null;
   readonly destination: PickDestination;
@@ -51,7 +58,13 @@ export interface PickExercisePageProps {
  * rendering. An explicit Load more widens the read by one catalog page and gives it a visible
  * state, which `onEndReached` cannot at the end of a short list.
  */
-export function usePickExercisePageLogic({ onPick, onUnpick, isIncluded, destination }: PickExercisePageProps) {
+export function usePickExercisePageLogic({
+  onPick,
+  onUnpick,
+  lockedReason,
+  isIncluded,
+  destination,
+}: PickExercisePageProps) {
   const { t } = useT();
   const [query, setQuery] = useState('');
   const [muscleId, setMuscleId] = useState<string | null>(null);
@@ -76,13 +89,13 @@ export function usePickExercisePageLogic({ onPick, onUnpick, isIncluded, destina
     (exerciseId: string) => {
       if (isPlaceholder) return;
       if (isIncluded(exerciseId)) {
-        onUnpick?.(exerciseId);
+        if ((lockedReason?.(exerciseId) ?? null) === null) onUnpick?.(exerciseId);
         return;
       }
       const exercise = items.find(item => item.id === exerciseId);
       if (exercise !== undefined) onPick(exercise);
     },
-    [isIncluded, isPlaceholder, items, onPick, onUnpick],
+    [isIncluded, isPlaceholder, items, lockedReason, onPick, onUnpick],
   );
   // NOTE: pushed over the sheet, which stays mounted under it, so back returns to the same search.
   const openDetail = useCallback((exerciseId: string) => router.push(routes.exerciseDetail(exerciseId, true)), []);
@@ -134,6 +147,7 @@ export function usePickExercisePageLogic({ onPick, onUnpick, isIncluded, destina
       loadMore: loadNextPage,
       retry,
       isIncluded,
+      lockedReason: lockedReason ?? NOT_LOCKED,
     },
   };
 }

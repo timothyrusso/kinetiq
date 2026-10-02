@@ -314,6 +314,8 @@ export const en = {
   },
   // NOTE: --- end group-c ---
   session: {
+    pickHasCompletedSet: 'Has a completed set, so it stays. Remove it from the workout screen.',
+    pickLastExercise: 'The only exercise in this workout, so it stays.',
     thisSet: 'This set',
     addNotChanged:
       'That exercise did not go in: it is either already in this workout, or the workout has ended. Nothing was changed.',
@@ -733,6 +735,9 @@ export const en = {
     alreadyInRoutine: 'Already in this routine',
     addsToRoutine: 'Adds this exercise to the routine',
     removesFromRoutine: 'Removes this exercise from the routine',
+    alreadyInWorkout: 'Already in this workout',
+    addsToWorkout: 'Adds this exercise to the workout',
+    removesFromWorkout: 'Removes this exercise from the workout',
     resetFailedBody:
       'Kinetiq still could not open local storage, and clearing it did not help. Reinstalling the app is the remaining option; your data has already been removed.',
     stillStartingBody:

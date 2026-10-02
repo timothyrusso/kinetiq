@@ -42,5 +42,6 @@ export {
 export { useActivities, useDeleteActivity } from '@/features/workouts/facades/useActivities';
 export { useAddSessionExercise } from '@/features/workouts/facades/useAddSessionExercise';
 export { useTrainingHeatmap, useTrainingSummary } from '@/features/workouts/facades/useProgress';
+export { useRemoveSessionExercise } from '@/features/workouts/facades/useRemoveSessionExercise';
 export { useStartSession } from '@/features/workouts/facades/useStartSession';
 export { invalidateAfterWatchWorkouts } from '@/features/workouts/facades/workoutQueryKeys';

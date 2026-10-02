@@ -4,6 +4,7 @@ import type { Theme } from '@/features/core/theme';
 import type { TKey } from '@/features/core/translations';
 import type { Exercise } from '@/features/exercises/domain/schemas/ExerciseSchema';
 import { ExercisePickerRow } from '@/features/exercises/ui/components/ExercisePickerRow/ExercisePickerRow';
+import type { PickDestination } from '@/features/exercises/ui/pages/PickExercisePage/PickExercisePage.logic';
 
 const keyExtractor = (exercise: Exercise) => exercise.id;
 
@@ -19,7 +20,9 @@ export function ExercisePickerList({
   rows,
   theme,
   isIncluded,
+  lockedReason,
   removable,
+  destination,
   dimmed,
   onSelect,
   onInfo,
@@ -32,8 +35,11 @@ export function ExercisePickerList({
   rows: readonly Exercise[];
   theme: Theme;
   isIncluded: (exerciseId: string) => boolean;
+  /** Why an included row cannot be removed, or `null`; such a row is inert and says why. */
+  lockedReason: (exerciseId: string) => string | null;
   /** Whether a tap on an included row removes it; otherwise included rows are inert. */
   removable: boolean;
+  destination: PickDestination;
   /**
    * Rows from the previous filter while the new one is read: dimmed, because they are about to be
    * wrong, and inert, so a tap cannot add the wrong exercise.
@@ -47,18 +53,23 @@ export function ExercisePickerList({
   empty: ReactElement;
 }) {
   const renderItem = useCallback(
-    ({ item }: { item: Exercise }) => (
-      <ExercisePickerRow
-        exercise={item}
-        theme={theme}
-        included={isIncluded(item.id)}
-        removable={removable}
-        dimmed={dimmed}
-        onSelect={onSelect}
-        onInfo={onInfo}
-      />
-    ),
-    [dimmed, isIncluded, onInfo, onSelect, removable, theme],
+    ({ item }: { item: Exercise }) => {
+      const included = isIncluded(item.id);
+      return (
+        <ExercisePickerRow
+          exercise={item}
+          theme={theme}
+          included={included}
+          removable={removable}
+          locked={included ? lockedReason(item.id) : null}
+          destination={destination}
+          dimmed={dimmed}
+          onSelect={onSelect}
+          onInfo={onInfo}
+        />
+      );
+    },
+    [destination, dimmed, isIncluded, lockedReason, onInfo, onSelect, removable, theme],
   );
 
   return (

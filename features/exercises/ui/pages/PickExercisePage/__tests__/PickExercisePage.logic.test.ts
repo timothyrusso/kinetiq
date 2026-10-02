@@ -18,17 +18,21 @@ const renderPicker = (
     included = [SQUAT.id],
     destination = 'routine',
     unpicked,
+    locked,
   }: {
     exercises?: Exercise[];
     included?: string[];
     destination?: PickExercisePageProps['destination'];
-    /** Where removals land; left out, the picker is add-only, as for the live workout. */
+    /** Where removals land; left out, the picker is add-only. */
     unpicked?: string[];
+    /** The included rows held back from removal, with their reasons. */
+    locked?: Record<string, string>;
   } = {},
 ) => {
   const props: PickExercisePageProps = {
     onPick: exercise => void picked.push(exercise),
     ...(unpicked === undefined ? {} : { onUnpick: (id: string) => void unpicked.push(id) }),
+    ...(locked === undefined ? {} : { lockedReason: (id: string) => locked[id] ?? null }),
     isIncluded: id => included.includes(id),
     error: null,
     destination,
@@ -121,6 +125,21 @@ describe('usePickExercisePageLogic', () => {
 
     expect(picked).toEqual([]);
     expect(result.current.derived.removable).toBe(false);
+    await done();
+  });
+
+  it('leaves an included row alone when the destination holds it back, and hands on why', async () => {
+    const picked: Exercise[] = [];
+    const unpicked: string[] = [];
+    const { result, done } = await renderPicker(picked, { unpicked, locked: { [SQUAT.id]: 'Has a logged set' } });
+    await waitFor(() => expect(result.current.state.rows).toHaveLength(50));
+
+    await act(async () => result.current.effects.select(SQUAT.id));
+
+    expect(unpicked).toEqual([]);
+    expect(picked).toEqual([]);
+    expect(result.current.effects.lockedReason(SQUAT.id)).toBe('Has a logged set');
+    expect(result.current.effects.lockedReason(BENCH.id)).toBeNull();
     await done();
   });
 

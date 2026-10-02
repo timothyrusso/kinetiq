@@ -1,4 +1,4 @@
-import type { WorkoutSession } from '@/features/workouts/domain/schemas/WorkoutSessionSchema';
+import type { StrengthEntry } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 
 /**
  * What a second tap on an exercise in the workout's picker does: removes the entry, or does
@@ -12,15 +12,16 @@ export type PickRemoval =
   | { readonly kind: 'absent' };
 
 /**
- * The removal for `exerciseId`. With the exercise in twice, the later entry is the one judged and
- * removed: the one a mistaken add would have made, as the routine picker does.
+ * The removal for `exerciseId` from the workout's `entries` (none without a workout). With the
+ * exercise in twice, the later entry is the one judged and removed: the one a mistaken add would
+ * have made, as the routine picker does.
  */
-export function pickRemoval(session: WorkoutSession | null, exerciseId: string): PickRemoval {
-  if (session === null) return { kind: 'absent' };
-  const entryIndex = session.entries.findLastIndex(entry => entry.exerciseId === exerciseId);
-  const entry = session.entries[entryIndex];
+export function pickRemoval(entries: readonly StrengthEntry[] | undefined, exerciseId: string): PickRemoval {
+  if (entries === undefined) return { kind: 'absent' };
+  const entryIndex = entries.findLastIndex(entry => entry.exerciseId === exerciseId);
+  const entry = entries[entryIndex];
   if (entry === undefined) return { kind: 'absent' };
   if (entry.sets.some(set => set.completed)) return { kind: 'hasCompletedSet' };
-  if (session.entries.length <= 1) return { kind: 'lastExercise' };
+  if (entries.length <= 1) return { kind: 'lastExercise' };
   return { kind: 'removable', entryIndex };
 }

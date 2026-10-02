@@ -321,6 +321,8 @@ export const it: Copy = {
   },
   // NOTE: --- end group-c ---
   session: {
+    pickHasCompletedSet: 'Ha una serie completata, quindi resta. Toglilo dalla schermata dell’allenamento.',
+    pickLastExercise: 'È l’unico esercizio di questo allenamento, quindi resta.',
     thisSet: 'Questa serie',
     addNotChanged:
       "L'esercizio non è stato inserito: o è già in questo allenamento, o l'allenamento è finito. Nulla è cambiato.",
@@ -738,6 +740,9 @@ export const it: Copy = {
     alreadyInRoutine: 'Già in questa scheda',
     addsToRoutine: 'Aggiunge questo esercizio alla scheda',
     removesFromRoutine: 'Toglie questo esercizio dalla scheda',
+    alreadyInWorkout: 'Già in questo allenamento',
+    addsToWorkout: 'Aggiunge questo esercizio all’allenamento',
+    removesFromWorkout: 'Toglie questo esercizio dall’allenamento',
     resetFailedBody:
       "Kinetiq non è comunque riuscita ad aprire l'archivio locale, e svuotarlo non è bastato. Reinstallare l'app è l'opzione che resta; i tuoi dati sono già stati rimossi.",
     stillStartingBody:

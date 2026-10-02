@@ -2,10 +2,10 @@ import { memo } from 'react';
 import { View } from 'react-native';
 import { ExerciseThumb, ICON_SIZE, Icon, ListRow, RowButton, useStyles } from '@/features/core/design-system';
 import type { Theme } from '@/features/core/theme';
-import { useT } from '@/features/core/translations';
 import type { Exercise } from '@/features/exercises/domain/schemas/ExerciseSchema';
 import { useExercisePickerRowLogic } from '@/features/exercises/ui/components/ExercisePickerRow/ExercisePickerRow.logic';
 import { createStyles } from '@/features/exercises/ui/components/ExercisePickerRow/ExercisePickerRow.style';
+import type { PickDestination } from '@/features/exercises/ui/pages/PickExercisePage/PickExercisePage.logic';
 
 /**
  * One library result. Memoised with the theme and the shared `onSelect` and `onInfo` as props, so
@@ -14,14 +14,17 @@ import { createStyles } from '@/features/exercises/ui/components/ExercisePickerR
  * the routine is still one to read about.
  *
  * A `removable` included row is selected rather than disabled: tinted, filled check, and a tap
- * hands its id to the same `onSelect`, which removes it. Without `removable` (the live workout)
- * an included row is inert.
+ * hands its id to the same `onSelect`, which removes it. Without `removable`, or with a `locked`
+ * reason (a workout's exercise with a logged set, or its last one), an included row is inert, and
+ * a reason is shown under the name and read as its hint.
  */
 export const ExercisePickerRow = memo(function ExercisePickerRow({
   exercise,
   theme,
   included,
   removable,
+  locked,
+  destination,
   dimmed,
   onSelect,
   onInfo,
@@ -30,15 +33,20 @@ export const ExercisePickerRow = memo(function ExercisePickerRow({
   theme: Theme;
   included: boolean;
   removable: boolean;
+  locked: string | null;
+  destination: PickDestination;
   dimmed: boolean;
   onSelect: (exerciseId: string) => void;
   onInfo: (exerciseId: string) => void;
 }) {
-  const { derived, effects } = useExercisePickerRowLogic(exercise, onSelect, onInfo);
-  const { t } = useT();
+  const { derived, effects } = useExercisePickerRowLogic(exercise, onSelect, onInfo, {
+    included,
+    removable,
+    locked,
+    destination,
+  });
   const styles = useStyles(createStyles);
-  const selected = included && removable;
-  const inert = included && !removable;
+  const { selected, inert } = derived;
 
   return (
     <ListRow
@@ -46,13 +54,12 @@ export const ExercisePickerRow = memo(function ExercisePickerRow({
       title={exercise.name}
       tags={derived.tags}
       tagsMax={2}
+      {...(locked === null ? {} : { description: locked })}
       {...(inert ? {} : { onPress: effects.select })}
       disabled={inert}
       selected={selected}
       style={dimmed ? [styles.row, styles.dimmed] : styles.row}
-      accessibilityHint={t(
-        selected ? 'states.removesFromRoutine' : inert ? 'states.alreadyInRoutine' : 'states.addsToRoutine',
-      )}
+      accessibilityHint={derived.hint}
       accessibilityActions={derived.accessibilityActions}
       onAccessibilityAction={effects.onAccessibilityAction}
       leading={<ExerciseThumb source={derived.image} name={exercise.name} size={44} theme={theme} />}

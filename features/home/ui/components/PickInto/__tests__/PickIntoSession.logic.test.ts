@@ -69,4 +69,28 @@ describe('usePickIntoSessionLogic', () => {
     expect(result.current.picker.state.destination).toBe('workout');
     await done();
   });
+
+  it('takes an exercise with nothing logged back out on a second tap', async () => {
+    const { result, done } = await renderPicker();
+    await act(async () => result.current.picker.effects.pick(aSquat()));
+    await waitFor(() => expect(result.current.live.session?.entries).toHaveLength(2));
+    const squatId = aSquat().id;
+
+    const reason = result.current.picker.effects.lockedReason(squatId);
+    await act(async () => result.current.picker.effects.unpick(squatId));
+
+    expect(reason).toBeNull();
+    expect(result.current.live.session?.entries.map(entry => entry.exerciseName)).toEqual(['Bench Press']);
+    await done();
+  });
+
+  it('keeps the workout’s last exercise, and says why', async () => {
+    const { result, done } = await renderPicker();
+
+    await act(async () => result.current.picker.effects.unpick('ex:barbell-bench-press'));
+
+    expect(result.current.picker.effects.lockedReason('ex:barbell-bench-press')).toBe(tr('session.pickLastExercise'));
+    expect(result.current.live.session?.entries).toHaveLength(1);
+    await done();
+  });
 });
