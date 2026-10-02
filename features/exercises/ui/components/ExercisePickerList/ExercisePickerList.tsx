@@ -10,7 +10,7 @@ const keyExtractor = (exercise: Exercise) => exercise.id;
 /**
  * The picker's sheet: its results as a `FlashList` under the search, so the list is the sheet's
  * only scroll container and scrolling back up always reaches the search. Every row shares one
- * `onSelect` that takes the exercise's id.
+ * `onSelect` and one `onInfo`, each taking the exercise's id.
  */
 export function ExercisePickerList({
   title,
@@ -20,6 +20,7 @@ export function ExercisePickerList({
   isIncluded,
   dimmed,
   onSelect,
+  onInfo,
   header,
   footer,
   empty,
@@ -35,6 +36,8 @@ export function ExercisePickerList({
    */
   dimmed: boolean;
   onSelect: (exerciseId: string) => void;
+  /** Opens the exercise's page over the sheet. */
+  onInfo: (exerciseId: string) => void;
   header: ReactNode;
   footer: ReactNode;
   empty: ReactElement;
@@ -47,9 +50,10 @@ export function ExercisePickerList({
         included={isIncluded(item.id)}
         dimmed={dimmed}
         onSelect={onSelect}
+        onInfo={onInfo}
       />
     ),
-    [dimmed, isIncluded, onSelect, theme],
+    [dimmed, isIncluded, onInfo, onSelect, theme],
   );
 
   return (

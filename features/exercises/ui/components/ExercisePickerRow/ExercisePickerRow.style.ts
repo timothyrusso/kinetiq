@@ -1,8 +1,9 @@
 import { StyleSheet } from 'react-native';
-import type { Theme } from '@/features/core/theme';
+import { spacing, type Theme } from '@/features/core/theme';
 
 export const createStyles = (theme: Theme) =>
   StyleSheet.create({
     row: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.hairline },
     dimmed: { opacity: 0.45 },
+    trailing: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   });
