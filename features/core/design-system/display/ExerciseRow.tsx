@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
+import type { BundledImage } from '@/features/core/design-system/display/BundledPhoto';
 import { ExerciseThumb } from '@/features/core/design-system/display/ExerciseThumb';
 import { ListRow } from '@/features/core/design-system/display/ListRow';
 import type { Tag } from '@/features/core/design-system/display/types';
@@ -30,7 +31,7 @@ export const ExerciseRow = memo(function ExerciseRow({
 }: {
   name: string;
   /** The bundled thumbnail, as `ExerciseThumb` takes it. */
-  image: number | null;
+  image: BundledImage | null;
   /** Primary muscles first, capped at two with "+n": a row stays one line tall. */
   tags: readonly Tag[];
   /** A status-style pill opposite the title: the exercise's category on the Exercises tab. */

@@ -26,6 +26,7 @@ export { TextInput } from '@/features/core/design-system/controls/TextInput';
 export { ActionRow } from '@/features/core/design-system/display/ActionRow';
 export { ACTIVITY_ICON } from '@/features/core/design-system/display/activityIcon';
 export { Badge } from '@/features/core/design-system/display/Badge';
+export type { BundledImage } from '@/features/core/design-system/display/BundledPhoto';
 export { CrossFadeImage } from '@/features/core/design-system/display/CrossFadeImage';
 export { ExerciseRow } from '@/features/core/design-system/display/ExerciseRow';
 export { ExerciseThumb } from '@/features/core/design-system/display/ExerciseThumb';

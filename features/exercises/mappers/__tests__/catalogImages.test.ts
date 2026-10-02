@@ -1,19 +1,32 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { exerciseImageSource } from '@/features/exercises/mappers/exerciseImageSource';
-import { CATALOG_IMAGES_OUTPUT, readCatalogImageInputs, renderCatalogImages } from '@/scripts/catalogImages';
+import {
+  CATALOG_IMAGES_OUTPUT,
+  type CatalogBlurhashes,
+  readCatalogBlurhashes,
+  readCatalogImageInputs,
+  renderCatalogImages,
+} from '@/scripts/catalogImages';
 
 const committed = () => readFileSync(resolve(__dirname, '../../../..', CATALOG_IMAGES_OUTPUT), 'utf8');
 
-describe('the bundled photo map', () => {
-  it('is the file `npm run catalog:images` writes from the committed dataset', () => {
-    const { exercises, pending } = readCatalogImageInputs();
+const BENCH_START = 'images/barbell-bench-press-medium-grip/0.webp';
 
-    expect(committed()).toBe(renderCatalogImages(exercises, pending));
+describe('the bundled photo map', () => {
+  const { exercises, pending } = readCatalogImageInputs();
+  let blurhashes: CatalogBlurhashes = {};
+
+  // NOTE: decoding every bundled photo takes a few seconds; it is done once for the whole block.
+  beforeAll(async () => {
+    blurhashes = await readCatalogBlurhashes(exercises, pending);
+  }, 60_000);
+
+  it('is the file `npm run catalog:images` writes from the committed dataset and photos', () => {
+    expect(committed()).toBe(renderCatalogImages(exercises, pending, blurhashes));
   });
 
   it('would change when the dataset gains an exercise, so a forgotten regeneration fails the test above', () => {
-    const { exercises, pending } = readCatalogImageInputs();
     const added = {
       id: 'ex:new-press',
       images: {
@@ -22,13 +35,31 @@ describe('the bundled photo map', () => {
         thumb: 'images/new-press/thumb.webp',
       },
     };
+    const withAdded = {
+      ...blurhashes,
+      [added.images.start]: 'L00000fQfQfQfQfQfQfQfQfQfQfQ',
+      [added.images.end]: 'L00000fQfQfQfQfQfQfQfQfQfQfQ',
+      [added.images.thumb]: 'L00000fQfQfQfQfQfQfQfQfQfQfQ',
+    };
 
-    expect(renderCatalogImages([...exercises, added], pending)).not.toBe(committed());
+    expect(renderCatalogImages([...exercises, added], pending, withAdded)).not.toBe(committed());
+  });
+
+  it('would change when a photo is replaced, so a stale blurhash fails the test above', () => {
+    const replaced = { ...blurhashes, [BENCH_START]: 'L00000fQfQfQfQfQfQfQfQfQfQfQ' };
+
+    expect(blurhashes[BENCH_START]).toMatch(/^[0-9A-Za-z#$%*+,\-.:;=?@[\]^_{|}~]{28}$/);
+    expect(renderCatalogImages(exercises, pending, replaced)).not.toBe(committed());
+  });
+
+  it('refuses a photo without a blurhash, rather than writing an entry the placeholder cannot draw', () => {
+    const { [BENCH_START]: _dropped, ...missing } = blurhashes;
+
+    expect(() => renderCatalogImages(exercises, pending, missing)).toThrow(BENCH_START);
   });
 
   it('leaves out the exercises waiting for photos, whose files a require would not find', () => {
-    const { exercises, pending } = readCatalogImageInputs();
-    const text = renderCatalogImages(exercises, pending);
+    const text = renderCatalogImages(exercises, pending, blurhashes);
 
     expect(pending.length).toBeGreaterThan(0);
     for (const id of pending) expect(text).not.toContain(`'${id.replace(/^ex:/, '')}': {`);
@@ -37,7 +68,7 @@ describe('the bundled photo map', () => {
   it('refuses an entry whose images break the one layout the app resolves', () => {
     const odd = { id: 'ex:odd', images: { start: 'images/odd/start.webp', end: 'images/odd/1.webp', thumb: 'x.webp' } };
 
-    expect(() => renderCatalogImages([odd], [])).toThrow('ex:odd');
+    expect(() => renderCatalogImages([odd], [], {})).toThrow('ex:odd');
   });
 });
 

@@ -6,8 +6,15 @@
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { CATALOG_IMAGES_OUTPUT, readCatalogImageInputs, renderCatalogImages } from '@/scripts/catalogImages';
+import {
+  CATALOG_IMAGES_OUTPUT,
+  readCatalogBlurhashes,
+  readCatalogImageInputs,
+  renderCatalogImages,
+} from '@/scripts/catalogImages';
 
 const { exercises, pending } = readCatalogImageInputs();
-writeFileSync(resolve(__dirname, '..', CATALOG_IMAGES_OUTPUT), renderCatalogImages(exercises, pending));
-console.log(`Wrote ${CATALOG_IMAGES_OUTPUT}: ${exercises.length - pending.length} exercises with photos.`);
+readCatalogBlurhashes(exercises, pending).then(blurhashes => {
+  writeFileSync(resolve(__dirname, '..', CATALOG_IMAGES_OUTPUT), renderCatalogImages(exercises, pending, blurhashes));
+  console.log(`Wrote ${CATALOG_IMAGES_OUTPUT}: ${exercises.length - pending.length} exercises with photos.`);
+});
