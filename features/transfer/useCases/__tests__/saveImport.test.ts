@@ -58,7 +58,7 @@ describe('saveImport', () => {
     'names an unnamed routine by its place in the whole file',
     Effect.gen(function* () {
       yield* saveImport(
-        [aRoutine({ items: [anItem({ match: { status: 'missing', offline: false } })] }), aRoutine({ name: null })],
+        [aRoutine({ items: [anItem({ match: { status: 'missing' } })] }), aRoutine({ name: null })],
         fallbackName,
         120,
       );
@@ -74,9 +74,9 @@ describe('saveImport', () => {
       const saved = yield* saveImport(
         [
           aRoutine({
-            items: [anItem(), anItem({ exerciseName: 'Flying kick', match: { status: 'missing', offline: false } })],
+            items: [anItem(), anItem({ exerciseName: 'Flying kick', match: { status: 'missing' } })],
           }),
-          aRoutine({ name: 'Nothing', items: [anItem({ match: { status: 'missing', offline: false } })] }),
+          aRoutine({ name: 'Nothing', items: [anItem({ match: { status: 'missing' } })] }),
         ],
         fallbackName,
         120,

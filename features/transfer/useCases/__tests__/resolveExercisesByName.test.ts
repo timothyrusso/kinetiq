@@ -99,7 +99,7 @@ describe('resolveExercisesByName', () => {
   itEffect(
     'reports an item that matches nothing as missing, never inventing an exercise',
     Effect.gen(function* () {
-      expect(yield* matchOf(anItem({ exerciseName: 'Flying kick' }))).toEqual({ status: 'missing', offline: false });
+      expect(yield* matchOf(anItem({ exerciseName: 'Flying kick' }))).toEqual({ status: 'missing' });
     }),
     layer([], [anExercise()]),
   );

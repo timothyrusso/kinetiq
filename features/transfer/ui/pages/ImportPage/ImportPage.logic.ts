@@ -59,9 +59,7 @@ export function useImportPageLogic() {
       const title = match.status === 'missing' ? item.exerciseName || item.exerciseId || '' : match.snapshot.name;
       const subtitle =
         match.status === 'missing'
-          ? match.offline
-            ? t('dataTransfer.missingOffline')
-            : t('dataTransfer.missingNotFound')
+          ? t('dataTransfer.missingNotFound')
           : match.status === 'closest' && item.exerciseName !== ''
             ? t('dataTransfer.matchedFrom', { name: item.exerciseName })
             : t('dataTransfer.itemTargets', {

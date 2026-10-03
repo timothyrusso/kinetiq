@@ -811,7 +811,6 @@ export const it: Copy = {
     itemTargets: '{weight} · recupero {rest} s',
     matchedFrom: 'Corrispondenza più vicina a "{name}"',
     missingNotFound: 'Non è nel catalogo: verrà saltato',
-    missingOffline: 'Serve una connessione per cercarlo: verrà saltato',
     missingSummary_one: '{count} esercizio verrà saltato.',
     missingSummary_other: '{count} esercizi verranno saltati.',
     errorEmpty: 'Gli appunti sono vuoti.',

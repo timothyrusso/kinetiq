@@ -1,5 +1,5 @@
 import { Clock, Effect } from 'effect';
-import { type AppError, isOfflineFailure } from '@/features/core/error';
+import type { AppError } from '@/features/core/error';
 import {
   type CatalogLanguage,
   type Exercise,
@@ -20,39 +20,29 @@ const matchItem = (item: ParsedItem, language: CatalogLanguage) =>
   Effect.gen(function* () {
     const stored = yield* ExerciseSnapshotRepository;
     const catalog = yield* ExerciseCatalog;
-    let offline = false;
-    // NOTE: each catalog step may fail on its own: an offline id lookup must not stop a stored
+    // NOTE: each catalog step may fail on its own: a failed id lookup must not stop a stored
     // name match from being found.
     const attempt = <A>(step: Effect.Effect<A | undefined, AppError>) =>
-      step.pipe(
-        Effect.catchAll(error => {
-          if (isOfflineFailure(error)) offline = true;
-          return Effect.succeed(undefined);
-        }),
-      );
+      step.pipe(Effect.catchAll(() => Effect.succeed(undefined)));
 
     const { exerciseId, exerciseName } = item;
     if (exerciseId !== null) {
       const byId = yield* stored.byId(exerciseId);
       if (byId) return { status: 'stored', snapshot: byId } satisfies Match;
-      if (!offline) {
-        const remote = yield* attempt(catalog.find(exerciseId, language));
-        if (remote) return { status: 'catalog', snapshot: yield* frozen(remote) } satisfies Match;
-      }
+      const remote = yield* attempt(catalog.find(exerciseId, language));
+      if (remote) return { status: 'catalog', snapshot: yield* frozen(remote) } satisfies Match;
     }
     if (exerciseName !== '') {
       const byName = yield* stored.byName(exerciseName);
       if (byName) return { status: 'stored', snapshot: byName } satisfies Match;
-      if (!offline) {
-        const found = (yield* attempt(catalog.search(exerciseName, language))) ?? [];
-        const wanted = normaliseName(exerciseName);
-        const exact = found.find(exercise => normaliseName(exercise.name) === wanted);
-        if (exact) return { status: 'catalog', snapshot: yield* frozen(exact) } satisfies Match;
-        const first = found[0];
-        if (first) return { status: 'closest', snapshot: yield* frozen(first) } satisfies Match;
-      }
+      const found = (yield* attempt(catalog.search(exerciseName, language))) ?? [];
+      const wanted = normaliseName(exerciseName);
+      const exact = found.find(exercise => normaliseName(exercise.name) === wanted);
+      if (exact) return { status: 'catalog', snapshot: yield* frozen(exact) } satisfies Match;
+      const first = found[0];
+      if (first) return { status: 'closest', snapshot: yield* frozen(first) } satisfies Match;
     }
-    return { status: 'missing', offline } satisfies Match;
+    return { status: 'missing' } satisfies Match;
   });
 
 /**

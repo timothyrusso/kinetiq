@@ -805,7 +805,6 @@ export const en = {
     itemTargets: '{weight} · rest {rest} s',
     matchedFrom: 'Closest match for "{name}"',
     missingNotFound: 'Not in the catalog: will be skipped',
-    missingOffline: 'Needs a connection to look up: will be skipped',
     missingSummary_one: '{count} exercise will be skipped.',
     missingSummary_other: '{count} exercises will be skipped.',
     errorEmpty: 'The clipboard is empty.',
