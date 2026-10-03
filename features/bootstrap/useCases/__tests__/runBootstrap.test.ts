@@ -247,6 +247,31 @@ describe('runBootstrap', () => {
   );
 
   itEffect(
+    'logs what the launch found once, at info, when the launch finishes',
+    Effect.gen(function* () {
+      yield* runBootstrap(true);
+
+      expect(logs.entries.filter(entry => entry.level === 'info')).toEqual([
+        expect.objectContaining({
+          message: 'launch finished',
+          context: { launchTheme: 'dark', resumedWorkout: true, fromVersion: 9, toVersion: 10 },
+        }),
+      ]);
+    }),
+    testLayer({ session: 'open' }),
+  );
+
+  itEffect(
+    'logs no outcome when the launch fails',
+    Effect.gen(function* () {
+      yield* Effect.either(runBootstrap(true));
+
+      expect(logs.entries.filter(entry => entry.level === 'info')).toEqual([]);
+    }),
+    testLayer({ fontsFail: true }),
+  );
+
+  itEffect(
     'syncs the watch when the app comes back to the foreground, and not when it only goes inactive',
     Effect.gen(function* () {
       yield* runBootstrap(true);

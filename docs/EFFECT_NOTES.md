@@ -30,7 +30,7 @@ it lives here. `docs/ARCHITECTURE.md` lists the deltas.
   migration report, `WatchBackgroundSyncLive` whether the install succeeded.
 - **Best-effort steps** go through `logBackgroundFailure(task)` from `core/logger`, which logs
   everything but an interruption and succeeds; see Exceptions in `docs/ARCHITECTURE.md` for where
-  that is allowed.
+  that is allowed. The launch's one success diagnostic goes through `logDiagnostic`, beside it.
 - **Failing after doing the work**: when a step's failure must not stop the next one but must
   still be reported, take it with `Effect.either`, carry on, and fail with it at the end
   (`features/notifications/useCases/syncTrainingReminder.ts`).

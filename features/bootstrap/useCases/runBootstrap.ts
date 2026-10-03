@@ -5,7 +5,7 @@ import type { BootstrapOutcome } from '@/features/bootstrap/domain/entities/Boot
 import { LaunchEnvironment } from '@/features/bootstrap/domain/services/LaunchEnvironment';
 import { AppConfig } from '@/features/core/config';
 import { BackgroundSync } from '@/features/core/lifecycle';
-import { logBackgroundFailure } from '@/features/core/logger';
+import { logBackgroundFailure, logDiagnostic } from '@/features/core/logger';
 import { SchemaStatus } from '@/features/core/sqlite';
 import { ExerciseCatalog } from '@/features/exercises';
 import { Notifications, TrainingReminder } from '@/features/notifications';
@@ -54,6 +54,7 @@ const installLifecycle = Effect.gen(function* () {
  * 6. Then, not awaited: the reminder, the watch sync and the app-state events. A workout open
  *    when the process died comes back paused, never running: the clock has been reading a stored
  *    value for hours the user did not train.
+ * 7. Last, the outcome is logged once at `info`, so a launch report says what the launch found.
  */
 export const runBootstrap = (systemDark: boolean) =>
   Effect.gen(function* () {
@@ -99,5 +100,6 @@ export const runBootstrap = (systemDark: boolean) =>
       fromVersion: schema.fromVersion,
       toVersion: schema.toVersion,
     };
+    yield* logDiagnostic('launch finished', { ...outcome });
     return outcome;
   });

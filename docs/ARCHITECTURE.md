@@ -45,7 +45,7 @@ Every feature declares `FEATURE_TIER` in its `index.ts`; `npm run arch` checks t
 | --- | --- |
 | `core/error` | the `AppError` union over `AppErrorRegistry`, `errorTagToMessageKey`, `useErrorMessage` |
 | `core/config` | `AppConfig` from `makeConfig`, decoding `extra` in `app.json` (empty while the app calls no server) |
-| `core/logger` | `LoggerLive` and `logBackgroundFailure`, the one logging helper outside the boundary (see Exceptions) |
+| `core/logger` | `LoggerLive`, `logBackgroundFailure` and `logDiagnostic`, the two logging helpers outside the boundary (see Exceptions) |
 | `core/sqlite` | `SqliteLive` (expo-sqlite, WAL, foreign keys), the per-version migrations `v001` to `v012`, `SchemaStatus`, `clearAllUserData` and `resetLocalData` |
 | `core/lifecycle` | `BackgroundSync`, the port the bootstrap installs and `watch-sync` fills (below) |
 | `core/query` | `queryClient` (no TanStack retry for app errors, one for a plain query's unknown failure), `useEffectQuery` and `useEffectMutation` re-exported for facades, the app-state focus adapter |
@@ -131,7 +131,13 @@ Each is a deliberate departure from a kit rule, with the reason.
 1. **Logging at fork points.** `logBackgroundFailure` (`core/logger`) logs through `Logger` inside
    `runBootstrap`, `installWatchSync` and `WatchBackgroundSyncLive`. These steps run on daemon
    fibers or as best-effort launch steps with no caller to hand a failure to; logging where the
-   fiber forks is the boundary for that work. Nothing else logs outside the hooks.
+   fiber forks is the boundary for that work. A launch also logs its outcome once:
+   `runBootstrap` ends with `logDiagnostic('launch finished', outcome)`, an `info` line through the
+   same `Logger` with the `BootstrapOutcome` (launch theme, resumed workout, schema versions) as
+   its context. The launch has no caller that reads the outcome (`useBootstrap` only needs it to
+   finish), so the log is the one place it can be seen; it is through `Logger`, not
+   `Effect.logInfo`, so a crash reporter's Layer receives it and tests can assert it. Nothing else
+   logs outside the hooks.
 2. **Settings autosave logs inside its Layer.** `SettingsAutosaveLive` is a scoped Layer whose
    debounced stream persists every settings write for the life of the runtime; a failed write has
    no caller, so it logs `settings could not be persisted` there and keeps the values in memory.
