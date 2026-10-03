@@ -32,14 +32,19 @@ function number(value: unknown): number | null {
  * The link to the public exercise index, which the app's own AI instructions carry in every
  * language. An answer may cite it too, in the prose around its JSON, so the link alone proves
  * nothing: what marks the instructions is the link in text that does not read as JSON. Their
- * example routine is followed by the rules, which hold the link and a bracketed column list, so
- * the slice `jsonSlice` takes runs from the example into the rules and never parses. An answer's
- * slice is its JSON alone, and parses whatever its prose says.
+ * example routine is unfenced and followed by the rules, which hold the link and a bracketed
+ * column list, so the slice `jsonSlice` takes runs from the example into the rules and never
+ * parses. An answer's slice is its JSON alone, read from its code fence when it has one, so
+ * brackets in its prose (a markdown link to the index) never reach the parser.
  */
 const AI_PROMPT_SIGNATURE = 'timothyrusso/kinetiq/main/assets/catalog/index.json';
 
-/** The JSON inside a code fence or a sentence, or the text itself. */
-function jsonSlice(raw: string): string {
+/** The body of the first code fence (```json or ```), when the text has one. */
+const CODE_FENCE = /```[a-z]*[^\S\n]*\n([\s\S]*?)```/i;
+
+/** The JSON inside a code fence or a sentence, or the text itself. A fence wins over prose. */
+function jsonSlice(input: string): string {
+  const raw = CODE_FENCE.exec(input)?.[1] ?? input;
   const start = raw.search(/[[{]/);
   const end = Math.max(raw.lastIndexOf('}'), raw.lastIndexOf(']'));
   return start >= 0 && end > start ? raw.slice(start, end + 1) : raw;
@@ -153,7 +158,7 @@ function parseItem(
  *
  * Strict about meaning, lenient about wrapping. An AI asked for JSON often wraps it in a code
  * fence or a sentence, so the text between the first `{` or `[` and the last `}` or `]` is what
- * gets parsed; the document may be the full file, a bare array of routines, or one routine, in
+ * gets parsed, inside the first code fence when there is one; the document may be the full file, a bare array of routines, or one routine, in
  * v2 or in v1 (`plannedSets`). What is not guessed is a value: a missing `sets` gets the editor's
  * default and is reported, an out-of-range one is clamped to the editor's bounds, and an item
  * with neither an exercise id nor a name is dropped and reported.
