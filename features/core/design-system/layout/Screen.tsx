@@ -5,11 +5,11 @@ import { useAppTheme } from '@/features/core/theme';
 /**
  * This screen's header options. Renders nothing itself.
  *
- * `largeTitle` for hubs and lists; the tab stacks already default to it. `transparent` for the
- * two media screens, where the bar floats over an image or a map and the system blurs what
- * scrolls under it. Such a screen's scroll view spreads `SCROLL_INSETS`, so the system starts the
- * content at the bar's real bottom edge; a height computed in JS guesses at it, and is not yet
- * right on the frame where the bar turns transparent.
+ * `largeTitle` for hubs and lists; the tab stacks already default to it. `transparent` for a
+ * media screen (the exercise page, when it has art), where the bar floats over an image and the
+ * system blurs what scrolls under it. Such a screen's scroll view spreads `SCROLL_INSETS`, so the
+ * system starts the content at the bar's real bottom edge; a height computed in JS guesses at it,
+ * and is not yet right on the frame where the bar turns transparent.
  */
 export function ScreenHeader({
   title,
