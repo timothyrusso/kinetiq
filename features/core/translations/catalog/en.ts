@@ -719,11 +719,7 @@ export const en = {
   },
 
   states: {
-    offlineTitle: 'You are offline',
-    timeoutTitle: 'The server took too long',
     genericTitle: 'Could not load this',
-    offlineMessage:
-      'Anything you have saved is still here, and the exercise library works offline. Whatever needed the network comes back as soon as you reconnect.',
     genericMessage: 'This one did not respond. Trying again usually works.',
     autoStartOn: 'Counting down the moment you complete a set.',
     autoStartOff: 'You tap to begin resting, so a phone call between sets costs you nothing.',

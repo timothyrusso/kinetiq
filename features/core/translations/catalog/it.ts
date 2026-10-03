@@ -725,11 +725,7 @@ export const it: Copy = {
   },
 
   states: {
-    offlineTitle: 'Sei offline',
-    timeoutTitle: 'Il server ci ha messo troppo',
     genericTitle: 'Non è stato possibile caricarlo',
-    offlineMessage:
-      'Tutto quello che hai salvato è ancora qui, e la libreria esercizi funziona offline. Quello che richiedeva la rete torna appena ti ricolleghi.',
     genericMessage: 'Questo non ha risposto. Riprovare di solito funziona.',
     autoStartOn: 'Parte il conto alla rovescia nel momento in cui completi una serie.',
     autoStartOff: 'Il recupero lo avvii tu, così una telefonata tra le serie non ti costa nulla.',

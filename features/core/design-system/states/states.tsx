@@ -18,7 +18,6 @@ import { Button } from '@/features/core/design-system/controls/Button';
 import { Icon, type IconName } from '@/features/core/design-system/icons/icons';
 import { Stack } from '@/features/core/design-system/layout/Stack';
 import { Txt } from '@/features/core/design-system/text/Text';
-import { isOfflineFailure } from '@/features/core/error';
 import { haptics } from '@/features/core/haptics';
 import { radius, screenGutter, spacing, useAppTheme } from '@/features/core/theme';
 import { useT } from '@/features/core/translations';
@@ -249,12 +248,11 @@ export const EmptyState = memo(function EmptyState(props: StateProps) {
 });
 
 /**
- * Maps an unknown throwable to the right failure screen and hands back the retry.
- * The offline/online distinction is the important one: telling someone "something went
- * wrong" while their plane mode is on is both untrue and unhelpful.
+ * The failure screen for any error, with the retry. The app reads only local data, so a failure
+ * has no cause worth naming to the user: the copy is the generic title and message. `error` is
+ * the failure on screen; the copy does not branch on it.
  */
 export const ErrorState = memo(function ErrorState({
-  error,
   onRetry,
   title,
   style,
@@ -267,16 +265,12 @@ export const ErrorState = memo(function ErrorState({
   compact?: boolean;
 }) {
   const { t } = useT();
-  const offline = isOfflineFailure(error);
   return (
     <StateScaffold
-      icon={offline ? 'offline' : 'warning'}
-      tone={offline ? 'warning' : 'danger'}
-      title={
-        title ??
-        t(offline ? 'states.offlineTitle' : isTimeoutLike(error) ? 'states.timeoutTitle' : 'states.genericTitle')
-      }
-      message={t(offline ? 'states.offlineMessage' : 'states.genericMessage')}
+      icon="warning"
+      tone="danger"
+      title={title ?? t('states.genericTitle')}
+      message={t('states.genericMessage')}
       actionLabel={t('common.retry')}
       onAction={onRetry}
       style={style}
@@ -319,14 +313,4 @@ export function ThemedRefreshControl({
       {...(progressViewOffset === undefined ? {} : { progressViewOffset })}
     />
   );
-}
-
-/**
- * Distinguishes a slow-failure (504 / gateway / timeout wording) from a generic one.
- * Deliberately conservative: a wrong "too long" message is still an explanation, but a
- * wrong "you are offline" is a lie about the user's own device.
- */
-function isTimeoutLike(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error ?? '');
-  return /timeout|timed out|gateway|504|ETIMEDOUT|ENETWORK/i.test(message);
 }
