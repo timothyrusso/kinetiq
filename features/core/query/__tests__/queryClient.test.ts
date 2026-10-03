@@ -1,17 +1,12 @@
 import { focusManager, QueryClient, QueryObserver } from '@tanstack/react-query';
 import { waitFor } from '@testing-library/react-native';
 import { AppState, type AppStateStatus } from 'react-native';
-import { HttpError, SqlError } from '@/features/core/error';
+import { SqlError } from '@/features/core/error';
 import { getQueryClient, installQueryAdapters } from '@/features/core/query';
 
 const retry = (failureCount: number, error: Error) => {
   const option = getQueryClient().getDefaultOptions().queries?.retry;
   return typeof option === 'function' ? option(failureCount, error) : option;
-};
-
-const retryDelay = (attemptIndex: number, error: Error) => {
-  const option = getQueryClient().getDefaultOptions().queries?.retryDelay;
-  return typeof option === 'function' ? option(attemptIndex, error) : option;
 };
 
 /** Fires the app-state listener the adapter registered last, through React Native's jest mock. */
@@ -32,16 +27,6 @@ describe('getQueryClient', () => {
 });
 
 describe('the query retry policy', () => {
-  it('retries a server error on its budget', () => {
-    const error = new HttpError({ kind: 'server', status: 503, retryAfterSeconds: null });
-
-    expect([retry(0, error), retry(1, error), retry(2, error)]).toEqual([true, true, false]);
-  });
-
-  it('never retries a missing resource', () => {
-    expect(retry(0, new HttpError({ kind: 'not-found', status: 404, retryAfterSeconds: null }))).toBe(false);
-  });
-
   it('never retries an app error that already ran through its Effect', () => {
     expect(retry(0, new SqlError({ message: 'read the routines' }))).toBe(false);
   });
@@ -50,12 +35,8 @@ describe('the query retry policy', () => {
     expect([retry(0, new Error('boom')), retry(1, new Error('boom'))]).toEqual([true, false]);
   });
 
-  it('waits the Retry-After the server sent', () => {
-    expect(retryDelay(0, new HttpError({ kind: 'rate-limit', status: 429, retryAfterSeconds: 5 }))).toBe(5_000);
-  });
-
-  it('backs off exponentially without a Retry-After', () => {
-    expect([retryDelay(0, new Error('boom')), retryDelay(2, new Error('boom'))]).toEqual([300, 1_200]);
+  it('waits briefly before that retry', () => {
+    expect(getQueryClient().getDefaultOptions().queries?.retryDelay).toBe(300);
   });
 });
 

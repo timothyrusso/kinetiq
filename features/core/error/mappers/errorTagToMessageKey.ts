@@ -12,8 +12,6 @@ export const errorTagToMessageKey = appErrors.assertExhaustiveMessageKeys<TKey>(
   UnexpectedError: 'errors.unexpected',
   SqlError: 'errors.sql',
   ConfigError: 'errors.config',
-  OfflineError: 'errors.offline',
-  HttpError: 'errors.http',
   DecodeError: 'errors.decode',
   NotificationPermissionDenied: 'errors.notificationPermissionDenied',
   NotificationScheduleFailed: 'errors.notificationScheduleFailed',

@@ -43,12 +43,12 @@ Every feature declares `FEATURE_TIER` in its `index.ts`; `npm run arch` checks t
 
 | Concern | What it holds |
 | --- | --- |
-| `core/error` | the `AppError` union over `AppErrorRegistry`, `errorTagToMessageKey`, `useErrorMessage`, the HTTP retry budget and delay (`httpRetryDelayMs`, which caps an honoured `Retry-After` at one minute) |
+| `core/error` | the `AppError` union over `AppErrorRegistry`, `errorTagToMessageKey`, `useErrorMessage` |
 | `core/config` | `AppConfig` from `makeConfig`, decoding `extra` in `app.json` (empty while the app calls no server) |
 | `core/logger` | `LoggerLive` and `logBackgroundFailure`, the one logging helper outside the boundary (see Exceptions) |
 | `core/sqlite` | `SqliteLive` (expo-sqlite, WAL, foreign keys), the per-version migrations `v001` to `v012`, `SchemaStatus`, `clearAllUserData` and `resetLocalData` |
 | `core/lifecycle` | `BackgroundSync`, the port the bootstrap installs and `watch-sync` fills (below) |
-| `core/query` | `queryClient` (no TanStack retry for app errors), `useEffectQuery` and `useEffectMutation` re-exported for facades, the app-state focus adapter |
+| `core/query` | `queryClient` (no TanStack retry for app errors, one for a plain query's unknown failure), `useEffectQuery` and `useEffectMutation` re-exported for facades, the app-state focus adapter |
 | `core/state` | `createStore`, `createSelectors`, `resetAllStores` |
 | `core/translations` | the hand-rolled catalog (`en`, `it`), `useT`, `tr`; a module-level map holds catalog keys, never words |
 | `core/theme` | tokens, `spacing`, `screenGutter`, the accent, `themeFor` |

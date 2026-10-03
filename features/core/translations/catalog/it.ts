@@ -844,8 +844,6 @@ export const it: Copy = {
     unexpected: 'Qualcosa è andato storto. Riprova.',
     sql: 'Non è stato possibile salvare o leggere i tuoi dati.',
     config: 'Kinetiq non è configurata correttamente.',
-    offline: 'Sei offline.',
-    http: 'Non è stato possibile raggiungere il server. Riprova.',
     decode: 'Non è stato possibile leggere alcuni dati.',
     notificationPermissionDenied: 'Le notifiche di Kinetiq sono disattivate nelle impostazioni di sistema.',
     notificationScheduleFailed: 'Non è stato possibile programmare la notifica.',
