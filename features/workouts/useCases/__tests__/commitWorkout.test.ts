@@ -57,6 +57,18 @@ describe('commitWorkout', () => {
     makeWorkoutsFake(counted),
   );
 
+  const emptied = makeFakeWorkoutsDb();
+  itEffect(
+    'records a routine workout with no exercises left, and counts nothing against its routine',
+    Effect.gen(function* () {
+      yield* commitWorkout(aCompletedWorkout({ entries: [], totalSets: 0, totalVolumeKg: 0 }));
+
+      expect(emptied.routinesUsed).toEqual([]);
+      expect(emptied.activities.size).toBe(1);
+    }),
+    makeWorkoutsFake(emptied),
+  );
+
   const unplanned = makeFakeWorkoutsDb();
   itEffect(
     'counts nothing for a workout that came from no routine',

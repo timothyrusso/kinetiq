@@ -244,11 +244,12 @@ describe('finishSession with "Update routine with today\'s values"', () => {
   const emptied = aSession({ routineItemIds: ['rit_bench', 'rit_press'], entries: [] });
   const allRemoved = makeFakeWorkoutsDb({ sessions: new Map([[ID, emptied]]) });
   itEffect(
-    'writes nothing back for a workout whose exercises were all removed, and still records it',
+    'neither writes back nor counts a workout whose exercises were all removed, and still records it',
     Effect.gen(function* () {
       yield* finishSession(ID, emptied, 3, true);
 
       expect(allRemoved.routinesUpdated).toEqual([]);
+      expect(allRemoved.routinesUsed).toEqual([]);
       expect(allRemoved.activities.has(ID)).toBe(true);
     }),
     makeWorkoutsFake(allRemoved),

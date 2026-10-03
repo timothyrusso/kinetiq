@@ -44,9 +44,9 @@ function nextUp(session: WorkoutSession, index: number): RestNextUp {
  * The alert names the exercise whose set started the rest, which the session keeps beside the
  * deadline, so an adjustment or a late grant names it too. It is armed when a rest starts and
  * retracted only by what ends that rest early: an unticked set, a skip, an adjusted or re-armed
- * rest, the workout's last exercise removed, a finish or a discard. Leaving the screen mid-rest is exactly what it exists for, so an
- * unmount does not retract it. Every handler is stable and reads the session at call time,
- * because the screen re-renders every second.
+ * rest, the workout's last exercise removed, a finish or a discard. Leaving the screen mid-rest
+ * is exactly what it exists for, so an unmount does not retract it. Every handler is stable and
+ * reads the session at call time, because the screen re-renders every second.
  */
 export function useRestTimer(session: WorkoutSession | null) {
   const { t } = useT();

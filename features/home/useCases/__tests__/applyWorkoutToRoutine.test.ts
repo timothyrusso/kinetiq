@@ -319,6 +319,26 @@ describe('applyWorkoutToRoutine', () => {
     routinesOver(emptied),
   );
 
+  const replacedUndone = storing();
+  itEffect(
+    'writes nothing when the routine’s exercises were all removed and only an undone one added',
+    Effect.gen(function* () {
+      const flyes: StrengthEntry = {
+        exerciseId: 'ex:incline-bench-press',
+        exerciseName: 'Cable Flyes',
+        muscleGroup: null,
+        sets: [set(0, { reps: 12, weightKg: 15, completed: false })],
+        notes: null,
+        restSeconds: 60,
+      };
+
+      yield* applyWorkoutToRoutine(updateOf([flyes]));
+
+      expect(replacedUndone.writes).toEqual([]);
+    }),
+    routinesOver(replacedUndone),
+  );
+
   const deleted: Stored = { routine: undefined, writes: [] };
   itEffect(
     'writes nothing into a routine deleted during the workout',
