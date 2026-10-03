@@ -120,8 +120,14 @@ export const routes = {
     }) as Href,
   renameRoutine: (id: string) => ({ pathname: '/routine/rename', params: { id } }) as Href,
   sessionFinish: () => '/workout/finish' as Href,
-  sessionSet: (entryIndex: number, setIndex: number) =>
-    ({ pathname: '/workout/set', params: { entry: String(entryIndex), set: String(setIndex) } }) as Href,
+  // NOTE: `setIndex` is the set that was tapped, which the sheet highlights; the exercise's name
+  // opens it with none.
+  sessionExercise: (entryIndex: number, setIndex?: number) =>
+    ({
+      pathname: '/workout/exercise',
+      params:
+        setIndex === undefined ? { entry: String(entryIndex) } : { entry: String(entryIndex), set: String(setIndex) },
+    }) as Href,
   // NOTE: the records a finish set go to the sheet as JSON, and the sheet decodes them.
   sessionRecords: (records: readonly object[]) =>
     ({ pathname: '/workout/records', params: { records: JSON.stringify(records) } }) as Href,

@@ -122,6 +122,21 @@ describe('the session store editing a workout', () => {
     expect(store().restEntryIndex).toBeNull();
   });
 
+  it('queues an exercise’s new rest without touching the rest running', () => {
+    store().setRest(90, 0, NOW + 1);
+    const { restEndsAt } = store().session ?? {};
+    const writes = store().writes;
+
+    store().updateEntry(0, { restSeconds: 120 }, NOW + 2);
+
+    expect(store().session?.entries[0]?.restSeconds).toBe(120);
+    expect(store().session?.restEndsAt).toBe(restEndsAt);
+    expect(store().writes).toBe(writes + 1);
+    expect(store().toggleSet(1, 0, NOW + 3)).toBe(60);
+    store().updateEntry(1, { restSeconds: 45 }, NOW + 4);
+    expect(store().toggleSet(1, 1, NOW + 5)).toBe(45);
+  });
+
   it('adds an exercise at the end of the list', () => {
     store().addExercise(anEntry({ exerciseId: 'ex:pullups' }), NOW + 1);
 

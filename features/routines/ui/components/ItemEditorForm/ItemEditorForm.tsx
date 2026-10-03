@@ -1,15 +1,24 @@
 import { memo } from 'react';
-import { Button, FormFooter, FormSection, MetaLine, Stepper, TagRow, Txt } from '@/features/core/design-system';
+import {
+  Button,
+  ExerciseAbout,
+  type ExerciseAboutContent,
+  FormFooter,
+  FormSection,
+  MetaLine,
+  NoteField,
+  SetStepperRow,
+  Stepper,
+  TagRow,
+  Txt,
+} from '@/features/core/design-system';
 import { useAppTheme } from '@/features/core/theme';
 import { useT } from '@/features/core/translations';
 import type { UnitSystem } from '@/features/core/utils';
 import type { ExerciseSnapshot } from '@/features/exercises';
 import type { ItemChange } from '@/features/routines/domain/entities/ItemTarget';
 import type { RoutineItem } from '@/features/routines/domain/schemas/RoutineSchema';
-import { ExerciseAbout } from '@/features/routines/ui/components/ExerciseAbout/ExerciseAbout';
 import { useItemEditorFormLogic } from '@/features/routines/ui/components/ItemEditorForm/ItemEditorForm.logic';
-import { NoteField } from '@/features/routines/ui/components/NoteField/NoteField';
-import { RoutineSetRow } from '@/features/routines/ui/components/RoutineSetRow/RoutineSetRow';
 
 /**
  * Editing one exercise's targets. Every stepper press commits, so the sheet is a surface for
@@ -20,12 +29,15 @@ export const ItemEditorForm = memo(function ItemEditorForm({
   item,
   snapshot,
   units,
+  about,
   onChange,
   onRemove,
 }: {
   item: RoutineItem;
   snapshot: ExerciseSnapshot | null;
   units: UnitSystem;
+  /** The library's About block, read by the page. */
+  about: ExerciseAboutContent;
   onChange: (change: ItemChange) => void;
   onRemove?: () => void;
 }) {
@@ -38,7 +50,7 @@ export const ItemEditorForm = memo(function ItemEditorForm({
       <MetaLine items={derived.meta} theme={theme} wrap />
       <FormSection title={t('itemEditor.sets')}>
         {derived.rows.map((row, at) => (
-          <RoutineSetRow
+          <SetStepperRow
             key={row.key}
             index={row.index}
             reps={row.reps}
@@ -49,8 +61,11 @@ export const ItemEditorForm = memo(function ItemEditorForm({
             rpeBounds={derived.rpe}
             weightMax={derived.weightMax}
             weightStep={derived.weightStep}
+            rpeKind="target"
+            completed={false}
             canRemove={derived.canRemoveSet}
             topDivider={at > 0}
+            highlighted={false}
             theme={theme}
             onReps={effects.setReps}
             onWeight={effects.setWeight}
@@ -87,11 +102,11 @@ export const ItemEditorForm = memo(function ItemEditorForm({
         ) : null}
       </FormSection>
 
-      <NoteField note={item.notes} onCommit={effects.setNotes} />
+      <NoteField note={item.notes} maxLength={derived.noteMax} onCommit={effects.setNotes} />
 
       <FormSection title={t('itemEditor.fromLibrary')}>
         {derived.libraryTags.length > 0 ? <TagRow tags={derived.libraryTags} theme={theme} /> : null}
-        <ExerciseAbout exerciseId={item.exerciseId} />
+        <ExerciseAbout about={about} />
       </FormSection>
 
       {onRemove === undefined ? null : (

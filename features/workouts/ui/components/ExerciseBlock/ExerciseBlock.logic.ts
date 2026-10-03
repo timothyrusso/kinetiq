@@ -17,7 +17,8 @@ export interface ExerciseBlockInput {
   readonly onAddSet: (entryIndex: number) => void;
   readonly onSkip: (entryIndex: number) => void;
   readonly onRequestRemove: (entryIndex: number) => void;
-  readonly onFocus: (entryIndex: number) => void;
+  /** Opens the exercise's sheet, making it current. */
+  readonly onOpen: (entryIndex: number) => void;
 }
 
 /**
@@ -33,7 +34,7 @@ export function useExerciseBlockLogic({
   onAddSet,
   onSkip,
   onRequestRemove,
-  onFocus,
+  onOpen,
 }: ExerciseBlockInput) {
   const styles = useStyles(createStyles);
   const done = entry.sets.filter(set => set.completed).length;
@@ -59,7 +60,7 @@ export function useExerciseBlockLogic({
     ],
     [styles],
   );
-  const focus = useCallback(() => onFocus(entryIndex), [onFocus, entryIndex]);
+  const open = useCallback(() => onOpen(entryIndex), [onOpen, entryIndex]);
   const addSet = useCallback(() => onAddSet(entryIndex), [onAddSet, entryIndex]);
   const skip = useCallback(() => onSkip(entryIndex), [onSkip, entryIndex]);
   const remove = useCallback(() => onRequestRemove(entryIndex), [onRequestRemove, entryIndex]);
@@ -72,6 +73,6 @@ export function useExerciseBlockLogic({
       headStyle,
       textActionStyle,
     },
-    effects: { focus, addSet, skip, remove },
+    effects: { open, addSet, skip, remove },
   };
 }

@@ -43,7 +43,8 @@ describe('routes', () => {
   });
 
   it('passes the set position as strings', () => {
-    expect(routes.sessionSet(1, 2)).toEqual({ pathname: '/workout/set', params: { entry: '1', set: '2' } });
+    expect(routes.sessionExercise(1, 2)).toEqual({ pathname: '/workout/exercise', params: { entry: '1', set: '2' } });
+    expect(routes.sessionExercise(1)).toEqual({ pathname: '/workout/exercise', params: { entry: '1' } });
   });
 
   it('passes the records a finish set as JSON', () => {

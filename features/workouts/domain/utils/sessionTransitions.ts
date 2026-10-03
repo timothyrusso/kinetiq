@@ -5,6 +5,9 @@ import { withEstimated1rm } from '@/features/workouts/domain/utils/workoutMath';
 /** The fields a set editor may change. */
 export type SetPatch = Partial<Pick<StrengthSet, 'reps' | 'weightKg' | 'rpe'>>;
 
+/** The fields of an exercise the exercise editor may change besides its sets. */
+export type EntryPatch = Partial<Pick<StrengthEntry, 'restSeconds' | 'notes'>>;
+
 /** The shortest rest a timer can hold; less than this is no rest, which is `clearRest`. */
 const MIN_REST_SECONDS = 5;
 
@@ -94,6 +97,22 @@ export function updateSet(
   return withEntrySets(session, entryIndex, sets, now);
 }
 
+/**
+ * Changes the exercise's rest or note. The rest is the one the next ticked set starts: a rest
+ * already running keeps its deadline, which is the session's, not the entry's.
+ */
+export function updateEntry(
+  session: WorkoutSession,
+  entryIndex: number,
+  patch: EntryPatch,
+  now: number,
+): WorkoutSession {
+  const entry = session.entries[entryIndex];
+  if (!entry) return session;
+  const entries = session.entries.map((row, index) => (index === entryIndex ? { ...row, ...patch } : row));
+  return touch(session, { entries }, now);
+}
+
 /** Appends a set with the previous set's targets: the common case. */
 export function addSet(session: WorkoutSession, entryIndex: number, now: number): WorkoutSession {
   const entry = session.entries[entryIndex];
@@ -129,11 +148,15 @@ export function skipExercise(session: WorkoutSession, entryIndex: number, now: n
   return touch(session, { entries, activeIndex: Math.min(entryIndex + 1, session.entries.length - 1) }, now);
 }
 
-/** Removes an exercise and the sets banked against it. A session keeps its last exercise. */
+/**
+ * Removes an exercise and the sets banked against it. A session keeps its last exercise. The
+ * current exercise stays current as the list closes up over one removed above it.
+ */
 export function removeExercise(session: WorkoutSession, entryIndex: number, now: number): WorkoutSession {
   if (session.entries.length <= 1) return session;
   const entries = session.entries.filter((_, index) => index !== entryIndex);
-  return touch(session, { entries, activeIndex: Math.min(session.activeIndex, entries.length - 1) }, now);
+  const current = entryIndex < session.activeIndex ? session.activeIndex - 1 : session.activeIndex;
+  return touch(session, { entries, activeIndex: Math.max(0, Math.min(current, entries.length - 1)) }, now);
 }
 
 export function addExercise(session: WorkoutSession, entry: StrengthEntry, now: number): WorkoutSession {

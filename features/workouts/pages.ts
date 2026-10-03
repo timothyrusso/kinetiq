@@ -7,6 +7,6 @@ export { ExerciseHistorySection } from '@/features/workouts/ui/components/Exerci
 export { ActivityPage } from '@/features/workouts/ui/pages/ActivityPage/ActivityPage';
 export { FinishPage } from '@/features/workouts/ui/pages/FinishPage/FinishPage';
 export { RecordsPage } from '@/features/workouts/ui/pages/RecordsPage/RecordsPage';
+export { SessionExercisePage } from '@/features/workouts/ui/pages/SessionExercisePage/SessionExercisePage';
 export { SessionPage } from '@/features/workouts/ui/pages/SessionPage/SessionPage';
-export { SetPage } from '@/features/workouts/ui/pages/SetPage/SetPage';
 export { WorkoutAccessory } from '@/features/workouts/ui/pages/WorkoutAccessory/WorkoutAccessory';

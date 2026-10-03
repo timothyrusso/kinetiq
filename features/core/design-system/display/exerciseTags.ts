@@ -16,3 +16,15 @@ export function exerciseTags(exercise: { primaryMuscles: readonly string[]; cate
   }
   return tags;
 }
+
+/**
+ * The tags an exercise editor shows above the library's About block: the taxonomy, then each
+ * piece of equipment.
+ */
+export function exerciseLibraryTags(exercise: {
+  primaryMuscles: readonly string[];
+  category: string | null;
+  equipment: readonly string[];
+}): Tag[] {
+  return [...exerciseTags(exercise), ...exercise.equipment.map(gear => ({ key: `e:${gear}`, label: gear }))];
+}

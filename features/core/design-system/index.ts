@@ -14,6 +14,7 @@ export {
   type ContentUnavailableAction,
 } from '@/features/core/design-system/controls/ContentUnavailable';
 export { IconButton } from '@/features/core/design-system/controls/IconButton';
+export { NoteField } from '@/features/core/design-system/controls/NoteField/NoteField';
 export { SegmentedControl } from '@/features/core/design-system/controls/SegmentedControl';
 export {
   SettingsList,
@@ -28,9 +29,13 @@ export { ACTIVITY_ICON } from '@/features/core/design-system/display/activityIco
 export { Badge } from '@/features/core/design-system/display/Badge';
 export type { BundledImage } from '@/features/core/design-system/display/BundledPhoto';
 export { CrossFadeImage } from '@/features/core/design-system/display/CrossFadeImage';
+export {
+  ExerciseAbout,
+  type ExerciseAboutContent,
+} from '@/features/core/design-system/display/ExerciseAbout/ExerciseAbout';
 export { ExerciseRow } from '@/features/core/design-system/display/ExerciseRow';
 export { ExerciseThumb } from '@/features/core/design-system/display/ExerciseThumb';
-export { exerciseTags } from '@/features/core/design-system/display/exerciseTags';
+export { exerciseLibraryTags, exerciseTags } from '@/features/core/design-system/display/exerciseTags';
 export { EXERCISE_IMAGE_CACHE } from '@/features/core/design-system/display/imageCache';
 export { ListRow } from '@/features/core/design-system/display/ListRow';
 export { MetaLine } from '@/features/core/design-system/display/MetaLine';
@@ -39,6 +44,8 @@ export { NumberedSteps } from '@/features/core/design-system/display/NumberedSte
 export { RoutineRow } from '@/features/core/design-system/display/RoutineRow';
 export { RowButton } from '@/features/core/design-system/display/RowButton';
 export { SectionHeader } from '@/features/core/design-system/display/SectionHeader';
+export { SetStepperRow } from '@/features/core/design-system/display/SetStepperRow/SetStepperRow';
+export type { SetRpeKind } from '@/features/core/design-system/display/SetStepperRow/SetStepperRow.logic';
 export { StatTile } from '@/features/core/design-system/display/StatTile';
 export { SwipeToDelete } from '@/features/core/design-system/display/SwipeToDelete';
 export { TagRow } from '@/features/core/design-system/display/TagRow';

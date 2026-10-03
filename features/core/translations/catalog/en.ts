@@ -311,11 +311,11 @@ export const en = {
     weekOf: 'Week of {date}',
     elapsedA11y: 'Elapsed {time}',
     setsDone: '{done} of {planned} {word} done',
-    repCount_one: '{count} rep',
-    repCount_other: '{count} reps',
   },
   // NOTE: --- end group-c ---
   session: {
+    pickHasCompletedSet: 'Has a completed set, so it stays. Remove it from the workout screen.',
+    pickLastExercise: 'The only exercise in this workout, so it stays.',
     thisSet: 'This set',
     addNotChanged:
       'That exercise did not go in: it is either already in this workout, or the workout has ended. Nothing was changed.',
@@ -426,7 +426,7 @@ export const en = {
   setRow: {
     bodyweight: 'bodyweight',
     setRepsAt: 'Set {n}: {reps} reps at {weight}',
-    opensEditor: 'Opens the set editor.',
+    opensEditor: 'Opens the exercise editor on this set.',
     reps: 'Reps',
     weightIn: 'Weight ({unit})',
     setWeight: 'Set {n} weight: {weight}',
@@ -434,19 +434,14 @@ export const en = {
     markNotDone: 'Mark set {n} not done',
     completeSet: 'Complete set {n}',
     blockA11y: '{name}. {done} of {total} sets done.',
-    isCurrent: 'This is the current exercise.',
-    makeCurrent: 'Makes it the current exercise.',
+    opensCurrentExercise: 'This is the current exercise. Opens its editor.',
+    opensExercise: 'Makes it the current exercise and opens its editor.',
     addSet: 'Add a set',
     skip: 'Skip',
     skipNamed: 'Skip {name}',
     remove: 'Remove',
     removeNamed: 'Remove {name} from this workout',
-    thisSet: 'This set',
-    weightInUnit: 'Weight in {unit}',
-    bodyweightNote: 'Bodyweight: no external load recorded.',
-    rpe: 'RPE',
     rpeNote: 'Effort out of 10. Zero means you did not note it.',
-    removeThisSet: 'Remove this set',
     restLess: 'Rest fifteen seconds less',
     restMore: 'Rest fifteen seconds longer',
     skipRest: 'Skip the rest',
@@ -545,6 +540,10 @@ export const en = {
     setWeightA11y: 'Set {n} weight in {unit}',
     targetRpe: 'Target RPE',
     setRpeA11y: 'Set {n} target RPE',
+    rpe: 'RPE',
+    setLoggedRpeA11y: 'Set {n} RPE',
+    setDone: 'Done',
+    setDoneA11y: 'Set {n}, done',
     removeSetA11y: 'Remove set {n}',
     addSet: 'Add a set',
     targetRpeNote: 'Target effort out of 10. Zero means no target.',
@@ -558,6 +557,10 @@ export const en = {
     notePlaceholder: 'A cue for mid-set: elbows tucked, pause at the chest',
     noteHint: 'Shown on this exercise during the workout.',
     noteCount: '{count} of {max}',
+  },
+
+  exerciseEditor: {
+    restAppliesNext: 'Used from the next set you tick. A rest already running keeps its time.',
   },
 
   trainingPrefs: {
@@ -732,6 +735,9 @@ export const en = {
     alreadyInRoutine: 'Already in this routine',
     addsToRoutine: 'Adds this exercise to the routine',
     removesFromRoutine: 'Removes this exercise from the routine',
+    alreadyInWorkout: 'Already in this workout',
+    addsToWorkout: 'Adds this exercise to the workout',
+    removesFromWorkout: 'Removes this exercise from the workout',
     resetFailedBody:
       'Kinetiq still could not open local storage, and clearing it did not help. Reinstalling the app is the remaining option; your data has already been removed.',
     stillStartingBody:

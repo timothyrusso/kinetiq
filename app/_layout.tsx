@@ -51,8 +51,9 @@ export default function RootLayout() {
  * header. Every pushed route lives in this one stack rather than a nested stack per folder, so the
  * system back button, its history menu and the Android back gesture all work unaided. The player
  * keeps `gestureEnabled: false`: a swipe must not discard an unfinished workout. Editors are routes
- * presented as the platform's sheet; the exercise item editor is not `fit`, because with the
- * picture and description under the targets a fit-to-contents sheet clips instead of scrolling.
+ * presented as the platform's sheet; the two exercise editors (a routine item, a workout's
+ * exercise) are not `fit`, because with the picture and description under the targets a
+ * fit-to-contents sheet clips instead of scrolling.
  * The unmatched route is a card, so the OS back gesture can undo a bad link.
  */
 function ThemedRoot() {
@@ -72,7 +73,7 @@ function ThemedRoot() {
             <Stack.Screen name="edit-profile" options={formSheet('fit', theme)} />
             <Stack.Screen name="routine/item" options={formSheet('picker', theme)} />
             <Stack.Screen name="routine/rename" options={formSheet('fit', theme)} />
-            <Stack.Screen name="workout/set" options={formSheet('fit', theme)} />
+            <Stack.Screen name="workout/exercise" options={formSheet('picker', theme)} />
             <Stack.Screen name="workout/finish" options={formSheet('fit', theme)} />
             <Stack.Screen name="workout/records" options={formSheet('fit', theme)} />
             <Stack.Screen name="+not-found" options={{ presentation: 'card' }} />

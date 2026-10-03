@@ -15,7 +15,7 @@ const renderBlock = async (overrides: Partial<ExerciseBlockInput> = {}) => {
     onAddSet: index => void presses.push(`add ${index}`),
     onSkip: index => void presses.push(`skip ${index}`),
     onRequestRemove: index => void presses.push(`remove ${index}`),
-    onFocus: index => void presses.push(`focus ${index}`),
+    onOpen: index => void presses.push(`open ${index}`),
     ...overrides,
   };
   return { ...(await renderHook(() => useExerciseBlockLogic(input))), presses };
@@ -74,12 +74,12 @@ describe('useExerciseBlockLogic', () => {
     const { result, presses } = await renderBlock();
 
     await act(async () => {
-      result.current.effects.focus();
+      result.current.effects.open();
       result.current.effects.addSet();
       result.current.effects.skip();
       result.current.effects.remove();
     });
 
-    expect(presses).toEqual(['focus 3', 'add 3', 'skip 3', 'remove 3']);
+    expect(presses).toEqual(['open 3', 'add 3', 'skip 3', 'remove 3']);
   });
 });

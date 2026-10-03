@@ -1,8 +1,10 @@
-import { useLocalSearchParams } from 'expo-router';
+import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo } from 'react';
-import { closeSheet } from '@/features/core/design-system';
+import { closeSheet, type ExerciseAboutContent } from '@/features/core/design-system';
 import { haptics } from '@/features/core/haptics';
+import { routes } from '@/features/core/navigation';
 import { useT } from '@/features/core/translations';
+import { useExerciseAbout } from '@/features/exercises';
 import type { ItemChange } from '@/features/routines/domain/entities/ItemTarget';
 import { routineIdOf } from '@/features/routines/domain/utils/routineId';
 import { useRoutine } from '@/features/routines/facades/useRoutine';
@@ -13,7 +15,9 @@ import { useSettings } from '@/features/settings';
 /**
  * One routine item's targets, from the builder (`target=draft`, written into the draft) or from a
  * saved routine (`target=routine&id=`, written through the item mutation). Both sources are read
- * unconditionally; the one the route does not name is empty or disabled.
+ * unconditionally; the one the route does not name is empty or disabled. The About block's photo
+ * moves while this sheet is the focused screen, and its link pushes the exercise page over the
+ * sheet, so back returns to it.
  */
 export function useRoutineItemPageLogic() {
   const { t } = useT();
@@ -62,10 +66,21 @@ export function useRoutineItemPageLogic() {
     closeSheet();
   }, [actions, dropItem, itemId, routineId]);
 
+  const exerciseId = item?.exerciseId ?? null;
+  const aboutContent = useExerciseAbout(exerciseId);
+  const focused = useIsFocused();
+  const openExercise = useCallback(() => {
+    if (exerciseId !== null) router.push(routes.exerciseDetail(exerciseId, true));
+  }, [exerciseId]);
+  const about = useMemo<ExerciseAboutContent>(
+    () => ({ ...aboutContent, animating: focused, onOpen: openExercise }),
+    [aboutContent, focused, openExercise],
+  );
+
   const title = item?.exerciseName ?? (routineId === null ? '' : t('routine.title'));
 
   return {
-    state: { item, snapshot, units },
+    state: { item, snapshot, units, about },
     derived: { title },
     effects: { change, remove },
   };

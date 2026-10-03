@@ -7,7 +7,7 @@ import { tr } from '@/features/core/translations';
 import { getSettings, updateSettings } from '@/features/settings';
 import { aSession } from '@/features/workouts/__fixtures__/builders';
 import { makeSessionScreenTestLayer } from '@/features/workouts/di/__tests__/workoutsTestData';
-import { sessionLifecycle } from '@/features/workouts/facades/useActiveSession';
+import { sessionActions, sessionLifecycle } from '@/features/workouts/facades/useActiveSession';
 import { useSessionPageLogic } from '@/features/workouts/ui/pages/SessionPage/SessionPage.logic';
 
 beforeEach(() => {
@@ -84,13 +84,45 @@ describe('useSessionPageLogic', () => {
     await done();
   });
 
-  it('opens the set editor for a set and makes its exercise current', async () => {
+  it('opens the exercise’s sheet on the tapped set and makes the exercise current', async () => {
     const { result, done } = await renderScreen();
 
     await act(async () => result.current.effects.openSet(1, 0));
 
-    expect(routerFake.history).toEqual([{ verb: 'push', href: routes.sessionSet(1, 0) }]);
+    expect(routerFake.history).toEqual([{ verb: 'push', href: routes.sessionExercise(1, 0) }]);
     expect(result.current.derived.blocks.map(block => block.isCurrent)).toEqual([false, true]);
+    await done();
+  });
+
+  it('opens the exercise’s sheet with no set from its name', async () => {
+    const { result, done } = await renderScreen();
+
+    await act(async () => result.current.effects.openExercise(1));
+
+    expect(routerFake.history).toEqual([{ verb: 'push', href: routes.sessionExercise(1) }]);
+    expect(result.current.derived.blocks.map(block => block.isCurrent)).toEqual([false, true]);
+    await done();
+  });
+
+  it('starts the rest on a tick with the exercise’s rest as edited since the workout began', async () => {
+    const { result, done } = await renderScreen();
+
+    await act(async () => sessionActions.updateEntry(1, { restSeconds: 45 }));
+    await act(async () => result.current.effects.toggleSet(1, 0));
+
+    expect(result.current.derived.restShown).toBe(true);
+    expect(result.current.state.restTotal).toBe(45);
+    await done();
+  });
+
+  it('starts no rest for an exercise whose rest is zero', async () => {
+    const { result, done } = await renderScreen();
+
+    await act(async () => sessionActions.updateEntry(1, { restSeconds: 0 }));
+    await act(async () => result.current.effects.toggleSet(1, 0));
+
+    expect(result.current.state.session?.entries[1]?.sets[0]?.completed).toBe(true);
+    expect(result.current.derived.restShown).toBe(false);
     await done();
   });
 

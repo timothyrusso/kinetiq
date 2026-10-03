@@ -14,6 +14,7 @@ import {
   startRest,
   tickElapsed,
   toggleSet,
+  updateEntry,
   updateSet,
 } from '@/features/workouts/domain/utils/sessionTransitions';
 
@@ -96,6 +97,14 @@ describe('toggleSet', () => {
 });
 
 describe('updateSet', () => {
+  it('keeps the routine row a set was planned from', () => {
+    const planned = aSession({ entries: [anEntry({ sets: [aSet({ routineSetIndex: 0 })] })] });
+
+    const next = updateSet(planned, 0, 0, { reps: 3, weightKg: 110 }, NOW);
+
+    expect(next.entries[0]?.sets[0]).toMatchObject({ reps: 3, weightKg: 110, routineSetIndex: 0 });
+  });
+
   it('changes the set and refreshes the estimate of a completed one', () => {
     const next = updateSet(aSession(), 0, 1, { reps: 1, weightKg: 130 }, NOW);
 
@@ -106,6 +115,32 @@ describe('updateSet', () => {
     const current = aSession();
 
     expect(updateSet(current, 5, 0, { reps: 3 }, NOW)).toBe(current);
+  });
+});
+
+describe('updateEntry', () => {
+  it('changes the exercise’s rest and note and leaves its sets and markers alone', () => {
+    const planned = aSession({ entries: [anEntry({ routineItemId: 'rit_bench' }), anotherEntry()] });
+
+    const next = updateEntry(planned, 0, { restSeconds: 150, notes: 'Pause at the chest' }, NOW);
+
+    expect(next.entries[0]).toEqual({ ...planned.entries[0], restSeconds: 150, notes: 'Pause at the chest' });
+    expect(next.entries[1]).toBe(planned.entries[1]);
+    expect(next.updatedAt).toBe(NOW);
+  });
+
+  it('leaves a running rest’s deadline as it was', () => {
+    const resting = startRest(aSession(), 90, NOW);
+
+    const next = updateEntry(resting, 0, { restSeconds: 30 }, NOW + 1_000);
+
+    expect(next).toMatchObject({ restEndsAt: resting.restEndsAt, restDurationSeconds: 90 });
+  });
+
+  it('changes nothing for an exercise that is not there', () => {
+    const current = aSession();
+
+    expect(updateEntry(current, 5, { restSeconds: 30 }, NOW)).toBe(current);
   });
 });
 
@@ -160,6 +195,27 @@ describe('removeExercise and addExercise', () => {
 
     expect(next.entries.map(entry => entry.exerciseName)).toEqual(['Bench Press']);
     expect(next.activeIndex).toBe(0);
+  });
+
+  it('keeps the current exercise current when one above it is removed', () => {
+    const three = aSession({
+      entries: [anEntry(), anotherEntry(), anEntry({ exerciseId: 'ex:pullups' })],
+      activeIndex: 2,
+    });
+
+    const next = removeExercise(three, 0, NOW);
+
+    expect(next.entries[next.activeIndex]?.exerciseId).toBe('ex:pullups');
+    expect(next.activeIndex).toBe(1);
+  });
+
+  it('leaves the current exercise alone when one below it is removed', () => {
+    const three = aSession({
+      entries: [anEntry(), anotherEntry(), anEntry({ exerciseId: 'ex:pullups' })],
+      activeIndex: 1,
+    });
+
+    expect(removeExercise(three, 2, NOW).activeIndex).toBe(1);
   });
 
   it('keeps a session’s last exercise', () => {

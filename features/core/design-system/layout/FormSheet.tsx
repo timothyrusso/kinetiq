@@ -22,7 +22,7 @@
 
 import { FlashList, type ListRenderItem } from '@shopify/flash-list';
 import { router } from 'expo-router';
-import { memo, type ReactElement, type ReactNode, useMemo } from 'react';
+import { memo, type ReactElement, type ReactNode, type RefObject, useCallback, useMemo, useRef } from 'react';
 import { ScrollView, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/features/core/design-system/controls/Button';
@@ -42,21 +42,43 @@ interface FormSheetBarProps {
 
 export function FormSheet({
   scroll = false,
+  scrollTo,
   children,
   ...barProps
 }: FormSheetBarProps & {
   /** For bodies taller than a phone's half height. */
   scroll?: boolean;
+  /**
+   * A view in a `scroll` body to bring to the top of the sheet once it first lays out: the row
+   * the sheet was opened for. Measured, not guessed, so Dynamic Type cannot put it off screen.
+   */
+  scrollTo?: RefObject<View | null>;
   children: ReactNode;
 }) {
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
+  const scroller = useRef<ScrollView>(null);
+  const content = useRef<View>(null);
+  const revealed = useRef(false);
+  // NOTE: once only: the content grows again as the About block's photo and steps arrive, and a
+  // sheet that jumped back to the row then would fight the thumb that had scrolled away from it.
+  const reveal = useCallback(() => {
+    const target = scrollTo?.current;
+    const view = scroller.current;
+    if (revealed.current || target == null || view === null || content.current === null) return;
+    revealed.current = true;
+    target.measureLayout(content.current, (_x, y) =>
+      view.scrollTo({ y: Math.max(0, y - spacing.md), animated: false }),
+    );
+  }, [scrollTo]);
   const bar = <FormSheetBar {...barProps} />;
   const body = <View style={[styles.body, { paddingBottom: insets.bottom + spacing.lg }]}>{children}</View>;
   return (
     <>
       {scroll ? (
         <ScrollView
+          ref={scroller}
+          onContentSizeChange={scrollTo === undefined ? undefined : reveal}
           // NOTE: Android's sheet (Material's BottomSheetBehavior) only yields a drag to a child
           // with nested scrolling on; without it every downward drag moved the sheet, so the list
           // could not scroll back up. At the top of the list a drag still moves the sheet.
@@ -66,8 +88,10 @@ export function FormSheet({
           keyboardShouldPersistTaps="handled"
           contentInsetAdjustmentBehavior="automatic"
         >
-          {bar}
-          {body}
+          <View ref={content} collapsable={false}>
+            {bar}
+            {body}
+          </View>
         </ScrollView>
       ) : (
         <View style={[styles.gutter, { backgroundColor: theme.colors.sheet }]}>

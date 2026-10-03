@@ -173,14 +173,22 @@ export function useSessionPageLogic() {
         return;
       }
       haptics.setCompleted();
-      if (autoStartRest) startRest(startedRest, entryIndex);
+      // NOTE: a rest of zero is the exercise's "no rest", as its editor says, not the timer's
+      // five-second floor.
+      if (autoStartRest && startedRest > 0) startRest(startedRest, entryIndex);
     },
     [autoStartRest, retract, startRest],
   );
 
+  // NOTE: both open the exercise's sheet and make it current; a set cell names the set to
+  // highlight in it.
   const openSet = useCallback((entryIndex: number, setIndex: number) => {
     sessionActions.focus(entryIndex);
-    router.push(routes.sessionSet(entryIndex, setIndex));
+    router.push(routes.sessionExercise(entryIndex, setIndex));
+  }, []);
+  const openExercise = useCallback((entryIndex: number) => {
+    sessionActions.focus(entryIndex);
+    router.push(routes.sessionExercise(entryIndex));
   }, []);
 
   const addSet = useCallback((entryIndex: number) => {
@@ -328,10 +336,10 @@ export function useSessionPageLogic() {
       cancelDiscard,
       discard,
       openSet,
+      openExercise,
       toggleSet,
       addSet,
       skip: sessionActions.skipExercise,
-      focus: sessionActions.focus,
       requestRemove: setRemoving,
       confirmRemove,
       cancelRemove,

@@ -9,6 +9,7 @@ import {
   addSet,
   bankElapsed,
   clearRest,
+  type EntryPatch,
   focusExercise,
   pauseSession,
   removeExercise,
@@ -20,6 +21,7 @@ import {
   startRest,
   tickElapsed,
   toggleSet,
+  updateEntry,
   updateSet,
 } from '@/features/workouts/domain/utils/sessionTransitions';
 
@@ -66,6 +68,7 @@ interface SessionStoreState {
   /** Returns the rest to start: the entry's, when the set was just completed, else `null`. */
   readonly toggleSet: (entryIndex: number, setIndex: number, now: number) => number | null;
   readonly updateSet: (entryIndex: number, setIndex: number, patch: SetPatch, now: number) => void;
+  readonly updateEntry: (entryIndex: number, patch: EntryPatch, now: number) => void;
   readonly addSet: (entryIndex: number, now: number) => void;
   readonly removeSet: (entryIndex: number, setIndex: number, now: number) => void;
   readonly skipExercise: (entryIndex: number, now: number) => void;
@@ -194,6 +197,8 @@ const sessionStore = createStore<SessionStoreState>((set, get) => {
 
     updateSet: (entryIndex, setIndex, patch, now) =>
       transition(session => updateSet(session, entryIndex, setIndex, patch, now)),
+
+    updateEntry: (entryIndex, patch, now) => transition(session => updateEntry(session, entryIndex, patch, now)),
 
     addSet: (entryIndex, now) => transition(session => addSet(session, entryIndex, now)),
 
