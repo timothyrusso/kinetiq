@@ -235,7 +235,7 @@ export const it: Copy = {
     unknownBuiltIn: 'Questo esercizio arriva dalla libreria interna, che non ne conserva una descrizione.',
     backToLibrary: 'Torna alla libreria',
     howTo: 'Come si esegue',
-    noDescriptionOffline:
+    noDescriptionStored:
       'Con questo esercizio non è stata salvata alcuna descrizione, e la libreria esercizi non lo contiene più.',
     noDescription:
       'La libreria esercizi non ha una descrizione per questo. Le tue note dalle sessioni passate sono il riferimento migliore.',
@@ -254,8 +254,6 @@ export const it: Copy = {
     noBundledImage: 'Nessuna foto per questo esercizio',
     imageUnavailable: 'Non è stato possibile mostrare la foto',
     photoOf: 'Foto di {name}',
-    offlineCopy: 'Copia offline salvata su questo dispositivo',
-    offlineCopyDated: 'Copia offline salvata il {date}',
     builtIn: 'Esercizio interno',
     bodyweightTimes: 'Corpo libero × {reps}',
     openSession: 'Apre la sessione',

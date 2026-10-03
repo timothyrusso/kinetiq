@@ -35,8 +35,7 @@ const SCREEN_OPTIONS = { animation: 'fade_from_bottom' } as const;
  * Exercise detail: what the library says about one movement, and what the user has done with it.
  *
  * Under the hero sit the badges (training type when it is not strength, level, mechanic) and, for
- * a stored copy, one line saying so, which explains a missing photo before the user goes looking
- * for one. Nothing is inferred to fill a gap: a missing description is a named
+ * an exercise neither the library nor a stored copy knows, one line saying it is built in. Nothing is inferred to fill a gap: a missing description is a named
  * silence, missing art a designed composition. Muscle and equipment chips are labels and go
  * nowhere: the library is reached only to pick an exercise.
  *
@@ -94,7 +93,7 @@ export function ExerciseDetailPage({ renderHistory }: { renderHistory?: (exercis
             {derived.hasLead ? (
               <Column gap="md" style={styles.section}>
                 <TagRow tags={derived.badgeTags} theme={theme} />
-                <ExerciseProvenance from={state.from} storedAt={state.storedAt} />
+                <ExerciseProvenance from={state.from} />
               </Column>
             ) : null}
 
@@ -121,9 +120,7 @@ export function ExerciseDetailPage({ renderHistory }: { renderHistory?: (exercis
                     <Icon name="info" size={ICON_SIZE.inline} color={theme.colors.textFaint} />
                     <Txt variant="body" tone="muted" style={styles.flex}>
                       {t(
-                        state.from === 'stored'
-                          ? 'exerciseDetail.noDescriptionOffline'
-                          : 'exerciseDetail.noDescription',
+                        state.from === 'stored' ? 'exerciseDetail.noDescriptionStored' : 'exerciseDetail.noDescription',
                       )}
                     </Txt>
                   </Row>

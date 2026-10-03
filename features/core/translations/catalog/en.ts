@@ -231,7 +231,7 @@ export const en = {
     unknownBuiltIn: 'This exercise came from the built-in library, which does not store a description for it.',
     backToLibrary: 'Back to library',
     howTo: 'How to do it',
-    noDescriptionOffline: 'No description was saved with this exercise, and the exercise library no longer lists it.',
+    noDescriptionStored: 'No description was saved with this exercise, and the exercise library no longer lists it.',
     noDescription:
       'The exercise library has no description for this one. Your own notes from past sessions are the best reference.',
     muscles: 'Muscles',
@@ -248,8 +248,6 @@ export const en = {
     noBundledImage: 'No photo for this exercise',
     imageUnavailable: 'The photo could not be shown',
     photoOf: 'Photos of {name}',
-    offlineCopy: 'Offline copy saved on this device',
-    offlineCopyDated: 'Offline copy saved {date}',
     builtIn: 'Built-in exercise',
     bodyweightTimes: 'Bodyweight × {reps}',
     openSession: 'Opens the session',

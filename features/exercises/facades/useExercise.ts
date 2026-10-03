@@ -67,8 +67,6 @@ export function useExercise(id: string | null) {
       id !== null && exercise === null && (stored.isPending || stored.isFetching || (isCatalogId && catalog.isPending)),
     isFetching: catalog.isFetching,
     error: exercise === null ? (catalog.error ?? stored.error) : null,
-    // NOTE: the stored row, so the screen can date its own copy.
-    stored: snapshot,
     retry,
   };
 }
