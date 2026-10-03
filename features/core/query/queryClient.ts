@@ -4,16 +4,16 @@
  * Two React Native facts shape this file, both verified against the installed
  * query-core rather than assumed:
  *
- * 1. There is no `window`, so `onlineManager` and `focusManager` attach nothing.
- *    Without intervention, queries would assume a connection forever and would
- *    never refetch on foreground. `adapters.ts` beside this file feeds both managers
- *    from `expo-network` and `AppState`.
+ * 1. There is no `window`, so `focusManager` attaches nothing. Without intervention,
+ *    a query that asks to refetch on foreground never would. `adapters.ts` beside this
+ *    file feeds the manager from `AppState`. The app makes no network requests, so
+ *    `onlineManager` keeps its default (always online).
  *
  * 2. The app's data is local (SQLite and the bundled exercise catalog), so there is
  *    no HTTP cache to lean on. The in-memory cache here *is* the cache: it has to
  *    survive navigation, so a screen opened twice reads the database once.
  */
-import { focusManager, MutationCache, onlineManager, QueryClient } from '@tanstack/react-query';
+import { focusManager, MutationCache, QueryClient } from '@tanstack/react-query';
 import { HTTP_RETRY_BUDGET, HttpError, httpRetryDelayMs, isAppError } from '@/features/core/error';
 import { type QueryAdapters, setupQueryAdapters } from '@/features/core/query/adapters';
 
@@ -104,13 +104,10 @@ export function getQueryClient(): QueryClient {
   return client;
 }
 
-/**
- * Wires the focus/online managers. Returns a disposer; must be called before any query is
- * subscribed.
- */
+/** Wires the focus manager. Returns a disposer; must be called before any query is subscribed. */
 export function installQueryAdapters(): () => void {
   if (adapters) adapters.dispose();
-  adapters = setupQueryAdapters(focusManager, onlineManager);
+  adapters = setupQueryAdapters(focusManager);
   return () => {
     adapters?.dispose();
     adapters = null;

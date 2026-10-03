@@ -48,14 +48,14 @@ Every feature declares `FEATURE_TIER` in its `index.ts`; `npm run arch` checks t
 | `core/logger` | `LoggerLive` and `logBackgroundFailure`, the one logging helper outside the boundary (see Exceptions) |
 | `core/sqlite` | `SqliteLive` (expo-sqlite, WAL, foreign keys), the per-version migrations `v001` to `v012`, `SchemaStatus`, `clearAllUserData` and `resetLocalData` |
 | `core/lifecycle` | `BackgroundSync`, the port the bootstrap installs and `watch-sync` fills (below) |
-| `core/query` | `queryClient` (no TanStack retry for app errors), `useEffectQuery` and `useEffectMutation` re-exported for facades, the app-state and network adapters |
+| `core/query` | `queryClient` (no TanStack retry for app errors), `useEffectQuery` and `useEffectMutation` re-exported for facades, the app-state focus adapter |
 | `core/state` | `createStore`, `createSelectors`, `resetAllStores` |
 | `core/translations` | the hand-rolled catalog (`en`, `it`), `useT`, `tr`; a module-level map holds catalog keys, never words |
 | `core/theme` | tokens, `spacing`, `screenGutter`, the accent, `themeFor` |
 | `core/design-system` | controls (`controls/<Name>/index.ios.tsx`, `index.android.tsx`, `types.ts`), layout, charts, display, states, icons, insets |
 | `core/navigation` | `routes`, header options and actions (`headerActions.ts`, one `sf` and one `material` name per action), the not-found page |
 | `core/haptics` | the `Haptics` Tag and the plain `haptics` vocabulary views call through `useHaptics` |
-| `core/network`, `core/clock`, `core/utils` | the connectivity probe; clock helpers; formatting, relative time, colour and small pure helpers |
+| `core/clock`, `core/utils` | clock helpers; formatting, relative time, colour and small pure helpers |
 | `core/testing` | `makeTestAppLayer`, `makeTestRuntime`, `makeMigratedSqliteLayer`, `renderWithLayer`, `routerFake`, `makeHapticsFake` |
 | `core/runtime` | `AppLayer`, `runtime` and the `Register` augmentation |
 
@@ -144,9 +144,8 @@ Each is a deliberate departure from a kit rule, with the reason.
    boundary drop their rejection with a `// NOTE:` codetag: each is cosmetic or a way out that has
    nothing to report to. These are the only lines the `catch(() => undefined)` grep returns
    outside tests.
-5. **Fallback catches with a reason.** The network probe (treated as online), the liquid-glass
-   check, the Android header glyph render, the root layout's appearance read, the haptics fire and
-   the notification channel set-up keep a fallback value and say why in a `// NOTE:` codetag.
+5. **Fallback catches with a reason.** The liquid-glass check, the Android header glyph render,
+   the root layout's appearance read, the haptics fire and the notification channel set-up keep a fallback value and say why in a `// NOTE:` codetag.
 6. **Routine snapshot writes are not in the routine's transaction.** `createRoutine` and
    `addRoutineItem` upsert the exercise snapshots through `ExerciseSnapshotRepository` before the routine
    save, outside its transaction: a snapshot is an idempotent upsert keyed by exercise, and one

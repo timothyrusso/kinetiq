@@ -1,51 +1,33 @@
 /**
- * React Native adapters for TanStack Query's focus and online managers.
+ * The React Native adapter for TanStack Query's focus manager.
  *
- * Verified against the installed query-core: both managers attach their default
- * listeners behind `typeof window !== 'undefined'`, and RN has no `window`, so
- * neither attaches anything. Out of the box the library therefore believes the
- * device is permanently online and permanently focused. Without this file, a query
- * that fails on a dead network is never resumed when the network returns, and
- * returning to the app never revalidates anything.
- *
- * Connectivity comes from `networkStatus.ts`, which owns the single
- * `expo-network` subscription: two sources of truth for "are we online" are
- * allowed to disagree, and the disagreement shows up as queries refusing to run.
+ * Verified against the installed query-core: the manager attaches its default listener behind
+ * `typeof window !== 'undefined'`, and RN has no `window`, so it attaches nothing. Out of the box
+ * the library therefore believes the app is permanently focused, and a query that asks to
+ * refetch on focus never does. The online manager needs no adapter: the app makes no network
+ * requests, and the library's default (always online) is the truth.
  */
 import { AppState, type AppStateStatus } from 'react-native';
-import { getNetworkStatus, subscribeNetworkStatus } from '@/features/core/network';
 
 type FocusManagerLike = { setFocused: (focused?: boolean) => void };
-type OnlineManagerLike = { setOnline: (online: boolean) => void };
 
 export type QueryAdapters = { dispose: () => void };
 
-export function setupQueryAdapters(focus: FocusManagerLike, online: OnlineManagerLike): QueryAdapters {
-  // NOTE: --- focus: `active` == focused. Background and `inactive` (transition, open
-  // overlay, control centre) are not, which is the same semantics the web
-  // visibility API gives.
+export function setupQueryAdapters(focus: FocusManagerLike): QueryAdapters {
+  // NOTE: `active` == focused. Background and `inactive` (transition, open overlay, control
+  // centre) are not, which is the same semantics the web visibility API gives.
   const applyAppState = (status: AppStateStatus): void => {
     focus.setFocused(status === 'active');
   };
   const appStateSub = AppState.addEventListener('change', applyAppState);
   applyAppState(AppState.currentState);
 
-  // NOTE: --- online. Seeded from the current snapshot, which is `true` until the probe
-  // answers: a cold launch on a dead network then discovers the truth on the first
-  // failed request rather than being told optimistically by the manager.
-  const unsubscribeNetwork = subscribeNetworkStatus(() => {
-    online.setOnline(getNetworkStatus().online);
-  });
-  online.setOnline(getNetworkStatus().online);
-
   return {
     dispose: () => {
       appStateSub.remove();
-      unsubscribeNetwork();
-      // NOTE: Restore the library defaults so a teardown cannot leave the app stuck
-      // "offline" if adapters are ever reinstalled against a fresh client.
+      // NOTE: Restore the library default so a teardown cannot leave the app stuck unfocused if
+      // the adapter is ever reinstalled against a fresh client.
       focus.setFocused(true);
-      online.setOnline(true);
     },
   };
 }
