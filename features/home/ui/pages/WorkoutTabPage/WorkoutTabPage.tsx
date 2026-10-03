@@ -61,7 +61,7 @@ export function WorkoutTabPage() {
           {state.isLoading ? (
             <SkeletonCard lines={2} />
           ) : state.error ? (
-            <ErrorState error={state.error} onRetry={effects.retry} title={t('workoutTab.routinesError')} />
+            <ErrorState onRetry={effects.retry} title={t('workoutTab.routinesError')} />
           ) : state.isEmpty ? (
             <EmptyState
               title={t('workoutTab.emptyTitle')}

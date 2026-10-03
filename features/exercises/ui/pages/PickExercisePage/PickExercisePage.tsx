@@ -69,7 +69,7 @@ export function PickExercisePage(props: PickExercisePageProps) {
       }
       empty={
         state.error !== null ? (
-          <ErrorState error={state.error} onRetry={effects.retry} compact title={t('picker.unreachable')} />
+          <ErrorState onRetry={effects.retry} compact title={t('picker.unreachable')} />
         ) : state.isLoading ? (
           <SkeletonList rows={6} />
         ) : (

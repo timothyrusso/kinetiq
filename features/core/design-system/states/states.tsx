@@ -249,8 +249,7 @@ export const EmptyState = memo(function EmptyState(props: StateProps) {
 
 /**
  * The failure screen for any error, with the retry. The app reads only local data, so a failure
- * has no cause worth naming to the user: the copy is the generic title and message. `error` is
- * the failure on screen; the copy does not branch on it.
+ * has no cause worth naming to the user: the copy is the generic title and message.
  */
 export const ErrorState = memo(function ErrorState({
   onRetry,
@@ -258,7 +257,6 @@ export const ErrorState = memo(function ErrorState({
   style,
   compact = false,
 }: {
-  error: unknown;
   onRetry: () => void;
   title?: string;
   style?: StyleProp<ViewStyle>;

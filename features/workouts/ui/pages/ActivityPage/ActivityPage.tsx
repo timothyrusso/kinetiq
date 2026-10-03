@@ -59,7 +59,7 @@ export function ActivityPage() {
             <SkeletonCard lines={5} />
           </Column>
         ) : state.error !== null ? (
-          <ErrorState error={state.error} onRetry={effects.retry} title={t('activity.loadError')} />
+          <ErrorState onRetry={effects.retry} title={t('activity.loadError')} />
         ) : activity && derived.hero ? (
           <View>
             <View

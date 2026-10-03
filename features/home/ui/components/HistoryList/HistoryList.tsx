@@ -93,7 +93,7 @@ export function HistoryList({
           {heatmapPending ? (
             <SkeletonCard lines={3} />
           ) : heatmapError ? (
-            <ErrorState error={heatmapError} onRetry={onRetryHeatmap} compact />
+            <ErrorState onRetry={onRetryHeatmap} compact />
           ) : heatmap ? (
             <TrainingGrid heatmap={heatmap} weeks={gridWeeks} theme={theme} locale={locale} t={t} />
           ) : null}
@@ -109,7 +109,7 @@ export function HistoryList({
           <SkeletonList rows={4} />
         </View>
       ) : historyError ? (
-        <ErrorState error={historyError} onRetry={onRefresh} title={t('home.historyError')} />
+        <ErrorState onRetry={onRefresh} title={t('home.historyError')} />
       ) : (
         <EmptyState
           title={t('home.emptyTitle')}

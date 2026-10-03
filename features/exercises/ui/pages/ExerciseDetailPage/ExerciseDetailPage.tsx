@@ -35,9 +35,10 @@ const SCREEN_OPTIONS = { animation: 'fade_from_bottom' } as const;
  * Exercise detail: what the library says about one movement, and what the user has done with it.
  *
  * Under the hero sit the badges (training type when it is not strength, level, mechanic) and, for
- * an exercise neither the library nor a stored copy knows, one line saying it is built in. Nothing is inferred to fill a gap: a missing description is a named
- * silence, missing art a designed composition. Muscle and equipment chips are labels and go
- * nowhere: the library is reached only to pick an exercise.
+ * an exercise neither the library nor a stored copy knows, one line saying it is built in.
+ * Nothing is inferred to fill a gap: a missing description is a named silence, missing art a
+ * designed composition. Muscle and equipment chips are labels and go nowhere: the library is
+ * reached only to pick an exercise.
  *
  * What the user has done with the exercise belongs to the workouts, a feature above this one, so
  * the route hands that section in as `renderHistory`, drawn between the how-to and the similar
@@ -75,7 +76,7 @@ export function ExerciseDetailPage({ renderHistory }: { renderHistory?: (exercis
         ) : exercise === null ? (
           <View style={styles.status}>
             {state.error !== null ? (
-              <ErrorState error={state.error} onRetry={effects.retry} title={t('exerciseDetail.loadError')} />
+              <ErrorState onRetry={effects.retry} title={t('exerciseDetail.loadError')} />
             ) : (
               <EmptyState
                 icon="info"

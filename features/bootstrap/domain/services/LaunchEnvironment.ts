@@ -4,8 +4,9 @@ import type { UnexpectedError } from '@/features/core/error';
 
 /**
  * The device and the app plumbing the launch sets up before the first frame: the query client's
- * focus adapter, the fonts, the header icons, the native chrome, and the app-state events. Every step but the two slow loads succeeds: a device that refuses a
- * cosmetic call is still a usable device.
+ * focus adapter, the fonts, the header icons, the native chrome, and the app-state events. Every
+ * step but the two slow loads succeeds: a device that refuses a cosmetic call is still a usable
+ * device.
  */
 export class LaunchEnvironment extends Context.Tag('bootstrap/LaunchEnvironment')<
   LaunchEnvironment,

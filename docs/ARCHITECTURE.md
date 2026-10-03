@@ -151,7 +151,8 @@ Each is a deliberate departure from a kit rule, with the reason.
    nothing to report to. These are the only lines the `catch(() => undefined)` grep returns
    outside tests.
 5. **Fallback catches with a reason.** The liquid-glass check, the Android header glyph render,
-   the root layout's appearance read, the haptics fire and the notification channel set-up keep a fallback value and say why in a `// NOTE:` codetag.
+   the root layout's appearance read, the haptics fire and the notification channel set-up keep a
+   fallback value and say why in a `// NOTE:` codetag.
 6. **Routine snapshot writes are not in the routine's transaction.** `createRoutine` and
    `addRoutineItem` upsert the exercise snapshots through `ExerciseSnapshotRepository` before the routine
    save, outside its transaction: a snapshot is an idempotent upsert keyed by exercise, and one
