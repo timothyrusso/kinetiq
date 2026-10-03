@@ -272,12 +272,11 @@ export const it: Copy = {
     unknown: 'sconosciuta',
     appId: 'ID app',
     appIdHint: 'Utile da citare se qualcosa si rompe.',
-    storageNote:
-      'Tutto è salvato su questo dispositivo. Kinetiq non ha account, non ha accessi e non ha un server proprio.',
+    storageNote: 'Tutto è salvato su questo dispositivo. Kinetiq non ha account e non richiede accessi.',
     catalog: 'Catalogo esercizi',
     catalogLicence: 'Pubblico dominio (Unlicense)',
     catalogNote:
-      "La libreria esercizi e le sue foto vengono da free-exercise-db e sono incluse nell'app, così ricerca, navigazione e ogni foto funzionano offline fin dal primo avvio. Non si scarica nulla e nulla si aggiorna da solo: la libreria cambia solo con un aggiornamento dell'app.",
+      "La libreria esercizi e le sue foto vengono da free-exercise-db e sono incluse nell'app, così ricerca, navigazione e ogni foto funzionano fin dal primo avvio. Non si scarica nulla e nulla si aggiorna da solo: la libreria cambia solo con un aggiornamento dell'app.",
     localNote:
       'I tuoi dati non dipendono da essa. Ogni esercizio che aggiungi a una scheda viene salvato come copia, così un aggiornamento della libreria non rinomina mai nulla nelle tue schede o nella cronologia.',
     onThisDevice: 'Su questo dispositivo',
@@ -289,7 +288,7 @@ export const it: Copy = {
     reset: 'Azzera',
     eraseAll: 'Cancella tutti i dati di Kinetiq',
     eraseNote:
-      "La libreria esercizi resta: è materiale di riferimento, non dati tuoi. Nulla viene caricato altrove, quindi non c'è alcun account da chiudere né nulla sul server di qualcun altro da eliminare.",
+      "La libreria esercizi resta: è materiale di riferimento, non dati tuoi. I tuoi dati non lasciano mai questo dispositivo, quindi non c'è alcun account da chiudere né alcuna copia altrove da eliminare.",
     builtWith: 'Realizzata con React Native ed Expo.',
     eraseTitle: 'Cancellare tutto?',
     eraseMessage:

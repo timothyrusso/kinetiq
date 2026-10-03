@@ -266,11 +266,11 @@ export const en = {
     unknown: 'unknown',
     appId: 'App ID',
     appIdHint: 'Worth quoting if something breaks.',
-    storageNote: 'Everything is stored on this device. Kinetiq has no account, no sign-in, and no server of its own.',
+    storageNote: 'Everything is stored on this device. Kinetiq has no account and no sign-in.',
     catalog: 'Exercise catalog',
     catalogLicence: 'Public domain (Unlicense)',
     catalogNote:
-      'The exercise library and its photos come from free-exercise-db and ship inside the app, so searching, browsing and every photo work offline from the first launch. Nothing is downloaded and nothing refreshes: the library changes only with an app update.',
+      'The exercise library and its photos come from free-exercise-db and ship inside the app, so searching, browsing and every photo work from the first launch. Nothing is downloaded and nothing refreshes: the library changes only with an app update.',
     localNote:
       'Your own data never depends on it. Every exercise you add to a routine is stored as a snapshot, so an update of the library never renames anything in your routines or history.',
     onThisDevice: 'On this device',
@@ -282,7 +282,7 @@ export const en = {
     reset: 'Reset',
     eraseAll: 'Erase all Kinetiq data',
     eraseNote:
-      'The exercise library stays: it is reference data, not yours. Nothing is uploaded anywhere, so there is no account to close and nothing sitting on someone else server to delete.',
+      'The exercise library stays: it is reference data, not yours. Your data never leaves this device, so there is no account to close and no copy anywhere else to delete.',
     builtWith: 'Built with React Native and Expo.',
     eraseTitle: 'Erase everything?',
     eraseMessage:
