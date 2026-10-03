@@ -16,18 +16,18 @@
  * starts with Material's drag handle (`SheetHandle`), the grabber that platform's sheet lacks.
  *
  * `fit` bodies are plain views so a `fitToContents` detent can measure them. Taller editors
- * scroll; a sheet whose body is a long list uses `FormSheetList` instead, so the list is the
- * sheet's only scroll container.
+ * scroll under a bar pinned to the top of the sheet; a sheet whose body is a long list uses
+ * `FormSheetList` instead, so the list is the sheet's only scroll container.
  */
 
 import { FlashList, type ListRenderItem } from '@shopify/flash-list';
 import { router } from 'expo-router';
-import { memo, type ReactElement, type ReactNode, type RefObject, useCallback, useMemo, useRef } from 'react';
-import { ScrollView, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native';
+import { memo, type ReactElement, type ReactNode, type RefObject, useCallback, useMemo, useRef, useState } from 'react';
+import { type LayoutChangeEvent, ScrollView, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/features/core/design-system/controls/Button';
 import { SheetHandle } from '@/features/core/design-system/layout/SheetHandle';
-import { Txt } from '@/features/core/design-system/text/Text';
+import { fontSizeOf, lineHeightOf, Txt } from '@/features/core/design-system/text/Text';
 import { screenGutter, spacing, useAppTheme } from '@/features/core/theme';
 import type { TKey } from '@/features/core/translations';
 import { useT } from '@/features/core/translations';
@@ -49,8 +49,9 @@ export function FormSheet({
   /** For bodies taller than a phone's half height. */
   scroll?: boolean;
   /**
-   * A view in a `scroll` body to bring to the top of the sheet once it first lays out: the row
-   * the sheet was opened for. Measured, not guessed, so Dynamic Type cannot put it off screen.
+   * A view in a `scroll` body to bring to the top of the body, just under the bar, once it first
+   * lays out: the row the sheet was opened for. Measured, not guessed, so Dynamic Type cannot
+   * put it off screen.
    */
   scrollTo?: RefObject<View | null>;
   children: ReactNode;
@@ -60,45 +61,66 @@ export function FormSheet({
   const scroller = useRef<ScrollView>(null);
   const content = useRef<View>(null);
   const revealed = useRef(false);
+  const [measuredBar, setMeasuredBar] = useState<number | null>(null);
+  const barHeight = measuredBar ?? BAR_MIN_HEIGHT;
   // NOTE: once only: the content grows again as the About block's photo and steps arrive, and a
   // sheet that jumped back to the row then would fight the thumb that had scrolled away from it.
+  // It waits for the bar's measured height, whose padding moves the body down and calls it again.
   const reveal = useCallback(() => {
     const target = scrollTo?.current;
     const view = scroller.current;
-    if (revealed.current || target == null || view === null || content.current === null) return;
+    if (revealed.current || measuredBar === null || target == null || view === null || content.current === null) return;
     revealed.current = true;
     target.measureLayout(content.current, (_x, y) =>
       view.scrollTo({ y: Math.max(0, y - spacing.md), animated: false }),
     );
-  }, [scrollTo]);
+  }, [scrollTo, measuredBar]);
+  const measureBar = useCallback((e: LayoutChangeEvent) => {
+    const next = Math.round(e.nativeEvent.layout.height);
+    setMeasuredBar(prev => (prev === next ? prev : next));
+  }, []);
   const bar = <FormSheetBar {...barProps} />;
-  const body = <View style={[styles.body, { paddingBottom: insets.bottom + spacing.lg }]}>{children}</View>;
+  const footInset = { paddingBottom: insets.bottom + spacing.lg };
+  if (!scroll) {
+    return (
+      <View style={[styles.gutter, { backgroundColor: theme.colors.sheet }]}>
+        {bar}
+        <View style={[styles.body, footInset]}>{children}</View>
+      </View>
+    );
+  }
+  // NOTE: the bar floats over the top of the scroll view, so Done stays in reach while the body
+  // scrolls under the bar's `sheet` surface, and the body starts the bar's height down. The scroll
+  // view stays the sheet's first child and fills it: that is the shape react-native-screens sizes
+  // to an iOS sheet's detent, and in any other (a sticky header, or the bar above the scroll view)
+  // the SwiftUI controls drew off their rows or the bar missed the reveal's scroll. The reveal
+  // measures from the top of the body, so the row lands just under the bar.
   return (
     <>
-      {scroll ? (
-        <ScrollView
-          ref={scroller}
-          onContentSizeChange={scrollTo === undefined ? undefined : reveal}
-          // NOTE: Android's sheet (Material's BottomSheetBehavior) only yields a drag to a child
-          // with nested scrolling on; without it every downward drag moved the sheet, so the list
-          // could not scroll back up. At the top of the list a drag still moves the sheet.
-          nestedScrollEnabled
-          style={{ backgroundColor: theme.colors.sheet }}
-          contentContainerStyle={styles.gutter}
-          keyboardShouldPersistTaps="handled"
-          contentInsetAdjustmentBehavior="automatic"
-        >
-          <View ref={content} collapsable={false}>
-            {bar}
-            {body}
-          </View>
-        </ScrollView>
-      ) : (
-        <View style={[styles.gutter, { backgroundColor: theme.colors.sheet }]}>
-          {bar}
-          {body}
+      <ScrollView
+        ref={scroller}
+        onContentSizeChange={scrollTo === undefined ? undefined : reveal}
+        // NOTE: Android's sheet (Material's BottomSheetBehavior) only yields a drag to a child
+        // with nested scrolling on; without it every downward drag moved the sheet, so the list
+        // could not scroll back up. At the top of the list a drag still moves the sheet.
+        nestedScrollEnabled
+        style={{ backgroundColor: theme.colors.sheet }}
+        contentContainerStyle={[styles.gutter, { paddingTop: barHeight }]}
+        scrollIndicatorInsets={{ top: barHeight }}
+        keyboardShouldPersistTaps="handled"
+        contentInsetAdjustmentBehavior="automatic"
+      >
+        <View ref={content} collapsable={false} style={[styles.body, styles.pinnedBody, footInset]}>
+          {children}
         </View>
-      )}
+      </ScrollView>
+      <View
+        collapsable={false}
+        onLayout={measureBar}
+        style={[styles.gutter, styles.pinnedBar, { backgroundColor: theme.colors.sheet }]}
+      >
+        {bar}
+      </View>
     </>
   );
 }
@@ -165,6 +187,13 @@ export function FormSheetList<T>({
     />
   );
 }
+
+/**
+ * The pinned bar's height before it is measured, from its own tokens: the space above the title,
+ * one line of it, and the gap below. Dynamic Type, a taller Done or Android's handle only add to
+ * it, so the first frame never draws the body under the bar; the measurement replaces it.
+ */
+const BAR_MIN_HEIGHT = spacing.xl + Math.ceil(fontSizeOf('subhead') * lineHeightOf('subhead')) + spacing.lg;
 
 /** One object, so the list's props keep their identity between renders. */
 const MVCP_OFF = { disabled: true } as const;
@@ -234,6 +263,8 @@ const styles = StyleSheet.create({
   gutter: { paddingHorizontal: screenGutter },
   bar: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingTop: spacing.xl },
   body: { paddingTop: spacing.lg, gap: spacing.xl },
+  pinnedBar: { position: 'absolute', top: 0, left: 0, right: 0, paddingBottom: spacing.lg },
+  pinnedBody: { paddingTop: 0 },
   listHeader: { paddingBottom: spacing.xl },
   listFooter: { paddingTop: spacing.xl },
   section: { gap: spacing.md },
