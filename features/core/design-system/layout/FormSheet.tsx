@@ -27,7 +27,7 @@ import { type LayoutChangeEvent, ScrollView, type StyleProp, StyleSheet, View, t
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/features/core/design-system/controls/Button';
 import { SheetHandle } from '@/features/core/design-system/layout/SheetHandle';
-import { Txt } from '@/features/core/design-system/text/Text';
+import { fontSizeOf, lineHeightOf, Txt } from '@/features/core/design-system/text/Text';
 import { screenGutter, spacing, useAppTheme } from '@/features/core/theme';
 import type { TKey } from '@/features/core/translations';
 import { useT } from '@/features/core/translations';
@@ -61,22 +61,23 @@ export function FormSheet({
   const scroller = useRef<ScrollView>(null);
   const content = useRef<View>(null);
   const revealed = useRef(false);
-  const [barHeight, setBarHeight] = useState(0);
+  const [measuredBar, setMeasuredBar] = useState<number | null>(null);
+  const barHeight = measuredBar ?? BAR_MIN_HEIGHT;
   // NOTE: once only: the content grows again as the About block's photo and steps arrive, and a
   // sheet that jumped back to the row then would fight the thumb that had scrolled away from it.
-  // It waits for the bar's height, whose padding moves the body down and calls it again.
+  // It waits for the bar's measured height, whose padding moves the body down and calls it again.
   const reveal = useCallback(() => {
     const target = scrollTo?.current;
     const view = scroller.current;
-    if (revealed.current || barHeight === 0 || target == null || view === null || content.current === null) return;
+    if (revealed.current || measuredBar === null || target == null || view === null || content.current === null) return;
     revealed.current = true;
     target.measureLayout(content.current, (_x, y) =>
       view.scrollTo({ y: Math.max(0, y - spacing.md), animated: false }),
     );
-  }, [scrollTo, barHeight]);
+  }, [scrollTo, measuredBar]);
   const measureBar = useCallback((e: LayoutChangeEvent) => {
     const next = Math.round(e.nativeEvent.layout.height);
-    setBarHeight(prev => (prev === next ? prev : next));
+    setMeasuredBar(prev => (prev === next ? prev : next));
   }, []);
   const bar = <FormSheetBar {...barProps} />;
   const footInset = { paddingBottom: insets.bottom + spacing.lg };
@@ -105,6 +106,7 @@ export function FormSheet({
         nestedScrollEnabled
         style={{ backgroundColor: theme.colors.sheet }}
         contentContainerStyle={[styles.gutter, { paddingTop: barHeight }]}
+        scrollIndicatorInsets={{ top: barHeight }}
         keyboardShouldPersistTaps="handled"
         contentInsetAdjustmentBehavior="automatic"
       >
@@ -185,6 +187,13 @@ export function FormSheetList<T>({
     />
   );
 }
+
+/**
+ * The pinned bar's height before it is measured, from its own tokens: the space above the title,
+ * one line of it, and the gap below. Dynamic Type, a taller Done or Android's handle only add to
+ * it, so the first frame never draws the body under the bar; the measurement replaces it.
+ */
+const BAR_MIN_HEIGHT = spacing.xl + Math.ceil(fontSizeOf('subhead') * lineHeightOf('subhead')) + spacing.lg;
 
 /** One object, so the list's props keep their identity between renders. */
 const MVCP_OFF = { disabled: true } as const;
