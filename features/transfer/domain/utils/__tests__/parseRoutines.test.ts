@@ -106,6 +106,28 @@ describe('parseRoutines', () => {
     expect(routinesOf(answer).routines.map(r => r.name)).toEqual(['Push']);
   });
 
+  it('reads the fenced JSON of an answer that links the index as a markdown link', () => {
+    const answer = `Ids from [the index](${INDEX_LINK}).\n\n\`\`\`json\n${ROUTINE}\n\`\`\`\nSee [the index](${INDEX_LINK}).`;
+
+    expect(routinesOf(answer).routines.map(r => r.name)).toEqual(['Push']);
+  });
+
+  it('reads JSON from a fence with no language', () => {
+    expect(routinesOf(`[link](${INDEX_LINK})\n\`\`\`\n${ROUTINE}\n\`\`\``).routines).toHaveLength(1);
+  });
+
+  it('passes over a first fence that holds no JSON for a later fence that does', () => {
+    const answer = `Run this first:\n\`\`\`bash\necho [ready]\n\`\`\`\nThen import:\n\`\`\`json\n${ROUTINE}\n\`\`\``;
+
+    expect(routinesOf(answer).routines.map(r => r.name)).toEqual(['Push']);
+  });
+
+  it('reads unfenced JSON after a fence that holds no JSON', () => {
+    const answer = `\`\`\`text\nPush day, three sets\n\`\`\`\n\n${ROUTINE}`;
+
+    expect(routinesOf(answer).routines.map(r => r.name)).toEqual(['Push']);
+  });
+
   it('calls text that is not JSON and has no index link not JSON', () => {
     expect(parseRoutines('Here is your plan: { push day }', rules)).toEqual({
       ok: false,

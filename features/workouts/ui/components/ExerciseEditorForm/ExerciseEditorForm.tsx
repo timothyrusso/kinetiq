@@ -35,6 +35,7 @@ export const ExerciseEditorForm = memo(function ExerciseEditorForm({
   units,
   tags,
   about,
+  onOpenExercise,
   highlightedSet,
   highlightRef,
   ...writers
@@ -45,6 +46,8 @@ export const ExerciseEditorForm = memo(function ExerciseEditorForm({
   tags: readonly Tag[];
   /** The library's About block, read by the page. */
   about: ExerciseAboutContent;
+  /** Opens the exercise page from the About block. */
+  onOpenExercise: () => void;
   highlightedSet: number | null;
   highlightRef: Ref<View>;
 }) {
@@ -112,7 +115,7 @@ export const ExerciseEditorForm = memo(function ExerciseEditorForm({
 
       <FormSection title={t('itemEditor.fromLibrary')}>
         {tags.length > 0 ? <TagRow tags={tags} theme={theme} /> : null}
-        <ExerciseAbout about={about} />
+        <ExerciseAbout about={about} onOpen={onOpenExercise} />
       </FormSection>
     </>
   );

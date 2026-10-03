@@ -9,8 +9,9 @@ import { radius, type Theme } from '@/features/core/theme';
  *
  * `source` is a bundled image, as the caller resolved it from the stored path. Some exercises
  * have no photo yet and a stored copy may name one this build does not bundle, so "no image" is
- * one of the layouts rather than an error to apologise for. A photo shows its blur until it decodes. The initials tile is exactly the
- * size of the image it replaces, so a list does not reflow as art lands.
+ * one of the layouts rather than an error to apologise for. A photo shows its blur until it
+ * decodes. The initials tile is exactly the size of the image it replaces, so a list does not
+ * reflow as art lands.
  */
 export const ExerciseThumb = memo(function ExerciseThumb({
   source,

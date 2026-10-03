@@ -1,8 +1,10 @@
 import { waitFor } from '@testing-library/react-native';
 import { renderWithLayer } from '@/features/core/testing';
 import { tr } from '@/features/core/translations';
+import { anExercise } from '@/features/exercises/__fixtures__/builders';
 import type { ExerciseSnapshot } from '@/features/exercises/domain/schemas/ExerciseSnapshotSchema';
 import { useExerciseAbout } from '@/features/exercises/facades/useExerciseAbout';
+import { exerciseImageSource } from '@/features/exercises/mappers/exerciseImageSource';
 import { makeCatalogReadsFake } from '@/features/exercises/useCases/__tests__/catalogFakes';
 
 const HIP_THRUST: ExerciseSnapshot = {
@@ -39,6 +41,25 @@ describe('useExerciseAbout', () => {
 
     await waitFor(() => expect(result.current.about.image).not.toBeNull());
     expect(result.current.about.imageEnd).toBeNull();
+    await done();
+  });
+
+  it('reads both frames from a catalog id’s row, not the still of its stored copy', async () => {
+    const frames = 'assets/catalog/images/barbell-bench-press-medium-grip';
+    const row = anExercise({
+      id: 'ex:barbell-bench-press-medium-grip',
+      imageUrl: `${frames}/0.webp`,
+      imageEndUrl: `${frames}/1.webp`,
+    });
+    const { result, done } = await renderWithLayer(
+      makeCatalogReadsFake({ exercises: [row] }, [{ ...HIP_THRUST, exerciseId: row.id }]),
+      useAbout,
+      row.id,
+    );
+
+    await waitFor(() => expect(result.current.about.image).not.toBeNull());
+    expect(result.current.about.imageEnd).not.toBeNull();
+    expect(result.current.about.imageEnd).toBe(exerciseImageSource(`${frames}/1.webp`));
     await done();
   });
 

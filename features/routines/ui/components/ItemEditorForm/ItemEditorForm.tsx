@@ -30,6 +30,7 @@ export const ItemEditorForm = memo(function ItemEditorForm({
   snapshot,
   units,
   about,
+  onOpenExercise,
   onChange,
   onRemove,
 }: {
@@ -38,6 +39,8 @@ export const ItemEditorForm = memo(function ItemEditorForm({
   units: UnitSystem;
   /** The library's About block, read by the page. */
   about: ExerciseAboutContent;
+  /** Opens the exercise page from the About block. */
+  onOpenExercise: () => void;
   onChange: (change: ItemChange) => void;
   onRemove?: () => void;
 }) {
@@ -106,7 +109,7 @@ export const ItemEditorForm = memo(function ItemEditorForm({
 
       <FormSection title={t('itemEditor.fromLibrary')}>
         {derived.libraryTags.length > 0 ? <TagRow tags={derived.libraryTags} theme={theme} /> : null}
-        <ExerciseAbout about={about} />
+        <ExerciseAbout about={about} onOpen={onOpenExercise} />
       </FormSection>
 
       {onRemove === undefined ? null : (

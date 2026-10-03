@@ -103,9 +103,9 @@ describe('useRoutineItemPageLogic on the builder’s draft', () => {
     const { result, done } = await renderSavedItem();
     const exerciseId = result.current.state.item?.exerciseId ?? '';
 
-    await act(async () => result.current.state.about.onOpen());
+    await act(async () => result.current.effects.openExercise());
 
-    expect(result.current.state.about.animating).toBe(true);
+    expect(result.current.derived.about.animating).toBe(true);
     expect(routerFake.history).toEqual([{ verb: 'push', href: routes.exerciseDetail(exerciseId, true) }]);
     await done();
   });

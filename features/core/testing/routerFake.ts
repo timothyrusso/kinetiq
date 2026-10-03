@@ -14,8 +14,9 @@ const record = (verb: Navigation['verb'], href: Href | null = null) => void hist
 /**
  * The router a ViewModel test runs against, in place of expo-router's, which needs a mounted
  * navigator. `__mocks__/expo-router.ts` hands it out from `router`, `useRouter`,
- * `useLocalSearchParams`, `usePathname`, `useNavigation` and `useIsFocused` (always focused). A test sets the route's params with
- * `setParams` and reads where the code went from `history`; `reset` runs before every test.
+ * `useLocalSearchParams`, `usePathname`, `useNavigation` and `useIsFocused` (always focused). A
+ * test sets the route's params with `setParams` and reads where the code went from `history`;
+ * `reset` runs before every test.
  */
 export const routerFake = {
   history: history as readonly Navigation[],

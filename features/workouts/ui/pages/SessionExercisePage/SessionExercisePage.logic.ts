@@ -37,10 +37,7 @@ export function useSessionExercisePageLogic() {
   const openExercise = useCallback(() => {
     if (exerciseId !== null) router.push(routes.exerciseDetail(exerciseId, true));
   }, [exerciseId]);
-  const about = useMemo<ExerciseAboutContent>(
-    () => ({ ...aboutContent, animating: focused, onOpen: openExercise }),
-    [aboutContent, focused, openExercise],
-  );
+  const about = useMemo<ExerciseAboutContent>(() => ({ ...aboutContent, animating: focused }), [aboutContent, focused]);
   const tags = useMemo<readonly Tag[]>(() => (exercise === null ? NO_TAGS : exerciseLibraryTags(exercise)), [exercise]);
   const highlightRef = useRef<View>(null);
   // NOTE: the first set is already at the top of the sheet; scrolling to it would only hide the
@@ -50,6 +47,6 @@ export function useSessionExercisePageLogic() {
   return {
     state: { entry, units, highlightedSet },
     derived: { title: entry?.exerciseName ?? '', tags, about, highlightRef, scrollTo },
-    effects: { changeSet, addSet, removeSet, changeEntry },
+    effects: { changeSet, addSet, removeSet, changeEntry, openExercise },
   };
 }

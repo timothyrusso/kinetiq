@@ -209,6 +209,21 @@ describe('readImport', () => {
         )}\n\`\`\`\n\nEvery exerciseId is copied from ${INDEX_LINK}.`,
       }),
     );
+
+    itEffect(
+      `reads an answer to the ${language} AI instructions that links the index as a markdown link`,
+      Effect.gen(function* () {
+        const read = yield* readImport('clipboard');
+
+        expect(read?.routines[0]?.name).toBe('Push Day');
+      }),
+      TransferDeviceFake({
+        clipboard: `I took the ids from [the exercise index](${INDEX_LINK}).\n\n\`\`\`json\n${prompt.slice(
+          prompt.indexOf('{'),
+          prompt.indexOf('\n\n', prompt.indexOf('{')),
+        )}\n\`\`\``,
+      }),
+    );
   }
 
   itEffect(

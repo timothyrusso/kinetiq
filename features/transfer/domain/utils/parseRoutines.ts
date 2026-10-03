@@ -32,17 +32,41 @@ function number(value: unknown): number | null {
  * The link to the public exercise index, which the app's own AI instructions carry in every
  * language. An answer may cite it too, in the prose around its JSON, so the link alone proves
  * nothing: what marks the instructions is the link in text that does not read as JSON. Their
- * example routine is followed by the rules, which hold the link and a bracketed column list, so
- * the slice `jsonSlice` takes runs from the example into the rules and never parses. An answer's
- * slice is its JSON alone, and parses whatever its prose says.
+ * example routine is unfenced and followed by the rules, which hold the link and a bracketed
+ * column list, so the slice `jsonSlice` takes runs from the example into the rules and never
+ * parses. An answer's slice is its JSON alone, read from its code fence when it has one, so
+ * brackets in its prose (a markdown link to the index) never reach the parser (`readDocument`).
  */
 const AI_PROMPT_SIGNATURE = 'timothyrusso/kinetiq/main/assets/catalog/index.json';
 
-/** The JSON inside a code fence or a sentence, or the text itself. */
+/** The body of each code fence (```json, ```text or ```). */
+const CODE_FENCES = /```[a-z]*[^\S\n]*\n([\s\S]*?)```/gi;
+
+/** The text between the first `{` or `[` and the last `}` or `]`, or the text itself. */
 function jsonSlice(raw: string): string {
   const start = raw.search(/[[{]/);
   const end = Math.max(raw.lastIndexOf('}'), raw.lastIndexOf(']'));
   return start >= 0 && end > start ? raw.slice(start, end + 1) : raw;
+}
+
+function parsed(raw: string): { readonly doc: unknown } | null {
+  try {
+    return { doc: JSON.parse(jsonSlice(raw)) };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The document in `input`: the first code fence whose body parses, so a fence of prose or shell
+ * before it is passed over; else the JSON slice of the whole text, as for an unfenced answer.
+ */
+function readDocument(input: string): { readonly doc: unknown } | null {
+  for (const [, body = ''] of input.matchAll(CODE_FENCES)) {
+    const read = parsed(body);
+    if (read !== null) return read;
+  }
+  return parsed(input);
 }
 
 function routineList(doc: unknown): unknown[] | null {
@@ -153,8 +177,9 @@ function parseItem(
  *
  * Strict about meaning, lenient about wrapping. An AI asked for JSON often wraps it in a code
  * fence or a sentence, so the text between the first `{` or `[` and the last `}` or `]` is what
- * gets parsed; the document may be the full file, a bare array of routines, or one routine, in
- * v2 or in v1 (`plannedSets`). What is not guessed is a value: a missing `sets` gets the editor's
+ * gets parsed, inside the first code fence that holds JSON when there is one (`readDocument`);
+ * the document may be the full file, a bare array of routines, or one routine, in v2 or in v1
+ * (`plannedSets`). What is not guessed is a value: a missing `sets` gets the editor's
  * default and is reported, an out-of-range one is clamped to the editor's bounds, and an item
  * with neither an exercise id nor a name is dropped and reported.
  *
@@ -169,15 +194,13 @@ export function parseRoutines(raw: string, rules: ImportRules): ParseResult {
   if (raw.length > rules.limits.bytes) return { ok: false, issue: { key: 'dataTransfer.errorTooLarge' } };
   if (raw.trim() === '') return { ok: false, issue: { key: 'dataTransfer.errorEmpty' } };
 
-  let doc: unknown;
-  try {
-    doc = JSON.parse(jsonSlice(raw));
-  } catch {
+  const read = readDocument(raw);
+  if (read === null) {
     const isPrompt = raw.includes(AI_PROMPT_SIGNATURE);
     return { ok: false, issue: { key: isPrompt ? 'dataTransfer.errorIsPrompt' : 'dataTransfer.errorNotJson' } };
   }
 
-  const list = routineList(doc);
+  const list = routineList(read.doc);
   if (list === null || list.length === 0) return { ok: false, issue: { key: 'dataTransfer.errorNoRoutines' } };
 
   const issues: ParseIssue[] = [];

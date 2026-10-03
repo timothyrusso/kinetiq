@@ -18,6 +18,7 @@ export function SessionExercisePage() {
           units={state.units}
           tags={derived.tags}
           about={derived.about}
+          onOpenExercise={effects.openExercise}
           highlightedSet={state.highlightedSet}
           highlightRef={derived.highlightRef}
           onChangeSet={effects.changeSet}
