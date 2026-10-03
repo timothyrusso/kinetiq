@@ -69,7 +69,7 @@ describe('useSessionExercisePageLogic', () => {
   it('opens the exercise page over the sheet from the About block, whose photo moves while focused', async () => {
     const { result, done } = await renderSheet({ entry: '1' });
 
-    await act(async () => result.current.derived.about.onOpen());
+    await act(async () => result.current.effects.openExercise());
 
     expect(result.current.derived.about.animating).toBe(true);
     expect(routerFake.history).toEqual([{ verb: 'push', href: routes.exerciseDetail('ex:barbell-squat', true) }]);

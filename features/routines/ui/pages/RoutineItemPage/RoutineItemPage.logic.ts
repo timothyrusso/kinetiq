@@ -72,16 +72,13 @@ export function useRoutineItemPageLogic() {
   const openExercise = useCallback(() => {
     if (exerciseId !== null) router.push(routes.exerciseDetail(exerciseId, true));
   }, [exerciseId]);
-  const about = useMemo<ExerciseAboutContent>(
-    () => ({ ...aboutContent, animating: focused, onOpen: openExercise }),
-    [aboutContent, focused, openExercise],
-  );
+  const about = useMemo<ExerciseAboutContent>(() => ({ ...aboutContent, animating: focused }), [aboutContent, focused]);
 
   const title = item?.exerciseName ?? (routineId === null ? '' : t('routine.title'));
 
   return {
-    state: { item, snapshot, units, about },
-    derived: { title },
-    effects: { change, remove },
+    state: { item, snapshot, units },
+    derived: { title, about },
+    effects: { change, remove, openExercise },
   };
 }

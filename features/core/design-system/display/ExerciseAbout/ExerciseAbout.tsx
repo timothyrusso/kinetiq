@@ -11,7 +11,7 @@ import { Txt } from '@/features/core/design-system/text/Text';
 import { useAppTheme } from '@/features/core/theme';
 import { useT } from '@/features/core/translations';
 
-/** What an exercise editor's About block draws: the library's picture, steps and a link. */
+/** What an exercise editor's About block draws: the library's picture, steps and labels. */
 export interface ExerciseAboutContent {
   readonly isLoading: boolean;
   readonly image: BundledImage | null;
@@ -24,7 +24,6 @@ export interface ExerciseAboutContent {
   /** The trimmed steps, or `null` when there are none and `fallback` says so. */
   readonly steps: readonly string[] | null;
   readonly fallback: string;
-  readonly onOpen: () => void;
 }
 
 /**
@@ -33,7 +32,14 @@ export interface ExerciseAboutContent {
  * with a thumb on the screen does not navigate away. Both exercise editors draw it from what the
  * exercises' `useExerciseAbout` reads.
  */
-export const ExerciseAbout = memo(function ExerciseAbout({ about }: { about: ExerciseAboutContent }) {
+export const ExerciseAbout = memo(function ExerciseAbout({
+  about,
+  onOpen,
+}: {
+  about: ExerciseAboutContent;
+  /** Opens the exercise page. */
+  onOpen: () => void;
+}) {
   const { t } = useT();
   const theme = useAppTheme();
   const styles = useStyles(createStyles);
@@ -48,7 +54,7 @@ export const ExerciseAbout = memo(function ExerciseAbout({ about }: { about: Exe
   return (
     <View style={styles.about}>
       <Pressable
-        onPress={about.onOpen}
+        onPress={onOpen}
         accessibilityRole="button"
         accessibilityLabel={about.openLabel}
         accessibilityHint={t('exerciseDetail.openHint')}
