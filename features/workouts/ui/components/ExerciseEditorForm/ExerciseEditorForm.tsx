@@ -46,6 +46,7 @@ export const ExerciseEditorForm = memo(function ExerciseEditorForm({
   tags: readonly Tag[];
   /** The library's About block, read by the page. */
   about: ExerciseAboutContent;
+  /** Opens the exercise page from the About block. */
   onOpenExercise: () => void;
   highlightedSet: number | null;
   highlightRef: Ref<View>;

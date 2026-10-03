@@ -39,6 +39,7 @@ export const ItemEditorForm = memo(function ItemEditorForm({
   units: UnitSystem;
   /** The library's About block, read by the page. */
   about: ExerciseAboutContent;
+  /** Opens the exercise page from the About block. */
   onOpenExercise: () => void;
   onChange: (change: ItemChange) => void;
   onRemove?: () => void;
