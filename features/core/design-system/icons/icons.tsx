@@ -15,7 +15,7 @@
  * ## The name map is the point
  *
  * Call sites keep saying `<Icon name="flame" />`. The app's own vocabulary survives: an icon is
- * named for what it means here (`route`, `streak`, `offline`), not for what the icon set happens
+ * named for what it means here (`route`, `streak`, `warning`), not for what the icon set happens
  * to call it. That keeps 87 call sites out of this change, and means swapping icon sets again is
  * an edit to one table.
  *
@@ -86,7 +86,6 @@ const GLYPHS = {
   dumbbell: 'barbell',
 
   // NOTE: States
-  offline: 'cloud-offline',
   image: 'image',
   info: 'information-circle',
   warning: 'warning',

@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { Clock, Effect } from 'effect';
-import { HttpError, UnexpectedError } from '@/features/core/error';
+import { SqlError, UnexpectedError } from '@/features/core/error';
 import { useEffectMutation, useEffectQuery } from '@/features/core/query';
 import { FeaturesLive } from '@/features/core/runtime/runtime';
 import { SqliteClient } from '@/features/core/sqlite';
@@ -20,15 +20,15 @@ describe('useEffectQuery', () => {
 
   it('reports a tagged failure as itself and logs it once as a warning', async () => {
     const { runtime, logs } = makeTestRuntime(FeaturesLive);
-    const failure = new HttpError({ kind: 'server', status: 503, retryAfterSeconds: null });
+    const failure = new SqlError({ message: 'read the routines' });
     const { result } = await renderHook(() => useEffectQuery({ queryKey: ['tagged'], queryFn: Effect.fail(failure) }), {
       wrapper: makeTestWrapper(runtime),
     });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error).toBe(failure);
-    expect(result.current.error?._tag).toBe('HttpError');
-    expect(logs.entries.map(entry => [entry.level, entry.message])).toEqual([['warn', 'HttpError']]);
+    expect(result.current.error?._tag).toBe('SqlError');
+    expect(logs.entries.map(entry => [entry.level, entry.message])).toEqual([['warn', 'SqlError']]);
     await runtime.dispose();
   });
 
@@ -69,7 +69,7 @@ describe('useEffectQuery', () => {
 describe('useEffectMutation', () => {
   it('resolves with the value and reports a tagged failure as itself', async () => {
     const { runtime } = makeTestRuntime(FeaturesLive);
-    const failure = new HttpError({ kind: 'bad-request', status: 400, retryAfterSeconds: null });
+    const failure = new SqlError({ message: 'save the routine' });
     const { result } = await renderHook(
       () =>
         useEffectMutation({ mutationFn: (fail: boolean) => (fail ? Effect.fail(failure) : Effect.succeed('saved')) }),

@@ -43,19 +43,19 @@ Every feature declares `FEATURE_TIER` in its `index.ts`; `npm run arch` checks t
 
 | Concern | What it holds |
 | --- | --- |
-| `core/error` | the `AppError` union over `AppErrorRegistry`, `errorTagToMessageKey`, `useErrorMessage`, the HTTP retry budget and delay (`httpRetryDelayMs`, which caps an honoured `Retry-After` at one minute) |
+| `core/error` | the `AppError` union over `AppErrorRegistry`, `errorTagToMessageKey`, `useErrorMessage` |
 | `core/config` | `AppConfig` from `makeConfig`, decoding `extra` in `app.json` (empty while the app calls no server) |
-| `core/logger` | `LoggerLive` and `logBackgroundFailure`, the one logging helper outside the boundary (see Exceptions) |
+| `core/logger` | `LoggerLive`, `logBackgroundFailure` and `logDiagnostic`, the two logging helpers outside the boundary (see Exceptions) |
 | `core/sqlite` | `SqliteLive` (expo-sqlite, WAL, foreign keys), the per-version migrations `v001` to `v012`, `SchemaStatus`, `clearAllUserData` and `resetLocalData` |
 | `core/lifecycle` | `BackgroundSync`, the port the bootstrap installs and `watch-sync` fills (below) |
-| `core/query` | `queryClient` (no TanStack retry for app errors), `useEffectQuery` and `useEffectMutation` re-exported for facades, the app-state and network adapters |
+| `core/query` | `queryClient` (no TanStack retry for app errors, one for a plain query's unknown failure), `useEffectQuery` and `useEffectMutation` re-exported for facades, the app-state focus adapter |
 | `core/state` | `createStore`, `createSelectors`, `resetAllStores` |
 | `core/translations` | the hand-rolled catalog (`en`, `it`), `useT`, `tr`; a module-level map holds catalog keys, never words |
 | `core/theme` | tokens, `spacing`, `screenGutter`, the accent, `themeFor` |
 | `core/design-system` | controls (`controls/<Name>/index.ios.tsx`, `index.android.tsx`, `types.ts`), layout, charts, display, states, icons, insets |
 | `core/navigation` | `routes`, header options and actions (`headerActions.ts`, one `sf` and one `material` name per action), the not-found page |
 | `core/haptics` | the `Haptics` Tag and the plain `haptics` vocabulary views call through `useHaptics` |
-| `core/network`, `core/clock`, `core/utils` | the connectivity probe; clock helpers; formatting, relative time, colour and small pure helpers |
+| `core/clock`, `core/utils` | clock helpers; formatting, relative time, colour and small pure helpers |
 | `core/testing` | `makeTestAppLayer`, `makeTestRuntime`, `makeMigratedSqliteLayer`, `renderWithLayer`, `routerFake`, `makeHapticsFake` |
 | `core/runtime` | `AppLayer`, `runtime` and the `Register` augmentation |
 
@@ -131,7 +131,13 @@ Each is a deliberate departure from a kit rule, with the reason.
 1. **Logging at fork points.** `logBackgroundFailure` (`core/logger`) logs through `Logger` inside
    `runBootstrap`, `installWatchSync` and `WatchBackgroundSyncLive`. These steps run on daemon
    fibers or as best-effort launch steps with no caller to hand a failure to; logging where the
-   fiber forks is the boundary for that work. Nothing else logs outside the hooks.
+   fiber forks is the boundary for that work. A launch also logs its outcome once:
+   `runBootstrap` ends with `logDiagnostic('launch finished', outcome)`, an `info` line through the
+   same `Logger` with the `BootstrapOutcome` (launch theme, resumed workout, schema versions) as
+   its context. The launch has no caller that reads the outcome (`useBootstrap` only needs it to
+   finish), so the log is the one place it can be seen; it is through `Logger`, not
+   `Effect.logInfo`, so a crash reporter's Layer receives it and tests can assert it. Nothing else
+   logs outside the hooks.
 2. **Settings autosave logs inside its Layer.** `SettingsAutosaveLive` is a scoped Layer whose
    debounced stream persists every settings write for the life of the runtime; a failed write has
    no caller, so it logs `settings could not be persisted` there and keeps the values in memory.
@@ -144,9 +150,9 @@ Each is a deliberate departure from a kit rule, with the reason.
    boundary drop their rejection with a `// NOTE:` codetag: each is cosmetic or a way out that has
    nothing to report to. These are the only lines the `catch(() => undefined)` grep returns
    outside tests.
-5. **Fallback catches with a reason.** The network probe (treated as online), the liquid-glass
-   check, the Android header glyph render, the root layout's appearance read, the haptics fire and
-   the notification channel set-up keep a fallback value and say why in a `// NOTE:` codetag.
+5. **Fallback catches with a reason.** The liquid-glass check, the Android header glyph render,
+   the root layout's appearance read, the haptics fire and the notification channel set-up keep a
+   fallback value and say why in a `// NOTE:` codetag.
 6. **Routine snapshot writes are not in the routine's transaction.** `createRoutine` and
    `addRoutineItem` upsert the exercise snapshots through `ExerciseSnapshotRepository` before the routine
    save, outside its transaction: a snapshot is an idempotent upsert keyed by exercise, and one

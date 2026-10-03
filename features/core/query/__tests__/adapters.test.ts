@@ -1,8 +1,11 @@
-import { AppState } from 'react-native';
+import { AppState, type AppStateStatus } from 'react-native';
 import { setupQueryAdapters } from '@/features/core/query/adapters';
 
-const managers = () => {
-  const state = { focused: null as boolean | null, online: null as boolean | null };
+/** Fires the app-state listener the adapter registered last, through React Native's jest mock. */
+const appStateChanged = (status: AppStateStatus) => jest.mocked(AppState.addEventListener).mock.lastCall?.[1](status);
+
+const manager = () => {
+  const state = { focused: null as boolean | null };
   return {
     state,
     focus: {
@@ -10,41 +13,38 @@ const managers = () => {
         state.focused = focused ?? null;
       },
     },
-    online: {
-      setOnline: (online: boolean) => {
-        state.online = online;
-      },
-    },
   };
 };
 
 describe('setupQueryAdapters', () => {
   it('seeds focus from the app state now', () => {
-    const { state, focus, online } = managers();
+    const { state, focus } = manager();
 
-    const adapters = setupQueryAdapters(focus, online);
+    const adapters = setupQueryAdapters(focus);
 
     expect(state.focused).toBe(AppState.currentState === 'active');
     adapters.dispose();
   });
 
-  it('seeds the connection as online until the probe answers', () => {
-    const { state, focus, online } = managers();
+  it('follows the app in and out of the foreground', () => {
+    const { state, focus } = manager();
+    const adapters = setupQueryAdapters(focus);
 
-    const adapters = setupQueryAdapters(focus, online);
+    appStateChanged('background');
+    const away = state.focused;
+    appStateChanged('active');
 
-    expect(state.online).toBe(true);
+    expect([away, state.focused]).toEqual([false, true]);
     adapters.dispose();
   });
 
-  it('leaves both managers focused and online once disposed', () => {
-    const { state, focus, online } = managers();
-    const adapters = setupQueryAdapters(focus, online);
+  it('leaves the manager focused once disposed', () => {
+    const { state, focus } = manager();
+    const adapters = setupQueryAdapters(focus);
     focus.setFocused(false);
-    online.setOnline(false);
 
     adapters.dispose();
 
-    expect(state).toEqual({ focused: true, online: true });
+    expect(state.focused).toBe(true);
   });
 });

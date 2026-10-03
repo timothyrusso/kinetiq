@@ -235,7 +235,7 @@ export const it: Copy = {
     unknownBuiltIn: 'Questo esercizio arriva dalla libreria interna, che non ne conserva una descrizione.',
     backToLibrary: 'Torna alla libreria',
     howTo: 'Come si esegue',
-    noDescriptionOffline:
+    noDescriptionStored:
       'Con questo esercizio non è stata salvata alcuna descrizione, e la libreria esercizi non lo contiene più.',
     noDescription:
       'La libreria esercizi non ha una descrizione per questo. Le tue note dalle sessioni passate sono il riferimento migliore.',
@@ -254,8 +254,6 @@ export const it: Copy = {
     noBundledImage: 'Nessuna foto per questo esercizio',
     imageUnavailable: 'Non è stato possibile mostrare la foto',
     photoOf: 'Foto di {name}',
-    offlineCopy: 'Copia offline salvata su questo dispositivo',
-    offlineCopyDated: 'Copia offline salvata il {date}',
     builtIn: 'Esercizio interno',
     bodyweightTimes: 'Corpo libero × {reps}',
     openSession: 'Apre la sessione',
@@ -274,12 +272,11 @@ export const it: Copy = {
     unknown: 'sconosciuta',
     appId: 'ID app',
     appIdHint: 'Utile da citare se qualcosa si rompe.',
-    storageNote:
-      'Tutto è salvato su questo dispositivo. Kinetiq non ha account, non ha accessi e non ha un server proprio.',
+    storageNote: 'Tutto è salvato su questo dispositivo. Kinetiq non ha account e non richiede accessi.',
     catalog: 'Catalogo esercizi',
     catalogLicence: 'Pubblico dominio (Unlicense)',
     catalogNote:
-      "La libreria esercizi e le sue foto vengono da free-exercise-db e sono incluse nell'app, così ricerca, navigazione e ogni foto funzionano offline fin dal primo avvio. Non si scarica nulla e nulla si aggiorna da solo: la libreria cambia solo con un aggiornamento dell'app.",
+      "La libreria esercizi e le sue foto vengono da free-exercise-db e sono incluse nell'app, così ricerca, navigazione e ogni foto funzionano fin dal primo avvio. Non si scarica nulla e nulla si aggiorna da solo: la libreria cambia solo con un aggiornamento dell'app.",
     localNote:
       'I tuoi dati non dipendono da essa. Ogni esercizio che aggiungi a una scheda viene salvato come copia, così un aggiornamento della libreria non rinomina mai nulla nelle tue schede o nella cronologia.',
     onThisDevice: 'Su questo dispositivo',
@@ -291,7 +288,7 @@ export const it: Copy = {
     reset: 'Azzera',
     eraseAll: 'Cancella tutti i dati di Kinetiq',
     eraseNote:
-      "La libreria esercizi resta: è materiale di riferimento, non dati tuoi. Nulla viene caricato altrove, quindi non c'è alcun account da chiudere né nulla sul server di qualcun altro da eliminare.",
+      "La libreria esercizi resta: è materiale di riferimento, non dati tuoi. Kinetiq non ha account e non carica nulla, quindi non c'è niente da chiudere. I file che hai esportato restano dove li hai salvati.",
     builtWith: 'Realizzata con React Native ed Expo.',
     eraseTitle: 'Cancellare tutto?',
     eraseMessage:
@@ -725,12 +722,8 @@ export const it: Copy = {
   },
 
   states: {
-    offlineTitle: 'Sei offline',
-    timeoutTitle: 'Il server ci ha messo troppo',
     genericTitle: 'Non è stato possibile caricarlo',
-    offlineMessage:
-      'Tutto quello che hai salvato è ancora qui, e la libreria esercizi funziona offline. Quello che richiedeva la rete torna appena ti ricolleghi.',
-    genericMessage: 'Questo non ha risposto. Riprovare di solito funziona.',
+    genericMessage: 'Non è stato possibile leggerlo. Riprovare di solito funziona.',
     autoStartOn: 'Parte il conto alla rovescia nel momento in cui completi una serie.',
     autoStartOff: 'Il recupero lo avvii tu, così una telefonata tra le serie non ti costa nulla.',
     pickerNoMatch: 'Nessun risultato',
@@ -815,7 +808,6 @@ export const it: Copy = {
     itemTargets: '{weight} · recupero {rest} s',
     matchedFrom: 'Corrispondenza più vicina a "{name}"',
     missingNotFound: 'Non è nel catalogo: verrà saltato',
-    missingOffline: 'Serve una connessione per cercarlo: verrà saltato',
     missingSummary_one: '{count} esercizio verrà saltato.',
     missingSummary_other: '{count} esercizi verranno saltati.',
     errorEmpty: 'Gli appunti sono vuoti.',
@@ -849,8 +841,6 @@ export const it: Copy = {
     unexpected: 'Qualcosa è andato storto. Riprova.',
     sql: 'Non è stato possibile salvare o leggere i tuoi dati.',
     config: 'Kinetiq non è configurata correttamente.',
-    offline: 'Sei offline.',
-    http: 'Non è stato possibile raggiungere il server. Riprova.',
     decode: 'Non è stato possibile leggere alcuni dati.',
     notificationPermissionDenied: 'Le notifiche di Kinetiq sono disattivate nelle impostazioni di sistema.',
     notificationScheduleFailed: 'Non è stato possibile programmare la notifica.',

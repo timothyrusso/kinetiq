@@ -53,7 +53,7 @@ export function RoutinePage({ launcher }: { launcher: WorkoutLauncher }) {
       <>
         <ScreenHeader title={t('routine.title')} />
         <View style={styles.centered}>
-          <ErrorState error={state.error} onRetry={effects.retry} title={t('routine.readError')} />
+          <ErrorState onRetry={effects.retry} title={t('routine.readError')} />
         </View>
       </>
     );

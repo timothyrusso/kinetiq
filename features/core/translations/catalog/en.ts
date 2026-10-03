@@ -231,7 +231,7 @@ export const en = {
     unknownBuiltIn: 'This exercise came from the built-in library, which does not store a description for it.',
     backToLibrary: 'Back to library',
     howTo: 'How to do it',
-    noDescriptionOffline: 'No description was saved with this exercise, and the exercise library no longer lists it.',
+    noDescriptionStored: 'No description was saved with this exercise, and the exercise library no longer lists it.',
     noDescription:
       'The exercise library has no description for this one. Your own notes from past sessions are the best reference.',
     muscles: 'Muscles',
@@ -248,8 +248,6 @@ export const en = {
     noBundledImage: 'No photo for this exercise',
     imageUnavailable: 'The photo could not be shown',
     photoOf: 'Photos of {name}',
-    offlineCopy: 'Offline copy saved on this device',
-    offlineCopyDated: 'Offline copy saved {date}',
     builtIn: 'Built-in exercise',
     bodyweightTimes: 'Bodyweight × {reps}',
     openSession: 'Opens the session',
@@ -268,11 +266,11 @@ export const en = {
     unknown: 'unknown',
     appId: 'App ID',
     appIdHint: 'Worth quoting if something breaks.',
-    storageNote: 'Everything is stored on this device. Kinetiq has no account, no sign-in, and no server of its own.',
+    storageNote: 'Everything is stored on this device. Kinetiq has no account and no sign-in.',
     catalog: 'Exercise catalog',
     catalogLicence: 'Public domain (Unlicense)',
     catalogNote:
-      'The exercise library and its photos come from free-exercise-db and ship inside the app, so searching, browsing and every photo work offline from the first launch. Nothing is downloaded and nothing refreshes: the library changes only with an app update.',
+      'The exercise library and its photos come from free-exercise-db and ship inside the app, so searching, browsing and every photo work from the first launch. Nothing is downloaded and nothing refreshes: the library changes only with an app update.',
     localNote:
       'Your own data never depends on it. Every exercise you add to a routine is stored as a snapshot, so an update of the library never renames anything in your routines or history.',
     onThisDevice: 'On this device',
@@ -284,7 +282,7 @@ export const en = {
     reset: 'Reset',
     eraseAll: 'Erase all Kinetiq data',
     eraseNote:
-      'The exercise library stays: it is reference data, not yours. Nothing is uploaded anywhere, so there is no account to close and nothing sitting on someone else server to delete.',
+      'The exercise library stays: it is reference data, not yours. Kinetiq has no account and uploads nothing, so there is nothing to close. Files you exported stay wherever you saved them.',
     builtWith: 'Built with React Native and Expo.',
     eraseTitle: 'Erase everything?',
     eraseMessage:
@@ -719,12 +717,8 @@ export const en = {
   },
 
   states: {
-    offlineTitle: 'You are offline',
-    timeoutTitle: 'The server took too long',
     genericTitle: 'Could not load this',
-    offlineMessage:
-      'Anything you have saved is still here, and the exercise library works offline. Whatever needed the network comes back as soon as you reconnect.',
-    genericMessage: 'This one did not respond. Trying again usually works.',
+    genericMessage: 'This could not be read. Trying again usually works.',
     autoStartOn: 'Counting down the moment you complete a set.',
     autoStartOff: 'You tap to begin resting, so a phone call between sets costs you nothing.',
     pickerNoMatch: 'Nothing matches that',
@@ -809,7 +803,6 @@ export const en = {
     itemTargets: '{weight} · rest {rest} s',
     matchedFrom: 'Closest match for "{name}"',
     missingNotFound: 'Not in the catalog: will be skipped',
-    missingOffline: 'Needs a connection to look up: will be skipped',
     missingSummary_one: '{count} exercise will be skipped.',
     missingSummary_other: '{count} exercises will be skipped.',
     errorEmpty: 'The clipboard is empty.',
@@ -842,8 +835,6 @@ export const en = {
     unexpected: 'Something went wrong. Please try again.',
     sql: 'Your data could not be saved or read.',
     config: 'Kinetiq is not configured correctly.',
-    offline: 'You are offline.',
-    http: 'The server could not be reached. Please try again.',
     decode: 'Some data could not be read.',
     notificationPermissionDenied: 'Notifications are turned off for Kinetiq in the system settings.',
     notificationScheduleFailed: 'The notification could not be scheduled.',

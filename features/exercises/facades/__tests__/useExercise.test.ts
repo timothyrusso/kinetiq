@@ -60,7 +60,6 @@ describe('useExercise', () => {
       secondaryMuscles: ['Triceps'],
       equipment: ['Barbell'],
     });
-    expect(result.current.stored?.primaryMuscles).toEqual(['Chest']);
     await done();
   });
 });

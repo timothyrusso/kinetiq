@@ -1,4 +1,7 @@
-/** What the launch found. Diagnostics only: nothing branches on it once the app is showing. */
+/**
+ * What the launch found, logged once at `info` when the launch finishes (`runBootstrap`). Diagnostics
+ * only: nothing branches on it once the app is showing.
+ */
 export interface BootstrapOutcome {
   /** The theme the launch chrome was painted with, which the native splash was showing. */
   readonly launchTheme: 'light' | 'dark';

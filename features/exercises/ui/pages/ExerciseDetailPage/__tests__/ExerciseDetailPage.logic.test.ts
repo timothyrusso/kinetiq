@@ -1,11 +1,13 @@
 import { act, waitFor } from '@testing-library/react-native';
 import { Platform } from 'react-native';
 import { routes } from '@/features/core/navigation';
-import { routerFake } from '@/features/core/testing';
+import { renderWithLayer, routerFake } from '@/features/core/testing';
 import { tr } from '@/features/core/translations';
 import { anExercise } from '@/features/exercises/__fixtures__/builders';
+import { snapshotOf } from '@/features/exercises/domain/utils/snapshotOf';
 import { renderWithCatalog } from '@/features/exercises/facades/__tests__/renderWithCatalog';
 import { useExerciseDetailPageLogic } from '@/features/exercises/ui/pages/ExerciseDetailPage/ExerciseDetailPage.logic';
+import { makeCatalogReadsFake } from '@/features/exercises/useCases/__tests__/catalogFakes';
 
 const BENCH = anExercise({ instructions: ['Lower the bar to the chest.', '  ', 'Press it back up.'] });
 
@@ -51,6 +53,17 @@ describe('useExerciseDetailPageLogic', () => {
       tr('exerciseMechanics.compound'),
     ]);
     expect(result.current.derived.hasLead).toBe(true);
+    await done();
+  });
+
+  it('gives a stored exercise no lead line when it has no badges', async () => {
+    const retired = anExercise({ id: 'legacy:999', level: null, mechanic: null });
+    routerFake.setParams({ id: retired.id });
+    const layer = makeCatalogReadsFake({ exercises: [] }, [snapshotOf(retired, 0)]);
+    const { result, done } = await renderWithLayer(layer, useExerciseDetailPageLogic, undefined);
+
+    await waitFor(() => expect(result.current.state.from).toBe('stored'));
+    expect(result.current.derived.hasLead).toBe(false);
     await done();
   });
 

@@ -4,17 +4,17 @@
  * Two React Native facts shape this file, both verified against the installed
  * query-core rather than assumed:
  *
- * 1. There is no `window`, so `onlineManager` and `focusManager` attach nothing.
- *    Without intervention, queries would assume a connection forever and would
- *    never refetch on foreground. `adapters.ts` beside this file feeds both managers
- *    from `expo-network` and `AppState`.
+ * 1. There is no `window`, so `focusManager` attaches nothing. Without intervention,
+ *    a query that asks to refetch on foreground never would. `adapters.ts` beside this
+ *    file feeds the manager from `AppState`. The app makes no network requests, so
+ *    `onlineManager` keeps its default (always online).
  *
  * 2. The app's data is local (SQLite and the bundled exercise catalog), so there is
  *    no HTTP cache to lean on. The in-memory cache here *is* the cache: it has to
  *    survive navigation, so a screen opened twice reads the database once.
  */
-import { focusManager, MutationCache, onlineManager, QueryClient } from '@tanstack/react-query';
-import { HTTP_RETRY_BUDGET, HttpError, httpRetryDelayMs, isAppError } from '@/features/core/error';
+import { focusManager, MutationCache, QueryClient } from '@tanstack/react-query';
+import { isAppError } from '@/features/core/error';
 import { type QueryAdapters, setupQueryAdapters } from '@/features/core/query/adapters';
 
 /**
@@ -25,19 +25,16 @@ import { type QueryAdapters, setupQueryAdapters } from '@/features/core/query/ad
  */
 const STALE_TIME_MS = 2 * 60_000;
 
+/** The wait before a plain query's one retry. */
+const RETRY_DELAY_MS = 300;
+
 /**
- * Remote failures retry by kind, on the budget in `core/error`. Any other app error already went
- * through its Effect, retries included, and was logged once at the boundary, so TanStack does not
- * run it again; a plain query's unknown failure keeps its one retry.
+ * An app error already went through its Effect, retries included, and was logged once at the
+ * boundary, so TanStack does not run it again; a plain query's unknown failure keeps its one retry.
  */
 function shouldRetry(failureCount: number, error: Error): boolean {
-  if (error instanceof HttpError) return failureCount < HTTP_RETRY_BUDGET[error.kind];
   if (isAppError(error)) return false;
-  return failureCount < HTTP_RETRY_BUDGET.unknown;
-}
-
-function retryDelay(attemptIndex: number, error: Error): number {
-  return httpRetryDelayMs(attemptIndex, error instanceof HttpError ? error.retryAfterSeconds : null);
+  return failureCount < 1;
 }
 
 function createQueryClient(): QueryClient {
@@ -73,11 +70,10 @@ function createQueryClient(): QueryClient {
         // and `online` pauses every query while the OS reports no connection: in airplane
         // mode Home sat on skeletons forever, and the exercise picker said "Start typing"
         // over a request that never ran. `offlineFirst` always runs the first attempt, so a
-        // local read succeeds and a remote one fails fast with the offline error the screens
-        // already know how to show; only retries wait for the network.
+        // local read succeeds whatever the OS says about the connection.
         networkMode: 'offlineFirst',
         retry: shouldRetry,
-        retryDelay,
+        retryDelay: RETRY_DELAY_MS,
         // NOTE: An error that survives retries stays on screen as an error state; a
         // stale-but-successful result would be nicer, but only where we have one
         // to show: see the exercise browser's `isPlaceholderData` handling.
@@ -104,13 +100,10 @@ export function getQueryClient(): QueryClient {
   return client;
 }
 
-/**
- * Wires the focus/online managers. Returns a disposer; must be called before any query is
- * subscribed.
- */
+/** Wires the focus manager. Returns a disposer; must be called before any query is subscribed. */
 export function installQueryAdapters(): () => void {
   if (adapters) adapters.dispose();
-  adapters = setupQueryAdapters(focusManager, onlineManager);
+  adapters = setupQueryAdapters(focusManager);
   return () => {
     adapters?.dispose();
     adapters = null;

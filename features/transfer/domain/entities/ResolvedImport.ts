@@ -7,7 +7,7 @@ import type { ParsedItem, ParsedRoutine } from '@/features/transfer/domain/entit
  */
 export type ExerciseMatch<Snapshot> =
   | { readonly status: 'stored' | 'catalog' | 'closest'; readonly snapshot: Snapshot }
-  | { readonly status: 'missing'; readonly offline: boolean };
+  | { readonly status: 'missing' };
 
 export type ResolvedItem<Snapshot> = ParsedItem & { readonly match: ExerciseMatch<Snapshot> };
 

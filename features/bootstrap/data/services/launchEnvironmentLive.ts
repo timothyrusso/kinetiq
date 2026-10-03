@@ -5,7 +5,6 @@ import { type AppStateStatus, AppState as NativeAppState } from 'react-native';
 import type { AppState } from '@/features/bootstrap/domain/entities/AppState';
 import { LaunchEnvironment } from '@/features/bootstrap/domain/services/LaunchEnvironment';
 import { toAppError } from '@/features/core/error';
-import { startNetworkStatus } from '@/features/core/network';
 import { installQueryAdapters } from '@/features/core/query';
 import { themeFor } from '@/features/core/theme';
 
@@ -20,14 +19,13 @@ const appStateOf = (status: AppStateStatus): AppState =>
 let appStateListener: ((next: AppState) => void) | null = null;
 
 /**
- * The launch environment over the core singletons and the native modules. The query plumbing's
- * disposers are dropped on purpose: they are process-lifetime singletons. The Android
+ * The launch environment over the core singletons and the native modules. The query adapter's
+ * disposer is dropped on purpose: it is a process-lifetime singleton. The Android
  * navigation buttons are left alone: since Android 10 the system keeps the gesture pill legible
  * against the window background the root colour sets.
  */
 export const LaunchEnvironmentLive = Layer.succeed(LaunchEnvironment, {
   installQueryPlumbing: Effect.sync(() => {
-    startNetworkStatus();
     installQueryAdapters();
   }),
   // NOTE: the fonts and the header icons are loaded on first use, so importing the runtime (as the

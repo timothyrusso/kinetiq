@@ -4,3 +4,4 @@ export const FEATURE_TIER: FeatureTier = 0;
 
 export { LoggerLive } from '@/features/core/logger/di/layer';
 export { logBackgroundFailure } from '@/features/core/logger/useCases/logBackgroundFailure';
+export { logDiagnostic } from '@/features/core/logger/useCases/logDiagnostic';
