@@ -315,7 +315,6 @@ export const en = {
   // NOTE: --- end group-c ---
   session: {
     pickHasCompletedSet: 'Has a completed set, so it stays. Remove it from the workout screen.',
-    pickLastExercise: 'The only exercise in this workout, so it stays.',
     thisSet: 'This set',
     addNotChanged:
       'That exercise did not go in: it is either already in this workout, or the workout has ended. Nothing was changed.',
@@ -352,6 +351,7 @@ export const en = {
     finishPartial:
       '{left} of {planned} {word} left un-ticked. Un-ticked work is not recorded: the workout saves what you completed.',
     finishAll: 'All {planned} sets are done. This becomes a workout in your history.',
+    finishEmpty: 'No exercises in this workout. Finishing saves only its time to your history, and changes no routine.',
     finishConfirm: 'Finish and save',
     finishUpdateRoutine: "Update routine with today's values",
     finishUpdateRoutineHint:

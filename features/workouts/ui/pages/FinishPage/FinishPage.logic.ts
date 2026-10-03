@@ -2,17 +2,29 @@ import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { haptics } from '@/features/core/haptics';
 import { routes } from '@/features/core/navigation';
-import { useT } from '@/features/core/translations';
+import { type TKey, type TVars, useT } from '@/features/core/translations';
 import { routineUpdateOf } from '@/features/workouts/domain/utils/routineUpdate';
 import { useActiveSession } from '@/features/workouts/facades/useActiveSession';
 import { useFinishSession } from '@/features/workouts/facades/useFinishSession';
 import { useSessionProgress } from '@/features/workouts/hooks/useSessionProgress';
 
+type Translate = (key: TKey, vars?: TVars) => string;
+
+/** What finishing records: nothing but the time with no exercises, else the sets left un-ticked. */
+function finishMessage(entryCount: number, progress: { completed: number; planned: number }, t: Translate): string {
+  if (entryCount === 0) return t('session.finishEmpty');
+  const { completed, planned } = progress;
+  if (completed >= planned) return t('session.finishAll', { planned });
+  const word = t('session.setWord', { count: planned });
+  return t('session.finishPartial', { left: planned - completed, planned, word });
+}
+
 /**
  * Finishing the workout in progress, as a form sheet: the confirmation, and for a workout from a
  * routine the switch "Update routine with today's values", on each time the sheet opens. The
  * routine changes only on Finish with the switch on; a swipe down, a discard or a killed app
- * change nothing. A workout not from a routine has no switch, and finishes with it off.
+ * change nothing. A workout not from a routine has no switch, and finishes with it off; so does
+ * one left with no exercises, which finishes like an empty workout, with its time only.
  */
 export function useFinishPageLogic() {
   const { t } = useT();
@@ -23,7 +35,6 @@ export function useFinishPageLogic() {
   const [error, setError] = useState<string | null>(null);
 
   const canUpdateRoutine = session !== null && routineUpdateOf(session) !== null;
-  const setWord = t('session.setWord', { count: progress.planned });
 
   const { mutate, isPending } = finishSession;
   const finish = useCallback(() => {
@@ -58,14 +69,7 @@ export function useFinishPageLogic() {
     state: { session, updateRoutine: canUpdateRoutine && updateRoutine, finishing: isPending, error },
     derived: {
       showRoutineSwitch: canUpdateRoutine,
-      message:
-        progress.ratio < 1
-          ? t('session.finishPartial', {
-              left: progress.planned - progress.completed,
-              planned: progress.planned,
-              word: setWord,
-            })
-          : t('session.finishAll', { planned: progress.planned }),
+      message: finishMessage(session?.entries.length ?? 0, progress, t),
     },
     effects: { finish, setUpdateRoutine },
   };

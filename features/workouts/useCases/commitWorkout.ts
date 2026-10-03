@@ -26,6 +26,9 @@ const HISTORY_WINDOW = 400;
  * values written back into the routine run in one transaction, so a crash cannot leave a workout
  * without its records, or a routine counted or changed for a workout never saved.
  *
+ * A workout with no sets in it (every exercise removed) is not counted against its routine: its
+ * trained count and last trained date stay as they were.
+ *
  * Idempotent: a workout whose id is already in history fails with `DuplicateWorkout` and writes
  * nothing, because a replay would be compared against a history that already contains it.
  */
@@ -43,7 +46,8 @@ export const commitWorkout = (workout: CompletedWorkout, routineUpdate: RoutineU
         const activity = yield* activities.recordWorkout(workout, personalRecords);
         yield* recordPersonalRecords(personalRecords);
         const { routineId } = workout;
-        if (routineId !== null)
+        const trained = workout.entries.some(entry => entry.sets.length > 0);
+        if (routineId !== null && trained)
           yield* Effect.flatMap(RoutineUsage, usage => usage.markUsed(routineId, workout.endedAt));
         if (routineUpdate !== null) yield* Effect.flatMap(RoutineUsage, usage => usage.applyWorkout(routineUpdate));
         const result: CommitResult = { activity, personalRecords };

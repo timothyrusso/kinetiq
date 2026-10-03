@@ -10,8 +10,8 @@ describe('pickRemoval', () => {
     expect(pickRemoval(aSession().entries, 'ex:barbell-bench-press')).toEqual({ kind: 'hasCompletedSet' });
   });
 
-  it('keeps the workout’s last exercise', () => {
-    expect(pickRemoval([anotherEntry()], 'ex:barbell-squat')).toEqual({ kind: 'lastExercise' });
+  it('removes the workout’s last exercise', () => {
+    expect(pickRemoval([anotherEntry()], 'ex:barbell-squat')).toEqual({ kind: 'removable', entryIndex: 0 });
   });
 
   it('judges the later entry of an exercise that is in twice', () => {

@@ -41,18 +41,20 @@ describe('useRemoveSessionExercise', () => {
     expect(live()?.entries).toHaveLength(2);
   });
 
-  it('keeps the workout’s last exercise', async () => {
+  it('removes the workout’s last exercise, leaving an empty workout', async () => {
     sessionLifecycle.restore(aSession({ entries: [anotherEntry()] }));
     const { result } = await renderHook(useRemoveSessionExercise);
 
-    let removed = true;
+    const kind = result.current.removalOf('ex:barbell-squat');
+    let removed = false;
     await act(async () => {
       removed = result.current.remove('ex:barbell-squat');
     });
 
-    expect(result.current.removalOf('ex:barbell-squat')).toBe('lastExercise');
-    expect(removed).toBe(false);
-    expect(live()?.entries).toHaveLength(1);
+    expect(kind).toBe('removable');
+    expect(removed).toBe(true);
+    expect(live()?.entries).toEqual([]);
+    expect(result.current.removalOf('ex:barbell-squat')).toBe('absent');
   });
 
   it('judges the workout as it is when tapped, not as it was drawn', async () => {
