@@ -288,7 +288,7 @@ export const it: Copy = {
     reset: 'Azzera',
     eraseAll: 'Cancella tutti i dati di Kinetiq',
     eraseNote:
-      "La libreria esercizi resta: è materiale di riferimento, non dati tuoi. I tuoi dati non lasciano mai questo dispositivo, quindi non c'è alcun account da chiudere né alcuna copia altrove da eliminare.",
+      "La libreria esercizi resta: è materiale di riferimento, non dati tuoi. Kinetiq non ha account e non carica nulla, quindi non c'è niente da chiudere. I file che hai esportato restano dove li hai salvati.",
     builtWith: 'Realizzata con React Native ed Expo.',
     eraseTitle: 'Cancellare tutto?',
     eraseMessage:
@@ -723,7 +723,7 @@ export const it: Copy = {
 
   states: {
     genericTitle: 'Non è stato possibile caricarlo',
-    genericMessage: 'Questo non ha risposto. Riprovare di solito funziona.',
+    genericMessage: 'Non è stato possibile leggerlo. Riprovare di solito funziona.',
     autoStartOn: 'Parte il conto alla rovescia nel momento in cui completi una serie.',
     autoStartOff: 'Il recupero lo avvii tu, così una telefonata tra le serie non ti costa nulla.',
     pickerNoMatch: 'Nessun risultato',

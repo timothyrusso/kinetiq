@@ -282,7 +282,7 @@ export const en = {
     reset: 'Reset',
     eraseAll: 'Erase all Kinetiq data',
     eraseNote:
-      'The exercise library stays: it is reference data, not yours. Your data never leaves this device, so there is no account to close and no copy anywhere else to delete.',
+      'The exercise library stays: it is reference data, not yours. Kinetiq has no account and uploads nothing, so there is nothing to close. Files you exported stay wherever you saved them.',
     builtWith: 'Built with React Native and Expo.',
     eraseTitle: 'Erase everything?',
     eraseMessage:
@@ -718,7 +718,7 @@ export const en = {
 
   states: {
     genericTitle: 'Could not load this',
-    genericMessage: 'This one did not respond. Trying again usually works.',
+    genericMessage: 'This could not be read. Trying again usually works.',
     autoStartOn: 'Counting down the moment you complete a set.',
     autoStartOff: 'You tap to begin resting, so a phone call between sets costs you nothing.',
     pickerNoMatch: 'Nothing matches that',
