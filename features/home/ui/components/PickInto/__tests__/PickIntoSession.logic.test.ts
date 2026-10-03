@@ -84,13 +84,17 @@ describe('usePickIntoSessionLogic', () => {
     await done();
   });
 
-  it('keeps the workout’s last exercise, and says why', async () => {
+  it('takes the workout’s last exercise back out, leaving an empty workout to add to again', async () => {
     const { result, done } = await renderPicker();
 
+    expect(result.current.picker.effects.lockedReason('ex:barbell-bench-press')).toBeNull();
     await act(async () => result.current.picker.effects.unpick('ex:barbell-bench-press'));
 
-    expect(result.current.picker.effects.lockedReason('ex:barbell-bench-press')).toBe(tr('session.pickLastExercise'));
-    expect(result.current.live.session?.entries).toHaveLength(1);
+    expect(result.current.live.session?.entries).toEqual([]);
+    expect(result.current.picker.effects.isIncluded('ex:barbell-bench-press')).toBe(false);
+    await act(async () => result.current.picker.effects.pick(aSquat()));
+    await waitFor(() => expect(result.current.live.session?.entries).toHaveLength(1));
+    expect(result.current.live.session?.activeIndex).toBe(0);
     await done();
   });
 });

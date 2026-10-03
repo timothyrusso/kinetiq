@@ -4,7 +4,7 @@ import { useSessionStore } from '@/features/workouts/state/sessionStore';
 
 /**
  * Taking an exercise back out of the workout in progress from the picker, with no confirmation:
- * only one with no completed set, and never the workout's last. `removalOf` says what a tap would
+ * only one with no completed set, the workout's last included. `removalOf` says what a tap would
  * do and changes only when the exercises do, not on the clock's ticks; `remove` judges the
  * session as it is when called and answers whether it removed anything.
  */

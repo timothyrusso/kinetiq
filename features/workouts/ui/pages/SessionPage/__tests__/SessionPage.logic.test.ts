@@ -5,7 +5,7 @@ import { renderWithLayer, routerFake } from '@/features/core/testing';
 import { spacing } from '@/features/core/theme';
 import { tr } from '@/features/core/translations';
 import { getSettings, updateSettings } from '@/features/settings';
-import { aSession } from '@/features/workouts/__fixtures__/builders';
+import { anEntry, anotherEntry, aSession } from '@/features/workouts/__fixtures__/builders';
 import { makeSessionScreenTestLayer } from '@/features/workouts/di/__tests__/workoutsTestData';
 import { sessionActions, sessionLifecycle } from '@/features/workouts/facades/useActiveSession';
 import { useSessionPageLogic } from '@/features/workouts/ui/pages/SessionPage/SessionPage.logic';
@@ -136,6 +136,45 @@ describe('useSessionPageLogic', () => {
     expect([...scheduled.values()][0]?.content.body).toBe(
       tr('push.restNextSet', { name: 'Overhead Press', set: 2, total: 3 }),
     );
+    await done();
+  });
+
+  it('removes the only exercise after the confirmation, back to the empty workout', async () => {
+    const { result, done } = await renderScreen(aSession({ entries: [anEntry()] }));
+
+    await act(async () => result.current.effects.requestRemove(0));
+    expect(result.current.derived.removingName).toBe('Bench Press');
+    await act(async () => result.current.effects.confirmRemove());
+
+    expect(result.current.state.removing).toBeNull();
+    expect(result.current.state.session?.entries).toEqual([]);
+    expect(result.current.derived.blocks).toEqual([]);
+    expect(result.current.derived.exercisesEyebrow).toBe(`0 ${tr('session.exerciseWord', { count: 0 })}`);
+    expect(result.current.derived.progress).toMatchObject({ completed: 0, planned: 0, ratio: 0 });
+    await done();
+  });
+
+  it('ends the rest and pulls back its alert when the last exercise goes', async () => {
+    const { result, scheduled, done } = await renderScreen(aSession({ entries: [anotherEntry()] }));
+    await act(async () => result.current.effects.toggleSet(0, 0));
+    await waitFor(() => expect(scheduled.size).toBe(1));
+
+    await act(async () => result.current.effects.requestRemove(0));
+    await act(async () => result.current.effects.confirmRemove());
+
+    expect(result.current.derived.restShown).toBe(false);
+    await waitFor(() => expect(scheduled.size).toBe(0));
+    await done();
+  });
+
+  it('adds to a workout emptied mid-way as to an empty one, the new exercise current', async () => {
+    const { result, done } = await renderScreen(aSession({ entries: [anEntry()] }));
+    await act(async () => result.current.effects.requestRemove(0));
+    await act(async () => result.current.effects.confirmRemove());
+
+    await act(async () => sessionActions.addExercise(anotherEntry()));
+
+    expect(result.current.derived.blocks.map(block => block.isCurrent)).toEqual([true]);
     await done();
   });
 

@@ -149,14 +149,17 @@ export function skipExercise(session: WorkoutSession, entryIndex: number, now: n
 }
 
 /**
- * Removes an exercise and the sets banked against it. A session keeps its last exercise. The
- * current exercise stays current as the list closes up over one removed above it.
+ * Removes an exercise and the sets banked against it. The current exercise stays current as the
+ * list closes up over one removed above it. The last exercise goes too: a session with none is the
+ * one an empty workout starts as, and with nothing left to rest for, its rest ends.
  */
 export function removeExercise(session: WorkoutSession, entryIndex: number, now: number): WorkoutSession {
-  if (session.entries.length <= 1) return session;
+  if (session.entries[entryIndex] === undefined) return session;
   const entries = session.entries.filter((_, index) => index !== entryIndex);
   const current = entryIndex < session.activeIndex ? session.activeIndex - 1 : session.activeIndex;
-  return touch(session, { entries, activeIndex: Math.max(0, Math.min(current, entries.length - 1)) }, now);
+  const activeIndex = Math.max(0, Math.min(current, entries.length - 1));
+  const rest = entries.length === 0 ? { restEndsAt: null, restDurationSeconds: null } : {};
+  return touch(session, { entries, activeIndex, ...rest }, now);
 }
 
 export function addExercise(session: WorkoutSession, entry: StrengthEntry, now: number): WorkoutSession {

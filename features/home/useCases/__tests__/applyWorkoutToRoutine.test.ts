@@ -308,6 +308,17 @@ describe('applyWorkoutToRoutine', () => {
     routinesOver(untouched),
   );
 
+  const emptied = storing();
+  itEffect(
+    'writes nothing when every exercise was removed during the workout, rather than empty the routine',
+    Effect.gen(function* () {
+      yield* applyWorkoutToRoutine(updateOf([]));
+
+      expect(emptied.writes).toEqual([]);
+    }),
+    routinesOver(emptied),
+  );
+
   const deleted: Stored = { routine: undefined, writes: [] };
   itEffect(
     'writes nothing into a routine deleted during the workout',

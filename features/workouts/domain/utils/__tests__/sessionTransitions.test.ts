@@ -218,10 +218,32 @@ describe('removeExercise and addExercise', () => {
     expect(removeExercise(three, 2, NOW).activeIndex).toBe(1);
   });
 
-  it('keeps a session’s last exercise', () => {
-    const single = aSession({ entries: [anEntry()] });
+  it('removes a session’s last exercise, back to an empty session, and ends its rest', () => {
+    const single = aSession({ entries: [anEntry()], restEndsAt: NOW + 60_000, restDurationSeconds: 90 });
 
-    expect(removeExercise(single, 0, NOW)).toBe(single);
+    const next = removeExercise(single, 0, NOW);
+
+    expect(next.entries).toEqual([]);
+    expect(next.activeIndex).toBe(0);
+    expect(next.restEndsAt).toBeNull();
+    expect(next.restDurationSeconds).toBeNull();
+    expect(next.updatedAt).toBe(NOW);
+  });
+
+  it('keeps a running rest while an exercise is left', () => {
+    const resting = aSession({ restEndsAt: NOW + 60_000, restDurationSeconds: 90 });
+
+    expect(removeExercise(resting, 1, NOW).restEndsAt).toBe(NOW + 60_000);
+  });
+
+  it('changes nothing for an exercise that is not there', () => {
+    const empty = aSession({ entries: [] });
+
+    expect(removeExercise(empty, 0, NOW)).toBe(empty);
+  });
+
+  it('focuses nothing past the start of an empty session', () => {
+    expect(focusExercise(aSession({ entries: [] }), 3, NOW).activeIndex).toBe(0);
   });
 
   it('appends an exercise', () => {

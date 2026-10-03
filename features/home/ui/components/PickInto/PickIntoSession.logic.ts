@@ -16,14 +16,13 @@ const LOCKED_KEY: Record<RemovalKind, TKey | null> = {
   removable: null,
   absent: null,
   hasCompletedSet: 'session.pickHasCompletedSet',
-  lastExercise: 'session.pickLastExercise',
 };
 
 /**
  * Picks into the workout in progress. The opening targets are the routines' own, so an exercise
  * added mid-workout starts out like one added to a routine: the rest is the user's default. A
  * second tap takes an exercise back out, like the routine picker, but only one with nothing
- * logged and never the workout's last: the picker asks no confirmation, so it cannot drop sets.
+ * logged, the workout's last included: the picker asks no confirmation, so it cannot drop sets.
  * Any other included row stays inert and says why.
  */
 export function usePickIntoSessionLogic() {

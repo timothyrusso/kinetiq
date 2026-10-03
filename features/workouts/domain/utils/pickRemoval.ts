@@ -3,12 +3,11 @@ import type { StrengthEntry } from '@/features/workouts/domain/schemas/StrengthE
 /**
  * What a second tap on an exercise in the workout's picker does: removes the entry, or does
  * nothing and says why. Only an exercise with nothing banked comes out this way, since the picker
- * asks no confirmation, and the session keeps its last exercise as `removeExercise` does.
+ * asks no confirmation. The workout's last exercise comes out too, back to the empty workout.
  */
 export type PickRemoval =
   | { readonly kind: 'removable'; readonly entryIndex: number }
   | { readonly kind: 'hasCompletedSet' }
-  | { readonly kind: 'lastExercise' }
   | { readonly kind: 'absent' };
 
 /**
@@ -22,6 +21,5 @@ export function pickRemoval(entries: readonly StrengthEntry[] | undefined, exerc
   const entry = entries[entryIndex];
   if (entry === undefined) return { kind: 'absent' };
   if (entry.sets.some(set => set.completed)) return { kind: 'hasCompletedSet' };
-  if (entries.length <= 1) return { kind: 'lastExercise' };
   return { kind: 'removable', entryIndex };
 }

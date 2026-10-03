@@ -7,10 +7,12 @@ import type { RoutineUpdate } from '@/features/workouts';
 /**
  * Writes a finished workout back into the routine it started from, as it is now: a routine
  * deleted meanwhile changes nothing, and one the workout leaves as it was is not written, so it
- * does not move to the top of the list for nothing.
+ * does not move to the top of the list for nothing. A workout with no exercises left is never
+ * written back: it would empty the routine.
  */
 export const applyWorkoutToRoutine = (update: RoutineUpdate) =>
   Effect.gen(function* () {
+    if (update.entries.length === 0) return;
     const routines = yield* RoutineRepository;
     const id = RoutineId.make(update.routineId);
     const routine = yield* routines.byId(id);

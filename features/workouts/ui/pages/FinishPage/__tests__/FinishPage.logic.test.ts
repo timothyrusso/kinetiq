@@ -2,6 +2,7 @@ import { act, waitFor } from '@testing-library/react-native';
 import { routes } from '@/features/core/navigation';
 import { resetAllStores } from '@/features/core/state';
 import { renderWithLayer, routerFake } from '@/features/core/testing';
+import { tr } from '@/features/core/translations';
 import { aSession } from '@/features/workouts/__fixtures__/builders';
 import { storedActivity } from '@/features/workouts/di/__tests__/workoutsTestData';
 import { routinesUpdated, WorkoutsTestLayer } from '@/features/workouts/di/__tests__/workoutsTestLayer';
@@ -70,6 +71,20 @@ describe('useFinishPageLogic', () => {
     const { result, done } = await renderSheet(aSession());
 
     expect(result.current.derived.showRoutineSwitch).toBe(false);
+    await done();
+  });
+
+  it('finishes a workout with every exercise removed like an empty one, leaving its routine alone', async () => {
+    const emptied = aSession({ routineItemIds: ['rit_bench', 'rit_press'], entries: [] });
+    const { result, runtime, done } = await renderSheet(emptied);
+
+    expect(result.current.derived.message).toBe(tr('session.finishEmpty'));
+    expect(result.current.derived.showRoutineSwitch).toBe(false);
+    await act(async () => result.current.effects.finish());
+
+    await waitFor(() => expect(routerFake.history[0]).toEqual({ verb: 'dismissTo', href: routes.home() }));
+    expect((await storedActivity(runtime, emptied.id))?.title).toBe('Push Day');
+    expect(routinesUpdated).toEqual([]);
     await done();
   });
 });

@@ -241,6 +241,19 @@ describe('finishSession with "Update routine with today\'s values"', () => {
     makeWorkoutsFake(legacy),
   );
 
+  const emptied = aSession({ routineItemIds: ['rit_bench', 'rit_press'], entries: [] });
+  const allRemoved = makeFakeWorkoutsDb({ sessions: new Map([[ID, emptied]]) });
+  itEffect(
+    'writes nothing back for a workout whose exercises were all removed, and still records it',
+    Effect.gen(function* () {
+      yield* finishSession(ID, emptied, 3, true);
+
+      expect(allRemoved.routinesUpdated).toEqual([]);
+      expect(allRemoved.activities.has(ID)).toBe(true);
+    }),
+    makeWorkoutsFake(allRemoved),
+  );
+
   const refused = withRoutine();
   itEffect(
     'records nothing when the routine cannot be updated: the workout and its routine roll back together',

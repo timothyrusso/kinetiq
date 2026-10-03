@@ -322,7 +322,6 @@ export const it: Copy = {
   // NOTE: --- end group-c ---
   session: {
     pickHasCompletedSet: 'Ha una serie completata, quindi resta. Toglilo dalla schermata dell’allenamento.',
-    pickLastExercise: 'È l’unico esercizio di questo allenamento, quindi resta.',
     thisSet: 'Questa serie',
     addNotChanged:
       "L'esercizio non è stato inserito: o è già in questo allenamento, o l'allenamento è finito. Nulla è cambiato.",
@@ -361,6 +360,8 @@ export const it: Copy = {
     finishPartial:
       "{left} di {planned} {word} non spuntate. Il lavoro non spuntato non viene registrato: l'allenamento salva ciò che hai completato.",
     finishAll: 'Tutte le {planned} serie sono fatte. Diventa un allenamento nella tua cronologia.',
+    finishEmpty:
+      'Nessun esercizio in questo allenamento. Completandolo salvi solo la durata nella cronologia, e nessuna scheda cambia.',
     finishConfirm: 'Completa e salva',
     finishUpdateRoutine: 'Aggiorna la scheda con i valori di oggi',
     finishUpdateRoutineHint:
