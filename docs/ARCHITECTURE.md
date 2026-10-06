@@ -115,9 +115,13 @@ Every feature declares `FEATURE_TIER` in its `index.ts`; `npm run arch` checks t
 - **A catalog with no row is an answer.** `getExercise` answers `null` for a retired or `local:`
   exercise; `useExercise` falls back to the stored snapshot and logs nothing.
 - **Stored rows read tolerantly**, as `main` did: an `entries_json` entry missing a nullable field
-  reads with it empty (rest defaults to 90 s), an entry with no exercise or no sets is dropped
-  alone, and a `records.kind` this build does not know is left out, not failed. Writes are
-  unchanged byte for byte.
+  reads with it empty (rest defaults to 90 s), an entry with no exercise, no sets, no tracking
+  type or a set of another type than its own is dropped alone, and a `records.kind` this build
+  does not know is left out, not failed. Rows from before tracking types are not converted:
+  migration 13 deleted every workout, session, record and routine (owner decision, #169), so an
+  entry with no `trackingType` is never read as weight and reps. Routine items read strictly: an
+  unknown `tracking_type`, or a set row missing a value its item's type records, fails the read
+  with a `DecodeError`. Writes are unchanged byte for byte.
 - **Device capabilities are Tags.** Keeping the screen on (`workouts` `ScreenWake`) runs through
   the boundary, which logs a refusal once.
 - **The training reminder** is re-scheduled on every sync. A `cancelAll` that fails does not stop
@@ -163,8 +167,9 @@ Each is a deliberate departure from a kit rule, with the reason.
 ## Tests
 
 - Use case tests fake Tags as Layers; Live Layer and migration tests run on
-  `makeMigratedSqliteLayer()` or `makeNodeSqliteLayer()`. A v9 database fixture with legacy-shaped
-  rows pins the tolerant reads (`workouts/data/repositories/__tests__/legacyRows.test.ts`).
+  `makeMigratedSqliteLayer()` or `makeNodeSqliteLayer()`. A v12 database fixture with rows written
+  before tracking types pins the v13 wipe and the reads after it
+  (`workouts/data/repositories/__tests__/legacyRows.test.ts`).
 - ViewModel and facade tests render with `renderWithLayer(layer, hook, props, around?)`: a test
   runtime of `layer` over the core test services, a fresh query client, a safe area with iPhone 17
   Pro metrics; `done` unmounts and disposes. `routerFake` is the router every test sees (the root

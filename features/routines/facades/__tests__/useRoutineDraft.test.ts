@@ -33,12 +33,28 @@ describe('useRoutineDraft', () => {
       expect.objectContaining({
         exerciseId: 'ex:barbell-bench-press',
         exerciseName: 'Bench Press',
-        sets: [0, 1, 2].map(index => ({ index, reps: 8, weightKg: 0, targetRpe: null })),
+        sets: [0, 1, 2].map(index => ({ type: 'weightReps' as const, index, reps: 8, weightKg: 0, targetRpe: null })),
         restSeconds: 90,
       }),
     ]);
     expect(result.current.draft.snapshots.map(snapshot => snapshot.exerciseId)).toEqual(['ex:barbell-bench-press']);
     expect(result.current.actions.isDirty()).toBe(true);
+  });
+
+  it('opens each exercise on its catalog tracking type: a bodyweight one on reps, a hold on time', async () => {
+    const { result } = await renderDraft();
+    const pullups = anExercise({ id: 'ex:pullups', name: 'Pullups', force: 'pull', equipmentKeys: ['body-only'] });
+    const plank = anExercise({ id: 'ex:plank', name: 'Plank', force: 'static', equipmentKeys: ['body-only'] });
+
+    await act(async () => {
+      result.current.actions.addExercise(pullups);
+      result.current.actions.addExercise(plank);
+    });
+
+    expect(result.current.draft.items.map(item => [item.trackingType, item.sets[0]])).toEqual([
+      ['repsOnly', { type: 'repsOnly', index: 0, reps: 8, targetRpe: null }],
+      ['duration', { type: 'duration', index: 0, durationSeconds: 30, targetRpe: null }],
+    ]);
   });
 
   it('refuses an exercise already in the draft', async () => {

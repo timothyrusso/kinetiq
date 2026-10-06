@@ -43,11 +43,13 @@ export function useItemEditorFormLogic(
   const { sets } = item;
   const rows = useMemo<SetRowValues[]>(
     () =>
+      // HACK: every set draws as weight and reps until the editor has a row per tracking type
+      // (#192): a reps-only set shows bodyweight, a timed one 0 reps at bodyweight.
       sets.map(set => ({
         key: `set-${set.index}`,
         index: set.index,
-        reps: set.reps,
-        weight: weightDisplayValue(set.weightKg, units, step),
+        reps: set.type === 'duration' ? 0 : set.reps,
+        weight: weightDisplayValue(set.type === 'weightReps' ? set.weightKg : 0, units, step),
         rpe: set.targetRpe ?? 0,
       })),
     [sets, step, units],
@@ -56,7 +58,9 @@ export function useItemEditorFormLogic(
   const addSet = useCallback(() => {
     if (sets.length >= ITEM_BOUNDS.sets.max) return;
     onChange(item =>
-      item.sets.length >= ITEM_BOUNDS.sets.max ? {} : { sets: resizeSets(item.sets, item.sets.length + 1) },
+      item.sets.length >= ITEM_BOUNDS.sets.max
+        ? {}
+        : { sets: resizeSets(item.sets, item.sets.length + 1, item.trackingType) },
     );
   }, [onChange, sets.length]);
   const removeSetAt = useCallback(

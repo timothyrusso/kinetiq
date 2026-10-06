@@ -29,10 +29,13 @@ export const saveImport = (
         const { snapshot } = item.match;
         if (item.match.status !== 'stored') yield* snapshots.upsert(snapshot);
         items.push({
+          // HACK: an imported item plans weight and reps until the routines file names its
+          // tracking type in transfer v3 (#193).
+          trackingType: 'weightReps',
           id: localId('rit'),
           exerciseId: snapshot.exerciseId,
           exerciseName: snapshot.name,
-          sets: item.sets.map((set, setIndex) => ({ index: setIndex, ...set })),
+          sets: item.sets.map((set, setIndex) => ({ type: 'weightReps', index: setIndex, ...set })),
           restSeconds: item.restSeconds ?? defaultRestSeconds,
           notes: item.notes,
         });

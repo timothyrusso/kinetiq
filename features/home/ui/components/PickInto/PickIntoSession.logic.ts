@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { haptics } from '@/features/core/haptics';
 import { type TKey, useT } from '@/features/core/translations';
-import type { Exercise } from '@/features/exercises';
+import { defaultTrackingType, type Exercise } from '@/features/exercises';
 import type { PickDestination } from '@/features/exercises/pages';
 import { defaultItemTarget } from '@/features/routines';
 import { useSettings } from '@/features/settings';
@@ -46,7 +46,7 @@ export function usePickIntoSessionLogic() {
   const pick = useCallback(
     (exercise: Exercise) => {
       setError(null);
-      const target = defaultItemTarget(defaultRest);
+      const target = defaultItemTarget(defaultTrackingType(exercise), defaultRest);
       add(
         exercise,
         { setCount: target.sets.length, restSeconds: target.restSeconds, notes: target.notes },

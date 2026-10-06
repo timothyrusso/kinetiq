@@ -5,14 +5,19 @@ import { applyWorkoutToRoutine } from '@/features/home/useCases/applyWorkoutToRo
 import { type Routine, RoutineId, type RoutineItem, RoutineRepository, type RoutineSet } from '@/features/routines';
 import type { RoutineUpdate, StrengthEntry } from '@/features/workouts';
 
-/** The workouts written back here record weight and reps. */
+/** Most workouts written back here record weight and reps. */
 type Entry = Extract<StrengthEntry, { readonly trackingType: 'weightReps' }>;
 
 type WorkoutSet = Entry['sets'][number];
 
+type WeightRepsItem = ReturnType<typeof aRoutineItem>;
+
+type Row = Extract<RoutineSet, { readonly type: 'weightReps' }>;
+
 const PUSH = RoutineId.make('rtn_push');
 
-const row = (index: number, reps: number, weightKg: number, targetRpe: number | null = null): RoutineSet => ({
+const row = (index: number, reps: number, weightKg: number, targetRpe: number | null = null): Row => ({
+  type: 'weightReps',
   index,
   reps,
   weightKg,
@@ -61,7 +66,7 @@ const set = (
 });
 
 /** The entry a routine item opens with, every set still open on its row's values. */
-const openedFrom = (item: RoutineItem): Entry => ({
+const openedFrom = (item: WeightRepsItem): Entry => ({
   trackingType: 'weightReps',
   exerciseId: item.exerciseId,
   exerciseName: item.exerciseName,
@@ -344,6 +349,103 @@ describe('applyWorkoutToRoutine', () => {
       expect(replacedUndone.writes).toEqual([]);
     }),
     routinesOver(replacedUndone),
+  );
+
+  const retyped = storing();
+  itEffect(
+    'gives an item the type it was changed to during the workout, with its logged sets and its open rows carried over',
+    Effect.gen(function* () {
+      const dips: StrengthEntry = {
+        ...openedFrom(DIPS),
+        trackingType: 'repsOnly',
+        sets: [
+          { type: 'repsOnly', index: 0, reps: 12, completed: true, rpe: 9, routineSetIndex: 0 },
+          { type: 'repsOnly', index: 1, reps: 10, completed: false, rpe: null, routineSetIndex: 1 },
+        ],
+      };
+
+      yield* applyWorkoutToRoutine(updateOf([openedFrom(BENCH), openedFrom(PRESS), dips]));
+
+      expect(lastWrite(retyped)[2]).toEqual({
+        ...DIPS,
+        trackingType: 'repsOnly',
+        sets: [
+          { type: 'repsOnly', index: 0, reps: 12, targetRpe: 9 },
+          { type: 'repsOnly', index: 1, reps: 10, targetRpe: null },
+        ],
+      });
+    }),
+    routinesOver(retyped),
+  );
+
+  const timed = storing();
+  itEffect(
+    'writes a timed set’s seconds, and an open row changed to a timed one opens on 30 s',
+    Effect.gen(function* () {
+      const press: StrengthEntry = {
+        ...openedFrom(PRESS),
+        trackingType: 'duration',
+        sets: [
+          { type: 'duration', index: 0, durationSeconds: 44.6, completed: true, rpe: null, routineSetIndex: 0 },
+          { type: 'duration', index: 1, durationSeconds: 90, completed: false, rpe: 8, routineSetIndex: 1 },
+        ],
+      };
+
+      yield* applyWorkoutToRoutine(updateOf([openedFrom(BENCH), press, openedFrom(DIPS)]));
+
+      expect(lastWrite(timed)[1]).toMatchObject({
+        trackingType: 'duration',
+        sets: [
+          { type: 'duration', index: 0, durationSeconds: 45, targetRpe: null },
+          { type: 'duration', index: 1, durationSeconds: 30, targetRpe: 8 },
+        ],
+      });
+    }),
+    routinesOver(timed),
+  );
+
+  const retypedSkipped = storing();
+  itEffect(
+    'keeps the routine’s type for an exercise whose type changed but has no done set',
+    Effect.gen(function* () {
+      const bench = withSets(openedFrom(BENCH), [set(0, { reps: 9, weightKg: 60, routineSetIndex: 0 })]);
+      const dips: StrengthEntry = {
+        ...openedFrom(DIPS),
+        trackingType: 'duration',
+        sets: [{ type: 'duration', index: 0, durationSeconds: 30, completed: false, rpe: null, routineSetIndex: 0 }],
+      };
+
+      yield* applyWorkoutToRoutine(updateOf([bench, openedFrom(PRESS), dips]));
+
+      expect(lastWrite(retypedSkipped)[2]).toEqual(DIPS);
+    }),
+    routinesOver(retypedSkipped),
+  );
+
+  const addedTimed = storing();
+  itEffect(
+    'adds an exercise added during the workout as its own type',
+    Effect.gen(function* () {
+      const plank: StrengthEntry = {
+        trackingType: 'duration',
+        exerciseId: 'ex:plank',
+        exerciseName: 'Plank',
+        muscleGroup: null,
+        sets: [{ type: 'duration', index: 0, durationSeconds: 60, completed: true, rpe: 7 }],
+        notes: null,
+        restSeconds: 45,
+      };
+
+      yield* applyWorkoutToRoutine(updateOf([openedFrom(BENCH), openedFrom(PRESS), openedFrom(DIPS), plank]));
+
+      expect(lastWrite(addedTimed)[3]).toMatchObject({
+        trackingType: 'duration',
+        exerciseId: 'ex:plank',
+        sets: [{ type: 'duration', index: 0, durationSeconds: 60, targetRpe: 7 }],
+        restSeconds: 45,
+      });
+    }),
+    routinesOver(addedTimed),
   );
 
   const deleted: Stored = { routine: undefined, writes: [] };

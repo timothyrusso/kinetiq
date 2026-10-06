@@ -1,7 +1,12 @@
 import { act, renderHook } from '@testing-library/react-native';
 import type { AccessibilityActionEvent } from 'react-native';
 import { tr } from '@/features/core/translations';
-import { anExerciseSnapshot, aRoutineItem } from '@/features/routines/__fixtures__/builders';
+import {
+  aDurationItem,
+  anExerciseSnapshot,
+  aRepsOnlyItem,
+  aRoutineItem,
+} from '@/features/routines/__fixtures__/builders';
 import { uniformSets } from '@/features/routines/domain/utils/itemTargets';
 import {
   type RoutineItemRowInput,
@@ -36,6 +41,25 @@ describe('useRoutineItemRowLogic', () => {
     const { result } = await renderRow({ item: aRoutineItem({ sets: uniformSets(3, 8, 0) }) });
 
     expect(result.current.derived.meta[2]?.label).toBe(tr('itemEditor.bodyweightShort'));
+  });
+
+  it('shows sets and reps for a reps-only item, with no load', async () => {
+    const sets = [10, 8, 6].map((reps, index) => ({ type: 'repsOnly' as const, index, reps, targetRpe: null }));
+    const { result } = await renderRow({ item: aRepsOnlyItem({ sets }) });
+
+    expect(result.current.derived.meta.map(item => item.label)).toEqual([
+      tr('workout.set', { count: 3 }),
+      tr('details.repsValue', { reps: '6-10' }),
+    ]);
+  });
+
+  it('shows sets and the time per set for a timed item, as m:ss', async () => {
+    const { result } = await renderRow({ item: aDurationItem() });
+
+    expect(result.current.derived.meta.map(item => [item.icon, item.label])).toEqual([
+      ['layers', tr('workout.set', { count: 3 })],
+      ['timer', '0:45'],
+    ]);
   });
 
   it('draws no tag and no thumbnail without a snapshot', async () => {

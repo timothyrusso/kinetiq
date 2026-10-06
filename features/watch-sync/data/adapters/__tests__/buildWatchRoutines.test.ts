@@ -33,9 +33,9 @@ describe('buildWatchRoutines', () => {
 
   it('plans each set from its own row, with its target RPE', () => {
     const sets = [
-      { index: 0, reps: 12, weightKg: 40, targetRpe: null },
-      { index: 1, reps: 10, weightKg: 50, targetRpe: 7 },
-      { index: 2, reps: 6, weightKg: 62.5, targetRpe: 9 },
+      { type: 'weightReps' as const, index: 0, reps: 12, weightKg: 40, targetRpe: null },
+      { type: 'weightReps' as const, index: 1, reps: 10, weightKg: 50, targetRpe: 7 },
+      { type: 'weightReps' as const, index: 2, reps: 6, weightKg: 62.5, targetRpe: 9 },
     ];
     const [routine] = buildWatchRoutines([aRoutine({ items: [anItem({ sets })] })], 'metric', at).routines;
 
@@ -52,7 +52,10 @@ describe('buildWatchRoutines', () => {
         aRoutine({
           items: [
             anItem({
-              sets: [{ index: 0, reps: 500, weightKg: 1000, targetRpe: 12 }, ...setsOf(98, 8, -5).slice(1)],
+              sets: [
+                { type: 'weightReps' as const, index: 0, reps: 500, weightKg: 1000, targetRpe: 12 },
+                ...setsOf(98, 8, -5).slice(1),
+              ],
               restSeconds: 9999,
               notes: 'n'.repeat(500),
             }),
@@ -77,7 +80,10 @@ describe('buildWatchRoutines', () => {
         aRoutine({
           items: [
             anItem({ sets: [], restSeconds: Number.NaN }),
-            anItem({ id: 'rit_2', sets: [{ index: 0, reps: 0, weightKg: Number.NaN, targetRpe: -1 }] }),
+            anItem({
+              id: 'rit_2',
+              sets: [{ type: 'weightReps' as const, index: 0, reps: 0, weightKg: Number.NaN, targetRpe: -1 }],
+            }),
           ],
         }),
       ],

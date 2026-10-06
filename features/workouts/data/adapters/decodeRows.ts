@@ -1,4 +1,4 @@
-import { Effect, Option, Predicate, Schema } from 'effect';
+import { Effect, Option, Schema } from 'effect';
 import { DecodeError } from '@/features/core/error';
 import type { StrengthEntry } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 
@@ -69,27 +69,13 @@ const StoredEntrySchema = Schema.Union(
   }),
 );
 
-/**
- * A stored entry from before tracking types, with the tags it lacks: every such entry recorded
- * weight and reps. An entry that names its type is left alone, so its sets are checked against it.
- */
-function withLegacyType(stored: unknown): unknown {
-  // HACK: only rows written before tracking types need this, and the v13 migration (#191) clears
-  // those; it goes with that migration.
-  if (!Predicate.isRecord(stored) || 'trackingType' in stored) return stored;
-  const sets = Array.isArray(stored.sets)
-    ? stored.sets.map(set => (Predicate.isRecord(set) && !('type' in set) ? { ...set, type: 'weightReps' } : set))
-    : stored.sets;
-  return { ...stored, trackingType: 'weightReps', sets };
-}
-
 const parseColumn = Schema.decodeUnknownOption(Schema.parseJson(Schema.Array(Schema.Unknown)));
 const decodeEntry = Schema.decodeUnknownOption(StoredEntrySchema);
 
 /**
  * An `entries_json` column as its entries. A column that is empty, does not parse, or is not a
- * list reads as no entries, and an entry with no exercise, no sets, or a set of another type than
- * its own is dropped, keeping the rest of the row: one damaged entry degrades to a missing
+ * list reads as no entries, and an entry with no exercise, no sets, no tracking type, or a set of
+ * another type than its own is dropped, keeping the rest of the row: one damaged entry degrades to a missing
  * exercise rather than blanking the workout or the history it sits in.
  */
 export function entriesFromColumn(raw: string | null): readonly StrengthEntry[] {
@@ -99,7 +85,7 @@ export function entriesFromColumn(raw: string | null): readonly StrengthEntry[] 
 
 /** A stored list as its entries, by the same rules as `entriesFromColumn`. */
 export function entriesFromList(stored: readonly unknown[]): readonly StrengthEntry[] {
-  return stored.flatMap(entry => Option.toArray(decodeEntry(withLegacyType(entry))));
+  return stored.flatMap(entry => Option.toArray(decodeEntry(entry)));
 }
 
 /** Entries as their `entries_json` column. */

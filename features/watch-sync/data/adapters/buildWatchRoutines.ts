@@ -18,9 +18,11 @@ const clampTo = (value: number, range: { min: number; max: number }) =>
 
 function watchSets(sets: readonly RoutineSet[]): WatchRoutineSet[] {
   if (sets.length === 0) return [FALLBACK_SET];
+  // HACK: the watch reads weight and reps only until watch v3 (#194): a reps-only set goes out at
+  // bodyweight and a timed one as the fewest reps at bodyweight.
   return sets.slice(0, ITEM_BOUNDS.sets.max).map(set => ({
-    reps: Math.round(clampTo(set.reps, ITEM_BOUNDS.reps)),
-    weightKg: clampTo(set.weightKg, ITEM_BOUNDS.weightKg),
+    reps: Math.round(clampTo(set.type === 'duration' ? 0 : set.reps, ITEM_BOUNDS.reps)),
+    weightKg: clampTo(set.type === 'weightReps' ? set.weightKg : 0, ITEM_BOUNDS.weightKg),
     targetRpe: set.targetRpe === null ? null : clampTo(set.targetRpe, ITEM_BOUNDS.rpe),
   }));
 }

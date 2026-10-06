@@ -27,7 +27,7 @@ describe('useAddRoutineExercise', () => {
     const { result, id, done } = await renderWrites();
 
     await act(async () => {
-      await result.current.add.mutateAsync({ routineId: id, exercise: DIPS, item: defaultItemTarget(90) });
+      await result.current.add.mutateAsync({ routineId: id, exercise: DIPS, item: defaultItemTarget('repsOnly', 90) });
     });
 
     await waitFor(() => expect(result.current.detail.routine?.items.map(item => item.exerciseName)).toContain('Dips'));
@@ -40,7 +40,7 @@ describe('useAddRoutineExercise', () => {
 
     await act(async () => {
       await result.current.add
-        .mutateAsync({ routineId: RoutineId.make('rtn_gone'), exercise: DIPS, item: defaultItemTarget(90) })
+        .mutateAsync({ routineId: RoutineId.make('rtn_gone'), exercise: DIPS, item: defaultItemTarget('repsOnly', 90) })
         .catch(() => null);
     });
 
@@ -63,7 +63,9 @@ describe('useSetRoutineItem', () => {
     });
 
     await waitFor(() =>
-      expect(result.current.detail.routine?.items.find(item => item.id === 'rit_bench')?.sets[0]?.weightKg).toBe(70),
+      expect(result.current.detail.routine?.items.find(item => item.id === 'rit_bench')?.sets[0]).toMatchObject({
+        weightKg: 70,
+      }),
     );
     await waitFor(() => expect(result.current.set.isPending).toBe(false));
     expect((await read())?.routine.items.find(item => item.id === 'rit_bench')?.sets).toEqual(uniformSets(3, 8, 70));
@@ -100,7 +102,7 @@ describe('useSetRoutineItem', () => {
     const before = bench();
 
     await act(async () => {
-      // NOTE: A set with no reps breaks the table's NOT NULL, so the write fails on disk.
+      // NOTE: A set with no reps and no duration breaks the table's CHECK, so the write fails on disk.
       result.current.set.change({
         routineId: id,
         itemId: 'rit_bench',

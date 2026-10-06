@@ -28,12 +28,13 @@ describe('saveImport', () => {
       expect(routine?.name).toBe('Push');
       expect(routine?.items.map(({ id: _id, ...item }) => item)).toEqual([
         {
+          trackingType: 'weightReps',
           exerciseId: 'ex:barbell-bench-press-medium-grip',
           exerciseName: 'Bench Press',
           sets: [
-            { index: 0, reps: 10, weightKg: 50, targetRpe: null },
-            { index: 1, reps: 8, weightKg: 60, targetRpe: 7 },
-            { index: 2, reps: 8, weightKg: 60, targetRpe: 8 },
+            { type: 'weightReps', index: 0, reps: 10, weightKg: 50, targetRpe: null },
+            { type: 'weightReps', index: 1, reps: 8, weightKg: 60, targetRpe: 7 },
+            { type: 'weightReps', index: 2, reps: 8, weightKg: 60, targetRpe: 8 },
           ],
           restSeconds: 90,
           notes: null,

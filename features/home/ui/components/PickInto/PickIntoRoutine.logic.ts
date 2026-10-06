@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { haptics } from '@/features/core/haptics';
 import { useT } from '@/features/core/translations';
-import type { Exercise } from '@/features/exercises';
+import { defaultTrackingType, type Exercise } from '@/features/exercises';
 import type { PickDestination } from '@/features/exercises/pages';
 import {
   defaultItemTarget,
@@ -15,12 +15,13 @@ import { useSettings } from '@/features/settings';
 const DESTINATION: PickDestination = 'routine';
 
 /**
- * Picks into saved routine `routineId`. The opening targets come from `defaultItemTarget`, the
- * same function the draft store calls, so a row added here and a row added in the builder cannot
- * start out different. A tap on an included exercise removes its item with the routine screen's
- * own remove mutation, so the positions behind it renumber the same way; with the exercise in
- * twice, the later item goes, the one a mistaken add would have made. A second tap on an item
- * whose remove is still saving is ignored, so a quick double tap sends one remove, not two.
+ * Picks into saved routine `routineId`. The opening targets come from `defaultItemTarget` on the
+ * exercise's catalog tracking type, as the draft store does, so a row added here and a row added
+ * in the builder cannot start out different. A tap on an included exercise removes its item with
+ * the routine screen's own remove mutation, so the positions behind it renumber the same way; with
+ * the exercise in twice, the later item goes, the one a mistaken add would have made. A second tap
+ * on an item whose remove is still saving is ignored, so a quick double tap sends one remove, not
+ * two.
  */
 export function usePickIntoRoutineLogic(routineId: RoutineId) {
   const { t } = useT();
@@ -35,7 +36,7 @@ export function usePickIntoRoutineLogic(routineId: RoutineId) {
     (exercise: Exercise) => {
       setError(null);
       addExercise
-        .mutateAsync({ routineId, exercise, item: defaultItemTarget(defaultRest) })
+        .mutateAsync({ routineId, exercise, item: defaultItemTarget(defaultTrackingType(exercise), defaultRest) })
         .then(() => haptics.success())
         .catch(() => {
           setError(t('routine.addFailed'));

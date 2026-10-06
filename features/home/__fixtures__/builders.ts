@@ -32,11 +32,14 @@ export const aSquat = (): Exercise =>
   anExercise({ id: 'ex:goblet-squat', name: 'Squat', category: 'Legs', primaryMuscles: ['Quads'] });
 
 /** One routine item: bench press, three sets of eight at 60 kg, resting 90 s. */
-export const aRoutineItem = (overrides: Partial<RoutineItem> = {}): RoutineItem => ({
+type WeightRepsItem = Extract<RoutineItem, { readonly trackingType: 'weightReps' }>;
+
+export const aRoutineItem = (overrides: Partial<WeightRepsItem> = {}): WeightRepsItem => ({
+  trackingType: 'weightReps',
   id: 'rit_bench',
   exerciseId: 'ex:barbell-bench-press',
   exerciseName: 'Bench Press',
-  sets: [0, 1, 2].map(index => ({ index, reps: 8, weightKg: 60, targetRpe: null })),
+  sets: [0, 1, 2].map(index => ({ type: 'weightReps', index, reps: 8, weightKg: 60, targetRpe: null })),
   restSeconds: 90,
   notes: null,
   ...overrides,

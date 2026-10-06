@@ -2,9 +2,9 @@ import { act, renderHook } from '@testing-library/react-native';
 import type { UnitSystem } from '@/features/core/utils';
 import type { ExerciseSnapshot } from '@/features/exercises';
 import { anExerciseSnapshot, aRoutineItem } from '@/features/routines/__fixtures__/builders';
-import type { ItemChange, ItemTarget } from '@/features/routines/domain/entities/ItemTarget';
+import type { ItemChange, ItemPatch } from '@/features/routines/domain/entities/ItemTarget';
 import type { RoutineItem } from '@/features/routines/domain/schemas/RoutineSchema';
-import { uniformSets } from '@/features/routines/domain/utils/itemTargets';
+import { patchItem, uniformSets } from '@/features/routines/domain/utils/itemTargets';
 import { useItemEditorFormLogic } from '@/features/routines/ui/components/ItemEditorForm/ItemEditorForm.logic';
 
 const renderForm = async ({
@@ -19,11 +19,11 @@ const renderForm = async ({
   /** Applies each edit to the item the edits before left, as the cache does. */
   chain?: boolean;
 } = {}) => {
-  const patches: Partial<ItemTarget>[] = [];
-  let current: ItemTarget = item;
+  const patches: ItemPatch[] = [];
+  let current: RoutineItem = item;
   const onChange = (change: ItemChange) => {
     const patch = change(current);
-    if (chain) current = { ...current, ...patch };
+    if (chain) current = patchItem(current, patch);
     patches.push(patch);
   };
   const rendered = await renderHook(() => useItemEditorFormLogic(item, snapshot, units, onChange));
@@ -32,8 +32,8 @@ const renderForm = async ({
 
 describe('useItemEditorFormLogic', () => {
   const sets = [
-    { index: 0, reps: 10, weightKg: 50, targetRpe: null },
-    { index: 1, reps: 8, weightKg: 60, targetRpe: 8 },
+    { type: 'weightReps' as const, index: 0, reps: 10, weightKg: 50, targetRpe: null },
+    { type: 'weightReps' as const, index: 1, reps: 8, weightKg: 60, targetRpe: 8 },
   ];
 
   it('shows a metric weight in kilograms on a one-kilogram stepper', async () => {
@@ -98,7 +98,12 @@ describe('useItemEditorFormLogic', () => {
     await act(async () => result.current.effects.setWeight(2, 135));
 
     expect(patches).toEqual([
-      { sets: [...uniformSets(2, 8, 60), { index: 2, reps: 8, weightKg: 61.23, targetRpe: null }] },
+      {
+        sets: [
+          ...uniformSets(2, 8, 60),
+          { type: 'weightReps' as const, index: 2, reps: 8, weightKg: 61.23, targetRpe: null },
+        ],
+      },
     ]);
   });
 

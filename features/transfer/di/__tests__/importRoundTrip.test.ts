@@ -6,6 +6,7 @@ import { type Routine, RoutineRepository, RoutinesLive } from '@/features/routin
 import { anExerciseSnapshot, EXPORTED_AT, someRoutines } from '@/features/transfer/__fixtures__/builders';
 import { routinesJson } from '@/features/transfer/domain/utils/exportDocuments';
 import { TransferDeviceFake } from '@/features/transfer/useCases/__tests__/transferFakes';
+import { routinesAsWeightReps } from '@/features/transfer/useCases/exportData';
 import { readImport } from '@/features/transfer/useCases/readImport';
 import { resolveExercisesByName } from '@/features/transfer/useCases/resolveExercisesByName';
 import { saveImport } from '@/features/transfer/useCases/saveImport';
@@ -40,7 +41,7 @@ const importClipboard = Effect.gen(function* () {
 });
 
 const sets = (count: number, reps: number, weightKg: number) =>
-  Array.from({ length: count }, (_, index) => ({ index, reps, weightKg, targetRpe: null }));
+  Array.from({ length: count }, (_, index) => ({ type: 'weightReps', index, reps, weightKg, targetRpe: null }));
 
 describe('importing an exported routines file', () => {
   itEffect(
@@ -49,7 +50,7 @@ describe('importing an exported routines file', () => {
       const routines = yield* importClipboard;
 
       expect(routines.map(planOf)).toEqual(someRoutines().map(planOf).sort(byName));
-      expect(routinesJson(routines, EXPORTED_AT)).toBe(fixture('kinetiq-routines.json'));
+      expect(routinesJson(routinesAsWeightReps(routines), EXPORTED_AT)).toBe(fixture('kinetiq-routines.json'));
     }),
     layer(fixture('kinetiq-routines.json')),
   );
@@ -74,6 +75,7 @@ describe('importing an exported routines file', () => {
           name: 'Legs · Heavy',
           items: [
             {
+              trackingType: 'weightReps',
               exerciseId: 'ex:barbell-squat',
               exerciseName: 'Squat, Back',
               sets: sets(5, 5, 142.5),
@@ -81,6 +83,7 @@ describe('importing an exported routines file', () => {
               notes: 'Belt on top sets',
             },
             {
+              trackingType: 'weightReps',
               exerciseId: 'local:hip-thrust',
               exerciseName: 'Hip thrust',
               sets: sets(3, 10, 60.25),
@@ -93,6 +96,7 @@ describe('importing an exported routines file', () => {
           name: 'Push Day',
           items: [
             {
+              trackingType: 'weightReps',
               exerciseId: 'ex:barbell-bench-press-medium-grip',
               exerciseName: 'Bench Press',
               sets: sets(3, 8, 60),
@@ -100,6 +104,7 @@ describe('importing an exported routines file', () => {
               notes: null,
             },
             {
+              trackingType: 'weightReps',
               exerciseId: 'ex:barbell-shoulder-press',
               exerciseName: 'Overhead Press',
               sets: sets(4, 6, 40),

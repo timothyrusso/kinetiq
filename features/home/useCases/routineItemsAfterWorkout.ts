@@ -1,29 +1,37 @@
-import type { RoutineItem, RoutineSet } from '@/features/routines';
+import { type RoutineItem, type RoutineSet, routineItemOf, routineSetAs } from '@/features/routines';
 import type { RoutineUpdate, StrengthEntry } from '@/features/workouts';
 
 type WorkoutSet = StrengthEntry['sets'][number];
 
-/** A done set as a routine row: its reps, load and RPE, which becomes the row's target RPE. */
-function rowFromSet(set: WorkoutSet): Omit<RoutineSet, 'index'> {
-  const rpe = set.rpe !== null && set.rpe >= 0 && set.rpe <= 10 ? set.rpe : null;
-  // HACK: a routine row holds weight and reps only until it carries its tracking type (#191): a
-  // reps-only set writes back at bodyweight and a timed one as 0 reps at bodyweight.
-  const reps = set.type === 'duration' ? 0 : set.reps;
-  const weightKg = set.type === 'weightReps' ? set.weightKg : 0;
-  return { reps: Math.max(0, Math.round(reps)), weightKg, targetRpe: rpe };
+type Row = RoutineSet;
+
+/** A done set as a routine row of its own type: its values, and its RPE as the row's target RPE. */
+function rowFromSet(set: WorkoutSet, index: number): Row {
+  const targetRpe = set.rpe !== null && set.rpe >= 0 && set.rpe <= 10 ? set.rpe : null;
+  switch (set.type) {
+    case 'weightReps':
+      return { type: set.type, index, targetRpe, reps: Math.max(0, Math.round(set.reps)), weightKg: set.weightKg };
+    case 'repsOnly':
+      return { type: set.type, index, targetRpe, reps: Math.max(0, Math.round(set.reps)) };
+    case 'duration':
+      return { type: set.type, index, targetRpe, durationSeconds: Math.max(0, Math.round(set.durationSeconds)) };
+  }
 }
 
 /**
- * The item's rows after the workout: one per set the workout kept, in its order. A done set
- * writes its values; a set not done keeps the row it was planned from, and one added during the
- * workout and not done is not added. A row whose set was removed during the workout goes.
+ * The item's rows after the workout: one per set the workout kept, in its order, of the entry's
+ * type. A done set writes its values; a set not done keeps the row it was planned from, carried
+ * to the entry's type by the rules a workout changes a set's type with when the type changed
+ * during the workout; one added during the workout and not done is not added. A row whose set
+ * was removed during the workout goes.
  */
-function rowsAfter(rows: readonly RoutineSet[], sets: readonly WorkoutSet[]): RoutineSet[] {
+function rowsAfter(rows: readonly Row[], entry: StrengthEntry): Row[] {
+  const sets: readonly WorkoutSet[] = entry.sets;
   return sets
-    .flatMap(set => {
-      if (set.completed) return [rowFromSet(set)];
+    .flatMap((set): Row[] => {
+      if (set.completed) return [rowFromSet(set, 0)];
       const planned = set.routineSetIndex === undefined ? undefined : rows[set.routineSetIndex];
-      return planned === undefined ? [] : [planned];
+      return planned === undefined ? [] : [routineSetAs(planned, entry.trackingType)];
     })
     .map((row, index) => ({ ...row, index }));
 }
@@ -34,9 +42,11 @@ const hasDoneSet = (entry: StrengthEntry) => entry.sets.some(set => set.complete
  * The routine's items once a finished workout is written back into them (the finish's "Update
  * routine with today's values"), in the workout's order:
  *
- * - an exercise planned from an item, with a done set, takes the workout's sets (`rowsAfter`);
- *   one with no done set (skipped) keeps the item as it is;
- * - an exercise added during the workout is added with its done sets, and not at all without one;
+ * - an exercise planned from an item, with a done set, takes the workout's tracking type and
+ *   sets (`rowsAfter`), also when its type changed during the workout; one with no done set
+ *   (skipped) keeps the item as it is, type included;
+ * - an exercise added during the workout is added with its type and done sets, and not at all
+ *   without one;
  * - an item the workout removed goes, and an item removed from the routine while the workout ran
  *   is never brought back;
  * - an item added to the routine while the workout ran, which the workout never had, is kept,
@@ -56,19 +66,24 @@ export function routineItemsAfterWorkout(
     if (entry.routineItemId !== undefined) {
       const item = byId.get(entry.routineItemId);
       if (item === undefined) return [];
-      return [hasDoneSet(entry) ? { ...item, sets: rowsAfter(item.sets, entry.sets) } : item];
+      if (!hasDoneSet(entry)) return [item];
+      const { trackingType: _type, sets: _sets, ...fields } = item;
+      return [routineItemOf(fields, entry.trackingType, rowsAfter(item.sets, entry))];
     }
-    const done = entry.sets.filter(set => set.completed);
+    const done: readonly WorkoutSet[] = entry.sets.filter((set: WorkoutSet) => set.completed);
     if (done.length === 0) return [];
     return [
-      {
-        id: newItemId(),
-        exerciseId: entry.exerciseId,
-        exerciseName: entry.exerciseName,
-        sets: done.map((set, index) => ({ ...rowFromSet(set), index })),
-        restSeconds: entry.restSeconds,
-        notes: null,
-      },
+      routineItemOf(
+        {
+          id: newItemId(),
+          exerciseId: entry.exerciseId,
+          exerciseName: entry.exerciseName,
+          restSeconds: entry.restSeconds,
+          notes: null,
+        },
+        entry.trackingType,
+        done.map(rowFromSet),
+      ),
     ];
   });
   const inWorkout = new Set(update.entries.flatMap(entry => entry.routineItemId ?? []));

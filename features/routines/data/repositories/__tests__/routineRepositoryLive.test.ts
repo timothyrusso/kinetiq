@@ -1,7 +1,13 @@
 import { Chunk, Effect, Either, Layer, PubSub, Queue, TestClock } from 'effect';
 import { SqliteClient } from '@/features/core/sqlite';
 import { itEffect, makeMigratedSqliteLayer } from '@/features/core/testing';
-import { anotherRoutineItem, aRoutine, aRoutineItem } from '@/features/routines/__fixtures__/builders';
+import {
+  aDurationItem,
+  anotherRoutineItem,
+  aRepsOnlyItem,
+  aRoutine,
+  aRoutineItem,
+} from '@/features/routines/__fixtures__/builders';
 import { RoutineRepositoryLive } from '@/features/routines/data/repositories/routineRepositoryLive';
 import { RoutineEventsLive } from '@/features/routines/data/services/routineEventsLive';
 import { RoutineRepository } from '@/features/routines/domain/repositories/RoutineRepository';
@@ -177,6 +183,78 @@ describe('RoutineRepositoryLive save and reads', () => {
   );
 });
 
+describe('RoutineRepositoryLive tracking types', () => {
+  // NOTE: a core day: pull-ups counted in reps and a timed plank, each with a target RPE on one set.
+  const saveCoreDay = Effect.gen(function* () {
+    yield* storeExercise('ex:pullups', 'Pullups');
+    yield* storeExercise('ex:plank', 'Plank');
+    const items = [
+      aRepsOnlyItem({ sets: [{ type: 'repsOnly', index: 0, reps: 12, targetRpe: 8 }] }),
+      aDurationItem({
+        sets: [
+          { type: 'duration', index: 0, durationSeconds: 45, targetRpe: null },
+          { type: 'duration', index: 1, durationSeconds: 60, targetRpe: 9 },
+        ],
+      }),
+    ];
+    return yield* (yield* RoutineRepository).save({ name: 'Core', items });
+  });
+
+  itEffect(
+    'reads back an item of each type with the values its type records, the others stored as null',
+    Effect.gen(function* () {
+      const saved = yield* saveCoreDay;
+
+      expect(saved.items.map(item => item.trackingType)).toEqual(['repsOnly', 'duration']);
+      expect(saved.items[0]?.sets).toEqual([{ type: 'repsOnly', index: 0, reps: 12, targetRpe: 8 }]);
+      expect(saved.items[1]?.sets).toEqual([
+        { type: 'duration', index: 0, durationSeconds: 45, targetRpe: null },
+        { type: 'duration', index: 1, durationSeconds: 60, targetRpe: 9 },
+      ]);
+      expect(
+        yield* rows('SELECT reps, weight_kg, duration_seconds FROM routine_item_sets ORDER BY item_id, position'),
+      ).toEqual([
+        { reps: null, weight_kg: null, duration_seconds: 45 },
+        { reps: null, weight_kg: null, duration_seconds: 60 },
+        { reps: 12, weight_kg: null, duration_seconds: null },
+      ]);
+    }),
+    layer(),
+  );
+
+  itEffect(
+    'changes an item’s type with the sets of that type, and lists it so',
+    Effect.gen(function* () {
+      yield* savePushDay;
+      const repo = yield* RoutineRepository;
+      const sets = [0, 1].map(index => ({ type: 'duration' as const, index, durationSeconds: 30, targetRpe: null }));
+
+      yield* repo.setItem('rit_bench', { trackingType: 'duration', sets });
+
+      const [routine] = yield* repo.list;
+      expect(routine?.items[0]).toEqual({ ...aRoutineItem(), trackingType: 'duration', sets });
+    }),
+    layer(),
+  );
+
+  itEffect(
+    'fails the read with a DecodeError for a type the app does not know, or a set missing its type’s value',
+    Effect.gen(function* () {
+      yield* savePushDay;
+      const repo = yield* RoutineRepository;
+
+      yield* run("UPDATE routine_items SET tracking_type = 'distance' WHERE id = 'rit_press'");
+      const unknownType = yield* Effect.either(repo.byId(PUSH));
+      yield* run("UPDATE routine_items SET tracking_type = 'duration' WHERE id = 'rit_press'");
+      const missingValue = yield* Effect.either(repo.list);
+
+      expect(Either.isLeft(unknownType) && unknownType.left._tag).toBe('DecodeError');
+      expect(Either.isLeft(missingValue) && missingValue.left._tag).toBe('DecodeError');
+    }),
+    layer(),
+  );
+});
+
 describe('RoutineRepositoryLive edits', () => {
   itEffect(
     'keeps a second routine’s items apart from the first',
@@ -260,11 +338,11 @@ describe('RoutineRepositoryLive edits', () => {
       yield* savePushDay;
       const repo = yield* RoutineRepository;
       const sets = [
-        { index: 0, reps: 12, weightKg: 50, targetRpe: null },
-        { index: 1, reps: 10, weightKg: 62.5, targetRpe: 7.5 },
-        { index: 2, reps: 8, weightKg: 0, targetRpe: 10 },
-        { index: 3, reps: 6, weightKg: 70, targetRpe: 0 },
-        { index: 4, reps: 1, weightKg: 100, targetRpe: 9 },
+        { type: 'weightReps' as const, index: 0, reps: 12, weightKg: 50, targetRpe: null },
+        { type: 'weightReps' as const, index: 1, reps: 10, weightKg: 62.5, targetRpe: 7.5 },
+        { type: 'weightReps' as const, index: 2, reps: 8, weightKg: 0, targetRpe: 10 },
+        { type: 'weightReps' as const, index: 3, reps: 6, weightKg: 70, targetRpe: 0 },
+        { type: 'weightReps' as const, index: 4, reps: 1, weightKg: 100, targetRpe: 9 },
       ];
 
       yield* repo.setItem('rit_bench', { sets });
@@ -379,7 +457,9 @@ describe('RoutineRepositoryLive replaceItems', () => {
       const repo = yield* RoutineRepository;
       yield* repo.markUsed(PUSH, NOW);
       yield* TestClock.setTime(NOW + 60_000);
-      const press = anotherRoutineItem({ sets: [{ index: 0, reps: 5, weightKg: 45, targetRpe: 8 }] });
+      const press = anotherRoutineItem({
+        sets: [{ type: 'weightReps' as const, index: 0, reps: 5, weightKg: 45, targetRpe: 8 }],
+      });
 
       yield* repo.replaceItems(PUSH, [press, DIPS]);
 
