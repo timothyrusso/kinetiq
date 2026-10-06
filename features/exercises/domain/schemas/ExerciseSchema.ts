@@ -1,6 +1,7 @@
 import { Schema } from 'effect';
 import {
   BODY_AREAS,
+  EQUIPMENT,
   FORCES,
   LEVELS,
   MECHANICS,
@@ -12,7 +13,7 @@ import {
  * exercise read back from a stored snapshot, a `local:` id or one the catalog no longer has.
  * `category`, the muscles and the equipment are already named in the render language; the
  * dataset's own keys (`bodyArea` and the rest) are null for an exercise read from a snapshot,
- * which does not keep them. Images are bundled asset paths (`assets/catalog/images/<slug>/0.webp`),
+ * which does not keep them, and so are `equipmentKeys`. Images are bundled asset paths (`assets/catalog/images/<slug>/0.webp`),
  * resolved to the bundled file at render time; an old snapshot may hold a URL instead.
  */
 export const ExerciseSchema = Schema.Struct({
@@ -30,6 +31,8 @@ export const ExerciseSchema = Schema.Struct({
   primaryMuscles: Schema.Array(Schema.String),
   secondaryMuscles: Schema.Array(Schema.String),
   equipment: Schema.Array(Schema.String),
+  // NOTE: the dataset's equipment keys, which the tracking-type default reads; empty for a snapshot.
+  equipmentKeys: Schema.Array(Schema.Literal(...EQUIPMENT)),
   // NOTE: the start frame.
   imageUrl: Schema.NullOr(Schema.String),
   // NOTE: the end frame.

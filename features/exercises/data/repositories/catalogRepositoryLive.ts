@@ -17,6 +17,8 @@ import { taxonName } from '@/features/exercises/data/adapters/taxonNames';
 import { CATALOG_ASSET_ROOT } from '@/features/exercises/domain/entities/catalogAssets';
 import {
   BODY_AREAS,
+  EQUIPMENT,
+  type Equipment,
   FORCES,
   LEVELS,
   MECHANICS,
@@ -332,6 +334,7 @@ export const CatalogRepositoryLive = Layer.effect(
         const primary = new Map<string, string[]>();
         const secondary = new Map<string, string[]>();
         const equipment = new Map<string, string[]>();
+        const equipmentKeys = new Map<string, Equipment[]>();
         for (const row of muscleRows) {
           pushName(
             row.role === 'primary' ? primary : secondary,
@@ -341,6 +344,8 @@ export const CatalogRepositoryLive = Layer.effect(
         }
         for (const row of equipmentRows) {
           pushName(equipment, row.exercise_id, taxonName('equipment', row.equipment, language));
+          const key = oneOf(EQUIPMENT, row.equipment);
+          if (key !== null) equipmentKeys.set(row.exercise_id, [...(equipmentKeys.get(row.exercise_id) ?? []), key]);
         }
 
         return rows.map(
@@ -357,6 +362,7 @@ export const CatalogRepositoryLive = Layer.effect(
             primaryMuscles: primary.get(row.id) ?? [],
             secondaryMuscles: secondary.get(row.id) ?? [],
             equipment: equipment.get(row.id) ?? [],
+            equipmentKeys: equipmentKeys.get(row.id) ?? [],
             imageUrl: row.image_start,
             imageEndUrl: row.image_end,
             thumbnailUrl: row.thumbnail ?? row.image_start,
