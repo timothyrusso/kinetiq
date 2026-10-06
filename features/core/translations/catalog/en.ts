@@ -363,9 +363,8 @@ export const en = {
     sets: 'Sets',
     volumeIn: 'Volume ({unit})',
     noPrevious: 'No previous sessions of this exercise',
-    noLoadRecorded: 'Last time, no load recorded',
-    bodyweight: 'bodyweight',
-    lastTime: 'Last time {load}',
+    noSetsRecorded: 'Last time, no sets recorded',
+    lastTime: 'Last time {value}',
   },
   profileScreen: {
     editProfileHint: 'Opens your name, height and birth year',
@@ -559,6 +558,26 @@ export const en = {
   exerciseEditor: {
     restAppliesNext: 'Used from the next set you tick. A rest already running keeps its time.',
   },
+
+  // NOTE: --- group-tracking (#192) ---
+  tracking: {
+    title: 'Each set records',
+    weightReps: 'Weight',
+    repsOnly: 'Reps',
+    time: 'Time',
+    locked: 'Fixed once a set is done. Untick the done sets to change it.',
+    setDurationA11y: 'Set {n} time in seconds',
+    setReps: 'Set {n}: {reps} reps',
+    setTime: 'Set {n}: {time}',
+    topReps: 'Best {reps} reps',
+    topTime: 'Longest {time}',
+    colTime: 'TIME',
+    mostRepsChart: 'Most reps',
+    longestSetChart: 'Longest set',
+    repsChartA11y: 'Most reps in each of {count} sessions, from {first} to {last}',
+    durationChartA11y: 'Longest set in each of {count} sessions, from {first} to {last}',
+  },
+  // NOTE: --- end group-tracking ---
 
   trainingPrefs: {
     title: 'Training',

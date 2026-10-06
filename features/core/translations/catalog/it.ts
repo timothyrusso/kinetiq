@@ -372,9 +372,8 @@ export const it: Copy = {
     sets: 'Serie',
     volumeIn: 'Volume ({unit})',
     noPrevious: 'Nessuna sessione precedente di questo esercizio',
-    noLoadRecorded: "L'ultima volta, nessun carico registrato",
-    bodyweight: 'corpo libero',
-    lastTime: "L'ultima volta {load}",
+    noSetsRecorded: "L'ultima volta, nessuna serie registrata",
+    lastTime: "L'ultima volta {value}",
   },
   profileScreen: {
     editProfileHint: 'Apre nome, altezza e anno di nascita',
@@ -567,6 +566,26 @@ export const it: Copy = {
   exerciseEditor: {
     restAppliesNext: 'Vale dalla prossima serie che spunti. Un recupero già in corso mantiene il suo tempo.',
   },
+
+  // NOTE: --- group-tracking (#192) ---
+  tracking: {
+    title: 'Ogni serie registra',
+    weightReps: 'Peso',
+    repsOnly: 'Ripetizioni',
+    time: 'Tempo',
+    locked: 'Fissato dopo una serie fatta. Togli la spunta alle serie fatte per cambiarlo.',
+    setDurationA11y: 'Tempo della serie {n} in secondi',
+    setReps: 'Serie {n}: {reps} ripetizioni',
+    setTime: 'Serie {n}: {time}',
+    topReps: 'Max {reps} rip.',
+    topTime: 'Più lunga {time}',
+    colTime: 'TEMPO',
+    mostRepsChart: 'Più ripetizioni',
+    longestSetChart: 'Serie più lunga',
+    repsChartA11y: 'Più ripetizioni in ciascuna di {count} sessioni, da {first} a {last}',
+    durationChartA11y: 'Serie più lunga in ciascuna di {count} sessioni, da {first} a {last}',
+  },
+  // NOTE: --- end group-tracking ---
 
   trainingPrefs: {
     title: 'Allenamento',

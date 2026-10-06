@@ -1,9 +1,15 @@
 import { act, renderHook } from '@testing-library/react-native';
+import { tr } from '@/features/core/translations';
 import type { UnitSystem } from '@/features/core/utils';
 import type { ExerciseSnapshot } from '@/features/exercises';
-import { anExerciseSnapshot, aRoutineItem } from '@/features/routines/__fixtures__/builders';
+import {
+  aDurationItem,
+  anExerciseSnapshot,
+  aRepsOnlyItem,
+  aRoutineItem,
+} from '@/features/routines/__fixtures__/builders';
 import type { ItemChange, ItemPatch } from '@/features/routines/domain/entities/ItemTarget';
-import type { RoutineItem } from '@/features/routines/domain/schemas/RoutineSchema';
+import type { RoutineItem, TrackingType } from '@/features/routines/domain/schemas/RoutineSchema';
 import { patchItem, uniformSets } from '@/features/routines/domain/utils/itemTargets';
 import { useItemEditorFormLogic } from '@/features/routines/ui/components/ItemEditorForm/ItemEditorForm.logic';
 
@@ -20,14 +26,16 @@ const renderForm = async ({
   chain?: boolean;
 } = {}) => {
   const patches: ItemPatch[] = [];
+  const types: TrackingType[] = [];
   let current: RoutineItem = item;
   const onChange = (change: ItemChange) => {
     const patch = change(current);
     if (chain) current = patchItem(current, patch);
     patches.push(patch);
   };
-  const rendered = await renderHook(() => useItemEditorFormLogic(item, snapshot, units, onChange));
-  return { ...rendered, patches, latest: () => current };
+  const onChangeType = (type: TrackingType) => void types.push(type);
+  const rendered = await renderHook(() => useItemEditorFormLogic(item, snapshot, units, onChange, onChangeType));
+  return { ...rendered, patches, types, latest: () => current };
 };
 
 describe('useItemEditorFormLogic', () => {
@@ -54,9 +62,56 @@ describe('useItemEditorFormLogic', () => {
     const { result } = await renderForm({ item: aRoutineItem({ sets }) });
 
     expect(result.current.derived.rows).toEqual([
-      { key: 'set-0', index: 0, reps: 10, weight: 50, rpe: 0 },
-      { key: 'set-1', index: 1, reps: 8, weight: 60, rpe: 8 },
+      { type: 'weightReps', key: 'set-0', index: 0, reps: 10, weight: 50, rpe: 0 },
+      { type: 'weightReps', key: 'set-1', index: 1, reps: 8, weight: 60, rpe: 8 },
     ]);
+  });
+
+  it('draws a reps-only item with reps alone and a timed item with its seconds', async () => {
+    const reps = await renderForm({ item: aRepsOnlyItem() });
+    const timed = await renderForm({ item: aDurationItem() });
+
+    expect(reps.result.current.derived.rows[0]).toEqual({ type: 'repsOnly', key: 'set-0', index: 0, reps: 8, rpe: 0 });
+    expect(timed.result.current.derived.rows[0]).toEqual({
+      type: 'duration',
+      key: 'set-0',
+      index: 0,
+      durationSeconds: 45,
+      rpe: 0,
+    });
+    expect(timed.result.current.derived.duration).toEqual({ min: 5, max: 3600 });
+  });
+
+  it('writes the time of one timed set', async () => {
+    const item = aDurationItem();
+    const { result, patches } = await renderForm({ item });
+
+    await act(async () => result.current.effects.setDuration(1, 60));
+
+    expect(patches).toEqual([{ sets: [item.sets[0], { ...item.sets[1], durationSeconds: 60 }, item.sets[2]] }]);
+  });
+
+  it('offers the three tracking types, the item’s own selected', async () => {
+    const { result } = await renderForm({ item: aRepsOnlyItem() });
+
+    expect(result.current.derived.trackingType).toBe('repsOnly');
+    expect(result.current.derived.typeSegments).toEqual([
+      { value: 'weightReps', label: tr('tracking.weightReps') },
+      { value: 'repsOnly', label: tr('tracking.repsOnly') },
+      { value: 'duration', label: tr('tracking.time') },
+    ]);
+  });
+
+  it('hands a new tracking type to the page, and ignores the one the item has', async () => {
+    const { result, types, patches } = await renderForm();
+
+    await act(async () => {
+      result.current.effects.changeType('weightReps');
+      result.current.effects.changeType('duration');
+    });
+
+    expect(types).toEqual(['duration']);
+    expect(patches).toEqual([]);
   });
 
   it('edits the reps, weight and target RPE of one set only', async () => {

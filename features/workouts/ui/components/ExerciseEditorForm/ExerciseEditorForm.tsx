@@ -2,11 +2,14 @@ import { memo, type Ref } from 'react';
 import type { View } from 'react-native';
 import {
   Button,
+  DurationSetStepperRow,
   ExerciseAbout,
   type ExerciseAboutContent,
   FormSection,
   MetaLine,
   NoteField,
+  RepsSetStepperRow,
+  SegmentedControl,
   SetStepperRow,
   Stepper,
   type Tag,
@@ -24,7 +27,8 @@ import {
 
 /**
  * Editing one exercise of the workout, laid out like the routine item sheet so the app has one
- * way to edit an exercise's sets: the summary, every set as a stepper row with its done state,
+ * way to edit an exercise's sets: the summary, what each set records (fixed, with the reason
+ * beside it, once a set is done), every set as a stepper row of its type with its done state,
  * add and remove set, the rest, the note and the library's About block. Every press writes
  * through, so closing the sheet is committing. The set the sheet was opened from is highlighted
  * and carries `highlightRef`, which the sheet scrolls to. Ticking a set stays on the session's
@@ -58,32 +62,67 @@ export const ExerciseEditorForm = memo(function ExerciseEditorForm({
   return (
     <>
       <MetaLine items={derived.meta} theme={theme} wrap />
+      <FormSection title={t('tracking.title')}>
+        <SegmentedControl
+          segments={derived.typeSegments}
+          value={derived.trackingType}
+          disabled={derived.typeLocked}
+          onChange={effects.changeType}
+        />
+        {derived.typeLocked ? (
+          <Txt variant="micro" tone="faint">
+            {t('tracking.locked')}
+          </Txt>
+        ) : null}
+      </FormSection>
+
       <FormSection title={t('itemEditor.sets')}>
-        {derived.rows.map((row, at) => (
-          <SetStepperRow
-            key={row.key}
-            ref={row.index === highlightedSet ? highlightRef : undefined}
-            index={row.index}
-            reps={row.reps}
-            weight={row.weight}
-            rpe={row.rpe}
-            unit={derived.unit}
-            repsBounds={derived.reps}
-            rpeBounds={derived.rpe}
-            weightMax={derived.weightMax}
-            weightStep={derived.weightStep}
-            rpeKind="logged"
-            completed={row.completed}
-            canRemove={derived.canRemoveSet}
-            topDivider={at > 0}
-            highlighted={row.index === highlightedSet}
-            theme={theme}
-            onReps={effects.setReps}
-            onWeight={effects.setWeight}
-            onRpe={effects.setRpe}
-            onRemove={effects.removeSet}
-          />
-        ))}
+        {derived.rows.map((row, at) => {
+          const shared = {
+            ref: row.index === highlightedSet ? highlightRef : undefined,
+            index: row.index,
+            rpe: row.rpe,
+            rpeBounds: derived.rpe,
+            rpeKind: 'logged',
+            completed: row.completed,
+            canRemove: derived.canRemoveSet,
+            topDivider: at > 0,
+            highlighted: row.index === highlightedSet,
+            theme,
+            onRpe: effects.setRpe,
+            onRemove: effects.removeSet,
+          } as const;
+          return row.type === 'weightReps' ? (
+            <SetStepperRow
+              key={row.key}
+              {...shared}
+              reps={row.reps}
+              weight={row.weight}
+              unit={derived.unit}
+              repsBounds={derived.reps}
+              weightMax={derived.weightMax}
+              weightStep={derived.weightStep}
+              onReps={effects.setReps}
+              onWeight={effects.setWeight}
+            />
+          ) : row.type === 'repsOnly' ? (
+            <RepsSetStepperRow
+              key={row.key}
+              {...shared}
+              reps={row.reps}
+              repsBounds={derived.reps}
+              onReps={effects.setReps}
+            />
+          ) : (
+            <DurationSetStepperRow
+              key={row.key}
+              {...shared}
+              durationSeconds={row.durationSeconds}
+              durationBounds={derived.duration}
+              onDuration={effects.setDuration}
+            />
+          );
+        })}
         <Txt variant="micro" tone="faint">
           {t('setRow.rpeNote')}
         </Txt>

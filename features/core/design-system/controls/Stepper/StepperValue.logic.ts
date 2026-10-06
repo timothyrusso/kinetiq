@@ -35,8 +35,16 @@ import { useT } from '@/features/core/translations';
  * The number is held only while `value` is still the one it was written over. Whatever `value`
  * moves to next is what the write came back as, and it wins even when it differs: a pound weight
  * rounded to its step (102.5 lb comes back as 102), or a failed write rolled back.
+ *
+ * `format` draws the value at rest in another form (a time as `m:ss`); focusing the field opens
+ * the plain number for typing.
  */
-export function useStepperField(value: number, onChange: (next: number) => void, bounds: FieldBounds) {
+export function useStepperField(
+  value: number,
+  onChange: (next: number) => void,
+  bounds: FieldBounds,
+  format?: (value: number) => string,
+) {
   const { locale } = useT();
   const separator = useMemo(() => decimalSeparator(locale), [locale]);
   const [draft, setDraft] = useState<StepperDraft | null>(null);
@@ -105,7 +113,7 @@ export function useStepperField(value: number, onChange: (next: number) => void,
   return {
     state: {
       value: shown,
-      text: stepperText(draft, shown, separator),
+      text: stepperText(draft, shown, separator, format),
       input,
       // NOTE: Select-on-focus is switched off while focused. Android's field selects all again on its
       // first layout after focus, and a field that widens as it is typed in lays out mid-typing: the

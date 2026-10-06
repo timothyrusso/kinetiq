@@ -1,5 +1,5 @@
 import { Host, Picker, Text } from '@expo/ui/swift-ui';
-import { pickerStyle, tag } from '@expo/ui/swift-ui/modifiers';
+import { disabled as disabledModifier, pickerStyle, tag } from '@expo/ui/swift-ui/modifiers';
 import type { SegmentedControlProps } from '@/features/core/design-system/controls/SegmentedControl/types';
 import { haptics } from '@/features/core/haptics';
 import { useAppTheme } from '@/features/core/theme';
@@ -7,7 +7,12 @@ import { useAppTheme } from '@/features/core/theme';
 export type { Segment, SegmentedControlProps } from '@/features/core/design-system/controls/SegmentedControl/types';
 
 /** UIKit's segmented control, through SwiftUI's `Picker` in segmented style. */
-export function SegmentedControl<T extends string>({ segments, value, onChange }: SegmentedControlProps<T>) {
+export function SegmentedControl<T extends string>({
+  segments,
+  value,
+  onChange,
+  disabled = false,
+}: SegmentedControlProps<T>) {
   const theme = useAppTheme();
   return (
     // NOTE: `vertical` only: the host hugs the control's height, which Dynamic Type can change, and
@@ -21,10 +26,11 @@ export function SegmentedControl<T extends string>({ segments, value, onChange }
       <Picker
         selection={value}
         onSelectionChange={next => {
+          if (disabled) return;
           haptics.selection();
           onChange(next as T);
         }}
-        modifiers={[pickerStyle('segmented')]}
+        modifiers={[pickerStyle('segmented'), disabledModifier(disabled)]}
       >
         {segments.map(s => (
           <Text key={s.value} modifiers={[tag(s.value)]}>

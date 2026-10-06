@@ -26,6 +26,23 @@ describe('useExerciseHistoryRowLogic', () => {
     expect(result.current.derived.load).toBe(tr('exerciseDetail.bodyweightTimes', { reps: 12 }));
   });
 
+  it('shows a reps-only session by its most reps', async () => {
+    const { result } = await renderRow({ trackingType: 'repsOnly', topWeightKg: 0, topReps: 15 });
+
+    expect(result.current.derived.load).toBe(tr('details.repsValue', { reps: 15 }));
+  });
+
+  it('shows a timed session by its longest set, as m:ss', async () => {
+    const { result } = await renderRow({
+      trackingType: 'duration',
+      topWeightKg: 0,
+      topReps: 0,
+      topDurationSeconds: 95,
+    });
+
+    expect(result.current.derived.load).toBe('1:35');
+  });
+
   it('counts the sets when every one was done', async () => {
     const { result } = await renderRow();
 

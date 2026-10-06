@@ -27,10 +27,11 @@ export const Stepper = memo(function Stepper({
   label,
   compact = false,
   decimal = false,
+  format,
 }: StepperProps) {
   const theme = useAppTheme();
   const typesDecimals = decimal || !Number.isInteger(step);
-  const field = useStepperField(value, onChange, { min, max, decimal: typesDecimals });
+  const field = useStepperField(value, onChange, { min, max, decimal: typesDecimals }, format);
   return (
     <View style={styles.row}>
       <View accessibilityLiveRegion="polite" style={styles.value}>

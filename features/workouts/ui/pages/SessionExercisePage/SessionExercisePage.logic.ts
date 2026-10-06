@@ -29,7 +29,7 @@ export function useSessionExercisePageLogic() {
   const entryIndex = positionOf(params.entry) ?? -1;
   const highlightedSet = positionOf(params.set);
   const units = useSettings(settings => settings.unitSystem);
-  const { entry, changeSet, addSet, removeSet, changeEntry } = useExerciseEditor(entryIndex);
+  const { entry, changeSet, addSet, removeSet, changeEntry, changeType } = useExerciseEditor(entryIndex);
   const exerciseId = entry?.exerciseId ?? null;
   const { exercise } = useExercise(exerciseId);
   const aboutContent = useExerciseAbout(exerciseId);
@@ -47,6 +47,6 @@ export function useSessionExercisePageLogic() {
   return {
     state: { entry, units, highlightedSet },
     derived: { title: entry?.exerciseName ?? '', tags, about, highlightRef, scrollTo },
-    effects: { changeSet, addSet, removeSet, changeEntry, openExercise },
+    effects: { changeSet, addSet, removeSet, changeEntry, changeType, openExercise },
   };
 }

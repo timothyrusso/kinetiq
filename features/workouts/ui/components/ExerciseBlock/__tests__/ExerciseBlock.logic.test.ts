@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react-native';
-import { anEntry, anOpenSet, aSet } from '@/features/workouts/__fixtures__/builders';
+import { aDurationEntry, anEntry, anOpenSet, aRepsOnlyEntry, aSet } from '@/features/workouts/__fixtures__/builders';
 import {
   type ExerciseBlockInput,
   useExerciseBlockLogic,
@@ -62,6 +62,22 @@ describe('useExerciseBlockLogic', () => {
       { icon: 'dumbbell', label: 'Last time 82.5 kg × 5' },
       { icon: 'calendar', label: '3w ago' },
     ]);
+  });
+
+  it('marks last time with the icon of what the exercise records', async () => {
+    const reps = await renderBlock({
+      entry: aRepsOnlyEntry(),
+      previousLabel: 'Last time 12 reps',
+      previousWhen: '1w ago',
+    });
+    const timed = await renderBlock({
+      entry: aDurationEntry(),
+      previousLabel: 'Last time 1:30',
+      previousWhen: '1w ago',
+    });
+
+    expect(reps.result.current.derived.previous[0]?.icon).toBe('refresh');
+    expect(timed.result.current.derived.previous[0]?.icon).toBe('timer');
   });
 
   it('shows a previous label with no date as information', async () => {
