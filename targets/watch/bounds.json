@@ -3,6 +3,7 @@
     "sets": { "min": 1, "max": 20 },
     "reps": { "min": 1, "max": 100 },
     "weightKg": { "min": 0, "max": 450 },
+    "durationSeconds": { "min": 5, "max": 3600 },
     "rpe": { "min": 0, "max": 10 },
     "restSeconds": { "min": 0, "max": 600 },
     "notesLength": 200
