@@ -52,7 +52,7 @@ export function HistoryList({
   historyEmpty,
   historyLoading,
   historyError,
-  onStartWorkout,
+  onCreateRoutine,
 }: {
   rows: readonly Row[];
   gridWeeks: number;
@@ -72,7 +72,7 @@ export function HistoryList({
   historyEmpty: boolean;
   historyLoading: boolean;
   historyError: unknown;
-  onStartWorkout: () => void;
+  onCreateRoutine: () => void;
 }) {
   const styles = useStyles(createStyles);
 
@@ -115,11 +115,11 @@ export function HistoryList({
           title={t('home.emptyTitle')}
           message={t('home.emptyMessage')}
           icon="dumbbell"
-          actionLabel={t('home.startWorkout')}
-          onAction={onStartWorkout}
+          actionLabel={t('home.createRoutine')}
+          onAction={onCreateRoutine}
         />
       ),
-    [historyError, historyLoading, onRefresh, onStartWorkout, styles, t],
+    [historyError, historyLoading, onRefresh, onCreateRoutine, styles, t],
   );
   const contentContainerStyle = useMemo(() => ({ paddingBottom: bottomSpace }), [bottomSpace]);
 

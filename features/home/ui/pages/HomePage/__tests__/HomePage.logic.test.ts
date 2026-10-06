@@ -97,12 +97,12 @@ describe('useHomePageLogic', () => {
     await done();
   });
 
-  it('sends the empty state to the Workout tab', async () => {
+  it('sends the empty state straight to the new-routine editor', async () => {
     const { result, done } = await renderHome();
 
-    await act(async () => result.current.effects.openWorkoutTab());
+    await act(async () => result.current.effects.openNewRoutine());
 
-    expect(routerFake.history).toEqual([{ verb: 'push', href: routes.workoutTab() }]);
+    expect(routerFake.history).toEqual([{ verb: 'push', href: routes.newRoutine() }]);
     await done();
   });
 

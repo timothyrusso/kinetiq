@@ -45,7 +45,7 @@ export const en = {
   // NOTE: --- end group-a ---
 
   home: {
-    startWorkout: 'Start a workout',
+    createRoutine: 'Create a routine',
     historyError: 'Your workouts could not be loaded',
     emptyTitle: 'No workouts yet',
     emptyMessage: 'Start a workout from the Workout tab. Every session you finish lands here, newest first.',

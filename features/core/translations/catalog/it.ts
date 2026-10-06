@@ -47,7 +47,7 @@ export const it: Copy = {
   // NOTE: --- end group-a ---
 
   home: {
-    startWorkout: 'Inizia un allenamento',
+    createRoutine: 'Crea una scheda',
     historyError: 'Impossibile caricare i tuoi allenamenti',
     emptyTitle: 'Nessun allenamento',
     emptyMessage:
