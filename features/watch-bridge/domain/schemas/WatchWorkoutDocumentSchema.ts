@@ -8,6 +8,8 @@ const MAX_TITLE = 200;
 const MAX_DURATION_SECONDS = 24 * 60 * 60;
 /** A logged set may have no reps, unlike a planned one. */
 const REPS = { min: 0, max: ITEM_BOUNDS.reps.max };
+/** A logged timed set may have no time, unlike a planned one. */
+const SET_SECONDS = { min: 0, max: ITEM_BOUNDS.durationSeconds.max };
 
 const within = (range: { readonly min: number; readonly max: number }) =>
   Schema.Number.pipe(Schema.finite(), Schema.between(range.min, range.max));
@@ -22,26 +24,57 @@ const NullableText = (max: number) => nullable(Schema.String.pipe(Schema.maxLeng
 /** An ISO 8601 moment that `Date.parse` can read. */
 const Moment = Schema.String.pipe(Schema.filter(text => Number.isFinite(Date.parse(text))));
 
-const WatchWorkoutSet = Schema.Struct({
-  index: wholeWithin({ min: 0, max: ITEM_BOUNDS.sets.max }),
+const index = wholeWithin({ min: 0, max: ITEM_BOUNDS.sets.max });
+const completed = Schema.Boolean;
+const rpe = nullable(within(ITEM_BOUNDS.rpe));
+
+const WatchWeightRepsSet = Schema.Struct({
+  type: Schema.Literal('weightReps'),
+  index,
   reps: wholeWithin(REPS),
   weightKg: within(ITEM_BOUNDS.weightKg),
-  completed: Schema.Boolean,
-  rpe: nullable(within(ITEM_BOUNDS.rpe)),
+  completed,
+  rpe,
 });
 
-const WatchWorkoutEntry = Schema.Struct({
+const WatchRepsOnlySet = Schema.Struct({
+  type: Schema.Literal('repsOnly'),
+  index,
+  reps: wholeWithin(REPS),
+  completed,
+  rpe,
+});
+
+const WatchDurationSet = Schema.Struct({
+  type: Schema.Literal('duration'),
+  index,
+  durationSeconds: wholeWithin(SET_SECONDS),
+  completed,
+  rpe,
+});
+
+const setList = <A, I>(set: Schema.Schema<A, I>) =>
+  Schema.Array(set).pipe(Schema.minItems(1), Schema.maxItems(ITEM_BOUNDS.sets.max));
+
+const entryFields = {
   exerciseId: Schema.String.pipe(Schema.minLength(1)),
   exerciseName: Schema.String.pipe(Schema.maxLength(MAX_TITLE)),
   restSeconds: wholeWithin(ITEM_BOUNDS.restSeconds),
   notes: NullableText(ITEM_BOUNDS.notesLength),
-  sets: Schema.Array(WatchWorkoutSet).pipe(Schema.minItems(1), Schema.maxItems(ITEM_BOUNDS.sets.max)),
-});
+};
+
+/** An entry of one tracking type: every set carries the same tag as its own `type`. */
+const WatchWorkoutEntry = Schema.Union(
+  Schema.Struct({ ...entryFields, trackingType: Schema.Literal('weightReps'), sets: setList(WatchWeightRepsSet) }),
+  Schema.Struct({ ...entryFields, trackingType: Schema.Literal('repsOnly'), sets: setList(WatchRepsOnlySet) }),
+  Schema.Struct({ ...entryFields, trackingType: Schema.Literal('duration'), sets: setList(WatchDurationSet) }),
+);
 
 /**
- * `kinetiq.watch-workout` v2 (v1 reads the same), watch to phone: one finished workout, checked against the same
+ * `kinetiq.watch-workout` v3, watch to phone: one finished workout, checked against the same
  * bounds the routine editor enforces. It is the phone's `CompletedWorkout` minus everything the
- * phone computes (duration, volume, set count, estimated 1RM, records).
+ * phone computes (duration, volume, set count, estimated 1RM, records). Each entry carries its
+ * `trackingType` and each set the same tag as its `type`.
  */
 export const WatchWorkoutDocumentSchema = Schema.Struct({
   format: Schema.Literal(WATCH_WORKOUT_FORMAT),

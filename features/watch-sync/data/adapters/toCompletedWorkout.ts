@@ -8,8 +8,64 @@ import {
   totalVolumeKg,
 } from '@/features/workouts';
 
+type WatchEntry = WatchWorkoutDocument['entries'][number];
+
 /** Activity ids of watch workouts, so history can tell them from `session-` ones. */
 const watchActivityId = (uuid: string) => ActivityId.make(`watch-${uuid}`);
+
+/**
+ * One watch entry as history records it, of the same tracking type. Only a loaded set gets an
+ * estimated 1RM, and only once it is done, as a phone session computes it.
+ */
+function toEntry(entry: WatchEntry): StrengthEntry {
+  const fields = {
+    exerciseId: entry.exerciseId,
+    exerciseName: entry.exerciseName,
+    muscleGroup: null,
+    restSeconds: entry.restSeconds,
+    notes: entry.notes,
+  };
+  switch (entry.trackingType) {
+    case 'weightReps':
+      return {
+        ...fields,
+        trackingType: entry.trackingType,
+        sets: entry.sets.map(set => ({
+          type: set.type,
+          index: set.index,
+          reps: set.reps,
+          weightKg: set.weightKg,
+          completed: set.completed,
+          estimated1rm: set.completed ? estimatedOneRepMax(set.weightKg, set.reps) : null,
+          rpe: set.rpe,
+        })),
+      };
+    case 'repsOnly':
+      return {
+        ...fields,
+        trackingType: entry.trackingType,
+        sets: entry.sets.map(set => ({
+          type: set.type,
+          index: set.index,
+          reps: set.reps,
+          completed: set.completed,
+          rpe: set.rpe,
+        })),
+      };
+    case 'duration':
+      return {
+        ...fields,
+        trackingType: entry.trackingType,
+        sets: entry.sets.map(set => ({
+          type: set.type,
+          index: set.index,
+          durationSeconds: set.durationSeconds,
+          completed: set.completed,
+          rpe: set.rpe,
+        })),
+      };
+  }
+}
 
 /**
  * A checked `kinetiq.watch-workout` document as the workout history records. The computed fields
@@ -20,25 +76,7 @@ export function toCompletedWorkout(document: WatchWorkoutDocument): CompletedWor
   const startedAt = Date.parse(document.startedAt);
   const endedAt = Date.parse(document.endedAt);
   const durationSeconds = Math.round((endedAt - startedAt) / 1000);
-  // HACK: a watch document records weight and reps only until watch v3 (#194) carries the
-  // tracking type.
-  const entries: StrengthEntry[] = document.entries.map(entry => ({
-    trackingType: 'weightReps',
-    exerciseId: entry.exerciseId,
-    exerciseName: entry.exerciseName,
-    muscleGroup: null,
-    restSeconds: entry.restSeconds,
-    notes: entry.notes,
-    sets: entry.sets.map(set => ({
-      type: 'weightReps',
-      index: set.index,
-      reps: set.reps,
-      weightKg: set.weightKg,
-      completed: set.completed,
-      estimated1rm: set.completed ? estimatedOneRepMax(set.weightKg, set.reps) : null,
-      rpe: set.rpe,
-    })),
-  }));
+  const entries = document.entries.map(toEntry);
 
   return {
     id: watchActivityId(document.id),

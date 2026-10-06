@@ -25,6 +25,26 @@ final class SnapshotStoreTests: XCTestCase {
         XCTAssertEqual(store.load()?.id, "snap-new")
     }
 
+    func testAFileFromTheV2ShapeReadsAsNoSnapshot() {
+        let files = Fixtures.temporaryStore()
+        let routines = "[{\"id\":\"r\",\"name\":\"R\",\"items\":[{\"id\":\"i\",\"exerciseId\":\"e\","
+            + "\"exerciseName\":\"E\",\"sets\":[{\"reps\":8,\"weightKg\":60}],\"restSeconds\":90,\"notes\":null}]}]"
+        let old = "{\"version\":2,\"id\":\"snap-1\",\"snapshot\":{\"format\":\"kinetiq.watch-routines\",\"version\":2,"
+            + "\"exportedAt\":\"2026-09-25T10:00:00.000Z\",\"unitSystem\":\"metric\",\"routines\":\(routines)}}"
+        files.writeData(Data(old.utf8), to: "snapshot.json")
+        XCTAssertNil(SnapshotStore(files: files).load())
+    }
+
+    func testStoresAndReadsBackEveryTrackingType() throws {
+        let store = SnapshotStore(files: Fixtures.temporaryStore())
+        let items = [Fixtures.item(), Fixtures.repsOnlyItem(), Fixtures.durationItem()]
+        _ = try store.receive(Fixtures.snapshot(items: items), id: "snap-1", bounds: Fixtures.bounds).get()
+        let stored = try XCTUnwrap(store.load())
+        XCTAssertEqual(stored.version, 3)
+        XCTAssertEqual(stored.snapshot.routines.first?.items.map(\.trackingType), [.weightReps, .repsOnly, .duration])
+        XCTAssertEqual(stored.snapshot.routines.first?.items.last?.sets.first, .duration(seconds: 45))
+    }
+
     func testAFileFromTheV1ShapeReadsAsNoSnapshot() {
         let files = Fixtures.temporaryStore()
         let routines = "[{\"id\":\"r\",\"name\":\"R\",\"items\":[{\"id\":\"i\",\"exerciseId\":\"e\","

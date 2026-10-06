@@ -38,10 +38,7 @@ final class UnitsDisplayTests: XCTestCase {
     func testAdjustRestEndsItWhenPushedPastNow() {
         let now = Date(timeIntervalSince1970: 0)
         let routine = Routine(id: "r", name: "R", items: [
-            RoutineItem(
-                id: "i", exerciseId: "e", exerciseName: "E",
-                sets: Fixtures.sets(2, reps: 5, weightKg: 0), restSeconds: 30, notes: nil
-            )
+            Fixtures.weightRepsItem("i", "E", sets: Fixtures.sets(2, reps: 5, weightKg: 0), rest: 30)
         ])
         var workout = Workout.start(routine: routine, unitSystem: .metric, id: "w", now: now)
         workout.completeNextSet(in: 0, now: now)

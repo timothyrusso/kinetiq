@@ -94,6 +94,22 @@ describe('makeInboxDrain', () => {
   );
 
   itEffect(
+    'sets a workout from an older watch app aside, since no update makes it readable, and says so',
+    Effect.gen(function* () {
+      const inbox = anInbox([{ id: 'old', read: { ok: false, reason: 'outdated' } }]);
+      const drain = yield* makeInboxDrain(inbox.port);
+
+      yield* drain;
+
+      expect(inbox.rejected).toEqual(['old']);
+      expect(inbox.waiting()).toEqual([]);
+      expect(notices).toEqual(['outdated']);
+      expect(recorded).toEqual([]);
+    }),
+    testLayer(),
+  );
+
+  itEffect(
     'shares the running drain with a second call and reads the inbox once more for it',
     Effect.gen(function* () {
       const inbox = anInbox([aWorkoutItem('w1')], { delayFirstRead: true });
