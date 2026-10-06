@@ -21,6 +21,7 @@ export function exerciseFromSnapshot(snapshot: ExerciseSnapshot): Exercise {
     primaryMuscles: snapshot.primaryMuscles,
     secondaryMuscles: snapshot.secondaryMuscles,
     equipment: snapshot.equipment,
+    equipmentKeys: [],
     imageUrl: snapshot.imageUrl,
     imageEndUrl: null,
     thumbnailUrl: snapshot.thumbnailUrl,

@@ -19,6 +19,7 @@ export const anExercise = (overrides: Partial<Exercise> = {}): Exercise => ({
   primaryMuscles: ['Chest'],
   secondaryMuscles: ['Triceps'],
   equipment: ['Barbell'],
+  equipmentKeys: ['barbell'],
   imageUrl: 'assets/catalog/images/barbell-bench-press-medium-grip/0.webp',
   imageEndUrl: 'assets/catalog/images/barbell-bench-press-medium-grip/1.webp',
   thumbnailUrl: 'assets/catalog/images/barbell-bench-press-medium-grip/thumb.webp',
