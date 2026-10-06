@@ -102,7 +102,7 @@ export type HeaderMenuItem = {
   /** iOS draws a symbol beside the item; Android's menu is text, as Material menus are. */
   sf?: SFSymbol;
   destructive?: boolean;
-  /** Drawn greyed out and not selectable, on both platforms. */
+  /** Greyed out and not selectable on iOS; left out of the menu on Android (see `headerMenu`). */
   disabled?: boolean;
 };
 
@@ -125,9 +125,12 @@ export function headerMenu({
   const row = HEADER_ACTIONS[action];
   const icon = Platform.OS === 'android' ? materialIcon(row.material) : row.sf;
   if (!icon) return null;
+  // NOTE: expo-router's Android menu paints every item's text in the toolbar tint, which hides
+  // Material's disabled colour: a disabled item would look live. Android leaves it out instead.
+  const shown = Platform.OS === 'android' ? items.filter(item => !item.disabled) : items;
   return (
     <Stack.Toolbar.Menu key={action} icon={icon} accessibilityLabel={t(label ?? row.label)}>
-      {items.map(item => (
+      {shown.map(item => (
         <Stack.Toolbar.MenuAction
           key={item.key}
           onPress={item.onPress}
