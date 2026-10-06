@@ -6,6 +6,8 @@ import { routes } from '@/features/core/navigation';
 import { useT } from '@/features/core/translations';
 import { useExerciseAbout } from '@/features/exercises';
 import type { ItemChange } from '@/features/routines/domain/entities/ItemTarget';
+import type { TrackingType } from '@/features/routines/domain/schemas/RoutineSchema';
+import { itemAs } from '@/features/routines/domain/utils/itemTargets';
 import { routineIdOf } from '@/features/routines/domain/utils/routineId';
 import { useRoutine } from '@/features/routines/facades/useRoutine';
 import { useRoutineDraft } from '@/features/routines/facades/useRoutineDraft';
@@ -55,6 +57,10 @@ export function useRoutineItemPageLogic() {
     [actions, itemId, routineId, writeItem],
   );
 
+  // NOTE: reps carry between the two types that count them, the weight is dropped, and sets to or
+  // from a timed type open on that type's defaults (`itemAs`).
+  const setTrackingType = useCallback((type: TrackingType) => change(item => itemAs(item, type)), [change]);
+
   const { mutate: dropItem } = removeItem;
   const remove = useCallback(() => {
     if (routineId === null) {
@@ -79,6 +85,6 @@ export function useRoutineItemPageLogic() {
   return {
     state: { item, snapshot, units },
     derived: { title, about },
-    effects: { change, remove, openExercise },
+    effects: { change, setTrackingType, remove, openExercise },
   };
 }

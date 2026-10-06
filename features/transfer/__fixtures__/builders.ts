@@ -1,8 +1,12 @@
 import type { Exercise, ExerciseSnapshot } from '@/features/exercises';
-import type { Routine, RoutineItem, RoutineSet } from '@/features/routines';
+import type { Routine, RoutineItem } from '@/features/routines';
 import { RoutineId } from '@/features/routines';
 import type { Activity, StrengthEntry } from '@/features/workouts';
 import { ActivityId } from '@/features/workouts';
+
+type WeightRepsItem = Extract<RoutineItem, { readonly trackingType: 'weightReps' }>;
+
+type WeightRepsSet = WeightRepsItem['sets'][number];
 
 /** Thursday 25 September 2026, 10:00 UTC: the moment every fixture export was taken. */
 export const EXPORTED_AT = Date.UTC(2026, 8, 25, 10, 0, 0);
@@ -98,11 +102,12 @@ export const someActivities = (): Activity[] => [
 ];
 
 /** `count` sets of `reps` at `weightKg`, with no target RPE. */
-const setsOf = (count: number, reps: number, weightKg: number): RoutineSet[] =>
-  Array.from({ length: count }, (_, index) => ({ index, reps, weightKg, targetRpe: null }));
+const setsOf = (count: number, reps: number, weightKg: number): WeightRepsSet[] =>
+  Array.from({ length: count }, (_, index) => ({ type: 'weightReps', index, reps, weightKg, targetRpe: null }));
 
 /** One item: bench press, three sets of eight at 60 kg, resting 90 s. */
-const anItem = (overrides: Partial<RoutineItem> = {}): RoutineItem => ({
+const anItem = (overrides: Partial<WeightRepsItem> = {}): WeightRepsItem => ({
+  trackingType: 'weightReps',
   id: 'rit_bench',
   exerciseId: 'ex:barbell-bench-press-medium-grip',
   exerciseName: 'Bench Press',
@@ -148,11 +153,11 @@ export const someRoutines = (): Routine[] => [
         exerciseId: 'ex:barbell-squat',
         exerciseName: 'Squat, Back',
         sets: [
-          { index: 0, reps: 5, weightKg: 130, targetRpe: null },
-          { index: 1, reps: 5, weightKg: 137.5, targetRpe: null },
-          { index: 2, reps: 5, weightKg: 142.5, targetRpe: 8 },
-          { index: 3, reps: 5, weightKg: 142.5, targetRpe: 8 },
-          { index: 4, reps: 3, weightKg: 142.5, targetRpe: 9 },
+          { type: 'weightReps', index: 0, reps: 5, weightKg: 130, targetRpe: null },
+          { type: 'weightReps', index: 1, reps: 5, weightKg: 137.5, targetRpe: null },
+          { type: 'weightReps', index: 2, reps: 5, weightKg: 142.5, targetRpe: 8 },
+          { type: 'weightReps', index: 3, reps: 5, weightKg: 142.5, targetRpe: 8 },
+          { type: 'weightReps', index: 4, reps: 3, weightKg: 142.5, targetRpe: 9 },
         ],
         restSeconds: 180,
         notes: 'Belt on top sets',

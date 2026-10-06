@@ -14,7 +14,11 @@ export { RoutineRepository } from '@/features/routines/domain/repositories/Routi
 export { RoutineId } from '@/features/routines/domain/schemas/RoutineId';
 export type { Routine, RoutineItem, RoutineSet } from '@/features/routines/domain/schemas/RoutineSchema';
 export { RoutineEvents } from '@/features/routines/domain/services/RoutineEvents';
-export { defaultItemTarget } from '@/features/routines/domain/utils/itemTargets';
+/**
+ * The opening targets of a new item, and how an item of a type is built and a set changes type,
+ * for the tier-4 code that writes a finished workout back into its routine.
+ */
+export { defaultItemTarget, routineItemOf, routineSetAs } from '@/features/routines/domain/utils/itemTargets';
 /** The routines' query keys, for a higher feature that writes routines (the import). */
 export { routineQueryKeys } from '@/features/routines/facades/routineQueryKeys';
 export { useRoutine } from '@/features/routines/facades/useRoutine';

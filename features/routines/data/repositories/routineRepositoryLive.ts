@@ -8,7 +8,7 @@ import {
   routineFromRows,
   routinesFromRows,
 } from '@/features/routines/data/adapters/routineRows';
-import type { ItemTarget } from '@/features/routines/domain/entities/ItemTarget';
+import type { ItemPatch } from '@/features/routines/domain/entities/ItemTarget';
 import type { RoutineChangeKind } from '@/features/routines/domain/entities/RoutineChanged';
 import { RoutineRepository } from '@/features/routines/domain/repositories/RoutineRepository';
 import { RoutineId } from '@/features/routines/domain/schemas/RoutineId';
@@ -19,18 +19,20 @@ const SELECT_ROUTINES = `SELECT id, name, created_at, updated_at, times_complete
                 last_performed_at
          FROM routines`;
 
-const SELECT_ITEMS = `SELECT id, routine_id, exercise_id, position, rest_seconds, notes, exercise_name
+const SELECT_ITEMS = `SELECT id, routine_id, exercise_id, position, rest_seconds, notes, exercise_name,
+                tracking_type
          FROM routine_items`;
 
-const SELECT_SETS = `SELECT item_id, position, reps, weight_kg, target_rpe
+const SELECT_SETS = `SELECT item_id, position, reps, weight_kg, duration_seconds, target_rpe
          FROM routine_item_sets`;
 
 const INSERT_ITEM = `INSERT INTO routine_items (id, routine_id, exercise_id, position, rest_seconds, notes,
-                                      exercise_name)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`;
+                                      exercise_name, tracking_type)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
 
-const INSERT_SET = `INSERT INTO routine_item_sets (item_id, position, reps, weight_kg, target_rpe)
-           VALUES (?, ?, ?, ?, ?)`;
+const INSERT_SET = `INSERT INTO routine_item_sets (item_id, position, reps, weight_kg, duration_seconds,
+                                          target_rpe)
+           VALUES (?, ?, ?, ?, ?, ?)`;
 
 // NOTE: explicit rather than left to the cascade: an exclusive transaction runs on its own
 // connection, where foreign keys are off.
@@ -49,23 +51,37 @@ const itemValues = (routineId: RoutineId, item: RoutineItem, position: number) =
   item.restSeconds,
   item.notes,
   item.exerciseName.trim(),
+  item.trackingType,
 ];
+
+/** A set's `reps`, `weight_kg` and `duration_seconds` columns: null where its type records none. */
+function setColumns(set: RoutineSet): [number | null, number | null, number | null] {
+  switch (set.type) {
+    case 'weightReps':
+      return [set.reps, set.weightKg, null];
+    case 'repsOnly':
+      return [set.reps, null, null];
+    case 'duration':
+      return [null, null, set.durationSeconds];
+  }
+}
 
 /** Writes `sets` as the item's set rows, numbered from 0 in their order. */
 async function insertSets(txn: SqliteDatabase, itemId: string, sets: readonly RoutineSet[]): Promise<void> {
   let position = 0;
   for (const set of sets) {
-    await txn.runAsync(INSERT_SET, [itemId, position++, set.reps, set.weightKg, set.targetRpe]);
+    await txn.runAsync(INSERT_SET, [itemId, position++, ...setColumns(set), set.targetRpe]);
   }
 }
 
 /** The columns `setItem` may change, by target; `sets` replaces the item's set rows instead. */
 const ITEM_COLUMNS = {
   restSeconds: 'rest_seconds',
-} as const satisfies Record<Exclude<keyof ItemTarget, 'notes' | 'sets'>, string>;
+  trackingType: 'tracking_type',
+} as const satisfies Record<Exclude<keyof ItemPatch, 'notes' | 'sets'>, string>;
 
 /** `SET` assignments and their values for the targets present in `patch`; `notes` may be null. */
-function itemAssignments(patch: Partial<ItemTarget>): { columns: string[]; values: (string | number | null)[] } {
+function itemAssignments(patch: ItemPatch): { columns: string[]; values: (string | number | null)[] } {
   const columns: string[] = [];
   const values: (string | number | null)[] = [];
   for (const [target, column] of Object.entries(ITEM_COLUMNS) as [keyof typeof ITEM_COLUMNS, string][]) {
@@ -112,7 +128,7 @@ export const RoutineRepositoryLive = Layer.effect(
           ).pipe(Effect.flatMap(decodeRoutineSetRows)),
         ]);
         const [row] = rows;
-        return row === undefined ? undefined : routineFromRows(row, items, sets);
+        return row === undefined ? undefined : yield* routineFromRows(row, items, sets);
       });
 
     return {
@@ -128,7 +144,7 @@ export const RoutineRepositoryLive = Layer.effect(
             Effect.flatMap(decodeRoutineSetRows),
           ),
         ]);
-        return routinesFromRows(rows, items, sets);
+        return yield* routinesFromRows(rows, items, sets);
       }),
 
       byId,
@@ -233,10 +249,19 @@ export const RoutineRepositoryLive = Layer.effect(
             db.withExclusiveTransactionAsync(async txn => {
               await txn.runAsync(
                 `INSERT INTO routine_items (id, routine_id, exercise_id, position, rest_seconds, notes,
-                                    exercise_name)
+                                    exercise_name, tracking_type)
          VALUES (?, ?, ?, (SELECT COALESCE(MAX(position), -1) + 1 FROM routine_items WHERE routine_id = ?),
-                 ?, ?, ?)`,
-                [item.id, id, item.exerciseId, id, item.restSeconds, item.notes, item.exerciseName.trim()],
+                 ?, ?, ?, ?)`,
+                [
+                  item.id,
+                  id,
+                  item.exerciseId,
+                  id,
+                  item.restSeconds,
+                  item.notes,
+                  item.exerciseName.trim(),
+                  item.trackingType,
+                ],
               );
               await insertSets(txn, item.id, item.sets);
               await txn.runAsync(TOUCH_ROUTINE, [now, id]);

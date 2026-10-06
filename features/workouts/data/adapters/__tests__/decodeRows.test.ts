@@ -38,6 +38,16 @@ describe('entriesFromColumn', () => {
     expect(entriesFromColumn(column)).toEqual([]);
   });
 
+  it('drops an entry written before tracking types, which names no type', () => {
+    const { trackingType: _entryType, ...untyped } = anEntry();
+    const column = JSON.stringify([
+      { ...untyped, sets: untyped.sets.map(({ type: _type, ...set }) => set) },
+      aRepsOnlyEntry(),
+    ]);
+
+    expect(entriesFromColumn(column)).toEqual([aRepsOnlyEntry()]);
+  });
+
   it('fills what an older write of each type left out', () => {
     const column = JSON.stringify([
       {

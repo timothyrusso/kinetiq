@@ -4,6 +4,7 @@ import { type ExerciseSnapshot, ExerciseSnapshotRepository } from '@/features/ex
 import { RoutineRepository } from '@/features/routines/domain/repositories/RoutineRepository';
 import { RoutineId } from '@/features/routines/domain/schemas/RoutineId';
 import type { Routine } from '@/features/routines/domain/schemas/RoutineSchema';
+import { patchItem } from '@/features/routines/domain/utils/itemTargets';
 
 type RoutineService = (typeof RoutineRepository)['Service'];
 
@@ -52,7 +53,7 @@ export const makeRoutineRepositoryFake = (routines: readonly Routine[] = [], fai
             if (!routine.items.some(item => item.id === itemId)) continue;
             stored.set(routine.id, {
               ...routine,
-              items: routine.items.map(item => (item.id === itemId ? { ...item, ...patch } : item)),
+              items: routine.items.map(item => (item.id === itemId ? patchItem(item, patch) : item)),
             });
           }
         }),

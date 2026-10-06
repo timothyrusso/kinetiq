@@ -1,6 +1,6 @@
 import { Context, type Effect } from 'effect';
 import type { DecodeError, SqlError } from '@/features/core/error';
-import type { ItemTarget } from '@/features/routines/domain/entities/ItemTarget';
+import type { ItemPatch } from '@/features/routines/domain/entities/ItemTarget';
 import type { RoutineInput } from '@/features/routines/domain/entities/RoutineInput';
 import type { RoutineId } from '@/features/routines/domain/schemas/RoutineId';
 import type { Routine, RoutineItem } from '@/features/routines/domain/schemas/RoutineSchema';
@@ -33,10 +33,11 @@ export class RoutineRepository extends Context.Tag('routines/RoutineRepository')
     readonly reorder: (id: RoutineId, orderedItemIds: readonly string[]) => Effect.Effect<void, SqlError>;
     /**
      * Changes only the targets present in `patch`, in one exclusive transaction. `sets` replaces
-     * the item's sets wholesale. A `notes` key set to `null` clears the note; an absent key leaves
-     * it. An unknown item changes nothing and publishes nothing.
+     * the item's sets wholesale, and `trackingType` its type: a patch changing the type carries
+     * the sets of that type (`itemWrite`). A `notes` key set to `null` clears the note; an absent
+     * key leaves it. An unknown item changes nothing and publishes nothing.
      */
-    readonly setItem: (itemId: string, patch: Partial<ItemTarget>) => Effect.Effect<void, RoutineReadError>;
+    readonly setItem: (itemId: string, patch: ItemPatch) => Effect.Effect<void, RoutineReadError>;
     /** Appends `item` after the routine's last item, in one exclusive transaction. */
     readonly addItem: (id: RoutineId, item: RoutineItem) => Effect.Effect<void, SqlError>;
     /** Removes the item and numbers the rest from 0 again. */

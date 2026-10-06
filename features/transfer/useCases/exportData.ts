@@ -1,6 +1,6 @@
 import { Clock, Effect } from 'effect';
-import { RoutineRepository } from '@/features/routines';
-import type { ExportableWorkout } from '@/features/transfer/domain/entities/Exportable';
+import { type Routine, RoutineRepository } from '@/features/routines';
+import type { ExportableRoutine, ExportableWorkout } from '@/features/transfer/domain/entities/Exportable';
 import type { ExportTarget } from '@/features/transfer/domain/entities/TransferFormat';
 import { TransferDevice } from '@/features/transfer/domain/services/TransferDevice';
 import { exportFile, routinesJson, setsCsv, workoutsJson } from '@/features/transfer/domain/utils/exportDocuments';
@@ -34,6 +34,25 @@ function asWeightReps(activities: readonly Activity[]): ExportableWorkout[] {
   }));
 }
 
+/**
+ * The routines as the v2 file reads them: every planned set as weight and reps, a reps-only set at
+ * bodyweight and a timed one as 0 reps at bodyweight.
+ */
+export function routinesAsWeightReps(routines: readonly Routine[]): ExportableRoutine[] {
+  // HACK: the routines file learns the tracking types in transfer v3 (#193); this goes with it.
+  return routines.map(routine => ({
+    ...routine,
+    items: routine.items.map(item => ({
+      ...item,
+      sets: item.sets.map(set => ({
+        reps: set.type === 'duration' ? 0 : set.reps,
+        weightKg: set.type === 'weightReps' ? set.weightKg : 0,
+        targetRpe: set.targetRpe,
+      })),
+    })),
+  }));
+}
+
 /** The file for `target`, from what is on disk now. */
 export const buildExport = (target: ExportTarget) =>
   Effect.gen(function* () {
@@ -49,7 +68,7 @@ export const buildExport = (target: ExportTarget) =>
       }
       case 'routinesJson': {
         const routines = yield* (yield* RoutineRepository).list;
-        return exportFile('routines', 'json', routinesJson(routines, now), now);
+        return exportFile('routines', 'json', routinesJson(routinesAsWeightReps(routines), now), now);
       }
     }
   });

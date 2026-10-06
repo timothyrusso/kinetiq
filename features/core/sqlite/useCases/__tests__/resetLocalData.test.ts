@@ -5,7 +5,7 @@ import { resetLocalData } from '@/features/core/sqlite/useCases/resetLocalData';
 import { itEffect, makeNodeSqliteLayer } from '@/features/core/testing';
 
 /** A step past the app's last one that cannot pass while two routines share a name. */
-const UNIQUE_NAMES = { version: 13, up: 'CREATE UNIQUE INDEX idx_routines_name ON routines (name);' };
+const UNIQUE_NAMES = { version: 14, up: 'CREATE UNIQUE INDEX idx_routines_name ON routines (name);' };
 
 const countOf = (table: string) =>
   Effect.flatMap(SqliteClient, db =>
@@ -21,11 +21,11 @@ describe('resetLocalData', () => {
 
       const report = yield* resetLocalData;
 
-      expect(report).toEqual({ fromVersion: 12, toVersion: 13, migrationError: null });
+      expect(report).toEqual({ fromVersion: 13, toVersion: 14, migrationError: null });
       expect(yield* status.current).toEqual(report);
       expect(yield* countOf('routines')).toBe(0);
     }),
-    blockedAtVersion12(),
+    blockedAtVersion13(),
   );
 
   itEffect(
@@ -35,7 +35,7 @@ describe('resetLocalData', () => {
 
       expect(yield* countOf('catalog_exercises')).toBe(1);
     }),
-    blockedAtVersion12(),
+    blockedAtVersion13(),
   );
 
   itEffect(
@@ -47,9 +47,9 @@ describe('resetLocalData', () => {
       const result = yield* Effect.either(resetLocalData);
 
       expect(Either.isLeft(result) && result.left._tag).toBe('SqlError');
-      expect((yield* (yield* SchemaStatus).current).toVersion).toBe(12);
+      expect((yield* (yield* SchemaStatus).current).toVersion).toBe(13);
     }),
-    blockedAtVersion12(),
+    blockedAtVersion13(),
   );
 });
 
@@ -57,7 +57,7 @@ describe('resetLocalData', () => {
  * A database at the app's last version holding two routines named alike, whose launch then
  * failed on `UNIQUE_NAMES`, with the app's own `SchemaStatus` over those steps.
  */
-function blockedAtVersion12() {
+function blockedAtVersion13() {
   const status = Layer.effect(
     SchemaStatus,
     Effect.gen(function* () {

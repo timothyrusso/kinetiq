@@ -58,8 +58,8 @@ describe('RoutineUsageLive', () => {
         {
           id: item.id,
           sets: [
-            { index: 0, reps: 10, weightKg: 70, targetRpe: 8 },
-            { index: 1, reps: 8, weightKg: 60, targetRpe: null },
+            { type: 'weightReps' as const, index: 0, reps: 10, weightKg: 70, targetRpe: 8 },
+            { type: 'weightReps' as const, index: 1, reps: 8, weightKg: 60, targetRpe: null },
           ],
         },
       ]);

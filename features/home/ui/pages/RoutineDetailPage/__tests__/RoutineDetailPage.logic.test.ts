@@ -41,10 +41,10 @@ describe('useRoutineDetailPageLogic', () => {
   it('plans each set of the workout from its own stored row: reps, weight and target RPE', async () => {
     const pyramid = aRoutineItem({
       sets: [
-        { index: 0, reps: 12, weightKg: 50, targetRpe: null },
-        { index: 1, reps: 10, weightKg: 55, targetRpe: 7 },
-        { index: 2, reps: 8, weightKg: 60, targetRpe: 8.5 },
-        { index: 3, reps: 6, weightKg: 0, targetRpe: 10 },
+        { type: 'weightReps' as const, index: 0, reps: 12, weightKg: 50, targetRpe: null },
+        { type: 'weightReps' as const, index: 1, reps: 10, weightKg: 55, targetRpe: 7 },
+        { type: 'weightReps' as const, index: 2, reps: 8, weightKg: 60, targetRpe: 8.5 },
+        { type: 'weightReps' as const, index: 3, reps: 6, weightKg: 0, targetRpe: 10 },
       ],
     });
     const { result, routine, done } = await renderLauncher('Pyramid', [pyramid]);
