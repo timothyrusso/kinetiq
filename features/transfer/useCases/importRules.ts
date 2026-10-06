@@ -12,6 +12,7 @@ export const IMPORT_RULES: ImportRules = {
     sets: ITEM_BOUNDS.sets,
     reps: ITEM_BOUNDS.reps,
     weightKg: ITEM_BOUNDS.weightKg,
+    durationSeconds: ITEM_BOUNDS.durationSeconds,
     targetRpe: ITEM_BOUNDS.rpe,
     restSeconds: ITEM_BOUNDS.restSeconds,
     notesLength: ITEM_BOUNDS.notesLength,

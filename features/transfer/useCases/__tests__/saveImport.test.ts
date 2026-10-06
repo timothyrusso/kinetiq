@@ -45,6 +45,48 @@ describe('saveImport', () => {
   );
 
   itEffect(
+    'writes each item with the tracking type the file gave it, its sets numbered in order',
+    Effect.gen(function* () {
+      yield* saveImport(
+        [
+          aRoutine({
+            items: [
+              anItem({
+                exerciseName: 'Pull-up',
+                trackingType: 'repsOnly',
+                sets: [
+                  { type: 'repsOnly', reps: 10, targetRpe: null },
+                  { type: 'repsOnly', reps: 8, targetRpe: 9 },
+                ],
+              }),
+              anItem({
+                exerciseName: 'Plank',
+                trackingType: 'duration',
+                sets: [{ type: 'duration', durationSeconds: 45, targetRpe: null }],
+              }),
+            ],
+          }),
+        ],
+        fallbackName,
+        120,
+      );
+
+      const [routine] = yield* savedRoutines;
+      expect(routine?.items.map(({ trackingType, sets }) => ({ trackingType, sets }))).toEqual([
+        {
+          trackingType: 'repsOnly',
+          sets: [
+            { type: 'repsOnly', index: 0, reps: 10, targetRpe: null },
+            { type: 'repsOnly', index: 1, reps: 8, targetRpe: 9 },
+          ],
+        },
+        { trackingType: 'duration', sets: [{ type: 'duration', index: 0, durationSeconds: 45, targetRpe: null }] },
+      ]);
+    }),
+    layer(),
+  );
+
+  itEffect(
     "gives an item with no rest of its own the user's default",
     Effect.gen(function* () {
       yield* saveImport([aRoutine({ items: [anItem({ restSeconds: null })] })], fallbackName, 120);
@@ -113,10 +155,11 @@ function anItem(overrides: Partial<ResolvedItem<ExerciseSnapshot>> = {}): Resolv
   return {
     exerciseId: 'ex:barbell-bench-press-medium-grip',
     exerciseName: 'Bench Press',
+    trackingType: 'weightReps',
     sets: [
-      { reps: 10, weightKg: 50, targetRpe: null },
-      { reps: 8, weightKg: 60, targetRpe: 7 },
-      { reps: 8, weightKg: 60, targetRpe: 8 },
+      { type: 'weightReps', reps: 10, weightKg: 50, targetRpe: null },
+      { type: 'weightReps', reps: 8, weightKg: 60, targetRpe: 7 },
+      { type: 'weightReps', reps: 8, weightKg: 60, targetRpe: 8 },
     ],
     restSeconds: 90,
     notes: null,

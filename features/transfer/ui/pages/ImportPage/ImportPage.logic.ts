@@ -4,22 +4,33 @@ import type { SettingsRow, SettingsSection } from '@/features/core/design-system
 import { haptics } from '@/features/core/haptics';
 import { routes } from '@/features/core/navigation';
 import { useT } from '@/features/core/translations';
-import { formatWeight } from '@/features/core/utils';
+import { formatTimer, formatWeight } from '@/features/core/utils';
 import type { ExerciseSnapshot } from '@/features/exercises';
 import { useSettings } from '@/features/settings';
-import type { ParsedSet } from '@/features/transfer/domain/entities/ParsedImport';
+import type { ParsedItem } from '@/features/transfer/domain/entities/ParsedImport';
 import type { ResolvedItem } from '@/features/transfer/domain/entities/ResolvedImport';
 import { importable } from '@/features/transfer/domain/utils/matchRules';
 import { useImportRoutines } from '@/features/transfer/facades/useImportRoutines';
 import { useResolvedImport } from '@/features/transfer/facades/useResolvedImport';
 import { useStagedImport } from '@/features/transfer/facades/useStagedImport';
 
-/** The item's reps: one number when every set has it, otherwise the fewest and the most. */
-function repsLabel(sets: readonly ParsedSet[]): string {
-  const reps = sets.map(set => set.reps);
-  const low = Math.min(...reps);
-  const high = Math.max(...reps);
-  return low === high ? `${low}` : `${low}-${high}`;
+/** `values` as one label when every set has the same one, otherwise as the lowest and the highest. */
+function spanLabel(values: readonly number[], label: (value: number) => string): string {
+  const low = Math.min(...values);
+  const high = Math.max(...values);
+  return low === high ? label(low) : `${label(low)}-${label(high)}`;
+}
+
+/** The item's reps, or its time as `m:ss`: one value when every set has it, else the span. */
+function targetLabel(item: ParsedItem): string {
+  const values = item.sets.map(set => (set.type === 'duration' ? set.durationSeconds : set.reps));
+  return item.trackingType === 'duration' ? spanLabel(values, formatTimer) : spanLabel(values, String);
+}
+
+/** The first set's load: what a loaded item's preview leads with. */
+function firstWeightKg(item: ParsedItem): number {
+  const [first] = item.sets;
+  return first?.type === 'weightReps' ? first.weightKg : 0;
 }
 
 /**
@@ -62,17 +73,18 @@ export function useImportPageLogic() {
           ? t('dataTransfer.missingNotFound')
           : match.status === 'closest' && item.exerciseName !== ''
             ? t('dataTransfer.matchedFrom', { name: item.exerciseName })
-            : t('dataTransfer.itemTargets', {
-                weight: formatWeight(item.sets[0]?.weightKg ?? 0, units),
-                rest: item.restSeconds ?? defaultRest,
-              });
-      return {
-        kind: 'info',
-        key,
-        title,
-        subtitle,
-        value: t('dataTransfer.setsReps', { sets: item.sets.length, reps: repsLabel(item.sets) }),
-      };
+            : item.trackingType === 'weightReps'
+              ? t('dataTransfer.itemTargets', {
+                  weight: formatWeight(firstWeightKg(item), units),
+                  rest: item.restSeconds ?? defaultRest,
+                })
+              : t('dataTransfer.itemRest', { rest: item.restSeconds ?? defaultRest });
+      const count = item.sets.length;
+      const value =
+        item.trackingType === 'duration'
+          ? t('dataTransfer.setsDuration', { sets: count, duration: targetLabel(item) })
+          : t('dataTransfer.setsReps', { sets: count, reps: targetLabel(item) });
+      return { kind: 'info', key, title, subtitle, value };
     },
     [defaultRest, t, units],
   );

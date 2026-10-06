@@ -3,6 +3,7 @@ import { Effect, Layer } from 'effect';
 import { itEffect } from '@/features/core/testing';
 import { setLanguagePreference, tr } from '@/features/core/translations';
 import { anExercise } from '@/features/transfer/__fixtures__/builders';
+import { FORMAT_VERSION } from '@/features/transfer/domain/entities/TransferFormat';
 import {
   ExerciseCatalogFake,
   ExerciseSnapshotRepositoryFake,
@@ -10,6 +11,7 @@ import {
 } from '@/features/transfer/useCases/__tests__/transferFakes';
 import { readImport } from '@/features/transfer/useCases/readImport';
 import { resolveExercisesByName } from '@/features/transfer/useCases/resolveExercisesByName';
+import { ITEM_BOUNDS } from '@/features/watch-bridge';
 
 const fixture = (name: string) => readFileSync(`${__dirname}/../../__fixtures__/${name}`, 'utf8');
 const INDEX_LINK = 'https://raw.githubusercontent.com/timothyrusso/kinetiq/main/assets/catalog/index.json';
@@ -32,39 +34,38 @@ describe('readImport', () => {
     TransferDeviceFake({ clipboard: fixture('kinetiq-routines.json') }),
   );
 
-  itEffect(
-    'reads a v1 export from before per-set routines, each item as its count of identical sets',
-    Effect.gen(function* () {
-      const read = yield* readImport('clipboard');
+  for (const file of ['kinetiq-routines.v1.json', 'kinetiq-routines.v2.json']) {
+    itEffect(
+      `fails with ImportUnreadable saying an export from before the tracking types (${file}) is older`,
+      Effect.gen(function* () {
+        const result = yield* Effect.either(readImport('clipboard'));
 
-      expect(read?.issues).toEqual([]);
-      expect(read?.routines.flatMap(routine => routine.items.map(item => [item.exerciseName, item.sets]))).toEqual([
-        ['Squat, Back', Array(5).fill({ reps: 5, weightKg: 142.5, targetRpe: null })],
-        ['Hip thrust', Array(3).fill({ reps: 10, weightKg: 60.25, targetRpe: null })],
-        ['Bench Press', Array(3).fill({ reps: 8, weightKg: 60, targetRpe: null })],
-        ['Overhead Press', Array(4).fill({ reps: 6, weightKg: 40, targetRpe: null })],
-      ]);
+        expect(result._tag === 'Left' && result.left).toMatchObject({
+          _tag: 'ImportUnreadable',
+          issue: { key: 'dataTransfer.errorOlderFile' },
+        });
+      }),
+      TransferDeviceFake({ clipboard: fixture(file) }),
+    );
+  }
+
+  itEffect(
+    "reads an AI's v3 answer row by row, clamping, defaulting and reporting for every tracking type",
+    Effect.gen(function* () {
+      expect(yield* readImport('clipboard')).toEqual(parsedFixture('ai-answer.v3.parsed.json'));
     }),
-    TransferDeviceFake({ clipboard: fixture('kinetiq-routines.v1.json') }),
+    TransferDeviceFake({ clipboard: fixture('ai-answer.v3.txt') }),
   );
 
   itEffect(
-    "reads an AI's v2 answer row by row, clamping, defaulting and reporting",
-    Effect.gen(function* () {
-      expect(yield* readImport('clipboard')).toEqual(parsedFixture('ai-answer.v2.parsed.json'));
-    }),
-    TransferDeviceFake({ clipboard: fixture('ai-answer.v2.txt') }),
-  );
-
-  itEffect(
-    "reads an AI's v1 answer in a code fence, clamping, defaulting and reporting as the app always has",
+    "reads an AI's count shorthand in a code fence, clamping, defaulting and reporting, an item with no type left out",
     Effect.gen(function* () {
       expect(yield* readImport('clipboard')).toEqual(parsedFixture('ai-answer.parsed.json'));
     }),
     TransferDeviceFake({ clipboard: fixture('ai-answer.txt') }),
   );
 
-  for (const file of ['kinetiq-workouts.json', 'kinetiq-workouts.v1.json']) {
+  for (const file of ['kinetiq-workouts.json', 'kinetiq-workouts.v2.json', 'kinetiq-workouts.v1.json']) {
     itEffect(
       `refuses a workout history file (${file}) as holding no routines, as the app always has`,
       Effect.gen(function* () {
@@ -165,6 +166,17 @@ describe('readImport', () => {
       expect(prompt).toContain('https://raw.githubusercontent.com/timothyrusso/kinetiq/main/assets/catalog/index.json');
     });
 
+    it(`states the current bounds and version in the ${language} AI instructions`, () => {
+      const { sets, reps, weightKg, durationSeconds, rpe, restSeconds, notesLength } = ITEM_BOUNDS;
+      const ranges = [sets, reps, weightKg, durationSeconds, rpe, restSeconds].map(
+        ({ min, max }) => new RegExp(`\\b${min} (to|a) ${max}\\b`),
+      );
+
+      for (const range of ranges) expect(prompt).toMatch(range);
+      expect(prompt).toContain(`${notesLength}`);
+      expect(prompt).toContain(`"version": ${FORMAT_VERSION}`);
+    });
+
     itEffect(
       `refuses the app's own AI instructions in ${language} instead of offering their example routine`,
       Effect.gen(function* () {
@@ -179,16 +191,36 @@ describe('readImport', () => {
     );
 
     itEffect(
-      `reads the example in the ${language} AI instructions as a v2 routine, one row per set`,
+      `reads the example in the ${language} AI instructions as a v3 routine, one item per tracking type`,
       Effect.gen(function* () {
         const read = yield* readImport('clipboard');
+        const items = read?.routines[0]?.items ?? [];
 
         expect(read?.issues).toEqual([]);
-        expect(indexIds.has(read?.routines[0]?.items[0]?.exerciseId ?? '')).toBe(true);
-        expect(read?.routines[0]?.items[0]?.sets).toEqual([
-          { reps: 10, weightKg: 50, targetRpe: null },
-          { reps: 8, weightKg: 60, targetRpe: 7 },
-          { reps: 8, weightKg: 60, targetRpe: 8 },
+        expect(items.every(item => indexIds.has(item.exerciseId ?? ''))).toBe(true);
+        expect(items.map(item => [item.trackingType, item.sets])).toEqual([
+          [
+            'weightReps',
+            [
+              { type: 'weightReps', reps: 10, weightKg: 50, targetRpe: null },
+              { type: 'weightReps', reps: 8, weightKg: 60, targetRpe: 7 },
+              { type: 'weightReps', reps: 8, weightKg: 60, targetRpe: 8 },
+            ],
+          ],
+          [
+            'repsOnly',
+            [
+              { type: 'repsOnly', reps: 8, targetRpe: null },
+              { type: 'repsOnly', reps: 8, targetRpe: 8 },
+            ],
+          ],
+          [
+            'duration',
+            [
+              { type: 'duration', durationSeconds: 45, targetRpe: null },
+              { type: 'duration', durationSeconds: 60, targetRpe: 8 },
+            ],
+          ],
         ]);
       }),
       TransferDeviceFake({ clipboard: prompt.slice(prompt.indexOf('{'), prompt.indexOf('\n\n', prompt.indexOf('{'))) }),
@@ -241,7 +273,7 @@ describe('readImport', () => {
     Layer.mergeAll(
       TransferDeviceFake({
         clipboard:
-          '{"routines": [{"name": "Push", "items": [{"wgerId": 192, "exerciseName": "Bench Press", "sets": 3}]}]}',
+          '{"routines": [{"name": "Push", "items": [{"wgerId": 192, "exerciseName": "Bench Press", "trackingType": "weightReps", "sets": 3}]}]}',
       }),
       ExerciseSnapshotRepositoryFake(new Map()),
       ExerciseCatalogFake([anExercise()]),

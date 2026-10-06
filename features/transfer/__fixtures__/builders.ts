@@ -11,10 +11,10 @@ type WeightRepsSet = WeightRepsItem['sets'][number];
 /** Thursday 25 September 2026, 10:00 UTC: the moment every fixture export was taken. */
 export const EXPORTED_AT = Date.UTC(2026, 8, 25, 10, 0, 0);
 
-/** Bench press: two sets of five at 100 kg, the second not done, resting 120 s. */
 /** An entry that records weight and reps. */
 type WeightRepsEntry = Extract<StrengthEntry, { readonly trackingType: 'weightReps' }>;
 
+/** Bench press: two sets of five at 100 kg, the second not done, resting 120 s. */
 const aBenchEntry = (overrides: Partial<WeightRepsEntry> = {}): WeightRepsEntry => ({
   trackingType: 'weightReps',
   exerciseId: 'ex:barbell-bench-press-medium-grip',
@@ -45,6 +45,8 @@ const anActivity = (overrides: Partial<Activity> = {}): Activity => ({
 /**
  * Three workouts, oldest first, with what a CSV has to quote: a comma, a double quote and a line
  * break in a title or a name, a watch workout, an entry with notes and a damaged row with no sets.
+ * The watch workout holds every tracking type: weight and reps, reps alone (a pull-up) and time
+ * (a plank).
  */
 export const someActivities = (): Activity[] => [
   anActivity(),
@@ -85,9 +87,33 @@ export const someActivities = (): Activity[] => [
             },
           ],
         }),
+        {
+          trackingType: 'repsOnly',
+          exerciseId: 'ex:pullups',
+          exerciseName: 'Pull-up',
+          muscleGroup: null,
+          restSeconds: 90,
+          notes: null,
+          sets: [
+            { type: 'repsOnly', index: 0, reps: 10, completed: true, rpe: 8 },
+            { type: 'repsOnly', index: 1, reps: 7, completed: false, rpe: null },
+          ],
+        },
+        {
+          trackingType: 'duration',
+          exerciseId: 'ex:plank',
+          exerciseName: 'Plank',
+          muscleGroup: null,
+          restSeconds: 60,
+          notes: 'Squeeze the glutes',
+          sets: [
+            { type: 'duration', index: 0, durationSeconds: 45, completed: true, rpe: null },
+            { type: 'duration', index: 1, durationSeconds: 90, completed: true, rpe: 9 },
+          ],
+        },
       ],
       totalVolumeKg: 1150,
-      totalSets: 3,
+      totalSets: 6,
       personalRecords: [],
     },
   }),
@@ -117,7 +143,7 @@ const anItem = (overrides: Partial<WeightRepsItem> = {}): WeightRepsItem => ({
   ...overrides,
 });
 
-/** A push day with two items. */
+/** A push day with four items: two loaded lifts, a pull-up in reps alone and a timed plank. */
 const aRoutine = (overrides: Partial<Routine> = {}): Routine => ({
   id: RoutineId.make('rtn_push'),
   name: 'Push Day',
@@ -131,6 +157,30 @@ const aRoutine = (overrides: Partial<Routine> = {}): Routine => ({
       restSeconds: 60,
       notes: 'Brace first',
     }),
+    {
+      trackingType: 'repsOnly',
+      id: 'rit_pullup',
+      exerciseId: 'ex:pullups',
+      exerciseName: 'Pull-up',
+      sets: [
+        { type: 'repsOnly', index: 0, reps: 10, targetRpe: null },
+        { type: 'repsOnly', index: 1, reps: 8, targetRpe: 8 },
+      ],
+      restSeconds: 90,
+      notes: null,
+    },
+    {
+      trackingType: 'duration',
+      id: 'rit_plank',
+      exerciseId: 'ex:plank',
+      exerciseName: 'Plank',
+      sets: [
+        { type: 'duration', index: 0, durationSeconds: 45, targetRpe: null },
+        { type: 'duration', index: 1, durationSeconds: 60, targetRpe: 9 },
+      ],
+      restSeconds: 60,
+      notes: 'Squeeze the glutes',
+    },
   ],
   createdAt: Date.UTC(2026, 8, 1, 9, 0, 0),
   updatedAt: Date.UTC(2026, 8, 20, 9, 0, 0),

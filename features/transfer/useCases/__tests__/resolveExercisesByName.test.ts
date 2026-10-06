@@ -125,10 +125,16 @@ describe('resolveExercisesByName', () => {
   itEffect(
     'keeps the routines, their names and their targets as parsed',
     Effect.gen(function* () {
-      const sets = [{ reps: 5, weightKg: 100, targetRpe: 8 }];
-      const resolved = yield* resolveExercisesByName([{ name: null, items: [anItem({ sets })] }], 'en');
+      const sets = [{ type: 'duration', durationSeconds: 45, targetRpe: 8 }] as const;
+      const resolved = yield* resolveExercisesByName(
+        [{ name: null, items: [anItem({ trackingType: 'duration', sets })] }],
+        'en',
+      );
 
-      expect(resolved[0]).toMatchObject({ name: null, items: [{ sets, exerciseName: 'Bench Press' }] });
+      expect(resolved[0]).toMatchObject({
+        name: null,
+        items: [{ trackingType: 'duration', sets, exerciseName: 'Bench Press' }],
+      });
     }),
     layer([anExerciseSnapshot()], []),
   );
@@ -138,7 +144,8 @@ function anItem(overrides: Partial<ParsedItem> = {}): ParsedItem {
   return {
     exerciseId: null,
     exerciseName: 'Bench Press',
-    sets: [{ reps: 8, weightKg: 60, targetRpe: null }],
+    trackingType: 'weightReps',
+    sets: [{ type: 'weightReps', reps: 8, weightKg: 60, targetRpe: null }],
     restSeconds: 90,
     notes: null,
     ...overrides,

@@ -7,28 +7,34 @@
         {
           "exerciseId": "ex:barbell-bench-press-medium-grip",
           "exerciseName": "Bench Press",
+          "trackingType": "weightReps",
           "sets": [
             {
+              "type": "weightReps",
               "reps": 10,
               "weightKg": 50,
               "targetRpe": null
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 61.25,
               "targetRpe": 7
             },
             {
+              "type": "weightReps",
               "reps": 6,
               "weightKg": 70,
               "targetRpe": 9
             },
             {
+              "type": "weightReps",
               "reps": 100,
               "weightKg": 450,
               "targetRpe": 10
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 40,
               "targetRpe": null
@@ -40,10 +46,11 @@
         {
           "exerciseId": null,
           "exerciseName": "Dips",
+          "trackingType": "repsOnly",
           "sets": [
             {
+              "type": "repsOnly",
               "reps": 12,
-              "weightKg": 0,
               "targetRpe": null
             }
           ],
@@ -52,19 +59,52 @@
         },
         {
           "exerciseId": null,
-          "exerciseName": "Push-up",
+          "exerciseName": "Plank",
+          "trackingType": "duration",
           "sets": [
             {
+              "type": "duration",
+              "durationSeconds": 45,
+              "targetRpe": null
+            },
+            {
+              "type": "duration",
+              "durationSeconds": 3600,
+              "targetRpe": 9
+            },
+            {
+              "type": "duration",
+              "durationSeconds": 5,
+              "targetRpe": null
+            },
+            {
+              "type": "duration",
+              "durationSeconds": 30,
+              "targetRpe": null
+            }
+          ],
+          "restSeconds": 60,
+          "notes": null
+        },
+        {
+          "exerciseId": null,
+          "exerciseName": "Lateral raise",
+          "trackingType": "weightReps",
+          "sets": [
+            {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 0,
               "targetRpe": null
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 0,
               "targetRpe": null
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 0,
               "targetRpe": null
@@ -89,6 +129,20 @@
       "vars": {
         "routine": 1,
         "item": 3
+      }
+    },
+    {
+      "key": "dataTransfer.issueItemNoType",
+      "vars": {
+        "routine": 1,
+        "item": 4
+      }
+    },
+    {
+      "key": "dataTransfer.issueDefaults",
+      "vars": {
+        "routine": 1,
+        "item": 5
       }
     }
   ]
