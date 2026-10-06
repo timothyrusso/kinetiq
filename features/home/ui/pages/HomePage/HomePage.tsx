@@ -34,7 +34,7 @@ export function HomePage() {
         historyEmpty={state.historyEmpty}
         historyLoading={state.historyLoading}
         historyError={state.historyError}
-        onStartWorkout={effects.openWorkoutTab}
+        onCreateRoutine={effects.openNewRoutine}
       />
       {state.pendingDelete ? (
         <ConfirmDialog

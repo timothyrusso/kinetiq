@@ -52,7 +52,7 @@ export function useHomePageLogic() {
   );
 
   const openActivity = useCallback((id: string) => router.push(routes.activityDetail(id)), [router]);
-  const openWorkoutTab = useCallback(() => router.push(routes.workoutTab()), [router]);
+  const openNewRoutine = useCallback(() => router.push(routes.newRoutine()), [router]);
 
   const { refetch: refetchSummary } = summaryQuery;
   const { refresh: refetchHistory } = history;
@@ -101,7 +101,7 @@ export function useHomePageLogic() {
     effects: {
       openActivity,
       askDelete: setPendingId,
-      openWorkoutTab,
+      openNewRoutine,
       refresh,
       retrySummary,
       confirmDelete,

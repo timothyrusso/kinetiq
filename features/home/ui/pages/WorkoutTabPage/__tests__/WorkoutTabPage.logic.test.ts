@@ -5,6 +5,7 @@ import { renderWithLayer, routerFake } from '@/features/core/testing';
 import { tr } from '@/features/core/translations';
 import { HomeTestLayer, seedRoutine, trainRoutine } from '@/features/home/di/__tests__/homeTestLayer';
 import { useWorkoutTabPageLogic } from '@/features/home/ui/pages/WorkoutTabPage/WorkoutTabPage.logic';
+import { useActiveSession } from '@/features/workouts';
 
 beforeEach(() => {
   resetAllStores();
@@ -81,6 +82,47 @@ describe('useWorkoutTabPageLogic', () => {
     const { result, done } = await renderTab();
 
     await act(async () => result.current.effects.openSession());
+
+    expect(routerFake.history).toEqual([{ verb: 'push', href: routes.workoutSession() }]);
+    await done();
+  });
+
+  it('starts a workout with no exercises, named as an empty workout, then opens it', async () => {
+    const useTab = () => ({ tab: useWorkoutTabPageLogic(), live: useActiveSession() });
+    const { result, done } = await renderWithLayer(HomeTestLayer, useTab, undefined);
+    await waitFor(() => expect(result.current.tab.state.isLoading).toBe(false));
+
+    await act(async () => result.current.tab.effects.startEmpty());
+
+    await waitFor(() => expect(routerFake.history).toEqual([{ verb: 'push', href: routes.workoutSession() }]));
+    expect(result.current.live.session?.routineName).toBe(tr('workoutTab.emptyWorkoutName'));
+    expect(result.current.live.session?.entries).toEqual([]);
+    expect(result.current.tab.state.resuming).toBe(true);
+    await done();
+  });
+
+  it('offers an empty workout, then a new routine, in the header menu', async () => {
+    const { result, done } = await renderTab();
+
+    expect(result.current.derived.startMenu.map(item => [item.label, item.disabled ?? false])).toEqual([
+      [tr('workoutTab.startEmpty'), false],
+      [tr('workout.newRoutine'), false],
+    ]);
+
+    await act(async () => result.current.derived.startMenu[1]?.onPress());
+
+    expect(routerFake.history).toEqual([{ verb: 'push', href: routes.newRoutine() }]);
+    await done();
+  });
+
+  it('turns off starting an empty workout while one runs, and keeps the new routine', async () => {
+    const { result, done } = await renderTab();
+    await act(async () => result.current.effects.startEmpty());
+    await waitFor(() => expect(result.current.state.resuming).toBe(true));
+
+    expect(result.current.derived.startMenu.map(item => item.disabled ?? false)).toEqual([true, false]);
+
+    await act(async () => result.current.effects.startEmpty());
 
     expect(routerFake.history).toEqual([{ verb: 'push', href: routes.workoutSession() }]);
     await done();

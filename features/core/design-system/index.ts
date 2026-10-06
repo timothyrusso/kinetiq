@@ -7,6 +7,7 @@ export { HeatmapCalendar, type HeatmapDay } from '@/features/core/design-system/
 export { LineChart, type LinePoint } from '@/features/core/design-system/charts/LineChart';
 export { ProgressRing } from '@/features/core/design-system/charts/ProgressRing';
 export { Button } from '@/features/core/design-system/controls/Button';
+export { ButtonPair, type ButtonPairItem } from '@/features/core/design-system/controls/ButtonPair';
 export { Chip } from '@/features/core/design-system/controls/Chip';
 export { ConfirmDialog } from '@/features/core/design-system/controls/ConfirmDialog';
 export {
