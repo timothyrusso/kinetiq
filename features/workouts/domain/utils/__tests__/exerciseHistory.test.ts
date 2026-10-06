@@ -1,5 +1,15 @@
-import { anActivity, anEntry, aSet, WORKOUT_TIME } from '@/features/workouts/__fixtures__/builders';
+import {
+  aDurationEntry,
+  aDurationSet,
+  anActivity,
+  anEntry,
+  aRepsOnlyEntry,
+  aRepsOnlySet,
+  aSet,
+  WORKOUT_TIME,
+} from '@/features/workouts/__fixtures__/builders';
 import { ActivityId } from '@/features/workouts/domain/schemas/ActivityId';
+import type { StrengthEntry } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 import { EMPTY_EXERCISE_HISTORY, summariseExerciseHistory } from '@/features/workouts/domain/utils/exerciseHistory';
 
 const DAY = 86_400_000;
@@ -68,5 +78,67 @@ describe('summariseExerciseHistory', () => {
     expect(history.sessions[0]).toMatchObject({ completedSets: 0, topWeightKg: 0, estimated1rmKg: null });
     expect(history.weightTrend).toEqual([]);
     expect(history.bestWeightKg).toBeNull();
+  });
+});
+
+/** A workout on `startedAt` with `entry` alone. */
+const workoutOn = (id: string, startedAt: number, entry: StrengthEntry) =>
+  anActivity({
+    id: ActivityId.make(id),
+    startedAt,
+    strength: { entries: [entry], totalVolumeKg: 0, totalSets: entry.sets.length, personalRecords: [] },
+  });
+
+describe('summariseExerciseHistory per tracking type', () => {
+  it('charts most reps per reps-only workout and keeps them out of the loaded bests', () => {
+    const pullups = (reps: number) =>
+      aRepsOnlyEntry({ exerciseId: 'ex:pullups', sets: [aRepsOnlySet({ reps }), aRepsOnlySet({ index: 1, reps: 4 })] });
+
+    const history = summariseExerciseHistory('ex:pullups', [
+      workoutOn('session-a', WORKOUT_TIME, pullups(8)),
+      workoutOn('session-b', WORKOUT_TIME + DAY, pullups(11)),
+    ]);
+
+    expect(history.repsTrend.map(point => point.reps)).toEqual([8, 11]);
+    expect(history.sessions[0]).toMatchObject({ trackingType: 'repsOnly', topReps: 11, volumeKg: 0, topWeightKg: 0 });
+    expect(history).toMatchObject({
+      weightTrend: [],
+      durationTrend: [],
+      mostReps: 11,
+      bestReps: null,
+      bestWeightKg: null,
+      bestEstimated1rmKg: null,
+      bestVolumeKg: null,
+      longestDurationSeconds: null,
+    });
+  });
+
+  it('charts the longest set per timed workout', () => {
+    const plank = (durationSeconds: number) =>
+      aDurationEntry({ sets: [aDurationSet({ durationSeconds }), aDurationSet({ index: 1, durationSeconds: 20 })] });
+
+    const history = summariseExerciseHistory('ex:plank', [
+      workoutOn('session-a', WORKOUT_TIME, plank(60)),
+      workoutOn('session-b', WORKOUT_TIME + DAY, plank(45)),
+    ]);
+
+    expect(history.durationTrend.map(point => point.durationSeconds)).toEqual([60, 45]);
+    expect(history.sessions[0]).toMatchObject({ trackingType: 'duration', topDurationSeconds: 45, topReps: 0 });
+    expect(history).toMatchObject({ longestDurationSeconds: 60, mostReps: null, bestReps: null, sessionsCount: 2 });
+  });
+
+  it('keeps each type to its own bests when one exercise was tracked two ways', () => {
+    const history = summariseExerciseHistory('ex:pullups', [
+      workoutOn(
+        'session-a',
+        WORKOUT_TIME,
+        anEntry({ exerciseId: 'ex:pullups', sets: [aSet({ reps: 6, weightKg: 20 })] }),
+      ),
+      workoutOn('session-b', WORKOUT_TIME + DAY, aRepsOnlyEntry({ sets: [aRepsOnlySet({ reps: 14 })] })),
+    ]);
+
+    expect(history).toMatchObject({ bestReps: 6, mostReps: 14, bestWeightKg: 20, bestVolumeKg: 120, sessionsCount: 2 });
+    expect(history.weightTrend.map(point => point.weightKg)).toEqual([20]);
+    expect(history.repsTrend.map(point => point.reps)).toEqual([14]);
   });
 });

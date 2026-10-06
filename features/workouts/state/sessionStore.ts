@@ -1,4 +1,5 @@
 import { createSelectors, createStore, setSessionInProgress } from '@/features/core/state';
+import type { TrackingType } from '@/features/exercises';
 import type { AppLifecycle } from '@/features/workouts/domain/entities/AppLifecycle';
 import type { SessionWrite } from '@/features/workouts/domain/entities/SessionWrite';
 import type { StrengthEntry } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
@@ -8,6 +9,7 @@ import {
   addExercise,
   addSet,
   bankElapsed,
+  changeTrackingType,
   clearRest,
   type EntryPatch,
   focusExercise,
@@ -70,6 +72,8 @@ interface SessionStoreState {
   readonly updateSet: (entryIndex: number, setIndex: number, patch: SetPatch, now: number) => void;
   readonly updateEntry: (entryIndex: number, patch: EntryPatch, now: number) => void;
   readonly addSet: (entryIndex: number, now: number) => void;
+  /** Changes what the exercise records; nothing changes once one of its sets is completed. */
+  readonly changeTrackingType: (entryIndex: number, type: TrackingType, now: number) => void;
   readonly removeSet: (entryIndex: number, setIndex: number, now: number) => void;
   readonly skipExercise: (entryIndex: number, now: number) => void;
   readonly removeExercise: (entryIndex: number, now: number) => void;
@@ -201,6 +205,9 @@ const sessionStore = createStore<SessionStoreState>((set, get) => {
     updateEntry: (entryIndex, patch, now) => transition(session => updateEntry(session, entryIndex, patch, now)),
 
     addSet: (entryIndex, now) => transition(session => addSet(session, entryIndex, now)),
+
+    changeTrackingType: (entryIndex, type, now) =>
+      transition(session => changeTrackingType(session, entryIndex, type, now)),
 
     removeSet: (entryIndex, setIndex, now) => transition(session => removeSet(session, entryIndex, setIndex, now)),
 

@@ -28,11 +28,8 @@ export { RoutineUsage } from '@/features/workouts/domain/services/RoutineUsage';
 /** How a workout from the Apple Watch goes into history. */
 export { WorkoutRecorder } from '@/features/workouts/domain/services/WorkoutRecorder';
 /** The derivations a watch workout is recorded with, the same as a phone session's. */
-export {
-  completedSetCount,
-  estimatedOneRepMax,
-  totalVolumeKg,
-} from '@/features/workouts/domain/utils/workoutMath';
+export { estimatedOneRepMax } from '@/features/workouts/domain/utils/oneRepMax';
+export { completedSetCount, totalVolumeKg } from '@/features/workouts/domain/utils/workoutMath';
 export {
   sessionLifecycle,
   useActiveSession,

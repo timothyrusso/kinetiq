@@ -32,7 +32,8 @@ describe('readInboxEntry', () => {
 
     expect(workout.totalSets).toBe(1);
     expect(workout.totalVolumeKg).toBe(400);
-    expect(workout.entries[0]?.sets.map(set => set.estimated1rm)).toEqual([93.5, null]);
+    const [entry] = workout.entries;
+    expect(entry?.trackingType === 'weightReps' ? entry.sets.map(set => set.estimated1rm) : []).toEqual([93.5, null]);
     expect(workout.entries[0]?.muscleGroup).toBeNull();
   });
 

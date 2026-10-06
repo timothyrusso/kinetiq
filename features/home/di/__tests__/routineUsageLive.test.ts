@@ -20,12 +20,31 @@ describe('RoutineUsageLive', () => {
         plannedItemIds: [item.id],
         entries: [
           {
+            trackingType: 'weightReps',
             exerciseId: item.exerciseId,
             exerciseName: item.exerciseName,
             muscleGroup: null,
             sets: [
-              { index: 0, reps: 10, weightKg: 70, completed: true, estimated1rm: null, rpe: 8, routineSetIndex: 0 },
-              { index: 1, reps: 8, weightKg: 60, completed: false, estimated1rm: null, rpe: null, routineSetIndex: 1 },
+              {
+                type: 'weightReps',
+                index: 0,
+                reps: 10,
+                weightKg: 70,
+                completed: true,
+                estimated1rm: null,
+                rpe: 8,
+                routineSetIndex: 0,
+              },
+              {
+                type: 'weightReps',
+                index: 1,
+                reps: 8,
+                weightKg: 60,
+                completed: false,
+                estimated1rm: null,
+                rpe: null,
+                routineSetIndex: 1,
+              },
             ],
             notes: null,
             restSeconds: 90,

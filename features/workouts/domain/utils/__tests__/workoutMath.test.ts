@@ -1,12 +1,22 @@
-import { anEntry, anOpenSet, anotherEntry, aSession, aSet } from '@/features/workouts/__fixtures__/builders';
+import {
+  aDurationEntry,
+  aDurationSet,
+  anEntry,
+  anOpenSet,
+  anotherEntry,
+  aRepsOnlyEntry,
+  aRepsOnlySet,
+  aSession,
+  aSet,
+} from '@/features/workouts/__fixtures__/builders';
+import { estimatedOneRepMax, withEstimated1rm } from '@/features/workouts/domain/utils/oneRepMax';
 import {
   completedSetCount,
-  estimatedOneRepMax,
   restRemaining,
   sessionProgress,
+  setVolumeKg,
   toCompletedWorkout,
   totalVolumeKg,
-  withEstimated1rm,
 } from '@/features/workouts/domain/utils/workoutMath';
 
 describe('estimatedOneRepMax', () => {
@@ -43,6 +53,19 @@ describe('the session totals', () => {
 
     expect(totalVolumeKg(entries)).toBe(1000);
     expect(completedSetCount(entries)).toBe(2);
+  });
+
+  it('count volume over the loaded sets only, and the completed sets of every type', () => {
+    const entries = [anEntry(), aRepsOnlyEntry(), aDurationEntry()];
+
+    expect(totalVolumeKg(entries)).toBe(1000);
+    expect(completedSetCount(entries)).toBe(6);
+  });
+
+  it('give a set volume only when it is loaded', () => {
+    expect(setVolumeKg(aSet())).toBe(500);
+    expect(setVolumeKg(aRepsOnlySet({ reps: 20 }))).toBe(0);
+    expect(setVolumeKg(aDurationSet({ durationSeconds: 600 }))).toBe(0);
   });
 
   it('report progress as sets done over sets planned', () => {
@@ -88,5 +111,15 @@ describe('toCompletedWorkout', () => {
 
     expect(workout.entries).toEqual([anEntry({ sets: [aSet()] })]);
     expect(JSON.stringify(workout.entries)).not.toContain('routine');
+  });
+
+  it('records each entry with its tracking type and its sets tagged the same', () => {
+    const timed = aDurationEntry({ routineItemId: 'rit_plank', sets: [aDurationSet({ routineSetIndex: 0 })] });
+
+    const workout = toCompletedWorkout(aSession({ entries: [aRepsOnlyEntry(), timed] }), 5_000);
+
+    expect(workout.entries).toEqual([aRepsOnlyEntry(), aDurationEntry({ sets: [aDurationSet()] })]);
+    expect(workout.totalVolumeKg).toBe(0);
+    expect(workout.totalSets).toBe(3);
   });
 });

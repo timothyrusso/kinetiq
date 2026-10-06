@@ -37,13 +37,13 @@ export const SetRow = memo(function SetRow(props: SetRowInput & { theme: Theme }
       <Pressable
         onPress={effects.open}
         accessibilityRole="button"
-        accessibilityLabel={t('setRow.setRepsAt', { n: setIndex + 1, reps: set.reps, weight: derived.weightText })}
+        accessibilityLabel={t('setRow.setRepsAt', { n: setIndex + 1, reps: derived.reps, weight: derived.weightText })}
         accessibilityHint={t('setRow.opensEditor')}
         style={derived.valueStyle}
       >
         <MetricLabel label={t('setRow.reps')} />
         <Txt variant="subhead" weight="700" tone={set.completed ? 'muted' : 'default'} style={styles.numeral}>
-          {set.reps}
+          {derived.reps}
         </Txt>
       </Pressable>
 
@@ -56,7 +56,7 @@ export const SetRow = memo(function SetRow(props: SetRowInput & { theme: Theme }
       >
         <MetricLabel label={t('setRow.weightIn', { unit: weightUnit(units) })} />
         <Txt variant="subhead" weight="700" tone={set.completed ? 'muted' : 'default'} style={styles.numeral}>
-          {set.weightKg === 0 ? t('setRow.bodyweightShort') : trimNumber(set.weightKg)}
+          {derived.weightKg === 0 ? t('setRow.bodyweightShort') : trimNumber(derived.weightKg)}
         </Txt>
       </Pressable>
 

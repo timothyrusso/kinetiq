@@ -81,24 +81,28 @@ const layer = () =>
 
 describe('rows written by a v9 build', () => {
   itEffect(
-    'read a legacy workout with the fields it lacks filled and only the unreadable entry dropped',
+    'read a legacy workout as weight and reps, with the fields it lacks filled and only the unreadable entry dropped',
     Effect.gen(function* () {
       const workout = yield* (yield* ActivityRepository).byId(ActivityId.make('session-legacy'));
 
       expect(workout?.strength?.entries).toEqual([
         {
+          trackingType: 'weightReps',
           exerciseId: 'ex:barbell-bench-press',
           exerciseName: 'Bench Press',
           muscleGroup: null,
-          sets: [{ index: 0, reps: 8, weightKg: 60, completed: false, estimated1rm: null, rpe: null }],
+          sets: [
+            { type: 'weightReps', index: 0, reps: 8, weightKg: 60, completed: false, estimated1rm: null, rpe: null },
+          ],
           notes: null,
           restSeconds: 90,
         },
         {
+          trackingType: 'weightReps',
           exerciseId: 'ex:barbell-squat',
           exerciseName: 'Overhead Press',
           muscleGroup: 'Shoulders',
-          sets: [{ index: 0, reps: 10, weightKg: 30, completed: true, estimated1rm: 40, rpe: 8 }],
+          sets: [{ type: 'weightReps', index: 0, reps: 10, weightKg: 30, completed: true, estimated1rm: 40, rpe: 8 }],
           notes: 'Strict',
           restSeconds: 120,
         },

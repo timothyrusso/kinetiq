@@ -7,9 +7,10 @@ import {
   weightUnit,
 } from '@/features/core/utils';
 import { ITEM_BOUNDS } from '@/features/watch-bridge';
-import type { StrengthEntry } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
+import type { StrengthEntry, StrengthSet } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 import type { EntryPatch, SetPatch } from '@/features/workouts/domain/utils/sessionTransitions';
 import { entryMeta } from '@/features/workouts/mappers/entryMeta';
+import { weightRepsView } from '@/features/workouts/mappers/weightRepsView';
 
 /** One set row as the editor draws it: weight already in the user's unit, no RPE as 0. */
 export type ExerciseSetRow = {
@@ -42,11 +43,11 @@ export function useExerciseEditorFormLogic(entry: StrengthEntry, units: UnitSyst
   const { sets } = entry;
   const rows = useMemo<ExerciseSetRow[]>(
     () =>
-      sets.map(set => ({
+      sets.map((set: StrengthSet) => ({
         key: `set-${set.index}`,
         index: set.index,
-        reps: set.reps,
-        weight: weightDisplayValue(set.weightKg, units, step),
+        reps: weightRepsView(set).reps,
+        weight: weightDisplayValue(weightRepsView(set).weightKg, units, step),
         rpe: set.rpe ?? 0,
         completed: set.completed,
       })),

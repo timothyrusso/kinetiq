@@ -79,4 +79,26 @@ describe('RecordRepositoryLive', () => {
     }),
     layer(),
   );
+
+  itEffect(
+    'keeps the reps-only and timed bests of one exercise beside its loaded ones, each by its kind',
+    Effect.gen(function* () {
+      const repository = yield* RecordRepository;
+
+      yield* repository.upsertBests([
+        aRecord(),
+        aRecord({ kind: 'mostReps', value: 14 }),
+        aRecord({ kind: 'longestDuration', value: 90 }),
+      ]);
+      yield* repository.upsertBests([aRecord({ kind: 'longestDuration', value: 120, achievedAt: WORKOUT_TIME + 1 })]);
+
+      const records = yield* repository.forExercise('ex:barbell-bench-press');
+      expect(records.map(record => [record.kind, record.value])).toEqual([
+        ['est1rm', 116.5],
+        ['longestDuration', 120],
+        ['mostReps', 14],
+      ]);
+    }),
+    layer(),
+  );
 });

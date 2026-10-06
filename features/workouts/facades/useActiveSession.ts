@@ -1,3 +1,4 @@
+import type { TrackingType } from '@/features/exercises';
 import type { AppLifecycle } from '@/features/workouts/domain/entities/AppLifecycle';
 import type { StrengthEntry } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 import type { WorkoutSession } from '@/features/workouts/domain/schemas/WorkoutSessionSchema';
@@ -25,6 +26,9 @@ export const sessionActions = {
     store().updateSet(entryIndex, setIndex, patch, Date.now()),
   updateEntry: (entryIndex: number, patch: EntryPatch) => store().updateEntry(entryIndex, patch, Date.now()),
   addSet: (entryIndex: number) => store().addSet(entryIndex, Date.now()),
+  // NOTE: does nothing once a set of the exercise is completed: the type is locked from then on.
+  changeTrackingType: (entryIndex: number, type: TrackingType) =>
+    store().changeTrackingType(entryIndex, type, Date.now()),
   removeSet: (entryIndex: number, setIndex: number) => store().removeSet(entryIndex, setIndex, Date.now()),
   skipExercise: (entryIndex: number) => store().skipExercise(entryIndex, Date.now()),
   removeExercise: (entryIndex: number) => store().removeExercise(entryIndex, Date.now()),

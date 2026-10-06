@@ -38,21 +38,23 @@ describe('planFromRoutine', () => {
       name: 'Push Day',
       items: [
         {
+          trackingType: 'weightReps',
           itemId: 'rit_bench',
           exerciseId: 'ex:barbell-bench-press',
           exerciseName: 'Bench Press',
           sets: [
-            { reps: 10, weightKg: 60, targetRpe: null },
-            { reps: 8, weightKg: 65, targetRpe: 8 },
+            { type: 'weightReps', reps: 10, weightKg: 60, targetRpe: null },
+            { type: 'weightReps', reps: 8, weightKg: 65, targetRpe: 8 },
           ],
           restSeconds: 90,
           notes: null,
         },
         {
+          trackingType: 'weightReps',
           itemId: 'rit_press',
           exerciseId: 'ex:barbell-squat',
           exerciseName: 'Overhead Press',
-          sets: [{ reps: 6, weightKg: 40, targetRpe: 9 }],
+          sets: [{ type: 'weightReps', reps: 6, weightKg: 40, targetRpe: 9 }],
           restSeconds: 60,
           notes: 'Brace first',
         },

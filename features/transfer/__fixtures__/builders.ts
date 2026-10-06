@@ -8,15 +8,19 @@ import { ActivityId } from '@/features/workouts';
 export const EXPORTED_AT = Date.UTC(2026, 8, 25, 10, 0, 0);
 
 /** Bench press: two sets of five at 100 kg, the second not done, resting 120 s. */
-const aBenchEntry = (overrides: Partial<StrengthEntry> = {}): StrengthEntry => ({
+/** An entry that records weight and reps. */
+type WeightRepsEntry = Extract<StrengthEntry, { readonly trackingType: 'weightReps' }>;
+
+const aBenchEntry = (overrides: Partial<WeightRepsEntry> = {}): WeightRepsEntry => ({
+  trackingType: 'weightReps',
   exerciseId: 'ex:barbell-bench-press-medium-grip',
   exerciseName: 'Bench Press',
   muscleGroup: 'Chest',
   restSeconds: 120,
   notes: null,
   sets: [
-    { index: 0, reps: 5, weightKg: 100, completed: true, estimated1rm: 116.66666666666667, rpe: 8 },
-    { index: 1, reps: 5, weightKg: 100, completed: false, estimated1rm: null, rpe: null },
+    { type: 'weightReps', index: 0, reps: 5, weightKg: 100, completed: true, estimated1rm: 116.66666666666667, rpe: 8 },
+    { type: 'weightReps', index: 1, reps: 5, weightKg: 100, completed: false, estimated1rm: null, rpe: null },
   ],
   ...overrides,
 });
@@ -56,8 +60,8 @@ export const someActivities = (): Activity[] => [
           restSeconds: 180,
           notes: 'Belt on top sets',
           sets: [
-            { index: 0, reps: 3, weightKg: 142.5, completed: true, estimated1rm: 156.75, rpe: 9.5 },
-            { index: 1, reps: 8, weightKg: 0, completed: true, estimated1rm: null, rpe: null },
+            { type: 'weightReps', index: 0, reps: 3, weightKg: 142.5, completed: true, estimated1rm: 156.75, rpe: 9.5 },
+            { type: 'weightReps', index: 1, reps: 8, weightKg: 0, completed: true, estimated1rm: null, rpe: null },
           ],
         }),
         aBenchEntry({
@@ -65,7 +69,17 @@ export const someActivities = (): Activity[] => [
           exerciseName: 'Hip thrust',
           muscleGroup: null,
           restSeconds: 90,
-          sets: [{ index: 0, reps: 12, weightKg: 60.25, completed: true, estimated1rm: 84.35, rpe: null }],
+          sets: [
+            {
+              type: 'weightReps',
+              index: 0,
+              reps: 12,
+              weightKg: 60.25,
+              completed: true,
+              estimated1rm: 84.35,
+              rpe: null,
+            },
+          ],
         }),
       ],
       totalVolumeKg: 1150,

@@ -4,7 +4,7 @@ import { type MetaItem, type Tag, useStyles } from '@/features/core/design-syste
 import { type TKey, useT } from '@/features/core/translations';
 import { formatWeight, joinMiddleDot, trimNumber, type UnitSystem } from '@/features/core/utils';
 import type { StrengthEntry, StrengthSet } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
-import { estimatedOneRepMax } from '@/features/workouts/domain/utils/workoutMath';
+import { weightRepsView } from '@/features/workouts/mappers/weightRepsView';
 import { createStyles } from '@/features/workouts/ui/components/ActivityExerciseCard/ActivityExerciseCard.style';
 
 /**
@@ -16,7 +16,8 @@ function heaviestCompletedSet(sets: readonly StrengthSet[]): StrengthSet | null 
   let bestMax = -1;
   for (const set of sets) {
     if (!set.completed) continue;
-    const max = set.estimated1rm ?? estimatedOneRepMax(set.weightKg, set.reps) ?? set.weightKg;
+    const view = weightRepsView(set);
+    const max = view.estimated1rm ?? view.weightKg;
     if (max > bestMax) {
       best = set;
       bestMax = max;
@@ -31,7 +32,7 @@ function heaviestCompletedSet(sets: readonly StrengthSet[]): StrengthSet | null 
  */
 function oneRepMaxLabel(set: StrengthSet, units: UnitSystem): string {
   if (!set.completed) return '-';
-  const max = set.estimated1rm ?? estimatedOneRepMax(set.weightKg, set.reps);
+  const max = weightRepsView(set).estimated1rm;
   return max === null ? '-' : formatWeight(max, units);
 }
 
@@ -51,7 +52,10 @@ export function useActivityExerciseCardLogic(
 ) {
   const { t } = useT();
   const styles = useStyles(createStyles);
-  const top = useMemo(() => heaviestCompletedSet(entry.sets), [entry.sets]);
+  const top = useMemo(() => {
+    const heaviest = heaviestCompletedSet(entry.sets);
+    return heaviest === null ? null : weightRepsView(heaviest);
+  }, [entry.sets]);
   const done = entry.sets.filter(set => set.completed).length;
   const planned = entry.sets.length;
   const meta = useMemo<MetaItem[]>(
@@ -77,22 +81,23 @@ export function useActivityExerciseCardLogic(
   );
   const sets = useMemo(
     () =>
-      entry.sets.map((set, index) => {
+      entry.sets.map((set: StrengthSet, index) => {
+        const { reps, weightKg } = weightRepsView(set);
         const noted = notedRpe(set);
         const rpe = noted === null ? '' : trimNumber(noted, 1);
         return {
           key: `${set.index}-${index}`,
           number: index + 1,
           completed: set.completed,
-          weight: set.weightKg === 0 ? t('activity.bodyweightShort') : formatWeight(set.weightKg, units),
-          reps: set.reps,
+          weight: weightKg === 0 ? t('activity.bodyweightShort') : formatWeight(weightKg, units),
+          reps,
           rpe,
           oneRepMax: oneRepMaxLabel(set, units),
           accessibilityLabel: set.completed
             ? joinMiddleDot([
                 t('activity.setNumber', { n: index + 1 }),
-                set.weightKg === 0 ? t('activity.bodyweight') : formatWeight(set.weightKg, units),
-                `${set.reps} ${t('activity.repWord', { count: set.reps })}`,
+                weightKg === 0 ? t('activity.bodyweight') : formatWeight(weightKg, units),
+                `${reps} ${t('activity.repWord', { count: reps })}`,
                 ...(rpe === '' ? [] : [t('activity.rpeValue', { value: rpe })]),
               ])
             : t('activity.setNotDone', { n: index + 1 }),

@@ -5,7 +5,10 @@ import { applyWorkoutToRoutine } from '@/features/home/useCases/applyWorkoutToRo
 import { type Routine, RoutineId, type RoutineItem, RoutineRepository, type RoutineSet } from '@/features/routines';
 import type { RoutineUpdate, StrengthEntry } from '@/features/workouts';
 
-type WorkoutSet = StrengthEntry['sets'][number];
+/** The workouts written back here record weight and reps. */
+type Entry = Extract<StrengthEntry, { readonly trackingType: 'weightReps' }>;
+
+type WorkoutSet = Entry['sets'][number];
 
 const PUSH = RoutineId.make('rtn_push');
 
@@ -47,6 +50,7 @@ const set = (
   index: number,
   values: { reps: number; weightKg: number; rpe?: number | null; completed?: boolean; routineSetIndex?: number },
 ): WorkoutSet => ({
+  type: 'weightReps',
   index,
   reps: values.reps,
   weightKg: values.weightKg,
@@ -57,7 +61,8 @@ const set = (
 });
 
 /** The entry a routine item opens with, every set still open on its row's values. */
-const openedFrom = (item: RoutineItem): StrengthEntry => ({
+const openedFrom = (item: RoutineItem): Entry => ({
+  trackingType: 'weightReps',
   exerciseId: item.exerciseId,
   exerciseName: item.exerciseName,
   muscleGroup: null,
@@ -75,7 +80,7 @@ const openedFrom = (item: RoutineItem): StrengthEntry => ({
   routineItemId: item.id,
 });
 
-const withSets = (entry: StrengthEntry, sets: readonly WorkoutSet[]): StrengthEntry => ({ ...entry, sets });
+const withSets = (entry: Entry, sets: readonly WorkoutSet[]): Entry => ({ ...entry, sets });
 
 const updateOf = (entries: readonly StrengthEntry[], plannedItemIds = ['rit_bench', 'rit_press', 'rit_dips']) => {
   const update: RoutineUpdate = { routineId: PUSH, plannedItemIds, entries };
@@ -205,7 +210,8 @@ describe('applyWorkoutToRoutine', () => {
   itEffect(
     'adds an exercise added during the workout with its done sets, its rest and no note, and not one never done',
     Effect.gen(function* () {
-      const flyes: StrengthEntry = {
+      const flyes: Entry = {
+        trackingType: 'weightReps',
         exerciseId: 'ex:incline-bench-press',
         exerciseName: 'Cable Flyes',
         muscleGroup: null,
@@ -217,7 +223,7 @@ describe('applyWorkoutToRoutine', () => {
         notes: 'Squeeze',
         restSeconds: 75,
       };
-      const curls: StrengthEntry = {
+      const curls: Entry = {
         ...flyes,
         exerciseId: 'ex:overhead-press',
         exerciseName: 'Curls',
@@ -323,7 +329,8 @@ describe('applyWorkoutToRoutine', () => {
   itEffect(
     'writes nothing when the routine’s exercises were all removed and only an undone one added',
     Effect.gen(function* () {
-      const flyes: StrengthEntry = {
+      const flyes: Entry = {
+        trackingType: 'weightReps',
         exerciseId: 'ex:incline-bench-press',
         exerciseName: 'Cable Flyes',
         muscleGroup: null,

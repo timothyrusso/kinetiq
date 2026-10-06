@@ -1,13 +1,36 @@
-import type { PreviousLift } from '@/features/workouts/domain/entities/PreviousLift';
+import { sum } from '@/features/core/utils';
+import type { PreviousLift, PreviousSet } from '@/features/workouts/domain/entities/PreviousLift';
 import type { Activity } from '@/features/workouts/domain/schemas/ActivitySchema';
-import { estimatedOneRepMax } from '@/features/workouts/domain/utils/workoutMath';
+import type { StrengthSet } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
+import { setEstimate } from '@/features/workouts/domain/utils/oneRepMax';
+import { setVolumeKg } from '@/features/workouts/domain/utils/workoutMath';
+
+/** A done set as last time shows it: the values its type records. */
+function previousSet(set: StrengthSet): PreviousSet {
+  switch (set.type) {
+    case 'weightReps':
+      return { type: set.type, reps: set.reps, weightKg: set.weightKg, estimated1rm: setEstimate(set) };
+    case 'repsOnly':
+      return { type: set.type, reps: set.reps };
+    case 'duration':
+      return { type: set.type, durationSeconds: set.durationSeconds };
+  }
+}
+
+/** The best estimate among `sets`, or null when no loaded set has one. */
+function bestEstimate(sets: readonly PreviousSet[]): number | null {
+  const estimates = sets.flatMap(set =>
+    set.type === 'weightReps' && set.estimated1rm !== null ? [set.estimated1rm] : [],
+  );
+  return estimates.length === 0 ? null : Math.max(...estimates);
+}
 
 /**
  * The last time each wanted exercise was trained, from `history` newest first: the first workout
- * with a ticked set of it is the last time. A set counts only when it was ticked, as in the
- * history: a finished workout keeps its un-ticked planned sets, and those were never lifted. An
- * empty `wanted` indexes every exercise; a full `wanted` stops the scan as soon as each has been
- * found.
+ * with a ticked set of it is the last time, whatever type it was tracked as then. A set counts
+ * only when it was ticked, as in the history: a finished workout keeps its un-ticked planned
+ * sets, and those were never done. An empty `wanted` indexes every exercise; a full `wanted`
+ * stops the scan as soon as each has been found.
  */
 export function indexPreviousLifts(
   history: readonly Activity[],
@@ -18,22 +41,16 @@ export function indexPreviousLifts(
     for (const entry of activity.strength?.entries ?? []) {
       if (wanted.size > 0 && !wanted.has(entry.exerciseId)) continue;
       if (byExercise.has(entry.exerciseId)) continue;
-      const done = entry.sets.filter(set => set.completed);
+      const done: StrengthSet[] = entry.sets.filter(set => set.completed);
       if (done.length === 0) continue;
-      const best = done.reduce<number | null>((acc, set) => {
-        const oneRm = set.estimated1rm ?? estimatedOneRepMax(set.weightKg, set.reps);
-        return oneRm === null ? acc : acc === null || oneRm > acc ? oneRm : acc;
-      }, null);
+      const sets = done.map(previousSet);
       byExercise.set(entry.exerciseId, {
         exerciseId: entry.exerciseId,
         exerciseName: entry.exerciseName,
-        sets: done.map(set => ({
-          reps: set.reps,
-          weightKg: set.weightKg,
-          estimated1rm: set.estimated1rm ?? estimatedOneRepMax(set.weightKg, set.reps),
-        })),
-        bestEstimated1rm: best,
-        totalVolumeKg: done.reduce((acc, set) => acc + set.reps * set.weightKg, 0),
+        trackingType: entry.trackingType,
+        sets,
+        bestEstimated1rm: bestEstimate(sets),
+        totalVolumeKg: sum(done.map(setVolumeKg)),
         performedAt: activity.startedAt,
       });
     }

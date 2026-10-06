@@ -67,11 +67,13 @@ function aPerformance(overrides: Partial<ExercisePerformance> = {}): ExercisePer
     activityId: 'session-mbz1a2b3',
     performedAt: WORKOUT_TIME,
     exerciseName: 'Bench Press',
+    trackingType: 'weightReps',
     volumeKg: 1500,
     sets: 3,
     completedSets: 3,
     topWeightKg: 100,
     topReps: 5,
+    topDurationSeconds: 0,
     estimated1rmKg: 116.5,
     ...overrides,
   };

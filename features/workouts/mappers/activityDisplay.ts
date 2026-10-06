@@ -14,7 +14,8 @@ export interface ActivityDisplay {
 
 /**
  * A workout in the user's units. A lift leads with volume, the only number that scales with
- * effort; a workout with no weighted set falls back to its duration rather than "0 kg". The list
+ * effort; a workout with no weighted set (bodyweight, reps-only or timed work, which carry no
+ * volume) falls back to its duration rather than "0 kg". The sets count every type. The list
  * card and the detail share this, so they cannot disagree about rounding.
  */
 export function activityDisplay(activity: Activity, units: UnitSystem): ActivityDisplay {

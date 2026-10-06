@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react-native';
 import { resetAllStores } from '@/features/core/state';
-import { anEntry, aSession } from '@/features/workouts/__fixtures__/builders';
+import { anEntry, aSession, loadedSets } from '@/features/workouts/__fixtures__/builders';
 import {
   sessionActions,
   sessionLifecycle,
@@ -61,7 +61,25 @@ describe('sessionActions', () => {
   it('changes a set', () => {
     sessionActions.updateSet(0, 0, { reps: 3 });
 
-    expect(live()?.entries[0]?.sets[0]?.reps).toBe(3);
+    expect(loadedSets(live()?.entries[0])[0]?.reps).toBe(3);
+  });
+
+  it('changes what an exercise with nothing done records, and queues the write', () => {
+    const writes = useSessionStore.getState().writes;
+
+    sessionActions.changeTrackingType(1, 'duration');
+
+    expect(live()?.entries[1]?.trackingType).toBe('duration');
+    expect(useSessionStore.getState().writes).toBe(writes + 1);
+  });
+
+  it('keeps the type of an exercise with a completed set, and writes nothing', () => {
+    const writes = useSessionStore.getState().writes;
+
+    sessionActions.changeTrackingType(0, 'repsOnly');
+
+    expect(live()?.entries[0]?.trackingType).toBe('weightReps');
+    expect(useSessionStore.getState().writes).toBe(writes);
   });
 
   it('adds a set like the last one', () => {

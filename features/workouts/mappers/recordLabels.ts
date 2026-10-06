@@ -1,6 +1,6 @@
 import type { TKey } from '@/features/core/translations';
 import { tr } from '@/features/core/translations';
-import { formatWeight, type UnitSystem } from '@/features/core/utils';
+import { formatTimer, formatWeight, type UnitSystem } from '@/features/core/utils';
 import type { PersonalRecordKind } from '@/features/workouts/domain/schemas/PersonalRecordSchema';
 
 /**
@@ -12,9 +12,20 @@ export const RECORD_LABEL: Record<PersonalRecordKind, TKey> = {
   est1rm: 'records.est1rm',
   volume: 'records.volume',
   maxReps: 'records.maxReps',
+  mostReps: 'records.mostReps',
+  longestDuration: 'records.longestDuration',
 };
 
-/** A record's value in its own unit: a rep record is reps, every other one weight. */
+/** A record's value in its own unit: reps for a rep record, `m:ss` for a timed one, else weight. */
 export function formatRecordValue(kind: PersonalRecordKind, value: number, units: UnitSystem): string {
-  return kind === 'maxReps' ? tr('details.repsValue', { reps: Math.round(value) }) : formatWeight(value, units);
+  switch (kind) {
+    case 'maxReps':
+    case 'mostReps':
+      return tr('details.repsValue', { reps: Math.round(value) });
+    case 'longestDuration':
+      return formatTimer(value);
+    case 'est1rm':
+    case 'volume':
+      return formatWeight(value, units);
+  }
 }
