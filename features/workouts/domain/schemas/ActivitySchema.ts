@@ -9,7 +9,7 @@ const ActivityKindSchema = Schema.Literal('lift');
 /** A recorded workout's sets and the totals derived from them. */
 const StrengthMetricsSchema = Schema.Struct({
   entries: Schema.Array(StrengthEntrySchema),
-  // NOTE: sets times reps times weight over the completed sets, kilograms.
+  // NOTE: reps times weight over the completed loaded sets, kilograms; other types add none.
   totalVolumeKg: Schema.Number,
   totalSets: Schema.Number,
   personalRecords: Schema.Array(PersonalRecordSchema),

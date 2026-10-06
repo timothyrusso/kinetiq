@@ -54,7 +54,13 @@ describe('useRoutineDetailPageLogic', () => {
     await waitFor(() => expect(result.current.live.session).not.toBeNull());
     const sets = result.current.live.session?.entries[0]?.sets ?? [];
     expect(
-      sets.map(({ index, reps, weightKg, rpe, completed }) => ({ index, reps, weightKg, rpe, completed })),
+      sets.map(set => ({
+        index: set.index,
+        reps: set.type === 'duration' ? null : set.reps,
+        weightKg: set.type === 'weightReps' ? set.weightKg : null,
+        rpe: set.rpe,
+        completed: set.completed,
+      })),
     ).toEqual([
       { index: 0, reps: 12, weightKg: 50, rpe: null, completed: false },
       { index: 1, reps: 10, weightKg: 55, rpe: 7, completed: false },

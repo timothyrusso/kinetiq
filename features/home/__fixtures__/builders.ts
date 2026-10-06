@@ -43,13 +43,17 @@ export const aRoutineItem = (overrides: Partial<RoutineItem> = {}): RoutineItem 
 });
 
 /** One bench press entry of a workout: two sets of five at 100 kg, one of them done. */
-const anEntry = (overrides: Partial<StrengthEntry> = {}): StrengthEntry => ({
+/** An entry that records weight and reps. */
+type WeightRepsEntry = Extract<StrengthEntry, { readonly trackingType: 'weightReps' }>;
+
+const anEntry = (overrides: Partial<WeightRepsEntry> = {}): WeightRepsEntry => ({
+  trackingType: 'weightReps',
   exerciseId: 'ex:barbell-bench-press',
   exerciseName: 'Bench Press',
   muscleGroup: null,
   sets: [
-    { index: 0, reps: 5, weightKg: 100, completed: true, estimated1rm: 116.5, rpe: null },
-    { index: 1, reps: 5, weightKg: 100, completed: false, estimated1rm: null, rpe: null },
+    { type: 'weightReps', index: 0, reps: 5, weightKg: 100, completed: true, estimated1rm: 116.5, rpe: null },
+    { type: 'weightReps', index: 1, reps: 5, weightKg: 100, completed: false, estimated1rm: null, rpe: null },
   ],
   notes: null,
   restSeconds: 90,
@@ -62,9 +66,10 @@ export const aPlan = (overrides: Partial<SessionPlan> = {}): SessionPlan => ({
   name: 'Push Day',
   items: [
     {
+      trackingType: 'weightReps',
       exerciseId: 'ex:barbell-bench-press',
       exerciseName: 'Bench Press',
-      sets: [0, 1, 2].map(() => ({ reps: 8, weightKg: 60, targetRpe: null })),
+      sets: [0, 1, 2].map(() => ({ type: 'weightReps' as const, reps: 8, weightKg: 60, targetRpe: null })),
       restSeconds: 90,
       notes: null,
     },

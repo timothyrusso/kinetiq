@@ -65,7 +65,10 @@ function previousFor(
   locale: string,
 ): { previousLabel: string | null; previousWhen: string | null } {
   if (lift === undefined) return { previousLabel: isLoading ? null : t('session.noPrevious'), previousWhen: null };
-  const heaviest = lift.sets.reduce<(typeof lift.sets)[number] | null>(
+  // HACK: reads the loaded sets alone, so a reps-only or timed last time reads as no load,
+  // until the phone UI child (#192) says each type's last time in its own units.
+  const loaded = lift.sets.flatMap(set => (set.type === 'weightReps' ? [set] : []));
+  const heaviest = loaded.reduce<(typeof loaded)[number] | null>(
     (best, set) => (best === null || set.weightKg > best.weightKg ? set : best),
     null,
   );

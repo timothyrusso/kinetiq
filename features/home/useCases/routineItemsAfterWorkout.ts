@@ -6,7 +6,11 @@ type WorkoutSet = StrengthEntry['sets'][number];
 /** A done set as a routine row: its reps, load and RPE, which becomes the row's target RPE. */
 function rowFromSet(set: WorkoutSet): Omit<RoutineSet, 'index'> {
   const rpe = set.rpe !== null && set.rpe >= 0 && set.rpe <= 10 ? set.rpe : null;
-  return { reps: Math.max(0, Math.round(set.reps)), weightKg: set.weightKg, targetRpe: rpe };
+  // HACK: a routine row holds weight and reps only until it carries its tracking type (#191): a
+  // reps-only set writes back at bodyweight and a timed one as 0 reps at bodyweight.
+  const reps = set.type === 'duration' ? 0 : set.reps;
+  const weightKg = set.type === 'weightReps' ? set.weightKg : 0;
+  return { reps: Math.max(0, Math.round(reps)), weightKg, targetRpe: rpe };
 }
 
 /**

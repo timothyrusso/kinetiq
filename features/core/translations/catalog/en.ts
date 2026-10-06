@@ -258,6 +258,8 @@ export const en = {
     est1rm: 'Heaviest single estimated',
     volume: 'Most volume',
     maxReps: 'Most reps in one set',
+    mostReps: 'Most reps in one set (no load)',
+    longestDuration: 'Longest set',
   },
 
   about: {

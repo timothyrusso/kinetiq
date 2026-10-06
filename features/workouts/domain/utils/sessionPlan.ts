@@ -4,39 +4,58 @@ import type {
   SessionPlanItem,
   SessionPlanSet,
 } from '@/features/workouts/domain/schemas/SessionPlanSchema';
-import type { StrengthEntry } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
+import type { StrengthEntry, StrengthSet } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 import type { WorkoutSession } from '@/features/workouts/domain/schemas/WorkoutSessionSchema';
-import { withEstimated1rm } from '@/features/workouts/domain/utils/workoutMath';
+import { withEstimated1rm } from '@/features/workouts/domain/utils/oneRepMax';
+import { entryOf, newSet } from '@/features/workouts/domain/utils/trackingSets';
 
-/** The set an item with no planned sets opens with: 8 reps at bodyweight. */
-const FALLBACK_SET: SessionPlanSet = { reps: 8, weightKg: 0, targetRpe: null };
+/** The open set a planned set becomes at `index`: its targets, and its target RPE as the set's RPE. */
+function setFromPlan(planned: SessionPlanSet, index: number): StrengthSet {
+  const base = { index, completed: false, rpe: planned.targetRpe };
+  switch (planned.type) {
+    case 'weightReps':
+      return withEstimated1rm({
+        ...base,
+        type: planned.type,
+        reps: planned.reps,
+        weightKg: planned.weightKg,
+        estimated1rm: null,
+      });
+    case 'repsOnly':
+      return { ...base, type: planned.type, reps: planned.reps };
+    case 'duration':
+      return { ...base, type: planned.type, durationSeconds: planned.durationSeconds };
+  }
+}
 
 /**
- * The empty entry an item opens with: one open set per planned set, each on its own reps, load
- * and target RPE, so the set holds what the routine displayed. An item with no planned sets
- * opens with one. An item of a routine marks the entry with the item and each set with its row,
- * so a finish can write the workout back into them; the fallback set has no row.
+ * The empty entry an item opens with: one open set per planned set, each on its own targets, so
+ * the set holds what the routine displayed. An item with no planned sets opens with one, on its
+ * type's defaults (8 reps at bodyweight, 8 reps, or 30 s). An item of a routine marks the entry
+ * with the item and each set with its row, so a finish can write the workout back into them; the
+ * fallback set has no row.
  */
 export function entryFromPlanItem(item: SessionPlanItem): StrengthEntry {
-  const planned = item.sets.length > 0 ? item.sets : [FALLBACK_SET];
   const fromRoutine = item.itemId !== undefined && item.sets.length > 0;
-  return {
-    exerciseId: item.exerciseId,
-    exerciseName: item.exerciseName,
-    muscleGroup: null,
-    restSeconds: item.restSeconds,
-    notes: item.notes,
-    sets: planned.map((set, index) => ({
-      index,
-      reps: set.reps,
-      weightKg: set.weightKg,
-      completed: false,
-      estimated1rm: null,
-      rpe: set.targetRpe,
-      ...(fromRoutine ? { routineSetIndex: index } : {}),
-    })),
-    ...(item.itemId !== undefined ? { routineItemId: item.itemId } : {}),
-  };
+  const sets: StrengthSet[] =
+    item.sets.length > 0
+      ? item.sets.map((planned, index) => ({
+          ...setFromPlan(planned, index),
+          ...(fromRoutine ? { routineSetIndex: index } : {}),
+        }))
+      : [newSet(item.trackingType, 0)];
+  return entryOf(
+    {
+      exerciseId: item.exerciseId,
+      exerciseName: item.exerciseName,
+      muscleGroup: null,
+      restSeconds: item.restSeconds,
+      notes: item.notes,
+      ...(item.itemId !== undefined ? { routineItemId: item.itemId } : {}),
+    },
+    item.trackingType,
+    sets,
+  );
 }
 
 /**
@@ -64,10 +83,7 @@ export function sessionFromPlan(plan: SessionPlan, now: number): WorkoutSession 
     startedAt: now,
     elapsedSeconds: 0,
     status: 'active',
-    entries: plan.items.map(item => {
-      const entry = entryFromPlanItem(item);
-      return { ...entry, sets: entry.sets.map(withEstimated1rm) };
-    }),
+    entries: plan.items.map(entryFromPlanItem),
     activeIndex: 0,
     restEndsAt: null,
     restDurationSeconds: null,

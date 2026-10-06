@@ -1,12 +1,51 @@
 import type { Activity } from '@/features/workouts/domain/schemas/ActivitySchema';
-import type { PersonalRecord } from '@/features/workouts/domain/schemas/PersonalRecordSchema';
+import type { PersonalRecord, PersonalRecordKind } from '@/features/workouts/domain/schemas/PersonalRecordSchema';
 import type { StrengthEntry } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
-import { estimatedOneRepMax } from '@/features/workouts/domain/utils/workoutMath';
+import { setEstimate } from '@/features/workouts/domain/utils/oneRepMax';
+
+/** A loaded set needs this many reps before its rep count is a record. */
+const MAX_REPS_THRESHOLD = 8;
+
+type Bests = Map<PersonalRecordKind, number>;
+
+function raise(bests: Bests, kind: PersonalRecordKind, value: number): void {
+  if (value > (bests.get(kind) ?? 0)) bests.set(kind, value);
+}
 
 /**
- * The records a finished workout sets, against the history before `atTime`. Only improvements
- * are reported, which is what a user reads as "a PR": a heavier estimated max, or (on a set of
- * eight or more with load) more reps than ever.
+ * The bests of one entry's completed sets, by the kinds its type records: the estimated max and
+ * the most reps in a loaded set; the most reps; or the longest set.
+ */
+function entryBests(entry: StrengthEntry): Bests {
+  const bests: Bests = new Map();
+  switch (entry.trackingType) {
+    case 'weightReps':
+      for (const set of entry.sets) {
+        if (!set.completed) continue;
+        raise(bests, 'est1rm', setEstimate(set) ?? 0);
+        if (set.weightKg > 0) raise(bests, 'maxReps', set.reps);
+      }
+      break;
+    case 'repsOnly':
+      for (const set of entry.sets) if (set.completed) raise(bests, 'mostReps', set.reps);
+      break;
+    case 'duration':
+      for (const set of entry.sets) if (set.completed) raise(bests, 'longestDuration', set.durationSeconds);
+      break;
+  }
+  return bests;
+}
+
+/** The smallest value of `kind` a workout reports as a record. */
+function isRecordValue(kind: PersonalRecordKind, value: number): boolean {
+  return kind === 'maxReps' ? value >= MAX_REPS_THRESHOLD : value > 0;
+}
+
+/**
+ * The records a finished workout sets, against the history before `atTime`, per exercise and
+ * kind. Only improvements are reported, which is what a user reads as "a PR": a heavier estimated
+ * max, more reps than ever on a loaded set of eight or more, more reps on a reps-only set, or a
+ * longer timed set. Each kind compares only with sets of the type that records it.
  */
 export function detectPersonalRecords(
   entries: readonly StrengthEntry[],
@@ -17,16 +56,9 @@ export function detectPersonalRecords(
   for (const activity of history) {
     if (activity.startedAt >= atTime || !activity.strength) continue;
     for (const entry of activity.strength.entries) {
-      for (const set of entry.sets) {
-        if (!set.completed) continue;
-        const key = `${entry.exerciseId}:est1rm`;
-        const value = set.estimated1rm ?? estimatedOneRepMax(set.weightKg, set.reps) ?? 0;
-        const current = bestPrior.get(key) ?? 0;
-        if (value > current) bestPrior.set(key, value);
-        if (set.weightKg > 0) {
-          const repKey = `${entry.exerciseId}:maxReps`;
-          if (set.reps > (bestPrior.get(repKey) ?? 0)) bestPrior.set(repKey, set.reps);
-        }
+      for (const [kind, value] of entryBests(entry)) {
+        const key = `${entry.exerciseId}:${kind}`;
+        if (value > (bestPrior.get(key) ?? 0)) bestPrior.set(key, value);
       }
     }
   }
@@ -34,40 +66,18 @@ export function detectPersonalRecords(
   const records: PersonalRecord[] = [];
   const seen = new Set<string>();
   for (const entry of entries) {
-    let best1rm = 0;
-    let bestReps = 0;
-    for (const set of entry.sets) {
-      if (!set.completed) continue;
-      const est = set.estimated1rm ?? estimatedOneRepMax(set.weightKg, set.reps) ?? 0;
-      if (est > best1rm) best1rm = est;
-      if (set.reps > bestReps && set.weightKg > 0) bestReps = set.reps;
-    }
-
-    const key = `${entry.exerciseId}:est1rm`;
-    const prior = bestPrior.get(key) ?? 0;
-    if (best1rm > prior && best1rm > 0 && !seen.has(key)) {
+    for (const [kind, value] of entryBests(entry)) {
+      const key = `${entry.exerciseId}:${kind}`;
+      const prior = bestPrior.get(key) ?? 0;
+      if (value <= prior || !isRecordValue(kind, value) || seen.has(key)) continue;
       seen.add(key);
       records.push({
         exerciseId: entry.exerciseId,
         exerciseName: entry.exerciseName,
-        kind: 'est1rm',
-        value: best1rm,
+        kind,
+        value,
         achievedAt: atTime,
         previousValue: prior > 0 ? prior : null,
-      });
-    }
-
-    const repKey = `${entry.exerciseId}:maxReps`;
-    const priorReps = bestPrior.get(repKey) ?? 0;
-    if (bestReps > priorReps && bestReps >= 8 && !seen.has(repKey)) {
-      seen.add(repKey);
-      records.push({
-        exerciseId: entry.exerciseId,
-        exerciseName: entry.exerciseName,
-        kind: 'maxReps',
-        value: bestReps,
-        achievedAt: atTime,
-        previousValue: priorReps > 0 ? priorReps : null,
       });
     }
   }

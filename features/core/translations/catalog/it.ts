@@ -264,6 +264,8 @@ export const it: Copy = {
     est1rm: 'Massimale singolo stimato',
     volume: 'Volume massimo',
     maxReps: 'Più ripetizioni in una serie',
+    mostReps: 'Più ripetizioni in una serie (senza carico)',
+    longestDuration: 'Serie più lunga',
   },
 
   about: {

@@ -1,4 +1,4 @@
-import { aPlan, aPlanItem, plannedSets } from '@/features/workouts/__fixtures__/builders';
+import { aPlan, aPlanItem, loadedSets, plannedSets } from '@/features/workouts/__fixtures__/builders';
 import { entryFromPlanItem, sessionFromPlan } from '@/features/workouts/domain/utils/sessionPlan';
 
 const NOW = 1_750_000_000_000;
@@ -9,6 +9,7 @@ describe('entryFromPlanItem', () => {
 
     expect(entry.sets).toEqual(
       [0, 1, 2].map(index => ({
+        type: 'weightReps',
         index,
         reps: 8,
         weightKg: 60,
@@ -29,14 +30,14 @@ describe('entryFromPlanItem', () => {
     const entry = entryFromPlanItem(
       aPlanItem({
         sets: [
-          { reps: 12, weightKg: 50, targetRpe: null },
-          { reps: 10, weightKg: 55, targetRpe: 7 },
-          { reps: 8, weightKg: 60, targetRpe: 9 },
+          { type: 'weightReps', reps: 12, weightKg: 50, targetRpe: null },
+          { type: 'weightReps', reps: 10, weightKg: 55, targetRpe: 7 },
+          { type: 'weightReps', reps: 8, weightKg: 60, targetRpe: 9 },
         ],
       }),
     );
 
-    expect(entry.sets.map(({ index, reps, weightKg, rpe }) => ({ index, reps, weightKg, rpe }))).toEqual([
+    expect(loadedSets(entry).map(({ index, reps, weightKg, rpe }) => ({ index, reps, weightKg, rpe }))).toEqual([
       { index: 0, reps: 12, weightKg: 50, rpe: null },
       { index: 1, reps: 10, weightKg: 55, rpe: 7 },
       { index: 2, reps: 8, weightKg: 60, rpe: 9 },
@@ -45,7 +46,40 @@ describe('entryFromPlanItem', () => {
 
   it('gives an item planned with no sets one set of eight at bodyweight', () => {
     expect(entryFromPlanItem(aPlanItem({ sets: [] })).sets).toEqual([
-      { index: 0, reps: 8, weightKg: 0, completed: false, estimated1rm: null, rpe: null },
+      { type: 'weightReps', index: 0, reps: 8, weightKg: 0, completed: false, estimated1rm: null, rpe: null },
+    ]);
+  });
+
+  it('gives a reps-only item planned with no sets one set of eight, and a timed one one of 30 s', () => {
+    const base = { exerciseId: 'ex:plank', exerciseName: 'Plank', restSeconds: 60, notes: null };
+
+    expect(entryFromPlanItem({ ...base, trackingType: 'repsOnly', sets: [] }).sets).toEqual([
+      { type: 'repsOnly', index: 0, reps: 8, completed: false, rpe: null },
+    ]);
+    expect(entryFromPlanItem({ ...base, trackingType: 'duration', sets: [] }).sets).toEqual([
+      { type: 'duration', index: 0, durationSeconds: 30, completed: false, rpe: null },
+    ]);
+  });
+
+  it('opens a reps-only and a timed item on their own targets, each set tagged with the item’s type', () => {
+    const base = { itemId: 'rit_core', exerciseId: 'ex:plank', exerciseName: 'Plank', restSeconds: 60, notes: null };
+
+    const reps = entryFromPlanItem({
+      ...base,
+      trackingType: 'repsOnly',
+      sets: [{ type: 'repsOnly', reps: 12, targetRpe: 7 }],
+    });
+    const timed = entryFromPlanItem({
+      ...base,
+      trackingType: 'duration',
+      sets: [{ type: 'duration', durationSeconds: 90, targetRpe: null }],
+    });
+
+    expect(reps).toMatchObject({ trackingType: 'repsOnly', routineItemId: 'rit_core' });
+    expect(reps.sets).toEqual([{ type: 'repsOnly', index: 0, reps: 12, completed: false, rpe: 7, routineSetIndex: 0 }]);
+    expect(timed.trackingType).toBe('duration');
+    expect(timed.sets).toEqual([
+      { type: 'duration', index: 0, durationSeconds: 90, completed: false, rpe: null, routineSetIndex: 0 },
     ]);
   });
 

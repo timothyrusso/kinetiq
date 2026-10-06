@@ -9,11 +9,19 @@ export function planFromRoutine(routine: Routine): SessionPlan {
   return {
     routineId: routine.id,
     name: routine.name,
+    // HACK: every item plans as weight and reps until a routine item carries its tracking type
+    // (#191).
     items: routine.items.map(item => ({
+      trackingType: 'weightReps' as const,
       itemId: item.id,
       exerciseId: item.exerciseId,
       exerciseName: item.exerciseName,
-      sets: item.sets.map(set => ({ reps: set.reps, weightKg: set.weightKg, targetRpe: set.targetRpe })),
+      sets: item.sets.map(set => ({
+        type: 'weightReps' as const,
+        reps: set.reps,
+        weightKg: set.weightKg,
+        targetRpe: set.targetRpe,
+      })),
       restSeconds: item.restSeconds,
       notes: item.notes,
     })),

@@ -20,13 +20,17 @@ export function toCompletedWorkout(document: WatchWorkoutDocument): CompletedWor
   const startedAt = Date.parse(document.startedAt);
   const endedAt = Date.parse(document.endedAt);
   const durationSeconds = Math.round((endedAt - startedAt) / 1000);
+  // HACK: a watch document records weight and reps only until watch v3 (#194) carries the
+  // tracking type.
   const entries: StrengthEntry[] = document.entries.map(entry => ({
+    trackingType: 'weightReps',
     exerciseId: entry.exerciseId,
     exerciseName: entry.exerciseName,
     muscleGroup: null,
     restSeconds: entry.restSeconds,
     notes: entry.notes,
     sets: entry.sets.map(set => ({
+      type: 'weightReps',
       index: set.index,
       reps: set.reps,
       weightKg: set.weightKg,

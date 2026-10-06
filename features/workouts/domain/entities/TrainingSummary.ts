@@ -6,7 +6,7 @@ export interface WeekSummary {
   readonly label: string;
   readonly workouts: number;
   readonly durationSeconds: number;
-  /** Strength volume in kg. */
+  /** Volume in kg, over the loaded sets only: reps-only and timed sets carry none. */
   readonly volumeKg: number;
 }
 
