@@ -398,18 +398,15 @@ export const it: Copy = {
   },
 
   workoutTab: {
-    quickStart: 'Avvio rapido',
     startEmpty: 'Inizia allenamento vuoto',
     emptyWorkoutName: 'Allenamento',
     orderRecent: 'Recenti',
     orderName: 'A-Z',
     saved: 'Salvate',
-    new: 'Nuova',
     routinesError: 'Non è stato possibile aprire le tue schede',
     emptyTitle: 'Ancora nessuna scheda',
     emptyMessage:
       'Scegli qualche esercizio, imposta ripetizioni e pesi, e le prossime sei settimane si sistemano da sole.',
-    createRoutine: 'Crea una scheda',
     resumeA11y: '{name} in corso. {done} di {total} serie fatte. Riprendi.',
     trainingNow: 'Allenamento in corso',
     setsOfTotal: '{done}/{total} serie',

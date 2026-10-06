@@ -9,12 +9,12 @@ import {
   SkeletonCard,
   useStyles,
 } from '@/features/core/design-system';
-import { HeaderToolbar, headerAction } from '@/features/core/navigation';
+import { HeaderToolbar, headerMenu } from '@/features/core/navigation';
 import { useAppTheme } from '@/features/core/theme';
 import { useT } from '@/features/core/translations';
 import { LiveResumeCard } from '@/features/home/ui/components/ResumeCard/LiveResumeCard';
 import { RoutineListItem } from '@/features/home/ui/components/RoutineListItem/RoutineListItem';
-import { StartEmptyWorkout } from '@/features/home/ui/components/StartEmptyWorkout/StartEmptyWorkout';
+import { StartChoice } from '@/features/home/ui/components/StartChoice/StartChoice';
 import { useWorkoutTabPageLogic } from '@/features/home/ui/pages/WorkoutTabPage/WorkoutTabPage.logic';
 import { createStyles } from '@/features/home/ui/pages/WorkoutTabPage/WorkoutTabPage.style';
 
@@ -32,9 +32,7 @@ export function WorkoutTabPage() {
   return (
     <>
       <ScreenHeader title={t('workout.title')} largeTitle />
-      <HeaderToolbar placement="right">
-        {headerAction({ action: 'add', onPress: effects.openNewRoutine, t, label: 'workout.newRoutine' })}
-      </HeaderToolbar>
+      <HeaderToolbar placement="right">{headerMenu({ action: 'add', t, items: derived.startMenu })}</HeaderToolbar>
 
       <ScrollView
         {...SCROLL_INSETS}
@@ -43,14 +41,17 @@ export function WorkoutTabPage() {
       >
         {state.resuming ? <LiveResumeCard onPress={effects.openSession} /> : null}
 
-        {state.resuming ? null : <StartEmptyWorkout onStarted={effects.openSession} />}
+        <StartChoice
+          startDisabled={state.resuming}
+          onStartEmpty={effects.startEmpty}
+          onNewRoutine={effects.openNewRoutine}
+        />
 
         <View style={styles.section}>
           <SectionHeader
             title={t('workout.yourRoutines')}
             eyebrow={t('workoutTab.saved')}
             {...(state.count > 0 ? { counter: state.count } : {})}
-            action={{ label: t('workoutTab.new'), onPress: effects.openNewRoutine }}
           />
           {state.showOrder ? (
             <View style={styles.order}>
@@ -67,8 +68,6 @@ export function WorkoutTabPage() {
               title={t('workoutTab.emptyTitle')}
               message={t('workoutTab.emptyMessage')}
               icon="dumbbell"
-              actionLabel={t('workoutTab.createRoutine')}
-              onAction={effects.openNewRoutine}
               compact
             />
           ) : (

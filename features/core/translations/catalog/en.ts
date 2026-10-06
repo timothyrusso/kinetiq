@@ -389,17 +389,14 @@ export const en = {
   },
 
   workoutTab: {
-    quickStart: 'Quick start',
     startEmpty: 'Start empty workout',
     emptyWorkoutName: 'Workout',
     orderRecent: 'Recent',
     orderName: 'A-Z',
     saved: 'Saved',
-    new: 'New',
     routinesError: 'Could not open your routines',
     emptyTitle: 'No routines yet',
     emptyMessage: 'Pick a few exercises, set your reps and weights, and the next six weeks sort themselves out.',
-    createRoutine: 'Create a routine',
     resumeA11y: '{name} in progress. {done} of {total} sets done. Resume.',
     trainingNow: 'Training now',
     setsOfTotal: '{done}/{total} sets',
