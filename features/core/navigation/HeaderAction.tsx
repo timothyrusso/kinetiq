@@ -102,6 +102,8 @@ export type HeaderMenuItem = {
   /** iOS draws a symbol beside the item; Android's menu is text, as Material menus are. */
   sf?: SFSymbol;
   destructive?: boolean;
+  /** Drawn greyed out and not selectable, on both platforms. */
+  disabled?: boolean;
 };
 
 /**
@@ -131,6 +133,7 @@ export function headerMenu({
           onPress={item.onPress}
           {...(Platform.OS === 'ios' && item.sf ? { icon: item.sf } : {})}
           {...(item.destructive ? { destructive: true } : {})}
+          {...(item.disabled ? { disabled: true } : {})}
         >
           {item.label}
         </Stack.Toolbar.MenuAction>
