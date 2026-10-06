@@ -9,7 +9,7 @@ export function aWatchDocument(
 ): Record<string, unknown> {
   const valid: WatchWorkoutDocument = {
     format: 'kinetiq.watch-workout',
-    version: 2,
+    version: 3,
     id: UUID,
     routineId: 'rtn_1',
     title: 'Push',
@@ -20,11 +20,12 @@ export function aWatchDocument(
       {
         exerciseId: 'ex:barbell-bench-press',
         exerciseName: 'Bench Press',
+        trackingType: 'weightReps',
         restSeconds: 120,
         notes: null,
         sets: [
-          { index: 0, reps: 5, weightKg: 80, completed: true, rpe: null },
-          { index: 1, reps: 5, weightKg: 80, completed: false, rpe: null },
+          { type: 'weightReps', index: 0, reps: 5, weightKg: 80, completed: true, rpe: null },
+          { type: 'weightReps', index: 1, reps: 5, weightKg: 80, completed: false, rpe: null },
         ],
       },
     ],
@@ -40,7 +41,7 @@ export function anInboxEntry(
   return {
     id: UUID,
     format: 'kinetiq.watch-workout',
-    version: 2,
+    version: 3,
     payload: typeof doc === 'string' ? doc : JSON.stringify(doc),
     ...overrides,
   };

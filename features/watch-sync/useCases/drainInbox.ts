@@ -25,9 +25,10 @@ interface DrainState {
  * Saves the finished watch workouts waiting in `inbox`, one drain at a time: the launch, a return
  * to the foreground and an inbox event arriving mid-drain share the running drain, which then
  * reads the inbox once more. An entry leaves the inbox only when it is saved or was already saved
- * (`ack`), or can never be read (`reject`, which keeps the file). A save that fails, or a document
- * from a newer watch app, stays for the next drain: nothing is ever dropped. Newer-version entries
- * are told to the user once per launch, not on every drain.
+ * (`ack`), or can never be read (`reject`, which keeps the file): a broken document, or one from
+ * an older watch app. A save that fails, or a document from a newer watch app, stays for the next
+ * drain: nothing is ever dropped. Newer-version entries are told to the user once per launch, not
+ * on every drain.
  */
 export const makeInboxDrain = (inbox: InboxPort) =>
   Effect.gen(function* () {
@@ -46,7 +47,7 @@ export const makeInboxDrain = (inbox: InboxPort) =>
             return Either.right(null);
           }
           yield* inbox.reject(item.id);
-          yield* notice.report('invalid');
+          yield* notice.report(item.read.reason);
           return Either.right(null);
         }
         const recorder = yield* WorkoutRecorder;

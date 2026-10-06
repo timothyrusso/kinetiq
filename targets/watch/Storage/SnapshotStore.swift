@@ -4,8 +4,8 @@ import Foundation
 /// bad transfer or a failed Sync keeps the routines the user already had (Stability rule 2).
 public struct SnapshotStore: Sendable {
     /// Bumped if the file's shape ever changes; an older file is then ignored, never misread.
-    /// 2 holds a v2 snapshot, one row per set.
-    public static let fileVersion = 2
+    /// 2 held a v2 snapshot, one row per set; 3 holds a v3 one, every set tagged with its type.
+    public static let fileVersion = 3
     static let fileName = "snapshot.json"
 
     public struct Stored: Codable, Equatable, Sendable {

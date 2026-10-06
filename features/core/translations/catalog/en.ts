@@ -821,6 +821,9 @@ export const en = {
     versionTitle: 'A workout from Apple Watch needs an update',
     versionMessage:
       'It comes from a newer version of Kinetiq on the watch. Update Kinetiq on this iPhone and it will be saved.',
+    outdatedTitle: 'A workout from Apple Watch is from an older version',
+    outdatedMessage:
+      'It was recorded by an older version of Kinetiq on the watch, which this iPhone no longer reads. It was kept on this iPhone, set aside.',
     ok: 'OK',
   },
   // NOTE: --- followups ---

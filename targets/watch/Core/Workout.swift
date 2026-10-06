@@ -8,7 +8,8 @@ import Foundation
 /// an out-of-range one is a no-op, never a crash.
 public struct Workout: Codable, Equatable, Sendable {
     /// Bumped if the file's shape changes; an older `workout.json` is then discarded, never misread.
-    public static let fileVersion = 1
+    /// 2 tags every entry and set with its tracking type.
+    public static let fileVersion = 2
 
     public let version: Int
     /// A UUID minted at Start. It becomes the phone's activity id, which makes a replay harmless.
@@ -32,9 +33,9 @@ public struct Workout: Codable, Equatable, Sendable {
     }
 
     /// Starts a workout from a routine, copying it in: a Sync mid-workout cannot change what is
-    /// being trained. The same rule as the phone's session plan: one entry per item, one set per
-    /// planned row with that row's reps and weight, nothing completed, and the row's target RPE as
-    /// the set's RPE until the rest screen changes it (issue #132).
+    /// being trained. The same rule as the phone's session plan: one entry per item, of the item's
+    /// tracking type, one set per planned row with that row's values, nothing completed, and the
+    /// row's target RPE as the set's RPE until the rest screen changes it (issue #132).
     public static func start(routine: Routine, unitSystem: UnitSystem, id: String, now: Date) -> Workout {
         Workout(
             version: fileVersion,
@@ -47,11 +48,13 @@ public struct Workout: Codable, Equatable, Sendable {
                 WorkoutEntry(
                     exerciseId: item.exerciseId,
                     exerciseName: item.exerciseName,
+                    trackingType: item.trackingType,
                     restSeconds: item.restSeconds,
                     notes: item.notes,
                     sets: item.sets.enumerated().map { index, planned in
                         WorkoutSet(
-                            index: index, reps: planned.reps, weightKg: planned.weightKg,
+                            index: index, type: item.trackingType, reps: planned.reps ?? 0,
+                            weightKg: planned.weightKg ?? 0, durationSeconds: planned.durationSeconds ?? 0,
                             completed: false, rpe: planned.targetRpe
                         )
                     }
@@ -175,18 +178,29 @@ public struct Workout: Codable, Equatable, Sendable {
         clearRest()
     }
 
-    /// Weight for `set`. On an open set it also carries to the open sets after it, since the
-    /// number is usually the same for the rest of the exercise; on a done set (a correction) it
-    /// changes that set alone. Clamped to `ITEM_BOUNDS`.
+    /// Weight for `set` of a weight-and-reps exercise. On an open set it also carries to the open
+    /// sets after it, since the number is usually the same for the rest of the exercise; on a done
+    /// set (a correction) it changes that set alone. Clamped to `ITEM_BOUNDS`.
     public mutating func setWeight(_ kilograms: Double, set: Int, in entry: Int, bounds: Bounds) {
+        guard records(.weightKg, in: entry) else { return }
         let value = bounds.itemBounds.weightKg.clamp(kilograms.isFinite ? kilograms : 0)
         update(set, in: entry) { $0.weightKg = value }
     }
 
-    /// Reps for `set`, 1 to 100, carried forward the same way as the weight.
-    public mutating func setReps(_ reps: Int, set: Int, in entry: Int) {
-        let value = min(Self.repsRange.upperBound, max(Self.repsRange.lowerBound, reps))
+    /// Reps for `set` of an exercise that counts them, within `ITEM_BOUNDS`, carried forward the
+    /// same way as the weight.
+    public mutating func setReps(_ reps: Int, set: Int, in entry: Int, bounds: Bounds) {
+        guard records(.reps, in: entry) else { return }
+        let value = Self.whole(reps, in: bounds.itemBounds.reps)
         update(set, in: entry) { $0.reps = value }
+    }
+
+    /// Seconds for `set` of a timed exercise, within `ITEM_BOUNDS`, carried forward the same way
+    /// as the weight.
+    public mutating func setDuration(_ seconds: Int, set: Int, in entry: Int, bounds: Bounds) {
+        guard records(.durationSeconds, in: entry) else { return }
+        let value = Self.whole(seconds, in: bounds.itemBounds.durationSeconds)
+        update(set, in: entry) { $0.durationSeconds = value }
     }
 
     private mutating func update(_ set: Int, in entry: Int, _ change: (inout WorkoutSet) -> Void) {
@@ -243,13 +257,15 @@ public struct Workout: Codable, Equatable, Sendable {
     /// Weight for the next set of `entry` and every set after it that is not done yet: the
     /// number is usually the same for the rest of the exercise. Clamped to `ITEM_BOUNDS`.
     public mutating func setWeight(_ kilograms: Double, in entry: Int, bounds: Bounds) {
+        guard records(.weightKg, in: entry) else { return }
         let value = bounds.itemBounds.weightKg.clamp(kilograms.isFinite ? kilograms : 0)
         updateRemainingSets(in: entry) { $0.weightKg = value }
     }
 
-    /// Reps for the next set and the ones after it, 1 to 100 like the phone's stepper.
-    public mutating func setReps(_ reps: Int, in entry: Int) {
-        let value = min(Self.repsRange.upperBound, max(Self.repsRange.lowerBound, reps))
+    /// Reps for the next set and the ones after it, within `ITEM_BOUNDS` like the phone's stepper.
+    public mutating func setReps(_ reps: Int, in entry: Int, bounds: Bounds) {
+        guard records(.reps, in: entry) else { return }
+        let value = Self.whole(reps, in: bounds.itemBounds.reps)
         updateRemainingSets(in: entry) { $0.reps = value }
     }
 
@@ -277,11 +293,27 @@ public struct Workout: Codable, Equatable, Sendable {
         restDuration = nil
     }
 
-    public static let repsRange = 1...100
     /// The phone's rest stepper step.
     public static let restStep = 15
+    /// The phone's duration stepper step, in seconds: what one turn of the Crown moves a timed set.
+    public static let durationStep = 5
     /// Where the Crown starts an RPE the routine gave no target for.
     public static let defaultRpe: Double = 7
+
+    /// The values a set can record; each tracking type records some of them.
+    public enum Value {
+        case reps, weightKg, durationSeconds
+    }
+
+    /// Whether the sets of `entry` record `value`. False for an exercise that does not exist.
+    public func records(_ value: Value, in entry: Int) -> Bool {
+        guard let type = entries[safe: entry]?.trackingType else { return false }
+        return type.records(value)
+    }
+
+    private static func whole(_ value: Int, in range: Bounds.Range) -> Int {
+        Int(range.clamp(Double(value)))
+    }
 
     private mutating func updateRemainingSets(in entry: Int, _ change: (inout WorkoutSet) -> Void) {
         guard var row = entries[safe: entry], let first = nextSet(in: entry) else { return }
@@ -295,18 +327,37 @@ public struct Workout: Codable, Equatable, Sendable {
     }
 }
 
+public extension TrackingType {
+    /// Whether a set of this type records `value`.
+    func records(_ value: Workout.Value) -> Bool {
+        switch (self, value) {
+        case (.weightReps, .reps), (.weightReps, .weightKg), (.repsOnly, .reps), (.duration, .durationSeconds):
+            return true
+        default:
+            return false
+        }
+    }
+}
+
 public struct WorkoutEntry: Codable, Equatable, Sendable {
     public let exerciseId: String
     public let exerciseName: String
+    /// What every set of the exercise records; the watch never changes it.
+    public let trackingType: TrackingType
     public var restSeconds: Int
     public let notes: String?
     public var sets: [WorkoutSet]
 }
 
+/// One set of a workout. Every value is held whatever the type, so the Crown and the file stay
+/// simple, but only the ones the set's `type` records are edited and sent to the phone: the others
+/// stay 0.
 public struct WorkoutSet: Codable, Equatable, Sendable {
     public let index: Int
+    public let type: TrackingType
     public var reps: Int
     public var weightKg: Double
+    public var durationSeconds: Int
     public var completed: Bool
     public var rpe: Double?
 }

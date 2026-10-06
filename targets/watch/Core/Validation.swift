@@ -39,17 +39,27 @@ public enum SnapshotValidator {
                     !row.id.isEmpty
                         && !row.exerciseId.isEmpty
                         && item.sets.contains(Double(row.sets.count))
-                        && row.sets.allSatisfy { isWithinBounds($0, item: item) }
+                        && row.sets.allSatisfy { $0.type == row.trackingType && isWithinBounds($0, item: item) }
                         && item.restSeconds.contains(Double(row.restSeconds))
                         && (row.notes?.count ?? 0) <= item.notesLength
                 }
         }
     }
 
+    /// The set holds every value its type needs, each within bounds.
     static func isWithinBounds(_ set: RoutineSet, item: Bounds.ItemBounds) -> Bool {
-        item.reps.contains(Double(set.reps))
-            && item.weightKg.contains(set.weightKg)
-            && (set.targetRpe.map(item.rpe.contains) ?? true)
+        guard set.targetRpe.map(item.rpe.contains) ?? true else { return false }
+        switch set.type {
+        case .weightReps:
+            guard let reps = set.reps, let weight = set.weightKg else { return false }
+            return item.reps.contains(Double(reps)) && item.weightKg.contains(weight)
+        case .repsOnly:
+            guard let reps = set.reps else { return false }
+            return item.reps.contains(Double(reps))
+        case .duration:
+            guard let seconds = set.durationSeconds else { return false }
+            return item.durationSeconds.contains(Double(seconds))
+        }
     }
 
     private struct Header: Decodable {

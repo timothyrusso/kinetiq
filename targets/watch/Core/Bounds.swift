@@ -21,6 +21,7 @@ public struct Bounds: Decodable, Equatable, Sendable {
         public let sets: Range
         public let reps: Range
         public let weightKg: Range
+        public let durationSeconds: Range
         public let rpe: Range
         public let restSeconds: Range
         public let notesLength: Int
@@ -46,6 +47,7 @@ public struct Bounds: Decodable, Equatable, Sendable {
             sets: Range(min: 1, max: 20),
             reps: Range(min: 1, max: 100),
             weightKg: Range(min: 0, max: 450),
+            durationSeconds: Range(min: 5, max: 3600),
             rpe: Range(min: 0, max: 10),
             restSeconds: Range(min: 0, max: 600),
             notesLength: 200

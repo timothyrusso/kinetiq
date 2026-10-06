@@ -1,14 +1,15 @@
 import SwiftUI
 
-/// One exercise: the selected set's weight and reps (the Crown edits whichever is picked),
-/// Complete set, and every set with a checkbox to tick or untick.
+/// One exercise: the selected set's values for its tracking type (weight and reps, reps alone, or
+/// a time; the Crown edits whichever is picked), Complete set, and every set with a checkbox to
+/// tick or untick.
 struct ExercisePage: View {
     @EnvironmentObject private var session: WorkoutSession
     let workout: Workout
     let index: Int
     let entry: WorkoutEntry
 
-    private enum Field { case weight, reps }
+    private enum Field { case weight, reps, duration }
     @State private var field: Field = .weight
     /// The set the tiles edit. Nil means "the next open one", which moves on as sets are done.
     @State private var picked: Int?
@@ -34,20 +35,16 @@ struct ExercisePage: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                 HStack(spacing: 6) {
-                    tile(.weight, value: weightText, unit: weightUnit, label: "workout.weight", adjust: adjustWeight)
-                    tile(.reps, value: String(selectedSet?.reps ?? 0), unit: String(localized: "workout.repsUnit"),
-                         label: "workout.reps", adjust: adjustReps)
+                    tiles
                 }
                 // The rest screen covers the page while it runs and takes the Crown.
                 .focusable(workout.restEndsAt == nil)
                 .focused($crownFocused)
                 .digitalCrownRotation(
                     crownBinding,
-                    from: field == .weight ? 0 : Double(Workout.repsRange.lowerBound),
-                    through: field == .weight
-                        ? maxWeightShown
-                        : Double(Workout.repsRange.upperBound),
-                    by: field == .weight ? Units.crownStep(workout.unitSystem) : 1,
+                    from: crownRange.lowerBound,
+                    through: crownRange.upperBound,
+                    by: crownStep,
                     sensitivity: .low,
                     isContinuous: false,
                     isHapticFeedbackEnabled: true
@@ -99,7 +96,53 @@ struct ExercisePage: View {
         }
     }
 
+    /// The tiles this exercise's type records: weight and reps, reps alone, or a time.
+    @ViewBuilder private var tiles: some View {
+        switch entry.trackingType {
+        case .weightReps:
+            tile(.weight, value: weightText, unit: weightUnit, label: "workout.weight", adjust: adjustWeight)
+            repsTile
+        case .repsOnly:
+            repsTile
+        case .duration:
+            tile(.duration, value: RestFormat.text(selectedSet?.durationSeconds ?? 0),
+                 unit: String(localized: "workout.durationUnit"), label: "workout.duration", adjust: adjustDuration)
+        }
+    }
+
+    private var repsTile: some View {
+        tile(.reps, value: String(selectedSet?.reps ?? 0), unit: String(localized: "workout.repsUnit"),
+             label: "workout.reps", adjust: adjustReps)
+    }
+
     // MARK: Values
+
+    /// The field the Crown turns: the one picked, if this exercise's type records it, otherwise
+    /// the type's first.
+    private var active: Field {
+        switch entry.trackingType {
+        case .weightReps: return field == .reps ? .reps : .weight
+        case .repsOnly: return .reps
+        case .duration: return .duration
+        }
+    }
+
+    private var crownRange: ClosedRange<Double> {
+        let bounds = session.bounds.itemBounds
+        switch active {
+        case .weight: return 0...maxWeightShown
+        case .reps: return bounds.reps.min...bounds.reps.max
+        case .duration: return bounds.durationSeconds.min...bounds.durationSeconds.max
+        }
+    }
+
+    private var crownStep: Double {
+        switch active {
+        case .weight: return Units.crownStep(workout.unitSystem)
+        case .reps: return 1
+        case .duration: return Double(Workout.durationStep)
+        }
+    }
 
     private var weightUnit: String { workout.unitSystem == .metric ? "kg" : "lb" }
 
@@ -107,9 +150,16 @@ struct ExercisePage: View {
         Units.displayValue(kilograms: session.bounds.itemBounds.weightKg.max, system: workout.unitSystem)
     }
 
-    /// "70 kg × 5" for a set row.
+    /// A set row's values: "70 kg × 5", "12 reps" or "0:45".
     private func summary(_ set: WorkoutSet) -> String {
-        "\(Units.format(kilograms: set.weightKg, system: workout.unitSystem)) × \(set.reps)"
+        switch entry.trackingType {
+        case .weightReps:
+            return "\(Units.format(kilograms: set.weightKg, system: workout.unitSystem)) × \(set.reps)"
+        case .repsOnly:
+            return "\(set.reps) \(String(localized: "workout.repsUnit"))"
+        case .duration:
+            return RestFormat.text(set.durationSeconds)
+        }
     }
 
     private var weightText: String {
@@ -121,17 +171,23 @@ struct ExercisePage: View {
         let system = workout.unitSystem
         return Binding(
             get: {
-                field == .weight
-                    ? Units.displayValue(kilograms: selectedSet?.weightKg ?? 0, system: system)
-                    : Double(selectedSet?.reps ?? 0)
+                switch active {
+                case .weight: return Units.displayValue(kilograms: selectedSet?.weightKg ?? 0, system: system)
+                case .reps: return Double(selectedSet?.reps ?? 0)
+                case .duration: return Double(selectedSet?.durationSeconds ?? 0)
+                }
             },
             set: { value in
                 let set = selected
-                if field == .weight {
+                let bounds = session.bounds
+                switch active {
+                case .weight:
                     let kilograms = Units.kilograms(fromDisplay: value, system: system)
-                    session.update { $0.setWeight(kilograms, set: set, in: index, bounds: session.bounds) }
-                } else {
-                    session.update { $0.setReps(Int(value.rounded()), set: set, in: index) }
+                    session.update { $0.setWeight(kilograms, set: set, in: index, bounds: bounds) }
+                case .reps:
+                    session.update { $0.setReps(Int(value.rounded()), set: set, in: index, bounds: bounds) }
+                case .duration:
+                    session.update { $0.setDuration(Int(value.rounded()), set: set, in: index, bounds: bounds) }
                 }
             }
         )
@@ -150,7 +206,14 @@ struct ExercisePage: View {
     private func adjustReps(_ direction: AccessibilityAdjustmentDirection) {
         let reps = (selectedSet?.reps ?? 0) + (direction == .increment ? 1 : -1)
         let set = selected
-        session.update { $0.setReps(reps, set: set, in: index) }
+        session.update { $0.setReps(reps, set: set, in: index, bounds: session.bounds) }
+    }
+
+    private func adjustDuration(_ direction: AccessibilityAdjustmentDirection) {
+        let step = direction == .increment ? Workout.durationStep : -Workout.durationStep
+        let seconds = (selectedSet?.durationSeconds ?? 0) + step
+        let set = selected
+        session.update { $0.setDuration(seconds, set: set, in: index, bounds: session.bounds) }
     }
 
     /// A tile is a button that hands the Crown to its number; the ring shows which has it.
@@ -165,7 +228,7 @@ struct ExercisePage: View {
             field = kind
             crownFocused = true
         } label: {
-            ValueTile(value: value, unit: unit, focused: field == kind)
+            ValueTile(value: value, unit: unit, focused: active == kind)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)
@@ -239,7 +302,7 @@ struct ValueTile: View {
     }
 }
 
-/// "1:30", or "0:00" for no rest.
+/// Minutes and seconds, `m:ss`: a rest ("1:30", or "0:00" for none) or a timed set ("0:45").
 enum RestFormat {
     static func text(_ seconds: Int) -> String {
         let value = max(0, seconds)
