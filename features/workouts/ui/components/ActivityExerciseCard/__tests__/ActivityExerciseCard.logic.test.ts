@@ -1,6 +1,15 @@
 import { act, renderHook } from '@testing-library/react-native';
 import { tr } from '@/features/core/translations';
-import { anEntry, anOpenSet, aSet } from '@/features/workouts/__fixtures__/builders';
+import { joinMiddleDot } from '@/features/core/utils';
+import {
+  aDurationEntry,
+  aDurationSet,
+  anEntry,
+  anOpenSet,
+  aRepsOnlyEntry,
+  aRepsOnlySet,
+  aSet,
+} from '@/features/workouts/__fixtures__/builders';
 import type { StrengthEntry } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 import { useActivityExerciseCardLogic } from '@/features/workouts/ui/components/ActivityExerciseCard/ActivityExerciseCard.logic';
 
@@ -22,6 +31,47 @@ describe('useActivityExerciseCardLogic', () => {
       { icon: 'layers', label: `2/3 ${tr('activity.setWord', { count: 3 })}` },
       { icon: 'trophy', label: tr('activity.topSet', { weight: '110 kg', reps: 5 }) },
     ]);
+  });
+
+  it('heads a loaded exercise with weight, reps and the estimated max', async () => {
+    const { result } = await renderCard();
+
+    expect(result.current.derived.columns).toEqual({
+      weight: 'activity.colKg',
+      value: 'activity.colReps',
+      estimate: true,
+    });
+    expect(result.current.derived.sets[0]).toMatchObject({ weight: '100 kg', value: '5' });
+  });
+
+  it('draws a reps-only exercise as reps alone, with its most reps as the top set', async () => {
+    const entry = aRepsOnlyEntry({ sets: [aRepsOnlySet({ reps: 10 }), aRepsOnlySet({ index: 1, reps: 14 })] });
+
+    const { result } = await renderCard(entry);
+
+    expect(result.current.derived.columns).toEqual({ weight: null, value: 'activity.colReps', estimate: false });
+    expect(result.current.derived.meta[1]).toEqual({ icon: 'trophy', label: tr('tracking.topReps', { reps: 14 }) });
+    expect(result.current.derived.sets[1]).toMatchObject({
+      weight: null,
+      value: '14',
+      oneRepMax: null,
+      accessibilityLabel: joinMiddleDot([
+        tr('activity.setNumber', { n: 2 }),
+        `14 ${tr('activity.repWord', { count: 14 })}`,
+      ]),
+    });
+  });
+
+  it('draws a timed exercise as its time per set, with the longest as the top set', async () => {
+    const entry = aDurationEntry({
+      sets: [aDurationSet({ durationSeconds: 75 }), aDurationSet({ index: 1, durationSeconds: 60 })],
+    });
+
+    const { result } = await renderCard(entry);
+
+    expect(result.current.derived.columns).toEqual({ weight: null, value: 'tracking.colTime', estimate: false });
+    expect(result.current.derived.meta[1]).toEqual({ icon: 'trophy', label: tr('tracking.topTime', { time: '1:15' }) });
+    expect(result.current.derived.sets.map(set => set.value)).toEqual(['1:15', '1:00']);
   });
 
   it('names no top set when nothing was completed', async () => {

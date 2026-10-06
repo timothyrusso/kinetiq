@@ -18,6 +18,7 @@ export function RoutineItemPage() {
           about={derived.about}
           onOpenExercise={effects.openExercise}
           onChange={effects.change}
+          onChangeType={effects.setTrackingType}
           onRemove={effects.remove}
         />
       ) : null}

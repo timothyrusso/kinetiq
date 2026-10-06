@@ -19,6 +19,11 @@ export type StepperProps = {
    * step is whole but the quantity is not (1 kg steps, 62.5 kg on the bar).
    */
   decimal?: boolean;
+  /**
+   * How the value reads at rest, when not as a plain number: seconds as `m:ss`. Typing still
+   * takes the plain number, in the unit the label names.
+   */
+  format?: (value: number) => string;
 };
 
 export function formatStepperValue(value: number): string {

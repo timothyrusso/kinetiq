@@ -21,9 +21,9 @@ import { useActivityExerciseCardLogic } from '@/features/workouts/ui/components/
 import { createStyles } from '@/features/workouts/ui/components/ActivityExerciseCard/ActivityExerciseCard.style';
 
 /**
- * One exercise's sets in a recorded workout. The head is the way into the exercise's own page (its
- * history, its heaviest-weight line, its records): a logged workout is where "how is my squat
- * going" starts, since the library is reached only to pick an exercise.
+ * One exercise's sets in a recorded workout, in the columns its tracking type recorded. The head
+ * is the way into the exercise's own page (its history, its chart, its records): a logged workout
+ * is where "how is my squat going" starts, since the library is reached only to pick an exercise.
  */
 export const ActivityExerciseCard = memo(function ActivityExerciseCard({
   entry,
@@ -71,20 +71,24 @@ export const ActivityExerciseCard = memo(function ActivityExerciseCard({
               <Txt variant="micro" tone="faint" style={styles.narrow}>
                 {t('activity.colSet')}
               </Txt>
+              {derived.columns.weight === null ? null : (
+                <Txt variant="micro" tone="faint" style={styles.cell}>
+                  {t(derived.columns.weight)}
+                </Txt>
+              )}
               <Txt variant="micro" tone="faint" style={styles.cell}>
-                {t(derived.weightColumn)}
-              </Txt>
-              <Txt variant="micro" tone="faint" style={styles.cell}>
-                {t('activity.colReps')}
+                {t(derived.columns.value)}
               </Txt>
               {derived.hasRpe ? (
                 <Txt variant="micro" tone="faint" align="right" style={styles.narrow}>
                   {t('activity.colRpe')}
                 </Txt>
               ) : null}
-              <Txt variant="micro" tone="faint" align="right" style={styles.wide}>
-                {t('activity.colE1rm')}
-              </Txt>
+              {derived.columns.estimate ? (
+                <Txt variant="micro" tone="faint" align="right" style={styles.wide}>
+                  {t('activity.colE1rm')}
+                </Txt>
+              ) : null}
             </Row>
             {derived.sets.map((set, index) => (
               <View key={set.key}>
@@ -98,20 +102,24 @@ export const ActivityExerciseCard = memo(function ActivityExerciseCard({
                   <Txt variant="caption" weight="700" tone="muted" style={styles.narrow}>
                     {set.number}
                   </Txt>
-                  <Txt variant="body" weight="700" style={styles.cell}>
-                    {set.weight}
-                  </Txt>
-                  <Txt variant="body" style={styles.cell}>
-                    {set.reps}
+                  {set.weight === null ? null : (
+                    <Txt variant="body" weight="700" style={styles.cell}>
+                      {set.weight}
+                    </Txt>
+                  )}
+                  <Txt variant="body" weight={set.weight === null ? '700' : undefined} style={styles.cell}>
+                    {set.value}
                   </Txt>
                   {derived.hasRpe ? (
                     <Txt variant="body" align="right" style={styles.narrow}>
                       {set.rpe}
                     </Txt>
                   ) : null}
-                  <Txt variant="caption" tone="muted" align="right" style={styles.wide}>
-                    {set.oneRepMax}
-                  </Txt>
+                  {set.oneRepMax === null ? null : (
+                    <Txt variant="caption" tone="muted" align="right" style={styles.wide}>
+                      {set.oneRepMax}
+                    </Txt>
+                  )}
                 </View>
               </View>
             ))}

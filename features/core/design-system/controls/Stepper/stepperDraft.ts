@@ -58,7 +58,17 @@ export function committedValue(draft: StepperDraft | null, value: number, bounds
   return next === null || next === value ? null : next;
 }
 
-/** The field's text: the draft while it still describes the value, otherwise the value itself. */
-export function stepperText(draft: StepperDraft | null, value: number, separator: string): string {
-  return draft !== null && draft.base === value ? draft.text : fieldText(value, separator);
+/**
+ * The field's text: the draft while it still describes the value, otherwise the value itself,
+ * through `format` when the stepper shows it in another form (a time as `m:ss`). A draft is always
+ * the plain number, so a formatted value is typed in its own unit.
+ */
+export function stepperText(
+  draft: StepperDraft | null,
+  value: number,
+  separator: string,
+  format?: (value: number) => string,
+): string {
+  if (draft !== null && draft.base === value) return draft.text;
+  return format === undefined ? fieldText(value, separator) : format(value);
 }

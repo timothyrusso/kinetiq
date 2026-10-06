@@ -16,7 +16,7 @@ import { SetRow } from '@/features/workouts/ui/components/SetRow/SetRow';
  * between sets: what they did last time and how many sets are banked; everything else is on the
  * exercise's own screen, and repeating it would push the set rows below the fold. The current
  * exercise is marked by the dot before its name, not by the card: an accent frame read as a
- * selection or an error. Tapping the head, or a set's reps or weight, opens the exercise's sheet
+ * selection or an error. Tapping the head, or a set's values, opens the exercise's sheet
  * and makes it current without unticking anything.
  *
  * A cue from the routine shows as plain text and is not editable here: a keyboard over a set list

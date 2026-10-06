@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import type { TrackingType } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 import type { EntryPatch, SetPatch } from '@/features/workouts/domain/utils/sessionTransitions';
 import { useSessionStore } from '@/features/workouts/state/sessionStore';
 
@@ -7,7 +8,8 @@ import { useSessionStore } from '@/features/workouts/state/sessionStore';
  * held: the session writes through on each stepper press, and a copy would freeze the editor at
  * the moment it opened while the block behind it moved. Every writer goes through the session's
  * transitions, so a set edit refreshes its estimate and keeps the routine row it was planned
- * from, and the exercise keeps its last set.
+ * from, and the exercise keeps its last set. A type change is refused by the session once a set
+ * of the exercise is done.
  */
 export function useExerciseEditor(entryIndex: number) {
   const entry = useSessionStore(state => state.session?.entries[entryIndex]);
@@ -25,5 +27,9 @@ export function useExerciseEditor(entryIndex: number) {
     (patch: EntryPatch) => useSessionStore.getState().updateEntry(entryIndex, patch, Date.now()),
     [entryIndex],
   );
-  return { entry, changeSet, addSet, removeSet, changeEntry };
+  const changeType = useCallback(
+    (type: TrackingType) => useSessionStore.getState().changeTrackingType(entryIndex, type, Date.now()),
+    [entryIndex],
+  );
+  return { entry, changeSet, addSet, removeSet, changeEntry, changeType };
 }

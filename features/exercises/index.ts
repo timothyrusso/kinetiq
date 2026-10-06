@@ -25,3 +25,5 @@ export { useExerciseAbout } from '@/features/exercises/facades/useExerciseAbout'
 /** A stored image path as the bundled image it names, for the rows that draw an exercise. */
 export { exerciseImageSource } from '@/features/exercises/mappers/exerciseImageSource';
 export { snapshotInLanguage } from '@/features/exercises/mappers/snapshotInLanguage';
+/** The tracking types in picker order, and their labels as catalog keys, for both exercise sheets. */
+export { TRACKING_TYPE_LABEL, TRACKING_TYPES } from '@/features/exercises/mappers/trackingTypeLabels';

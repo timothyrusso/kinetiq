@@ -1,7 +1,15 @@
 import { act, renderHook } from '@testing-library/react-native';
 import { tr } from '@/features/core/translations';
 import type { UnitSystem } from '@/features/core/utils';
-import { anEntry, anOpenSet, aSet } from '@/features/workouts/__fixtures__/builders';
+import {
+  aDurationEntry,
+  aDurationSet,
+  anEntry,
+  anOpenSet,
+  aRepsOnlyEntry,
+  aRepsOnlySet,
+  aSet,
+} from '@/features/workouts/__fixtures__/builders';
 import type { StrengthEntry } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 import { useExerciseEditorFormLogic } from '@/features/workouts/ui/components/ExerciseEditorForm/ExerciseEditorForm.logic';
 
@@ -17,6 +25,7 @@ const renderEditor = async (entry: StrengthEntry = anEntry(), units: UnitSystem 
       onAddSet: record('add'),
       onRemoveSet: record('remove'),
       onChangeEntry: record('entry'),
+      onChangeType: record('type'),
     }),
   );
   return { ...rendered, calls };
@@ -29,9 +38,58 @@ describe('useExerciseEditorFormLogic', () => {
     const { result } = await renderEditor(entry);
 
     expect(result.current.derived.rows).toEqual([
-      { key: 'set-0', index: 0, reps: 5, weight: 100, rpe: 8, completed: true },
-      { key: 'set-1', index: 1, reps: 3, weight: 110, rpe: 0, completed: false },
+      { type: 'weightReps', key: 'set-0', index: 0, reps: 5, weight: 100, rpe: 8, completed: true },
+      { type: 'weightReps', key: 'set-1', index: 1, reps: 3, weight: 110, rpe: 0, completed: false },
     ]);
+  });
+
+  it('draws a reps-only set with its reps alone and a timed set with its seconds', async () => {
+    const reps = await renderEditor(aRepsOnlyEntry({ sets: [aRepsOnlySet({ reps: 15, rpe: 7 })] }));
+    const timed = await renderEditor(
+      aDurationEntry({ sets: [aDurationSet({ durationSeconds: 90, completed: false })] }),
+    );
+
+    expect(reps.result.current.derived.rows).toEqual([
+      { type: 'repsOnly', key: 'set-0', index: 0, reps: 15, rpe: 7, completed: true },
+    ]);
+    expect(timed.result.current.derived.rows).toEqual([
+      { type: 'duration', key: 'set-0', index: 0, durationSeconds: 90, rpe: 0, completed: false },
+    ]);
+    expect(timed.result.current.derived.duration).toEqual({ min: 5, max: 3600 });
+  });
+
+  it('writes the time of a timed set against its index', async () => {
+    const { result, calls } = await renderEditor(aDurationEntry());
+
+    await act(async () => result.current.effects.setDuration(1, 120));
+
+    expect(calls).toEqual([['set', 1, { durationSeconds: 120 }]]);
+  });
+
+  it('offers the three tracking types and changes the type while no set is done', async () => {
+    const { result, calls } = await renderEditor(anEntry({ sets: [anOpenSet()] }));
+
+    await act(async () => {
+      result.current.effects.changeType('weightReps');
+      result.current.effects.changeType('repsOnly');
+    });
+
+    expect(result.current.derived.typeSegments.map(segment => segment.value)).toEqual([
+      'weightReps',
+      'repsOnly',
+      'duration',
+    ]);
+    expect(result.current.derived.typeLocked).toBe(false);
+    expect(calls).toEqual([['type', 'repsOnly']]);
+  });
+
+  it('locks the type once a set is done, and writes no change', async () => {
+    const { result, calls } = await renderEditor(anEntry({ sets: [aSet(), anOpenSet({ index: 1 })] }));
+
+    await act(async () => result.current.effects.changeType('duration'));
+
+    expect(result.current.derived.typeLocked).toBe(true);
+    expect(calls).toEqual([]);
   });
 
   it('sums the exercise up like a routine item, with the sets done after it', async () => {
@@ -56,7 +114,7 @@ describe('useExerciseEditorFormLogic', () => {
       rpe: { min: 0, max: 10 },
       rest: { min: 0, max: 600 },
     });
-    expect(result.current.derived.rows[0]?.weight).toBe(220);
+    expect(result.current.derived.rows[0]).toMatchObject({ weight: 220 });
   });
 
   it('writes each set change against the set’s own index, weight in kilograms', async () => {
