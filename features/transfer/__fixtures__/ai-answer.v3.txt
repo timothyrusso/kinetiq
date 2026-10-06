@@ -1,0 +1,32 @@
+Sure! Here is a push day with a ramp on the bench, then dips and a plank:
+
+```json
+{
+  "format": "kinetiq.routines",
+  "version": 3,
+  "routines": [
+    {
+      "name": "Push",
+      "items": [
+        {"exerciseId": "ex:barbell-bench-press-medium-grip", "exerciseName": "Bench Press", "trackingType": "weightReps", "restSeconds": 150, "notes": "Pause on the chest", "sets": [
+          {"type": "weightReps", "reps": 10, "weightKg": 50, "targetRpe": null},
+          {"type": "weightReps", "reps": 8, "weightKg": 61.3, "targetRpe": 7},
+          {"type": "weightReps", "reps": "6-8", "weightKg": 70, "targetRpe": 8.6},
+          {"type": "weightReps", "reps": 250, "weightKg": 999, "targetRpe": 14},
+          {"weightKg": 40},
+          "not a set"
+        ]},
+        {"exerciseName": "Dips", "trackingType": "repsOnly", "restSeconds": 90, "sets": [{"type": "repsOnly", "reps": 12, "weightKg": 20, "targetRpe": null}]},
+        {"exerciseName": "Plank", "trackingType": "duration", "restSeconds": 60, "sets": [
+          {"type": "duration", "durationSeconds": 45.4, "targetRpe": null},
+          {"type": "duration", "durationSeconds": 9000, "targetRpe": 9},
+          {"type": "duration", "durationSeconds": 2},
+          {"type": "duration", "reps": 10}
+        ]},
+        {"exerciseName": "Push-up", "trackingType": "bodyweight", "sets": [{"reps": 15}]},
+        {"exerciseName": "Lateral raise", "trackingType": "weightReps", "sets": []}
+      ]
+    }
+  ]
+}
+```

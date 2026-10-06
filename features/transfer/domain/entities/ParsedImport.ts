@@ -10,6 +10,8 @@ export interface ParseIssue {
     | 'dataTransfer.errorNoRoutines'
     | 'dataTransfer.errorIsPrompt'
     | 'dataTransfer.errorUnreadable'
+    | 'dataTransfer.errorOlderFile'
+    | 'dataTransfer.issueItemNoType'
     | 'dataTransfer.issueItemSkipped'
     | 'dataTransfer.issueDefaults'
     | 'dataTransfer.issueTooMany'
@@ -17,18 +19,30 @@ export interface ParseIssue {
   readonly vars?: Readonly<Record<string, number>>;
 }
 
-/** One planned set as the file gave it, clamped to the editor's bounds. */
-export interface ParsedSet {
-  readonly reps: number;
-  readonly weightKg: number;
-  readonly targetRpe: number | null;
-}
+/**
+ * One planned set as the file gave it, clamped to the editor's bounds and tagged with what it
+ * records: reps at a weight, reps alone, or seconds.
+ */
+export type ParsedSet =
+  | { readonly type: 'weightReps'; readonly reps: number; readonly weightKg: number; readonly targetRpe: number | null }
+  | { readonly type: 'repsOnly'; readonly reps: number; readonly targetRpe: number | null }
+  | { readonly type: 'duration'; readonly durationSeconds: number; readonly targetRpe: number | null };
+
+/**
+ * What an item's sets record. The same literals as the exercises' `TrackingType`, which a domain
+ * file may not import: `saveImport` hands one to the other, so the compiler keeps the lists equal.
+ */
+export type ParsedTrackingType = ParsedSet['type'];
+
+/** Every tracking type a file may name, for the parser to check a value against. */
+export const TRACKING_TYPES: readonly ParsedTrackingType[] = ['weightReps', 'repsOnly', 'duration'];
 
 /** One routine item as the file gave it, clamped to the editor's bounds. */
 export interface ParsedItem {
   readonly exerciseId: string | null;
   readonly exerciseName: string;
-  /** In the order they are performed; never empty. */
+  readonly trackingType: ParsedTrackingType;
+  /** In the order they are performed; never empty, and every one of `trackingType`. */
   readonly sets: readonly ParsedSet[];
   /** Null means "use the user's default rest", decided at import time. */
   readonly restSeconds: number | null;

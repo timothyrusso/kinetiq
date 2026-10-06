@@ -1,10 +1,12 @@
 import { clamp } from '@/features/core/utils';
 import type { ImportRules } from '@/features/transfer/domain/entities/ImportRules';
-import type {
-  ParsedItem,
-  ParsedRoutine,
-  ParsedSet,
-  ParseIssue,
+import {
+  type ParsedItem,
+  type ParsedRoutine,
+  type ParsedSet,
+  type ParsedTrackingType,
+  type ParseIssue,
+  TRACKING_TYPES,
 } from '@/features/transfer/domain/entities/ParsedImport';
 
 /** A routines file read: the routines and what changed on the way in, or why there are none. */
@@ -86,7 +88,7 @@ function exerciseIdOf(item: Json, rules: ImportRules): string | null {
   return id !== null && rules.isExerciseId(id) ? id : null;
 }
 
-/** A v1 rep text: digits and one hyphen. AIs like en and em dashes, and "x". */
+/** A rep text: digits and one hyphen. AIs like en and em dashes, and "x". */
 function repsTextOf(value: unknown): string | null {
   const raw = text(value);
   if (raw === null) return null;
@@ -110,34 +112,75 @@ function weightOf(value: unknown, rules: ImportRules): number {
   return clamp(Math.round((number(value) ?? 0) * 4) / 4, min, max);
 }
 
-/** What an item without a usable count or rep target gets: the editor's defaults. */
+/** What an item without a usable count, rep target or time gets: the editor's defaults. */
 const DEFAULT_SET_COUNT = 3;
 const DEFAULT_REPS = 8;
+const DEFAULT_DURATION_SECONDS = 30;
 
 /**
- * An item's planned sets, and whether a default filled a gap. A v2 item lists them as rows
- * (`sets: [{ reps, weightKg, targetRpe }]`), cut to the most sets an item holds. A v1 item gives a
- * count, one rep text and one weight: it becomes that many identical sets on the number the reps
- * start with, with no target RPE. The shape decides, not `version`: an AI often keeps the number
- * of the example it was shown.
+ * The item's tracking type, or null when it names none the app knows. No item of a file from
+ * before v3 has one, and a guess from the exercise would plan a plank as weight and reps.
  */
-function plannedSets(item: Json, rules: ImportRules): { sets: ParsedSet[]; defaulted: boolean } {
+function trackingTypeOf(item: Json): ParsedTrackingType | null {
+  return TRACKING_TYPES.find(type => type === item.trackingType) ?? null;
+}
+
+/** The values one set may give: a set row, or the item itself for the count shorthand. */
+type SetValues = Partial<Record<'reps' | 'weightKg' | 'durationSeconds' | 'targetRpe', unknown>>;
+
+/**
+ * A set of `type` from `values`, and whether a default filled a gap. Only the fields the type
+ * records are read: a weight on a set counted in reps alone is dropped.
+ */
+function setOf(
+  type: ParsedTrackingType,
+  values: SetValues,
+  rules: ImportRules,
+): { set: ParsedSet; defaulted: boolean } {
+  const targetRpe = bounded(number(values.targetRpe), rules.bounds.targetRpe);
+  switch (type) {
+    case 'weightReps': {
+      const reps = repsOf(values.reps, rules);
+      const weightKg = weightOf(values.weightKg, rules);
+      return { set: { type, reps: reps ?? DEFAULT_REPS, weightKg, targetRpe }, defaulted: reps === null };
+    }
+    case 'repsOnly': {
+      const reps = repsOf(values.reps, rules);
+      return { set: { type, reps: reps ?? DEFAULT_REPS, targetRpe }, defaulted: reps === null };
+    }
+    case 'duration': {
+      const seconds = bounded(number(values.durationSeconds), rules.bounds.durationSeconds);
+      return {
+        set: { type, durationSeconds: seconds ?? DEFAULT_DURATION_SECONDS, targetRpe },
+        defaulted: seconds === null,
+      };
+    }
+  }
+}
+
+/**
+ * An item's planned sets, and whether a default filled a gap. An item lists them as rows
+ * (`sets: [{ type, reps, weightKg, targetRpe }]`), cut to the most sets an item holds; the item's
+ * type decides what every row records, so a row's own `type` is not read. An item may instead give
+ * a count with one set's values beside it, the shorthand of a v1 file that an AI still writes: it
+ * becomes that many identical sets, reps on the number a range starts with, with no target RPE.
+ * The shape decides, not `version`: an AI often keeps the number of the example it was shown.
+ */
+function plannedSets(
+  item: Json,
+  type: ParsedTrackingType,
+  rules: ImportRules,
+): { sets: ParsedSet[]; defaulted: boolean } {
   const rows = Array.isArray(item.sets) ? item.sets.filter(isObject).slice(0, rules.bounds.sets.max) : [];
   if (rows.length > 0) {
-    const reps = rows.map(row => repsOf(row.reps, rules));
-    const sets = rows.map((row, index) => ({
-      reps: reps[index] ?? DEFAULT_REPS,
-      weightKg: weightOf(row.weightKg, rules),
-      targetRpe: bounded(number(row.targetRpe), rules.bounds.targetRpe),
-    }));
-    return { sets, defaulted: reps.includes(null) };
+    const read = rows.map(row => setOf(type, row, rules));
+    return { sets: read.map(({ set }) => set), defaulted: read.some(({ defaulted }) => defaulted) };
   }
   const count = bounded(number(item.sets), rules.bounds.sets);
-  const reps = repsOf(item.reps, rules);
-  const set: ParsedSet = { reps: reps ?? DEFAULT_REPS, weightKg: weightOf(item.weightKg, rules), targetRpe: null };
+  const { set, defaulted } = setOf(type, { ...item, targetRpe: null }, rules);
   return {
     sets: Array.from({ length: count ?? DEFAULT_SET_COUNT }, () => set),
-    defaulted: count === null || reps === null,
+    defaulted: count === null || defaulted,
   };
 }
 
@@ -159,17 +202,33 @@ function parseItem(
     issues.push({ key: 'dataTransfer.issueItemSkipped', vars: where });
     return null;
   }
+  const trackingType = trackingTypeOf(raw);
+  if (trackingType === null) {
+    issues.push({ key: 'dataTransfer.issueItemNoType', vars: where });
+    return null;
+  }
 
-  const { sets, defaulted } = plannedSets(raw, rules);
+  const { sets, defaulted } = plannedSets(raw, trackingType, rules);
   if (defaulted) issues.push({ key: 'dataTransfer.issueDefaults', vars: where });
 
   return {
     exerciseId,
     exerciseName: exerciseName ?? '',
+    trackingType,
     sets,
     restSeconds: bounded(number(raw.restSeconds), rules.bounds.restSeconds),
     notes: text(raw.notes)?.slice(0, rules.bounds.notesLength) ?? null,
   };
+}
+
+/**
+ * Why a file gave no routines: it is older than v3 when an item was left out for naming no
+ * tracking type, which tells its author what to do (export again from an updated app, or ask the
+ * AI again); otherwise it simply has none.
+ */
+function noRoutines(issues: readonly ParseIssue[]): ParseResult {
+  const older = issues.some(issue => issue.key === 'dataTransfer.issueItemNoType');
+  return { ok: false, issue: { key: older ? 'dataTransfer.errorOlderFile' : 'dataTransfer.errorNoRoutines' } };
 }
 
 /**
@@ -178,10 +237,12 @@ function parseItem(
  * Strict about meaning, lenient about wrapping. An AI asked for JSON often wraps it in a code
  * fence or a sentence, so the text between the first `{` or `[` and the last `}` or `]` is what
  * gets parsed, inside the first code fence that holds JSON when there is one (`readDocument`);
- * the document may be the full file, a bare array of routines, or one routine, in v2 or in v1
- * (`plannedSets`). What is not guessed is a value: a missing `sets` gets the editor's
+ * the document may be the full file, a bare array of routines, or one routine, its sets as rows or
+ * as a count (`plannedSets`). What is not guessed is a value: a missing `sets` gets the editor's
  * default and is reported, an out-of-range one is clamped to the editor's bounds, and an item
- * with neither an exercise id nor a name is dropped and reported.
+ * with neither an exercise id nor a name is dropped and reported. Nor is a tracking type: an item
+ * without one is dropped and reported, and a file with no item left, a file from before v3, is
+ * refused as older (`noRoutines`).
  *
  * Text that is not JSON and carries the index link is the app's own AI instructions pasted back
  * (by mistake, or echoed by the AI around its answer), and is refused as such rather than as text
@@ -228,6 +289,6 @@ export function parseRoutines(raw: string, rules: ImportRules): ParseResult {
     routines.push({ name: text(entry.name), items });
   });
 
-  if (routines.length === 0) return { ok: false, issue: { key: 'dataTransfer.errorNoRoutines' } };
+  if (routines.length === 0) return noRoutines(issues);
   return { ok: true, routines, issues };
 }

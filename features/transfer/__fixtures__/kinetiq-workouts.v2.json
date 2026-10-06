@@ -1,6 +1,6 @@
 {
   "format": "kinetiq.workouts",
-  "version": 3,
+  "version": 2,
   "exportedAt": "2026-09-25T10:00:00.000Z",
   "units": {
     "weight": "kg"
@@ -19,13 +19,11 @@
           "exerciseId": "ex:barbell-bench-press-medium-grip",
           "exerciseName": "Bench Press",
           "muscleGroup": "Chest",
-          "trackingType": "weightReps",
           "restSeconds": 120,
           "notes": null,
           "sets": [
             {
               "index": 0,
-              "type": "weightReps",
               "reps": 5,
               "weightKg": 100,
               "completed": true,
@@ -34,7 +32,6 @@
             },
             {
               "index": 1,
-              "type": "weightReps",
               "reps": 5,
               "weightKg": 100,
               "completed": false,
@@ -52,19 +49,17 @@
       "durationSeconds": 3120,
       "notes": "Knees felt good\nDeload next week",
       "totalVolumeKg": 1150,
-      "totalSets": 6,
+      "totalSets": 3,
       "exercises": [
         {
           "exerciseId": "ex:barbell-squat",
           "exerciseName": "Squat, Back",
           "muscleGroup": null,
-          "trackingType": "weightReps",
           "restSeconds": 180,
           "notes": "Belt on top sets",
           "sets": [
             {
               "index": 0,
-              "type": "weightReps",
               "reps": 3,
               "weightKg": 142.5,
               "completed": true,
@@ -73,7 +68,6 @@
             },
             {
               "index": 1,
-              "type": "weightReps",
               "reps": 8,
               "weightKg": 0,
               "completed": true,
@@ -86,66 +80,16 @@
           "exerciseId": "local:hip-thrust",
           "exerciseName": "Hip thrust",
           "muscleGroup": null,
-          "trackingType": "weightReps",
           "restSeconds": 90,
           "notes": null,
           "sets": [
             {
               "index": 0,
-              "type": "weightReps",
               "reps": 12,
               "weightKg": 60.25,
               "completed": true,
               "rpe": null,
               "estimated1rmKg": 84.35
-            }
-          ]
-        },
-        {
-          "exerciseId": "ex:pullups",
-          "exerciseName": "Pull-up",
-          "muscleGroup": null,
-          "trackingType": "repsOnly",
-          "restSeconds": 90,
-          "notes": null,
-          "sets": [
-            {
-              "index": 0,
-              "type": "repsOnly",
-              "reps": 10,
-              "completed": true,
-              "rpe": 8
-            },
-            {
-              "index": 1,
-              "type": "repsOnly",
-              "reps": 7,
-              "completed": false,
-              "rpe": null
-            }
-          ]
-        },
-        {
-          "exerciseId": "ex:plank",
-          "exerciseName": "Plank",
-          "muscleGroup": null,
-          "trackingType": "duration",
-          "restSeconds": 60,
-          "notes": "Squeeze the glutes",
-          "sets": [
-            {
-              "index": 0,
-              "type": "duration",
-              "durationSeconds": 45,
-              "completed": true,
-              "rpe": null
-            },
-            {
-              "index": 1,
-              "type": "duration",
-              "durationSeconds": 90,
-              "completed": true,
-              "rpe": 9
             }
           ]
         }

@@ -15,6 +15,7 @@ export interface ImportRules {
     readonly sets: Bounds;
     readonly reps: Bounds;
     readonly weightKg: Bounds;
+    readonly durationSeconds: Bounds;
     readonly targetRpe: Bounds;
     readonly restSeconds: Bounds;
     readonly notesLength: number;

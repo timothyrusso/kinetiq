@@ -1,44 +1,38 @@
 {
   "format": "kinetiq.routines",
-  "version": 3,
+  "version": 2,
   "exportedAt": "2026-09-25T10:00:00.000Z",
   "routines": [
     {
       "name": "Legs · Heavy",
       "items": [
         {
-          "exerciseId": "wger:111",
+          "exerciseId": "ex:barbell-squat",
           "exerciseName": "Squat, Back",
-          "trackingType": "weightReps",
           "restSeconds": 180,
           "notes": "Belt on top sets",
           "sets": [
             {
-              "type": "weightReps",
               "reps": 5,
               "weightKg": 130,
               "targetRpe": null
             },
             {
-              "type": "weightReps",
               "reps": 5,
               "weightKg": 137.5,
               "targetRpe": null
             },
             {
-              "type": "weightReps",
               "reps": 5,
               "weightKg": 142.5,
               "targetRpe": 8
             },
             {
-              "type": "weightReps",
               "reps": 5,
               "weightKg": 142.5,
               "targetRpe": 8
             },
             {
-              "type": "weightReps",
               "reps": 3,
               "weightKg": 142.5,
               "targetRpe": 9
@@ -48,24 +42,20 @@
         {
           "exerciseId": "local:hip-thrust",
           "exerciseName": "Hip thrust",
-          "trackingType": "weightReps",
           "restSeconds": 90,
           "notes": null,
           "sets": [
             {
-              "type": "weightReps",
               "reps": 10,
               "weightKg": 60.25,
               "targetRpe": null
             },
             {
-              "type": "weightReps",
               "reps": 10,
               "weightKg": 60.25,
               "targetRpe": null
             },
             {
-              "type": "weightReps",
               "reps": 10,
               "weightKg": 60.25,
               "targetRpe": null
@@ -78,26 +68,22 @@
       "name": "Push Day",
       "items": [
         {
-          "exerciseId": "wger:73",
+          "exerciseId": "ex:barbell-bench-press-medium-grip",
           "exerciseName": "Bench Press",
-          "trackingType": "weightReps",
           "restSeconds": 90,
           "notes": null,
           "sets": [
             {
-              "type": "weightReps",
               "reps": 8,
               "weightKg": 60,
               "targetRpe": null
             },
             {
-              "type": "weightReps",
               "reps": 8,
               "weightKg": 60,
               "targetRpe": null
             },
             {
-              "type": "weightReps",
               "reps": 8,
               "weightKg": 60,
               "targetRpe": null
@@ -105,73 +91,30 @@
           ]
         },
         {
-          "exerciseId": "wger:74",
+          "exerciseId": "ex:barbell-shoulder-press",
           "exerciseName": "Overhead Press",
-          "trackingType": "weightReps",
           "restSeconds": 60,
           "notes": "Brace first",
           "sets": [
             {
-              "type": "weightReps",
               "reps": 6,
               "weightKg": 40,
               "targetRpe": null
             },
             {
-              "type": "weightReps",
               "reps": 6,
               "weightKg": 40,
               "targetRpe": null
             },
             {
-              "type": "weightReps",
               "reps": 6,
               "weightKg": 40,
               "targetRpe": null
             },
             {
-              "type": "weightReps",
               "reps": 6,
               "weightKg": 40,
               "targetRpe": null
-            }
-          ]
-        },
-        {
-          "exerciseId": "wger:107",
-          "exerciseName": "Pull-up",
-          "trackingType": "repsOnly",
-          "restSeconds": 90,
-          "notes": null,
-          "sets": [
-            {
-              "type": "repsOnly",
-              "reps": 10,
-              "targetRpe": null
-            },
-            {
-              "type": "repsOnly",
-              "reps": 8,
-              "targetRpe": 8
-            }
-          ]
-        },
-        {
-          "exerciseId": "wger:238",
-          "exerciseName": "Plank",
-          "trackingType": "duration",
-          "restSeconds": 60,
-          "notes": "Squeeze the glutes",
-          "sets": [
-            {
-              "type": "duration",
-              "durationSeconds": 45,
-              "targetRpe": null
-            },
-            {
-              "type": "duration",
-              "durationSeconds": 60,
-              "targetRpe": 9
             }
           ]
         }

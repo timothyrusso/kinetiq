@@ -7,103 +7,124 @@
         {
           "exerciseId": "ex:barbell-bench-press-medium-grip",
           "exerciseName": "Bench Press",
+          "trackingType": "weightReps",
           "sets": [
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 61.25,
               "targetRpe": null
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 61.25,
               "targetRpe": null
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 61.25,
               "targetRpe": null
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 61.25,
               "targetRpe": null
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 61.25,
               "targetRpe": null
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 61.25,
               "targetRpe": null
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 61.25,
               "targetRpe": null
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 61.25,
               "targetRpe": null
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 61.25,
               "targetRpe": null
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 61.25,
               "targetRpe": null
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 61.25,
               "targetRpe": null
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 61.25,
               "targetRpe": null
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 61.25,
               "targetRpe": null
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 61.25,
               "targetRpe": null
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 61.25,
               "targetRpe": null
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 61.25,
               "targetRpe": null
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 61.25,
               "targetRpe": null
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 61.25,
               "targetRpe": null
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 61.25,
               "targetRpe": null
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 61.25,
               "targetRpe": null
@@ -115,18 +136,22 @@
         {
           "exerciseId": null,
           "exerciseName": "Row",
+          "trackingType": "weightReps",
           "sets": [
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 0,
               "targetRpe": null
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 0,
               "targetRpe": null
             },
             {
+              "type": "weightReps",
               "reps": 8,
               "weightKg": 0,
               "targetRpe": null
@@ -138,25 +163,45 @@
         {
           "exerciseId": "local:band-pull",
           "exerciseName": "Band pull-apart",
+          "trackingType": "repsOnly",
           "sets": [
             {
+              "type": "repsOnly",
               "reps": 15,
-              "weightKg": 0,
               "targetRpe": null
             },
             {
+              "type": "repsOnly",
               "reps": 15,
-              "weightKg": 0,
               "targetRpe": null
             },
             {
+              "type": "repsOnly",
               "reps": 15,
-              "weightKg": 0,
               "targetRpe": null
             }
           ],
           "restSeconds": null,
           "notes": "Slow"
+        },
+        {
+          "exerciseId": null,
+          "exerciseName": "Wall sit",
+          "trackingType": "duration",
+          "sets": [
+            {
+              "type": "duration",
+              "durationSeconds": 40,
+              "targetRpe": null
+            },
+            {
+              "type": "duration",
+              "durationSeconds": 40,
+              "targetRpe": null
+            }
+          ],
+          "restSeconds": null,
+          "notes": null
         }
       ]
     },
@@ -166,20 +211,21 @@
         {
           "exerciseId": null,
           "exerciseName": "Plank",
+          "trackingType": "duration",
           "sets": [
             {
-              "reps": 60,
-              "weightKg": 0,
+              "type": "duration",
+              "durationSeconds": 30,
               "targetRpe": null
             },
             {
-              "reps": 60,
-              "weightKg": 0,
+              "type": "duration",
+              "durationSeconds": 30,
               "targetRpe": null
             },
             {
-              "reps": 60,
-              "weightKg": 0,
+              "type": "duration",
+              "durationSeconds": 30,
               "targetRpe": null
             }
           ],
@@ -198,23 +244,37 @@
       }
     },
     {
-      "key": "dataTransfer.issueItemSkipped",
-      "vars": {
-        "routine": 1,
-        "item": 4
-      }
-    },
-    {
-      "key": "dataTransfer.issueItemSkipped",
+      "key": "dataTransfer.issueItemNoType",
       "vars": {
         "routine": 1,
         "item": 5
       }
     },
     {
+      "key": "dataTransfer.issueItemSkipped",
+      "vars": {
+        "routine": 1,
+        "item": 6
+      }
+    },
+    {
+      "key": "dataTransfer.issueItemSkipped",
+      "vars": {
+        "routine": 1,
+        "item": 7
+      }
+    },
+    {
       "key": "dataTransfer.issueRoutineSkipped",
       "vars": {
         "routine": 2
+      }
+    },
+    {
+      "key": "dataTransfer.issueDefaults",
+      "vars": {
+        "routine": 3,
+        "item": 1
       }
     }
   ]
