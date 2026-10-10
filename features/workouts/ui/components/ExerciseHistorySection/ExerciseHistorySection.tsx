@@ -19,7 +19,8 @@ import { useExerciseHistorySectionLogic } from '@/features/workouts/ui/component
 import { createStyles } from '@/features/workouts/ui/components/ExerciseHistorySection/ExerciseHistorySection.style';
 
 /**
- * The exercise detail's history: when it was last done, the heaviest weight per session, the
+ * The exercise detail's history: when it was last done, one chart point per session (the heaviest
+ * weight, the most reps or the longest set, by what the exercise records), the
  * latest sessions (each opens its activity) and the personal bests. Rendered as siblings of the
  * detail's other sections, so the page's gap spaces them.
  */
@@ -50,14 +51,14 @@ export function ExerciseHistorySection({ exerciseId }: { exerciseId: string | nu
             {derived.showChart ? (
               <Card>
                 <SectionHeader
-                  title={t('exerciseDetail.heaviestWeight')}
+                  title={derived.chartTitle}
                   eyebrow={t('exerciseDetail.perSession')}
                   style={styles.chartTitle}
                 />
                 <LineChart
                   points={derived.chartPoints}
                   theme={theme}
-                  format={effects.formatChartWeight}
+                  format={effects.formatChartValue}
                   accessibilityLabel={derived.chartA11y}
                 />
               </Card>

@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { haptics } from '@/features/core/haptics';
 import { type TKey, useT } from '@/features/core/translations';
-import type { Exercise } from '@/features/exercises';
+import { defaultTrackingType, type Exercise } from '@/features/exercises';
 import type { PickDestination } from '@/features/exercises/pages';
 import { defaultItemTarget } from '@/features/routines';
 import { useSettings } from '@/features/settings';
@@ -19,8 +19,9 @@ const LOCKED_KEY: Record<RemovalKind, TKey | null> = {
 };
 
 /**
- * Picks into the workout in progress. The opening targets are the routines' own, so an exercise
- * added mid-workout starts out like one added to a routine: the rest is the user's default. A
+ * Picks into the workout in progress. The set count is the routines' own, so an exercise added
+ * mid-workout starts out like one added to a routine: the rest is the user's default, and the
+ * sets open on the defaults of the exercise's catalog tracking type. A
  * second tap takes an exercise back out, like the routine picker, but only one with nothing
  * logged, the workout's last included: the picker asks no confirmation, so it cannot drop sets.
  * Any other included row stays inert and says why.
@@ -45,7 +46,12 @@ export function usePickIntoSessionLogic() {
   const pick = useCallback(
     (exercise: Exercise) => {
       setError(null);
-      add(exercise, defaultItemTarget(defaultRest), ids.includes(exercise.id))
+      const target = defaultItemTarget(defaultTrackingType(exercise), defaultRest);
+      add(
+        exercise,
+        { setCount: target.sets.length, restSeconds: target.restSeconds, notes: target.notes },
+        ids.includes(exercise.id),
+      )
         .then(added => {
           if (added) {
             haptics.success();

@@ -1,18 +1,52 @@
-import type { StrengthEntry, StrengthSet } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
+import type {
+  EntryFields,
+  StrengthEntry,
+  StrengthSet,
+  TrackingType,
+} from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 import type { WorkoutSession } from '@/features/workouts/domain/schemas/WorkoutSessionSchema';
-import { withEstimated1rm } from '@/features/workouts/domain/utils/workoutMath';
+import { withEstimated1rm } from '@/features/workouts/domain/utils/oneRepMax';
+import { entryAs, isTypeLocked, newSet, withSets } from '@/features/workouts/domain/utils/trackingSets';
 
-/** The fields a set editor may change. */
-export type SetPatch = Partial<Pick<StrengthSet, 'reps' | 'weightKg' | 'rpe'>>;
+/**
+ * The fields a set editor may change. A field the set's type does not record is ignored: a weight
+ * sent to a reps-only set changes nothing.
+ */
+export interface SetPatch {
+  readonly reps?: number;
+  readonly weightKg?: number;
+  readonly durationSeconds?: number;
+  readonly rpe?: number | null;
+}
 
 /** The fields of an exercise the exercise editor may change besides its sets. */
-export type EntryPatch = Partial<Pick<StrengthEntry, 'restSeconds' | 'notes'>>;
+export type EntryPatch = Partial<Pick<EntryFields, 'restSeconds' | 'notes'>>;
 
 /** The shortest rest a timer can hold; less than this is no rest, which is `clearRest`. */
 const MIN_REST_SECONDS = 5;
 
-/** The reps and load a set added to an empty exercise opens with. */
-const DEFAULT_NEW_SET = { reps: 8, weightKg: 0 } as const;
+/** `set` with the fields of `patch` its type records, its estimate refreshed. */
+function patched(set: StrengthSet, patch: SetPatch): StrengthSet {
+  const rpe = patch.rpe === undefined ? set.rpe : patch.rpe;
+  switch (set.type) {
+    case 'weightReps':
+      return withEstimated1rm({
+        ...set,
+        rpe,
+        reps: patch.reps ?? set.reps,
+        weightKg: patch.weightKg ?? set.weightKg,
+      });
+    case 'repsOnly':
+      return { ...set, rpe, reps: patch.reps ?? set.reps };
+    case 'duration':
+      return { ...set, rpe, durationSeconds: patch.durationSeconds ?? set.durationSeconds };
+  }
+}
+
+/** `set` ticked or unticked, its estimate refreshed. */
+function withCompleted(set: StrengthSet, completed: boolean): StrengthSet {
+  return set.type === 'weightReps' ? withEstimated1rm({ ...set, completed }) : { ...set, completed };
+}
 
 /**
  * The next session, stamped `updatedAt: now`. Every transition below goes through it, or returns
@@ -29,7 +63,7 @@ function withEntrySets(
   sets: readonly StrengthSet[],
   now: number,
 ): WorkoutSession {
-  const entries = session.entries.map((entry, index) => (index === entryIndex ? { ...entry, sets } : entry));
+  const entries = session.entries.map((entry, index) => (index === entryIndex ? withSets(entry, sets) : entry));
   return touch(session, { entries }, now);
 }
 
@@ -79,7 +113,7 @@ export function toggleSet(
     if (index !== setIndex) return set;
     const completed = !set.completed;
     if (completed) restSeconds = entry.restSeconds;
-    return withEstimated1rm({ ...set, completed });
+    return withCompleted(set, completed);
   });
   return { session: withEntrySets(session, entryIndex, sets, now), restSeconds };
 }
@@ -93,7 +127,7 @@ export function updateSet(
 ): WorkoutSession {
   const entry = session.entries[entryIndex];
   if (!entry) return session;
-  const sets = entry.sets.map((set, index) => (index === setIndex ? withEstimated1rm({ ...set, ...patch }) : set));
+  const sets = entry.sets.map((set, index) => (index === setIndex ? patched(set, patch) : set));
   return withEntrySets(session, entryIndex, sets, now);
 }
 
@@ -113,20 +147,46 @@ export function updateEntry(
   return touch(session, { entries }, now);
 }
 
-/** Appends a set with the previous set's targets: the common case. */
+/** An open copy of `last` at `index`: its targets, with no RPE and no routine row. */
+function copiedSet(last: StrengthSet, index: number): StrengthSet {
+  const base = { index, completed: false, rpe: null };
+  switch (last.type) {
+    case 'weightReps':
+      return { ...base, type: last.type, reps: last.reps, weightKg: last.weightKg, estimated1rm: null };
+    case 'repsOnly':
+      return { ...base, type: last.type, reps: last.reps };
+    case 'duration':
+      return { ...base, type: last.type, durationSeconds: last.durationSeconds };
+  }
+}
+
+/**
+ * Appends a set with the previous set's targets: the common case. An exercise with no sets gets
+ * one on its type's defaults.
+ */
 export function addSet(session: WorkoutSession, entryIndex: number, now: number): WorkoutSession {
   const entry = session.entries[entryIndex];
   if (!entry) return session;
-  const last = entry.sets[entry.sets.length - 1];
-  const added = withEstimated1rm({
-    index: entry.sets.length,
-    reps: last?.reps ?? DEFAULT_NEW_SET.reps,
-    weightKg: last?.weightKg ?? DEFAULT_NEW_SET.weightKg,
-    completed: false,
-    estimated1rm: null,
-    rpe: null,
-  });
+  const index = entry.sets.length;
+  const last = entry.sets[index - 1];
+  const added = last === undefined ? newSet(entry.trackingType, index) : copiedSet(last, index);
   return withEntrySets(session, entryIndex, [...entry.sets, added], now);
+}
+
+/**
+ * Changes what the exercise records. Allowed until one of its sets is completed; after that the
+ * type is locked and the same session comes back. Each set is carried over by `setAs`.
+ */
+export function changeTrackingType(
+  session: WorkoutSession,
+  entryIndex: number,
+  type: TrackingType,
+  now: number,
+): WorkoutSession {
+  const entry = session.entries[entryIndex];
+  if (!entry || entry.trackingType === type || isTypeLocked(entry)) return session;
+  const entries = session.entries.map((row, index) => (index === entryIndex ? entryAs(row, type) : row));
+  return touch(session, { entries }, now);
 }
 
 /** Removes a set and numbers the rest from 0 again. An exercise keeps its last set. */
@@ -143,7 +203,12 @@ export function removeSet(session: WorkoutSession, entryIndex: number, setIndex:
  */
 export function skipExercise(session: WorkoutSession, entryIndex: number, now: number): WorkoutSession {
   const entries = session.entries.map((entry, index) =>
-    index === entryIndex ? { ...entry, sets: entry.sets.map(set => ({ ...set, completed: false })) } : entry,
+    index === entryIndex
+      ? withSets(
+          entry,
+          entry.sets.map(set => withCompleted(set, false)),
+        )
+      : entry,
   );
   return touch(session, { entries, activeIndex: Math.min(entryIndex + 1, session.entries.length - 1) }, now);
 }

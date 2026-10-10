@@ -2,8 +2,9 @@ import { type MutateOptions, type QueryClient, useQueryClient } from '@tanstack/
 import { useCallback, useRef } from 'react';
 import { useEffectMutation } from '@/features/core/query';
 import type { Exercise } from '@/features/exercises';
-import type { ItemChange, ItemTarget } from '@/features/routines/domain/entities/ItemTarget';
+import type { ItemChange, ItemPatch, ItemTarget } from '@/features/routines/domain/entities/ItemTarget';
 import type { RoutineId } from '@/features/routines/domain/schemas/RoutineId';
+import { itemWrite, patchItem } from '@/features/routines/domain/utils/itemTargets';
 import { forgetRoutine, refreshRoutine, routineQueryKeys } from '@/features/routines/facades/routineQueryKeys';
 import { addRoutineItem } from '@/features/routines/useCases/addRoutineItem';
 import { deleteRoutine } from '@/features/routines/useCases/deleteRoutine';
@@ -61,27 +62,27 @@ export function useReorderRoutine() {
 
 const SET_ITEM_KEY = ['routines', 'setItem'] as const;
 
-type SetItemWrite = { readonly routineId: RoutineId; readonly itemId: string; readonly patch: Partial<ItemTarget> };
+type SetItemWrite = { readonly routineId: RoutineId; readonly itemId: string; readonly patch: ItemPatch };
 
 /**
- * Applies `change` to item `itemId` as the cached routine holds it now, and returns the patch it
- * made: nothing when the routine or the item is not in the cache.
+ * Applies `change` to item `itemId` as the cached routine holds it now, and returns the patch to
+ * write (`itemWrite`): nothing when the routine or the item is not in the cache.
  */
 function changeCachedItem(
   client: QueryClient,
   routineId: RoutineId,
   itemId: string,
   change: ItemChange,
-): Partial<ItemTarget> | null {
+): ItemPatch | null {
   const key = routineQueryKeys.detail(routineId);
   const detail = client.getQueryData<RoutineDetail | null>(key);
   const item = detail?.routine.items.find(row => row.id === itemId);
   if (detail == null || item === undefined) return null;
-  const patch = change(item);
+  const patch = itemWrite(item, change(item));
   // NOTE: A read in flight would land the item from before this edit over it; cancelling one first
   // puts back what it started from, which this then patches.
   void client.cancelQueries({ queryKey: key });
-  const items = detail.routine.items.map(row => (row.id === itemId ? { ...row, ...patch } : row));
+  const items = detail.routine.items.map(row => (row.id === itemId ? patchItem(row, patch) : row));
   client.setQueryData<RoutineDetail>(key, { ...detail, routine: { ...detail.routine, items } });
   return patch;
 }

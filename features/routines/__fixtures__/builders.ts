@@ -3,8 +3,13 @@ import { RoutineId } from '@/features/routines/domain/schemas/RoutineId';
 import type { Routine, RoutineItem } from '@/features/routines/domain/schemas/RoutineSchema';
 import { uniformSets } from '@/features/routines/domain/utils/itemTargets';
 
+type WeightRepsItem = Extract<RoutineItem, { readonly trackingType: 'weightReps' }>;
+type RepsOnlyItem = Extract<RoutineItem, { readonly trackingType: 'repsOnly' }>;
+type DurationItem = Extract<RoutineItem, { readonly trackingType: 'duration' }>;
+
 /** One item of a push day: bench press, three sets of eight at 60 kg. */
-export const aRoutineItem = (overrides: Partial<RoutineItem> = {}): RoutineItem => ({
+export const aRoutineItem = (overrides: Partial<WeightRepsItem> = {}): WeightRepsItem => ({
+  trackingType: 'weightReps',
   id: 'rit_bench',
   exerciseId: 'ex:barbell-bench-press',
   exerciseName: 'Bench Press',
@@ -14,8 +19,32 @@ export const aRoutineItem = (overrides: Partial<RoutineItem> = {}): RoutineItem 
   ...overrides,
 });
 
+/** A reps-only item: pull-ups, three sets of eight. */
+export const aRepsOnlyItem = (overrides: Partial<RepsOnlyItem> = {}): RepsOnlyItem => ({
+  trackingType: 'repsOnly',
+  id: 'rit_pullup',
+  exerciseId: 'ex:pullups',
+  exerciseName: 'Pullups',
+  sets: [0, 1, 2].map(index => ({ type: 'repsOnly', index, reps: 8, targetRpe: null })),
+  restSeconds: 90,
+  notes: null,
+  ...overrides,
+});
+
+/** A timed item: the plank, three holds of 45 s. */
+export const aDurationItem = (overrides: Partial<DurationItem> = {}): DurationItem => ({
+  trackingType: 'duration',
+  id: 'rit_plank',
+  exerciseId: 'ex:plank',
+  exerciseName: 'Plank',
+  sets: [0, 1, 2].map(index => ({ type: 'duration', index, durationSeconds: 45, targetRpe: null })),
+  restSeconds: 60,
+  notes: null,
+  ...overrides,
+});
+
 /** A second item: overhead press, four sets of six at 40 kg, resting 60 s. */
-export const anotherRoutineItem = (overrides: Partial<RoutineItem> = {}): RoutineItem =>
+export const anotherRoutineItem = (overrides: Partial<WeightRepsItem> = {}): WeightRepsItem =>
   aRoutineItem({
     id: 'rit_press',
     exerciseId: 'ex:barbell-squat',
@@ -67,6 +96,7 @@ export const anExercise = (overrides: Partial<Exercise> = {}): Exercise => ({
   primaryMuscles: ['Chest'],
   secondaryMuscles: ['Triceps'],
   equipment: ['Barbell'],
+  equipmentKeys: ['barbell'],
   imageUrl: 'assets/catalog/images/barbell-bench-press-medium-grip/0.webp',
   imageEndUrl: 'assets/catalog/images/barbell-bench-press-medium-grip/1.webp',
   thumbnailUrl: 'assets/catalog/images/barbell-bench-press-medium-grip/thumb.webp',

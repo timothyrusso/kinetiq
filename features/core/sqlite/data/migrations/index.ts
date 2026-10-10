@@ -11,6 +11,7 @@ import { v009 } from '@/features/core/sqlite/data/migrations/v009';
 import { v010 } from '@/features/core/sqlite/data/migrations/v010';
 import { v011 } from '@/features/core/sqlite/data/migrations/v011';
 import { v012 } from '@/features/core/sqlite/data/migrations/v012';
+import { v013 } from '@/features/core/sqlite/data/migrations/v013';
 
 /**
  * The schema, one step per version, keyed by `PRAGMA user_version`. Never edit a released step:
@@ -30,4 +31,5 @@ export const migrations: readonly Migration[] = [
   v010,
   v011,
   v012,
+  v013,
 ];

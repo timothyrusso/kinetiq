@@ -76,7 +76,7 @@ export const en = {
   workout: {
     title: 'Workout',
     yourRoutines: 'Your routines',
-    newRoutine: 'New routine',
+    newRoutine: 'Create routine',
     paused: 'Paused',
     exercise_one: '{count} exercise',
     exercise_other: '{count} exercises',
@@ -258,6 +258,8 @@ export const en = {
     est1rm: 'Heaviest single estimated',
     volume: 'Most volume',
     maxReps: 'Most reps in one set',
+    mostReps: 'Most reps in one set (no load)',
+    longestDuration: 'Longest set',
   },
 
   about: {
@@ -361,9 +363,8 @@ export const en = {
     sets: 'Sets',
     volumeIn: 'Volume ({unit})',
     noPrevious: 'No previous sessions of this exercise',
-    noLoadRecorded: 'Last time, no load recorded',
-    bodyweight: 'bodyweight',
-    lastTime: 'Last time {load}',
+    noSetsRecorded: 'Last time, no sets recorded',
+    lastTime: 'Last time {value}',
   },
   profileScreen: {
     editProfileHint: 'Opens your name, height and birth year',
@@ -557,6 +558,26 @@ export const en = {
   exerciseEditor: {
     restAppliesNext: 'Used from the next set you tick. A rest already running keeps its time.',
   },
+
+  // NOTE: --- group-tracking (#192) ---
+  tracking: {
+    title: 'Each set records',
+    weightReps: 'Weight',
+    repsOnly: 'Reps',
+    time: 'Time',
+    locked: 'Fixed once a set is done. Untick the done sets to change it.',
+    setDurationA11y: 'Set {n} time in seconds',
+    setReps: 'Set {n}: {reps} reps',
+    setTime: 'Set {n}: {time}',
+    topReps: 'Best {reps} reps',
+    topTime: 'Longest {time}',
+    colTime: 'TIME',
+    mostRepsChart: 'Most reps',
+    longestSetChart: 'Longest set',
+    repsChartA11y: 'Most reps in each of {count} sessions, from {first} to {last}',
+    durationChartA11y: 'Longest set in each of {count} sessions, from {first} to {last}',
+  },
+  // NOTE: --- end group-tracking ---
 
   trainingPrefs: {
     title: 'Training',
@@ -786,7 +807,7 @@ export const en = {
     aiFooter:
       'Paste the instructions into any AI chat, add what you want ("a 4-day upper/lower split, 45 minutes"), copy its answer, then tap Paste from clipboard. To change existing routines, send it your routines export as well.',
     aiPrompt:
-      'You are writing gym routines for the Kinetiq app. Reply with ONLY a JSON document in exactly this shape, with no other text:\n\n{\n  "format": "kinetiq.routines",\n  "version": 2,\n  "routines": [\n    {\n      "name": "Push Day",\n      "items": [\n        {\n          "exerciseId": "ex:barbell-bench-press-medium-grip",\n          "exerciseName": "Bench Press",\n          "restSeconds": 120,\n          "notes": "Pause the bar on the chest",\n          "sets": [\n            { "reps": 10, "weightKg": 50, "targetRpe": null },\n            { "reps": 8, "weightKg": 60, "targetRpe": 7 },\n            { "reps": 8, "weightKg": 60, "targetRpe": 8 }\n          ]\n        }\n      ]\n    }\n  ]\n}\n\nRules:\n- exerciseName is required. Use the common English name of the exercise.\n- exerciseId is optional. The app\'s exercise list is at https://raw.githubusercontent.com/timothyrusso/kinetiq/main/assets/catalog/index.json: "fields" names the columns, and each row of "exercises" is [id, name, primary muscles, equipment]. If you can open that link, find the matching exercise and copy its exact id (it starts with "ex:") into exerciseId. If you cannot, leave exerciseId out and write the common English name. Never invent an id.\n- sets: one row per set, in the order they are performed, 1 to 20 rows. Each row gives its own reps, a whole number from 1 to 100 (no ranges); weightKg, from 0 to 450, and 0 for bodyweight or when unsure; and targetRpe, the effort aimed for from 0 to 10, or null for no target. Sets may differ, for a warm-up or a ramp.\n- restSeconds: the rest between the sets of that exercise, 0 to 600.\n- notes is optional: a short form cue for that exercise, at most 200 characters, or null.\n- One routine per training day, with exercises in the order they are performed.\n- If I give you an existing Kinetiq routines file, keep its exerciseId values.\n\nWhat I want:\n',
+      'You are writing gym routines for the Kinetiq app. Reply with ONLY a JSON document in exactly this shape, with no other text:\n\n{\n  "format": "kinetiq.routines",\n  "version": 3,\n  "routines": [\n    {\n      "name": "Push Day",\n      "items": [\n        {\n          "exerciseId": "ex:barbell-bench-press-medium-grip",\n          "exerciseName": "Bench Press",\n          "trackingType": "weightReps",\n          "restSeconds": 120,\n          "notes": "Pause the bar on the chest",\n          "sets": [\n            { "type": "weightReps", "reps": 10, "weightKg": 50, "targetRpe": null },\n            { "type": "weightReps", "reps": 8, "weightKg": 60, "targetRpe": 7 },\n            { "type": "weightReps", "reps": 8, "weightKg": 60, "targetRpe": 8 }\n          ]\n        },\n        {\n          "exerciseId": "ex:pullups",\n          "exerciseName": "Pull-up",\n          "trackingType": "repsOnly",\n          "restSeconds": 90,\n          "notes": null,\n          "sets": [\n            { "type": "repsOnly", "reps": 8, "targetRpe": null },\n            { "type": "repsOnly", "reps": 8, "targetRpe": 8 }\n          ]\n        },\n        {\n          "exerciseId": "ex:plank",\n          "exerciseName": "Plank",\n          "trackingType": "duration",\n          "restSeconds": 60,\n          "notes": null,\n          "sets": [\n            { "type": "duration", "durationSeconds": 45, "targetRpe": null },\n            { "type": "duration", "durationSeconds": 60, "targetRpe": 8 }\n          ]\n        }\n      ]\n    }\n  ]\n}\n\nRules:\n- exerciseName is required. Use the common English name of the exercise.\n- exerciseId is optional. The app\'s exercise list is at https://raw.githubusercontent.com/timothyrusso/kinetiq/main/assets/catalog/index.json: "fields" names the columns, and each row of "exercises" is [id, name, primary muscles, equipment]. If you can open that link, find the matching exercise and copy its exact id (it starts with "ex:") into exerciseId. If you cannot, leave exerciseId out and write the common English name. Never invent an id.\n- trackingType is required on every exercise and says what its sets record: "weightReps" for reps at a weight (a barbell, dumbbell or machine lift); "repsOnly" for reps with no load (pull-ups, push-ups); "duration" for a timed set (a plank, a wall sit, a stretch, cardio). An exercise without it cannot be imported.\n- sets: one row per set, in the order they are performed, 1 to 20 rows. Each row repeats the exercise\'s trackingType as its "type" and gives only that type\'s values. "weightReps": reps, a whole number from 1 to 100 (no ranges), and weightKg, from 0 to 450, 0 for bodyweight or when unsure. "repsOnly": reps, from 1 to 100. "duration": durationSeconds, a whole number of seconds from 5 to 3600. Every row also has targetRpe, the effort aimed for from 0 to 10, or null for no target. Sets may differ, for a warm-up or a ramp.\n- restSeconds: the rest between the sets of that exercise, 0 to 600.\n- notes is optional: a short form cue for that exercise, at most 200 characters, or null.\n- One routine per training day, with exercises in the order they are performed.\n- If I give you an existing Kinetiq routines file, keep its exerciseId and trackingType values.\n\nWhat I want:\n',
     previewTitle: 'Import',
     matching: 'Looking up exercises…',
     matchFailed: 'The exercises could not be looked up.',
@@ -811,7 +832,14 @@ export const en = {
     issueTooMany: 'Only the first {count} routines are shown.',
     issueRoutineSkipped: 'Routine {routine} has no exercises and was left out.',
     issueItemSkipped: 'Routine {routine}, exercise {item}: no name, left out.',
-    issueDefaults: 'Routine {routine}, exercise {item}: missing sets or reps, defaults used.',
+    issueDefaults: 'Routine {routine}, exercise {item}: missing sets, reps or time, defaults used.',
+    // NOTE: tracking types in the transfer files (#193).
+    errorOlderFile:
+      'This file comes from an older version of Kinetiq, from before each exercise said whether it tracks weight and reps, reps only or time, and cannot be imported. For an AI answer, copy the AI instructions again and ask once more.',
+    issueItemNoType:
+      'Routine {routine}, exercise {item}: no tracking type, left out. It comes from an older version of Kinetiq.',
+    itemRest: 'rest {rest} s',
+    setsDuration: '{sets} × {duration}',
   },
   watchInbox: {
     invalidTitle: 'A workout from Apple Watch could not be read',
@@ -819,6 +847,9 @@ export const en = {
     versionTitle: 'A workout from Apple Watch needs an update',
     versionMessage:
       'It comes from a newer version of Kinetiq on the watch. Update Kinetiq on this iPhone and it will be saved.',
+    outdatedTitle: 'A workout from Apple Watch is from an older version',
+    outdatedMessage:
+      'It was recorded by an older version of Kinetiq on the watch, which this iPhone no longer reads. It was kept on this iPhone, set aside.',
     ok: 'OK',
   },
   // NOTE: --- followups ---

@@ -41,10 +41,10 @@ describe('useRoutineDetailPageLogic', () => {
   it('plans each set of the workout from its own stored row: reps, weight and target RPE', async () => {
     const pyramid = aRoutineItem({
       sets: [
-        { index: 0, reps: 12, weightKg: 50, targetRpe: null },
-        { index: 1, reps: 10, weightKg: 55, targetRpe: 7 },
-        { index: 2, reps: 8, weightKg: 60, targetRpe: 8.5 },
-        { index: 3, reps: 6, weightKg: 0, targetRpe: 10 },
+        { type: 'weightReps' as const, index: 0, reps: 12, weightKg: 50, targetRpe: null },
+        { type: 'weightReps' as const, index: 1, reps: 10, weightKg: 55, targetRpe: 7 },
+        { type: 'weightReps' as const, index: 2, reps: 8, weightKg: 60, targetRpe: 8.5 },
+        { type: 'weightReps' as const, index: 3, reps: 6, weightKg: 0, targetRpe: 10 },
       ],
     });
     const { result, routine, done } = await renderLauncher('Pyramid', [pyramid]);
@@ -54,7 +54,13 @@ describe('useRoutineDetailPageLogic', () => {
     await waitFor(() => expect(result.current.live.session).not.toBeNull());
     const sets = result.current.live.session?.entries[0]?.sets ?? [];
     expect(
-      sets.map(({ index, reps, weightKg, rpe, completed }) => ({ index, reps, weightKg, rpe, completed })),
+      sets.map(set => ({
+        index: set.index,
+        reps: set.type === 'duration' ? null : set.reps,
+        weightKg: set.type === 'weightReps' ? set.weightKg : null,
+        rpe: set.rpe,
+        completed: set.completed,
+      })),
     ).toEqual([
       { index: 0, reps: 12, weightKg: 50, rpe: null, completed: false },
       { index: 1, reps: 10, weightKg: 55, rpe: 7, completed: false },

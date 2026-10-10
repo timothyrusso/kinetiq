@@ -1,5 +1,5 @@
 import { tr } from '@/features/core/translations';
-import { anActivity } from '@/features/workouts/__fixtures__/builders';
+import { aDurationEntry, anActivity, aRepsOnlyEntry } from '@/features/workouts/__fixtures__/builders';
 import { activityDisplay } from '@/features/workouts/mappers/activityDisplay';
 
 describe('activityDisplay', () => {
@@ -11,6 +11,18 @@ describe('activityDisplay', () => {
     const bodyweight = anActivity({ strength: { entries: [], totalVolumeKg: 0, totalSets: 3, personalRecords: [] } });
 
     expect(activityDisplay(bodyweight, 'metric').headline).toBe('45m');
+  });
+
+  it('leads a workout of reps-only and timed exercises with its duration, and counts their sets', () => {
+    const unloaded = anActivity({
+      strength: { entries: [aRepsOnlyEntry(), aDurationEntry()], totalVolumeKg: 0, totalSets: 4, personalRecords: [] },
+    });
+
+    expect(activityDisplay(unloaded, 'metric').headline).toBe('45m');
+    expect(activityDisplay(unloaded, 'metric').meta).toContainEqual({
+      icon: 'layers',
+      label: tr('workout.set', { count: 4 }),
+    });
   });
 
   it('lists the duration and the sets under the title', () => {

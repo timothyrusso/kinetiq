@@ -2,7 +2,7 @@ import { act } from '@testing-library/react-native';
 import { routes } from '@/features/core/navigation';
 import { resetAllStores } from '@/features/core/state';
 import { routerFake } from '@/features/core/testing';
-import { aSession } from '@/features/workouts/__fixtures__/builders';
+import { aSession, loadedSets } from '@/features/workouts/__fixtures__/builders';
 import { renderWithWorkouts } from '@/features/workouts/facades/__tests__/renderWithWorkouts';
 import { sessionLifecycle } from '@/features/workouts/facades/useActiveSession';
 import { useSessionStore } from '@/features/workouts/state/sessionStore';
@@ -60,7 +60,7 @@ describe('useSessionExercisePageLogic', () => {
     });
 
     const entry = useSessionStore.getState().session?.entries[1];
-    expect(entry?.sets.map(set => set.reps)).toEqual([10, 8, 8]);
+    expect(loadedSets(entry).map(set => set.reps)).toEqual([10, 8, 8]);
     expect(entry?.restSeconds).toBe(75);
     expect(result.current.state.entry).toBe(entry);
     await done();

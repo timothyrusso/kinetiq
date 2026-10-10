@@ -1,0 +1,124 @@
+{
+  "format": "kinetiq.routines",
+  "version": 2,
+  "exportedAt": "2026-09-25T10:00:00.000Z",
+  "routines": [
+    {
+      "name": "Legs · Heavy",
+      "items": [
+        {
+          "exerciseId": "ex:barbell-squat",
+          "exerciseName": "Squat, Back",
+          "restSeconds": 180,
+          "notes": "Belt on top sets",
+          "sets": [
+            {
+              "reps": 5,
+              "weightKg": 130,
+              "targetRpe": null
+            },
+            {
+              "reps": 5,
+              "weightKg": 137.5,
+              "targetRpe": null
+            },
+            {
+              "reps": 5,
+              "weightKg": 142.5,
+              "targetRpe": 8
+            },
+            {
+              "reps": 5,
+              "weightKg": 142.5,
+              "targetRpe": 8
+            },
+            {
+              "reps": 3,
+              "weightKg": 142.5,
+              "targetRpe": 9
+            }
+          ]
+        },
+        {
+          "exerciseId": "local:hip-thrust",
+          "exerciseName": "Hip thrust",
+          "restSeconds": 90,
+          "notes": null,
+          "sets": [
+            {
+              "reps": 10,
+              "weightKg": 60.25,
+              "targetRpe": null
+            },
+            {
+              "reps": 10,
+              "weightKg": 60.25,
+              "targetRpe": null
+            },
+            {
+              "reps": 10,
+              "weightKg": 60.25,
+              "targetRpe": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Push Day",
+      "items": [
+        {
+          "exerciseId": "ex:barbell-bench-press-medium-grip",
+          "exerciseName": "Bench Press",
+          "restSeconds": 90,
+          "notes": null,
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 60,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 60,
+              "targetRpe": null
+            },
+            {
+              "reps": 8,
+              "weightKg": 60,
+              "targetRpe": null
+            }
+          ]
+        },
+        {
+          "exerciseId": "ex:barbell-shoulder-press",
+          "exerciseName": "Overhead Press",
+          "restSeconds": 60,
+          "notes": "Brace first",
+          "sets": [
+            {
+              "reps": 6,
+              "weightKg": 40,
+              "targetRpe": null
+            },
+            {
+              "reps": 6,
+              "weightKg": 40,
+              "targetRpe": null
+            },
+            {
+              "reps": 6,
+              "weightKg": 40,
+              "targetRpe": null
+            },
+            {
+              "reps": 6,
+              "weightKg": 40,
+              "targetRpe": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

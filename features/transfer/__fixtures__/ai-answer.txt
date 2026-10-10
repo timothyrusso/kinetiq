@@ -2,14 +2,16 @@ Here is your routine:
 ```json
 {"routines": [
   {"name": "Upper", "items": [
-    {"exerciseName": "Bench Press", "exerciseId": "ex:barbell-bench-press-medium-grip", "sets": 99, "reps": "8\u201312", "weightKg": 61.3, "restSeconds": 5000},
-    {"exercise": "Row", "reps": "10x"},
-    {"exerciseId": "local:band-pull", "exerciseName": "Band pull-apart", "sets": "3", "reps": 15, "notes": "Slow"},
+    {"exerciseName": "Bench Press", "exerciseId": "ex:barbell-bench-press-medium-grip", "trackingType": "weightReps", "sets": 99, "reps": "8\u201312", "weightKg": 61.3, "restSeconds": 5000},
+    {"exercise": "Row", "trackingType": "weightReps", "reps": "10x"},
+    {"exerciseId": "local:band-pull", "exerciseName": "Band pull-apart", "trackingType": "repsOnly", "sets": "3", "reps": 15, "weightKg": 5, "notes": "Slow"},
+    {"exerciseName": "Wall sit", "trackingType": "duration", "sets": 2, "durationSeconds": "40"},
+    {"exerciseName": "Face pull", "sets": 3, "reps": 12},
     {"notes": "no name"},
     "not an item"
   ]},
   {"name": "Empty", "items": []},
-  {"exercises": [{"name": "Plank", "sets": 3, "reps": "60"}]}
+  {"exercises": [{"name": "Plank", "trackingType": "duration", "sets": 3, "reps": "60"}]}
 ]}
 ```
 Enjoy!

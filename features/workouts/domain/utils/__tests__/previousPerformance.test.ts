@@ -1,8 +1,10 @@
 import {
+  aDurationEntry,
   anActivity,
   anEntry,
   anOpenSet,
   anotherEntry,
+  aRepsOnlyEntry,
   aSet,
   WORKOUT_TIME,
 } from '@/features/workouts/__fixtures__/builders';
@@ -102,5 +104,46 @@ describe('indexPreviousLifts', () => {
     });
 
     expect(indexPreviousLifts([planned], new Set(['ex:barbell-squat'])).has('ex:barbell-squat')).toBe(false);
+  });
+});
+
+describe('indexPreviousLifts per tracking type', () => {
+  it('keeps a reps-only and a timed last time in their own units, with no estimate or volume', () => {
+    const workout = anActivity({
+      strength: {
+        entries: [aRepsOnlyEntry(), aDurationEntry()],
+        totalVolumeKg: 0,
+        totalSets: 4,
+        personalRecords: [],
+      },
+    });
+
+    const previous = indexPreviousLifts([workout], new Set());
+
+    expect(previous.get('ex:pullups')).toMatchObject({
+      trackingType: 'repsOnly',
+      sets: [
+        { type: 'repsOnly', reps: 12 },
+        { type: 'repsOnly', reps: 12 },
+      ],
+      bestEstimated1rm: null,
+      totalVolumeKg: 0,
+    });
+    expect(previous.get('ex:plank')).toMatchObject({
+      trackingType: 'duration',
+      sets: [
+        { type: 'duration', durationSeconds: 45 },
+        { type: 'duration', durationSeconds: 45 },
+      ],
+      bestEstimated1rm: null,
+      totalVolumeKg: 0,
+    });
+  });
+
+  it('reads a loaded last time with its type and volume', () => {
+    expect(indexPreviousLifts([latest], new Set()).get('ex:barbell-bench-press')).toMatchObject({
+      trackingType: 'weightReps',
+      totalVolumeKg: 525,
+    });
   });
 });

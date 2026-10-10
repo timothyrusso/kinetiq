@@ -7,13 +7,7 @@ import { haptics, useHaptics } from '@/features/core/haptics';
 import { routes } from '@/features/core/navigation';
 import { screenGutter, spacing } from '@/features/core/theme';
 import { type TKey, type TVars, useT } from '@/features/core/translations';
-import {
-  formatAgoLocalized,
-  formatDurationCompact,
-  formatTimer,
-  formatWeight,
-  type UnitSystem,
-} from '@/features/core/utils';
+import { formatAgoLocalized, formatDurationCompact, formatTimer, type UnitSystem } from '@/features/core/utils';
 import { useAskNotificationPermissionOnce, useRestAlertsOff } from '@/features/notifications';
 import { useSettings } from '@/features/settings';
 import type { PreviousLift } from '@/features/workouts/domain/entities/PreviousLift';
@@ -24,6 +18,7 @@ import { useKeepScreenAwake } from '@/features/workouts/facades/useKeepScreenAwa
 import { usePreviousPerformance } from '@/features/workouts/facades/usePreviousPerformance';
 import { useRestTimer } from '@/features/workouts/facades/useRestTimer';
 import { useSessionProgress } from '@/features/workouts/hooks/useSessionProgress';
+import { lastTimeValue } from '@/features/workouts/mappers/lastTimeValue';
 import type { RestAlertsNotice } from '@/features/workouts/ui/components/RestDock/RestDock.logic';
 
 /** A background stint longer than this is worth saying out loud. */
@@ -54,8 +49,9 @@ function firstOpenSetIndex(entry: StrengthEntry): number | null {
 /**
  * "Last time 82.5 kg × 5" and "3w ago", or the honest alternative. Three truths: the history has
  * not answered yet (say nothing: "no previous data" before it has would be a lie), the exercise
- * is genuinely new (say so), or there is a previous number, and then the heaviest set's load and
- * reps, which is what decides whether to add weight.
+ * is genuinely new (say so), or there is a previous number, and then the best set in the terms
+ * that workout recorded: the heaviest load and its reps, which is what decides whether to add
+ * weight; the most reps; or the longest hold.
  */
 function previousFor(
   lift: PreviousLift | undefined,
@@ -65,16 +61,11 @@ function previousFor(
   locale: string,
 ): { previousLabel: string | null; previousWhen: string | null } {
   if (lift === undefined) return { previousLabel: isLoading ? null : t('session.noPrevious'), previousWhen: null };
-  const heaviest = lift.sets.reduce<(typeof lift.sets)[number] | null>(
-    (best, set) => (best === null || set.weightKg > best.weightKg ? set : best),
-    null,
-  );
-  if (heaviest === null) return { previousLabel: t('session.noLoadRecorded'), previousWhen: null };
-  const load =
-    heaviest.weightKg === 0 ? t('session.bodyweight') : `${formatWeight(heaviest.weightKg, units)} × ${heaviest.reps}`;
+  const value = lastTimeValue(lift, units);
+  if (value === null) return { previousLabel: t('session.noSetsRecorded'), previousWhen: null };
   const when =
     Number.isFinite(lift.performedAt) && lift.performedAt > 0 ? formatAgoLocalized(lift.performedAt, t, locale) : null;
-  return { previousLabel: t('session.lastTime', { load }), previousWhen: when };
+  return { previousLabel: t('session.lastTime', { value }), previousWhen: when };
 }
 
 /**

@@ -1,14 +1,15 @@
 import { useMemo } from 'react';
 import { clamp, localId, moveItem } from '@/features/core/utils';
 import {
+  defaultTrackingType,
   type Exercise,
   type ExerciseSnapshot,
   snapshotInLanguage,
   snapshotOf,
   useCatalogLanguage,
 } from '@/features/exercises';
-import type { ItemChange, ItemTarget } from '@/features/routines/domain/entities/ItemTarget';
-import { defaultItemTarget } from '@/features/routines/domain/utils/itemTargets';
+import type { ItemChange } from '@/features/routines/domain/entities/ItemTarget';
+import { defaultItemTarget, patchItem } from '@/features/routines/domain/utils/itemTargets';
 import { EMPTY_DRAFT, type RoutineDraft, useRoutineDraftStore } from '@/features/routines/state/routineDraftStore';
 import type { NewRoutine } from '@/features/routines/useCases/createRoutine';
 
@@ -45,11 +46,11 @@ function withSnapshot(snapshots: readonly ExerciseSnapshot[], snapshot: Exercise
 }
 
 /**
- * Adds `exercise` with the opening targets and freezes its snapshot now, the moment it was
- * chosen. An exercise already in the draft is refused silently: the common case is a double tap,
- * and the picker marks the rows already in.
+ * Adds `exercise` with the opening targets of its catalog tracking type and freezes its snapshot
+ * now, the moment it was chosen. An exercise already in the draft is refused silently: the common
+ * case is a double tap, and the picker marks the rows already in.
  */
-function addExercise(exercise: Exercise, target?: Partial<ItemTarget>): void {
+function addExercise(exercise: Exercise): void {
   if (containsExercise(exercise.id)) return;
   const current = draft();
   write({
@@ -60,8 +61,7 @@ function addExercise(exercise: Exercise, target?: Partial<ItemTarget>): void {
         id: localId('rit'),
         exerciseId: exercise.id,
         exerciseName: exercise.name,
-        ...defaultItemTarget(current.defaultRestSeconds),
-        ...target,
+        ...defaultItemTarget(defaultTrackingType(exercise), current.defaultRestSeconds),
       },
     ],
     snapshots: withSnapshot(current.snapshots, snapshotOf(exercise, Date.now())),
@@ -70,7 +70,7 @@ function addExercise(exercise: Exercise, target?: Partial<ItemTarget>): void {
 
 /** Applies `change` to the row as the draft holds it now. */
 function updateItem(itemId: string, change: ItemChange): void {
-  write({ items: draft().items.map(item => (item.id === itemId ? { ...item, ...change(item) } : item)) });
+  write({ items: draft().items.map(item => (item.id === itemId ? patchItem(item, change(item)) : item)) });
 }
 
 /** Moves a row; a destination off the list moves nothing. */

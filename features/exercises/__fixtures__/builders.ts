@@ -49,6 +49,7 @@ export const anExercise = (overrides: Partial<Exercise> = {}): Exercise => ({
   primaryMuscles: ['Chest'],
   secondaryMuscles: ['Triceps'],
   equipment: ['Barbell'],
+  equipmentKeys: ['barbell'],
   imageUrl: null,
   imageEndUrl: null,
   thumbnailUrl: null,

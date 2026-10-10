@@ -76,6 +76,12 @@ describe('stepperText', () => {
     expect(stepperText(null, 2.5, '.')).toBe('2.5');
     expect(stepperText(null, 102.5, ',')).toBe('102,5');
   });
+
+  it('formats the value at rest and types the plain number', () => {
+    const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+    expect(stepperText(null, 90, '.', clock)).toBe('1:30');
+    expect(stepperText({ text: '95', base: 90 }, 90, '.', clock)).toBe('95');
+  });
 });
 
 describe('fieldText', () => {

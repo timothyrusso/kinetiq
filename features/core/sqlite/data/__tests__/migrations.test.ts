@@ -4,6 +4,7 @@ import { Effect } from 'effect';
 import { SCHEMA_V10 } from '@/features/core/sqlite/data/__tests__/schemaV10';
 import { SCHEMA_V11 } from '@/features/core/sqlite/data/__tests__/schemaV11';
 import { SCHEMA_V12 } from '@/features/core/sqlite/data/__tests__/schemaV12';
+import { SCHEMA_V13 } from '@/features/core/sqlite/data/__tests__/schemaV13';
 import { migrations } from '@/features/core/sqlite/data/migrations';
 
 const lastVersion = Math.max(...migrations.map(migration => migration.version));
@@ -30,8 +31,8 @@ const upTo = (version: number) => migrations.filter(migration => migration.versi
 const all = <T>(db: SqliteDatabase, sql: string) => Effect.promise(() => db.getAllAsync<T>(sql));
 
 describe('migrations', () => {
-  it('declares one step per version, 1 to 12, in order', () => {
-    expect(migrations.map(migration => migration.version)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+  it('declares one step per version, 1 to 13, in order', () => {
+    expect(migrations.map(migration => migration.version)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
   });
 
   itEffect(
@@ -57,13 +58,24 @@ describe('migrations', () => {
   );
 
   itEffect(
-    'bring an empty database to the last version with the v12 schema, and run again as a no-op',
+    'bring an empty database to the v12 schema at v12',
+    Effect.gen(function* () {
+      const db = yield* SqliteClient;
+      yield* runMigrations(db, upTo(12));
+      expect(yield* userVersion(db)).toBe(12);
+      expect(yield* schemaOf(db)).toEqual(SCHEMA_V12);
+    }),
+    makeNodeSqliteLayer(),
+  );
+
+  itEffect(
+    'bring an empty database to the last version with the v13 schema, and run again as a no-op',
     Effect.gen(function* () {
       const db = yield* SqliteClient;
       const first = yield* runMigrations(db, migrations);
       expect(first).toEqual({ from: 0, to: lastVersion, applied: migrations.map(migration => migration.version) });
-      expect(yield* userVersion(db)).toBe(12);
-      expect(yield* schemaOf(db)).toEqual(SCHEMA_V12);
+      expect(yield* userVersion(db)).toBe(13);
+      expect(yield* schemaOf(db)).toEqual(SCHEMA_V13);
       const second = yield* runMigrations(db, migrations);
       expect(second.applied).toEqual([]);
     }),
@@ -71,7 +83,7 @@ describe('migrations', () => {
   );
 
   itEffect(
-    'bring a v7 database to the last version, keeping its rows and dropping what v8 to v12 remove',
+    'bring a v7 database to v12, keeping its rows and dropping what v8 to v12 remove',
     Effect.gen(function* () {
       const db = yield* SqliteClient;
       yield* runMigrations(
@@ -93,7 +105,7 @@ describe('migrations', () => {
         `),
       );
 
-      const report = yield* runMigrations(db, migrations);
+      const report = yield* runMigrations(db, upTo(12));
 
       expect(report).toEqual({ from: 7, to: 12, applied: [8, 9, 10, 11, 12] });
       expect(yield* userVersion(db)).toBe(12);
@@ -125,7 +137,7 @@ describe('migrations', () => {
       const db = yield* SqliteClient;
       yield* runMigrations(db, migrations);
       const broken: Migration = {
-        version: 13,
+        version: 14,
         up: async txn => {
           await txn.execAsync('CREATE TABLE half_done (id TEXT PRIMARY KEY);');
           await txn.execAsync('ALTER TABLE no_such_table ADD COLUMN x TEXT;');
@@ -135,7 +147,7 @@ describe('migrations', () => {
       const failure = yield* Effect.flip(runMigrations(db, [...migrations, broken]));
 
       expect(failure).toBeInstanceOf(SqlError);
-      expect(yield* userVersion(db)).toBe(12);
+      expect(yield* userVersion(db)).toBe(13);
       const tables = yield* Effect.promise(() =>
         db.getAllAsync<{ name: string }>("SELECT name FROM sqlite_master WHERE name = 'half_done'"),
       );
@@ -435,7 +447,7 @@ describe('migration 12: the catalog on the bundled dataset', () => {
       const before = [];
       for (const table of USER_TABLES) before.push(yield* all(db, `SELECT * FROM ${table} ORDER BY rowid`));
 
-      const report = yield* runMigrations(db, migrations);
+      const report = yield* runMigrations(db, upTo(12));
 
       expect(report).toEqual({ from: 11, to: 12, applied: [12] });
       const after = [];
@@ -451,7 +463,7 @@ describe('migration 12: the catalog on the bundled dataset', () => {
     Effect.gen(function* () {
       const db = yield* seededV11;
 
-      yield* runMigrations(db, migrations);
+      yield* runMigrations(db, upTo(12));
 
       const tables = (yield* all<{ name: string }>(db, "SELECT name FROM sqlite_master WHERE type = 'table'")).map(
         row => row.name,
@@ -463,6 +475,84 @@ describe('migration 12: the catalog on the bundled dataset', () => {
         const rows = yield* all<{ n: number }>(db, `SELECT COUNT(*) AS n FROM ${table}`);
         expect([table, rows[0]?.n]).toEqual([table, 0]);
       }
+    }),
+    makeNodeSqliteLayer(),
+  );
+});
+
+/** The tables v13 empties: every workout, session, record and routine. */
+const WIPED_TABLES = ['activities', 'sessions', 'records', 'routines', 'routine_items', 'routine_item_sets'] as const;
+
+/** The tables v13 keeps exactly as they were. */
+const KEPT_TABLES = ['exercises', 'settings', 'app_state', 'catalog_meta'] as const;
+
+const countOf = (db: SqliteDatabase, table: string) =>
+  all<{ n: number }>(db, `SELECT COUNT(*) AS n FROM ${table}`).pipe(Effect.map(rows => rows[0]?.n ?? 0));
+
+/** A v12 database holding routines, workouts, an open session, a record and the catalog's version. */
+const seededV12 = Effect.gen(function* () {
+  const db = yield* seededV11;
+  yield* runMigrations(db, upTo(12));
+  yield* Effect.promise(() => db.execAsync("INSERT INTO catalog_meta (key, value) VALUES ('version', '2');"));
+  return db;
+});
+
+describe('migration 13: tracking types', () => {
+  itEffect(
+    'deletes every workout, session, record and routine, and keeps the snapshots, settings, app state and catalog',
+    Effect.gen(function* () {
+      const db = yield* seededV12;
+      const before = [];
+      for (const table of KEPT_TABLES) before.push(yield* all(db, `SELECT * FROM ${table} ORDER BY rowid`));
+      for (const table of WIPED_TABLES) expect([table, (yield* countOf(db, table)) > 0]).toEqual([table, true]);
+
+      const report = yield* runMigrations(db, migrations);
+
+      expect(report).toEqual({ from: 12, to: 13, applied: [13] });
+      for (const table of WIPED_TABLES) expect([table, yield* countOf(db, table)]).toEqual([table, 0]);
+      const after = [];
+      for (const table of KEPT_TABLES) after.push(yield* all(db, `SELECT * FROM ${table} ORDER BY rowid`));
+      expect(after).toEqual(before);
+      expect(yield* schemaOf(db)).toEqual(SCHEMA_V13);
+    }),
+    makeNodeSqliteLayer(),
+  );
+
+  itEffect(
+    'gives an item its tracking type and a set row a duration, the values a type does not record left null',
+    Effect.gen(function* () {
+      const db = yield* seededV12;
+      yield* runMigrations(db, migrations);
+
+      expect(yield* columnsOf(db, 'routine_items')).toEqual([
+        'id',
+        'routine_id',
+        'exercise_id',
+        'exercise_name',
+        'tracking_type',
+        'position',
+        'rest_seconds',
+        'notes',
+      ]);
+      expect(yield* columnsOf(db, 'routine_item_sets')).toEqual([
+        'item_id',
+        'position',
+        'reps',
+        'weight_kg',
+        'duration_seconds',
+        'target_rpe',
+      ]);
+      yield* Effect.promise(() =>
+        db.execAsync(`
+          INSERT INTO routines (id, name, created_at, updated_at) VALUES ('r2', 'Core', 1, 1);
+          INSERT INTO routine_items (id, routine_id, exercise_id, exercise_name, tracking_type, position, rest_seconds)
+            VALUES ('i_plank', 'r2', 'e1', 'Plank', 'duration', 0, 60);
+          INSERT INTO routine_item_sets (item_id, position, duration_seconds) VALUES ('i_plank', 0, 45);
+        `),
+      );
+      expect(yield* all(db, 'SELECT * FROM routine_item_sets')).toEqual([
+        { item_id: 'i_plank', position: 0, reps: null, weight_kg: null, duration_seconds: 45, target_rpe: null },
+      ]);
     }),
     makeNodeSqliteLayer(),
   );

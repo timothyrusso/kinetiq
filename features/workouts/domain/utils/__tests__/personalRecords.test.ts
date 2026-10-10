@@ -1,11 +1,20 @@
-import { anActivity, anEntry, aSet, WORKOUT_TIME } from '@/features/workouts/__fixtures__/builders';
-import type { StrengthSet } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
+import {
+  aDurationEntry,
+  aDurationSet,
+  anActivity,
+  anEntry,
+  aRepsOnlyEntry,
+  aRepsOnlySet,
+  aSet,
+  WORKOUT_TIME,
+} from '@/features/workouts/__fixtures__/builders';
+import type { StrengthEntry, WeightRepsSet } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 import { detectPersonalRecords } from '@/features/workouts/domain/utils/personalRecords';
 
 const NOW = WORKOUT_TIME + 86_400_000;
 
 /** An earlier bench press workout made of `sets`. */
-const earlierBench = (sets: StrengthSet[]) =>
+const earlierBench = (sets: WeightRepsSet[]) =>
   anActivity({
     strength: { entries: [anEntry({ sets })], totalVolumeKg: 0, totalSets: sets.length, personalRecords: [] },
   });
@@ -130,5 +139,63 @@ describe('detectPersonalRecords', () => {
     const bodyweight = anEntry({ sets: [aSet({ reps: 12, weightKg: 0, estimated1rm: null })] });
 
     expect(detectPersonalRecords([bodyweight], [], NOW)).toEqual([]);
+  });
+});
+
+/** An earlier workout made of `entries`. */
+const earlier = (...entries: StrengthEntry[]) =>
+  anActivity({ strength: { entries, totalVolumeKg: 0, totalSets: 0, personalRecords: [] } });
+
+describe('detectPersonalRecords per tracking type', () => {
+  it('reports the most reps of a reps-only exercise, with no threshold', () => {
+    const records = detectPersonalRecords(
+      [aRepsOnlyEntry({ sets: [aRepsOnlySet({ reps: 3 })] })],
+      [earlier(aRepsOnlyEntry({ sets: [aRepsOnlySet({ reps: 2 })] }))],
+      NOW,
+    );
+
+    expect(records).toEqual([
+      {
+        exerciseId: 'ex:pullups',
+        exerciseName: 'Pull-ups',
+        kind: 'mostReps',
+        value: 3,
+        achievedAt: NOW,
+        previousValue: 2,
+      },
+    ]);
+  });
+
+  it('reports the longest set of a timed exercise, and nothing for one no longer than before', () => {
+    const plank = (durationSeconds: number) => aDurationEntry({ sets: [aDurationSet({ durationSeconds })] });
+
+    expect(detectPersonalRecords([plank(90)], [earlier(plank(60))], NOW)).toEqual([
+      expect.objectContaining({ exerciseId: 'ex:plank', kind: 'longestDuration', value: 90, previousValue: 60 }),
+    ]);
+    expect(detectPersonalRecords([plank(60)], [earlier(plank(60))], NOW)).toEqual([]);
+  });
+
+  it('gives no estimate, volume or loaded-rep record to a reps-only or a timed exercise', () => {
+    const records = detectPersonalRecords([aRepsOnlyEntry(), aDurationEntry()], [], NOW);
+
+    expect(records.map(record => record.kind)).toEqual(['mostReps', 'longestDuration']);
+  });
+
+  it('counts only the completed sets', () => {
+    const open = aRepsOnlyEntry({ sets: [aRepsOnlySet({ reps: 30, completed: false })] });
+
+    expect(detectPersonalRecords([open], [], NOW)).toEqual([]);
+  });
+
+  it('keeps the bests of one exercise apart by type', () => {
+    const asLoaded = anEntry({
+      exerciseId: 'ex:pullups',
+      sets: [aSet({ reps: 10, weightKg: 10, estimated1rm: 13.5 })],
+    });
+    const asReps = aRepsOnlyEntry({ sets: [aRepsOnlySet({ reps: 6 })] });
+
+    const records = detectPersonalRecords([asReps], [earlier(asLoaded)], NOW);
+
+    expect(records).toEqual([expect.objectContaining({ kind: 'mostReps', value: 6, previousValue: null })]);
   });
 });

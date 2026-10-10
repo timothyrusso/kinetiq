@@ -5,7 +5,7 @@ import {
   anExercise,
   aPlan,
   aSession,
-  plannedSets,
+  loadedSets,
   WORKOUT_TIME,
 } from '@/features/workouts/__fixtures__/builders';
 import { ActivityId } from '@/features/workouts/domain/schemas/ActivityId';
@@ -296,7 +296,7 @@ describe('discardSession', () => {
 });
 
 describe('addSessionExercise', () => {
-  const TARGET = { sets: plannedSets(3, 8, 0), restSeconds: 120, notes: null };
+  const TARGET = { setCount: 3, restSeconds: 120, notes: null };
 
   const stored = makeFakeWorkoutsDb();
   itEffect(
@@ -315,9 +315,44 @@ describe('addSessionExercise', () => {
         exerciseName: 'Bench Press',
         restSeconds: 120,
       });
-      expect(entry.sets.map(set => set.reps)).toEqual([8, 8, 8]);
+      expect(entry.trackingType).toBe('weightReps');
+      expect(loadedSets(entry).map(({ reps, weightKg }) => ({ reps, weightKg }))).toEqual([
+        { reps: 8, weightKg: 0 },
+        { reps: 8, weightKg: 0 },
+        { reps: 8, weightKg: 0 },
+      ]);
     }),
     makeWorkoutsFake(stored),
+  );
+
+  itEffect(
+    'opens a bodyweight exercise as reps only, on 8 reps a set',
+    Effect.gen(function* () {
+      const entry = yield* addSessionExercise(
+        anExercise({ id: 'ex:pullups', equipment: ['Bodyweight'], equipmentKeys: ['body-only'] }),
+        TARGET,
+      );
+
+      expect(entry.trackingType).toBe('repsOnly');
+      expect(entry.sets).toEqual(
+        [0, 1, 2].map(index => ({ type: 'repsOnly', index, reps: 8, completed: false, rpe: null })),
+      );
+    }),
+    makeWorkoutsFake(makeFakeWorkoutsDb()),
+  );
+
+  itEffect(
+    'opens a cardio exercise as timed, on 30 s a set, and with one set when none is asked for',
+    Effect.gen(function* () {
+      const entry = yield* addSessionExercise(anExercise({ id: 'ex:bike', trainingType: 'cardio' }), {
+        ...TARGET,
+        setCount: 0,
+      });
+
+      expect(entry.trackingType).toBe('duration');
+      expect(entry.sets).toEqual([{ type: 'duration', index: 0, durationSeconds: 30, completed: false, rpe: null }]);
+    }),
+    makeWorkoutsFake(makeFakeWorkoutsDb()),
   );
 
   itEffect(

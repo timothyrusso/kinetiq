@@ -1,29 +1,67 @@
 import { Schema } from 'effect';
 
-/** One planned set: the reps, load and effort target the workout's set opens with. */
-const SessionPlanSetSchema = Schema.Struct({
-  reps: Schema.Number,
-  // NOTE: kilograms; 0 is bodyweight.
-  weightKg: Schema.Number,
+/** What every planned set carries. */
+const planSetFields = {
   // NOTE: 0 to 10, the RPE the set opens with; null for none.
   targetRpe: Schema.NullOr(Schema.Number),
+};
+
+/** A planned loaded set: reps at a weight, in kilograms; 0 is bodyweight. */
+const WeightRepsPlanSetSchema = Schema.Struct({
+  type: Schema.Literal('weightReps'),
+  ...planSetFields,
+  reps: Schema.Number,
+  weightKg: Schema.Number,
 });
 
-/** One exercise of a plan, with the targets its sets open with. */
-const SessionPlanItemSchema = Schema.Struct({
+/** A planned set counted in reps alone. */
+const RepsOnlyPlanSetSchema = Schema.Struct({
+  type: Schema.Literal('repsOnly'),
+  ...planSetFields,
+  reps: Schema.Number,
+});
+
+/** A planned timed set, in seconds. */
+const DurationPlanSetSchema = Schema.Struct({
+  type: Schema.Literal('duration'),
+  ...planSetFields,
+  durationSeconds: Schema.Number,
+});
+
+const planItemFields = {
   // NOTE: the routine item this is, so a finish can write the workout back into it.
   itemId: Schema.optional(Schema.String),
   exerciseId: Schema.String,
   exerciseName: Schema.String,
-  // NOTE: in order, one per set the entry opens with.
-  sets: Schema.Array(SessionPlanSetSchema),
   restSeconds: Schema.Number,
   notes: Schema.NullOr(Schema.String),
-});
+};
+
+/**
+ * One exercise of a plan, with the targets its sets open with, in order, one per set the entry
+ * opens with. A union on `trackingType`, each set tagged the same, as the session's entries are.
+ */
+const SessionPlanItemSchema = Schema.Union(
+  Schema.Struct({
+    trackingType: Schema.Literal('weightReps'),
+    ...planItemFields,
+    sets: Schema.Array(WeightRepsPlanSetSchema),
+  }),
+  Schema.Struct({
+    trackingType: Schema.Literal('repsOnly'),
+    ...planItemFields,
+    sets: Schema.Array(RepsOnlyPlanSetSchema),
+  }),
+  Schema.Struct({
+    trackingType: Schema.Literal('duration'),
+    ...planItemFields,
+    sets: Schema.Array(DurationPlanSetSchema),
+  }),
+);
 
 export type SessionPlanItem = typeof SessionPlanItemSchema.Type;
 
-export type SessionPlanSet = typeof SessionPlanSetSchema.Type;
+export type SessionPlanSet = SessionPlanItem['sets'][number];
 
 /**
  * What a session starts from: a name and the exercises to train, in order. Owned here so a

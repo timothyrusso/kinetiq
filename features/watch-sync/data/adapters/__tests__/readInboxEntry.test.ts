@@ -1,7 +1,17 @@
 import { anInboxEntry, aWatchDocument, UUID } from '@/features/watch-sync/__fixtures__/watchWorkout';
 import { readInboxEntry } from '@/features/watch-sync/data/adapters/readInboxEntry';
 
-const aSet = { index: 0, reps: 5, weightKg: 80, completed: true, rpe: null };
+const aSet = { type: 'weightReps', index: 0, reps: 5, weightKg: 80, completed: true, rpe: null };
+
+const anEntry = (fields: Record<string, unknown>) => ({
+  exerciseId: 'ex:barbell-bench-press',
+  exerciseName: 'Bench',
+  trackingType: 'weightReps',
+  restSeconds: 60,
+  notes: null,
+  sets: [aSet],
+  ...fields,
+});
 
 const workoutOf = (entry: ReturnType<typeof anInboxEntry>) => {
   const { read } = readInboxEntry(entry);
@@ -32,7 +42,8 @@ describe('readInboxEntry', () => {
 
     expect(workout.totalSets).toBe(1);
     expect(workout.totalVolumeKg).toBe(400);
-    expect(workout.entries[0]?.sets.map(set => set.estimated1rm)).toEqual([93.5, null]);
+    const [entry] = workout.entries;
+    expect(entry?.trackingType === 'weightReps' ? entry.sets.map(set => set.estimated1rm) : []).toEqual([93.5, null]);
     expect(workout.entries[0]?.muscleGroup).toBeNull();
   });
 
@@ -41,7 +52,7 @@ describe('readInboxEntry', () => {
       anInboxEntry(
         aWatchDocument({
           routineId: null,
-          entries: [{ exerciseId: 'local:deleted', exerciseName: 'Gone', restSeconds: 0, notes: null, sets: [aSet] }],
+          entries: [anEntry({ exerciseId: 'local:deleted', exerciseName: 'Gone', restSeconds: 0 })],
         }),
       ),
     );
@@ -50,18 +61,75 @@ describe('readInboxEntry', () => {
     expect(workout.entries[0]?.sets[0]?.rpe).toBeNull();
   });
 
-  it('still saves a v1 workout from a watch app not yet updated', () => {
-    const workout = workoutOf(anInboxEntry(aWatchDocument({ version: 1 }), { version: 1 }));
+  it('records a reps-only set with its reps, and no load, volume or one-rep max', () => {
+    const workout = workoutOf(
+      anInboxEntry(
+        aWatchDocument({
+          entries: [
+            anEntry({
+              exerciseId: 'ex:pullups',
+              trackingType: 'repsOnly',
+              sets: [
+                { type: 'repsOnly', index: 0, reps: 12, completed: true, rpe: 8 },
+                { type: 'repsOnly', index: 1, reps: 10, completed: false, rpe: null },
+              ],
+            }),
+          ],
+        }),
+      ),
+    );
 
-    expect(workout.id).toBe(`watch-${UUID}`);
+    expect(workout.entries[0]).toMatchObject({
+      trackingType: 'repsOnly',
+      sets: [
+        { type: 'repsOnly', index: 0, reps: 12, completed: true, rpe: 8 },
+        { type: 'repsOnly', index: 1, reps: 10, completed: false, rpe: null },
+      ],
+    });
+    expect(workout.entries[0]?.sets[0]).not.toHaveProperty('weightKg');
+    expect(workout.entries[0]?.sets[0]).not.toHaveProperty('estimated1rm');
     expect(workout.totalSets).toBe(1);
+    expect(workout.totalVolumeKg).toBe(0);
+  });
+
+  it('records a timed set with its seconds, and no reps, volume or one-rep max', () => {
+    const workout = workoutOf(
+      anInboxEntry(
+        aWatchDocument({
+          entries: [
+            anEntry({
+              exerciseId: 'ex:plank',
+              trackingType: 'duration',
+              sets: [{ type: 'duration', index: 0, durationSeconds: 45, completed: true, rpe: null }],
+            }),
+          ],
+        }),
+      ),
+    );
+
+    expect(workout.entries[0]).toMatchObject({
+      trackingType: 'duration',
+      sets: [{ type: 'duration', index: 0, durationSeconds: 45, completed: true, rpe: null }],
+    });
+    expect(workout.entries[0]?.sets[0]).not.toHaveProperty('reps');
+    expect(workout.totalSets).toBe(1);
+    expect(workout.totalVolumeKg).toBe(0);
   });
 
   it('reads a document from a newer watch app as version, apart from bad data', () => {
-    expect(readInboxEntry(anInboxEntry(aWatchDocument(), { version: 3 })).read).toEqual({
+    expect(readInboxEntry(anInboxEntry(aWatchDocument(), { version: 4 })).read).toEqual({
       ok: false,
       reason: 'version',
     });
+  });
+
+  it('reads a v1 or v2 document as outdated: the phone no longer guesses a tracking type', () => {
+    for (const version of [1, 2]) {
+      expect(readInboxEntry(anInboxEntry(aWatchDocument({ version }), { version })).read).toEqual({
+        ok: false,
+        reason: 'outdated',
+      });
+    }
   });
 
   it('reads an unparseable payload as invalid', () => {
@@ -74,15 +142,7 @@ describe('readInboxEntry', () => {
   it('reads a set out of bounds as invalid, so nothing of it is saved', () => {
     const entry = anInboxEntry(
       aWatchDocument({
-        entries: [
-          {
-            exerciseId: 'ex:barbell-bench-press',
-            exerciseName: 'Bench',
-            restSeconds: 60,
-            notes: null,
-            sets: [{ ...aSet, weightKg: 451 }],
-          },
-        ],
+        entries: [anEntry({ sets: [{ ...aSet, weightKg: 451 }] })],
       }),
     );
 

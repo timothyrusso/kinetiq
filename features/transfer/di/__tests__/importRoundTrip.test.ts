@@ -39,16 +39,21 @@ const importClipboard = Effect.gen(function* () {
   return [...routines].sort(byName);
 });
 
-const sets = (count: number, reps: number, weightKg: number) =>
-  Array.from({ length: count }, (_, index) => ({ index, reps, weightKg, targetRpe: null }));
-
 describe('importing an exported routines file', () => {
   itEffect(
-    'writes a v2 export back byte for byte, every planned set in place',
+    'writes a v3 export back byte for byte, every tracking type and planned set in place',
     Effect.gen(function* () {
       const routines = yield* importClipboard;
 
       expect(routines.map(planOf)).toEqual(someRoutines().map(planOf).sort(byName));
+      expect(routines.flatMap(routine => routine.items.map(item => item.trackingType))).toEqual([
+        'weightReps',
+        'weightReps',
+        'weightReps',
+        'weightReps',
+        'repsOnly',
+        'duration',
+      ]);
       expect(routinesJson(routines, EXPORTED_AT)).toBe(fixture('kinetiq-routines.json'));
     }),
     layer(fixture('kinetiq-routines.json')),
@@ -64,52 +69,19 @@ describe('importing an exported routines file', () => {
     layer(fixture('kinetiq-routines.legacy.json')),
   );
 
-  itEffect(
-    'reads a v1 export from before per-set routines into identical sets on the bottom of each range',
-    Effect.gen(function* () {
-      const routines = yield* importClipboard;
+  for (const file of ['kinetiq-routines.v1.json', 'kinetiq-routines.v2.json']) {
+    itEffect(
+      `refuses an export from before the tracking types (${file}) as older, saving nothing`,
+      Effect.gen(function* () {
+        const result = yield* Effect.either(readImport('clipboard'));
 
-      expect(routines.map(planOf)).toEqual([
-        {
-          name: 'Legs · Heavy',
-          items: [
-            {
-              exerciseId: 'ex:barbell-squat',
-              exerciseName: 'Squat, Back',
-              sets: sets(5, 5, 142.5),
-              restSeconds: 180,
-              notes: 'Belt on top sets',
-            },
-            {
-              exerciseId: 'local:hip-thrust',
-              exerciseName: 'Hip thrust',
-              sets: sets(3, 10, 60.25),
-              restSeconds: 90,
-              notes: null,
-            },
-          ],
-        },
-        {
-          name: 'Push Day',
-          items: [
-            {
-              exerciseId: 'ex:barbell-bench-press-medium-grip',
-              exerciseName: 'Bench Press',
-              sets: sets(3, 8, 60),
-              restSeconds: 90,
-              notes: null,
-            },
-            {
-              exerciseId: 'ex:barbell-shoulder-press',
-              exerciseName: 'Overhead Press',
-              sets: sets(4, 6, 40),
-              restSeconds: 60,
-              notes: 'Brace first',
-            },
-          ],
-        },
-      ]);
-    }),
-    layer(fixture('kinetiq-routines.v1.json')),
-  );
+        expect(result._tag === 'Left' && result.left).toMatchObject({
+          _tag: 'ImportUnreadable',
+          issue: { key: 'dataTransfer.errorOlderFile' },
+        });
+        expect(yield* (yield* RoutineRepository).list).toEqual([]);
+      }),
+      layer(fixture(file)),
+    );
+  }
 });

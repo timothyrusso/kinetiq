@@ -15,7 +15,8 @@ import { useImportPageLogic } from '@/features/transfer/ui/pages/ImportPage/Impo
 const anItem = (overrides: Partial<ParsedItem> = {}): ParsedItem => ({
   exerciseId: 'ex:barbell-bench-press-medium-grip',
   exerciseName: 'Bench Press',
-  sets: [10, 10, 8, 8].map(reps => ({ reps, weightKg: 60, targetRpe: null })),
+  trackingType: 'weightReps',
+  sets: [10, 10, 8, 8].map(reps => ({ type: 'weightReps', reps, weightKg: 60, targetRpe: null })),
   restSeconds: 120,
   notes: null,
   ...overrides,
@@ -86,6 +87,44 @@ describe('useImportPageLogic', () => {
       title: 'Bench Press',
       subtitle: tr('dataTransfer.itemTargets', { weight: formatWeight(60, getSettings().unitSystem), rest: 120 }),
       value: tr('dataTransfer.setsReps', { sets: 4, reps: '8-10' }),
+    });
+    await done();
+  });
+
+  it('shows an item counted in reps alone with its reps and its rest, and no weight', async () => {
+    const pullUp = anItem({
+      trackingType: 'repsOnly',
+      sets: [12, 10, 8].map(reps => ({ type: 'repsOnly', reps, targetRpe: null })),
+    });
+    const { result, done } = await renderPage(aStagedImport({ routines: [{ name: 'Pull', items: [pullUp] }] }));
+    await matched(result);
+
+    expect(rowOf(result.current.derived.sections, 'routine-0', 'item-0-0')).toMatchObject({
+      subtitle: tr('dataTransfer.itemRest', { rest: 120 }),
+      value: tr('dataTransfer.setsReps', { sets: 3, reps: '8-12' }),
+    });
+    await done();
+  });
+
+  it('shows a timed item with its time as minutes and seconds', async () => {
+    const plank = (seconds: number[]) =>
+      anItem({
+        trackingType: 'duration',
+        restSeconds: null,
+        sets: seconds.map(durationSeconds => ({ type: 'duration', durationSeconds, targetRpe: null })),
+      });
+    const { result, done } = await renderPage(
+      aStagedImport({ routines: [{ name: 'Core', items: [plank([45, 45]), plank([30, 90])] }] }),
+    );
+    await matched(result);
+
+    const { sections } = result.current.derived;
+    expect(rowOf(sections, 'routine-0', 'item-0-0')).toMatchObject({
+      subtitle: tr('dataTransfer.itemRest', { rest: getSettings().defaultRestSeconds }),
+      value: tr('dataTransfer.setsDuration', { sets: 2, duration: '0:45' }),
+    });
+    expect(rowOf(sections, 'routine-0', 'item-0-1')).toMatchObject({
+      value: tr('dataTransfer.setsDuration', { sets: 2, duration: '0:30-1:30' }),
     });
     await done();
   });

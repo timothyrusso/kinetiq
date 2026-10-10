@@ -27,10 +27,11 @@ export const Stepper = memo(function Stepper({
   label,
   compact = false,
   decimal = false,
+  format,
 }: StepperProps) {
   const theme = useAppTheme();
   const typesDecimals = decimal || !Number.isInteger(step);
-  const field = useStepperField(value, onChange, { min, max, decimal: typesDecimals });
+  const field = useStepperField(value, onChange, { min, max, decimal: typesDecimals }, format);
   return (
     <View style={styles.row}>
       <View accessibilityLiveRegion="polite" style={styles.value}>
@@ -48,7 +49,7 @@ export const Stepper = memo(function Stepper({
           align="left"
         />
       </View>
-      <Host matchContents colorScheme={theme.mode} seedColor={theme.colors.accent}>
+      <Host style={styles.control} colorScheme={theme.mode} seedColor={theme.colors.accent}>
         <NativeStepper
           label={label}
           value={value}
@@ -69,7 +70,15 @@ export const Stepper = memo(function Stepper({
   );
 });
 
+/**
+ * UIKit's stepper is one size whatever the text size: 94 by 32 points. The host takes it as a
+ * fixed frame rather than `matchContents`: a measured host draws a frame before its size arrives,
+ * so every stepper a tracking-type change mounted jumped into place.
+ */
+const NATIVE_STEPPER = { width: 94, height: 32 } as const;
+
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  control: NATIVE_STEPPER,
   value: { minWidth: 60 },
 });

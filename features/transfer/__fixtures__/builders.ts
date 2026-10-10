@@ -1,22 +1,30 @@
 import type { Exercise, ExerciseSnapshot } from '@/features/exercises';
-import type { Routine, RoutineItem, RoutineSet } from '@/features/routines';
+import type { Routine, RoutineItem } from '@/features/routines';
 import { RoutineId } from '@/features/routines';
 import type { Activity, StrengthEntry } from '@/features/workouts';
 import { ActivityId } from '@/features/workouts';
 
+type WeightRepsItem = Extract<RoutineItem, { readonly trackingType: 'weightReps' }>;
+
+type WeightRepsSet = WeightRepsItem['sets'][number];
+
 /** Thursday 25 September 2026, 10:00 UTC: the moment every fixture export was taken. */
 export const EXPORTED_AT = Date.UTC(2026, 8, 25, 10, 0, 0);
 
+/** An entry that records weight and reps. */
+type WeightRepsEntry = Extract<StrengthEntry, { readonly trackingType: 'weightReps' }>;
+
 /** Bench press: two sets of five at 100 kg, the second not done, resting 120 s. */
-const aBenchEntry = (overrides: Partial<StrengthEntry> = {}): StrengthEntry => ({
+const aBenchEntry = (overrides: Partial<WeightRepsEntry> = {}): WeightRepsEntry => ({
+  trackingType: 'weightReps',
   exerciseId: 'ex:barbell-bench-press-medium-grip',
   exerciseName: 'Bench Press',
   muscleGroup: 'Chest',
   restSeconds: 120,
   notes: null,
   sets: [
-    { index: 0, reps: 5, weightKg: 100, completed: true, estimated1rm: 116.66666666666667, rpe: 8 },
-    { index: 1, reps: 5, weightKg: 100, completed: false, estimated1rm: null, rpe: null },
+    { type: 'weightReps', index: 0, reps: 5, weightKg: 100, completed: true, estimated1rm: 116.66666666666667, rpe: 8 },
+    { type: 'weightReps', index: 1, reps: 5, weightKg: 100, completed: false, estimated1rm: null, rpe: null },
   ],
   ...overrides,
 });
@@ -37,6 +45,8 @@ const anActivity = (overrides: Partial<Activity> = {}): Activity => ({
 /**
  * Three workouts, oldest first, with what a CSV has to quote: a comma, a double quote and a line
  * break in a title or a name, a watch workout, an entry with notes and a damaged row with no sets.
+ * The watch workout holds every tracking type: weight and reps, reps alone (a pull-up) and time
+ * (a plank).
  */
 export const someActivities = (): Activity[] => [
   anActivity(),
@@ -56,8 +66,8 @@ export const someActivities = (): Activity[] => [
           restSeconds: 180,
           notes: 'Belt on top sets',
           sets: [
-            { index: 0, reps: 3, weightKg: 142.5, completed: true, estimated1rm: 156.75, rpe: 9.5 },
-            { index: 1, reps: 8, weightKg: 0, completed: true, estimated1rm: null, rpe: null },
+            { type: 'weightReps', index: 0, reps: 3, weightKg: 142.5, completed: true, estimated1rm: 156.75, rpe: 9.5 },
+            { type: 'weightReps', index: 1, reps: 8, weightKg: 0, completed: true, estimated1rm: null, rpe: null },
           ],
         }),
         aBenchEntry({
@@ -65,11 +75,45 @@ export const someActivities = (): Activity[] => [
           exerciseName: 'Hip thrust',
           muscleGroup: null,
           restSeconds: 90,
-          sets: [{ index: 0, reps: 12, weightKg: 60.25, completed: true, estimated1rm: 84.35, rpe: null }],
+          sets: [
+            {
+              type: 'weightReps',
+              index: 0,
+              reps: 12,
+              weightKg: 60.25,
+              completed: true,
+              estimated1rm: 84.35,
+              rpe: null,
+            },
+          ],
         }),
+        {
+          trackingType: 'repsOnly',
+          exerciseId: 'ex:pullups',
+          exerciseName: 'Pull-up',
+          muscleGroup: null,
+          restSeconds: 90,
+          notes: null,
+          sets: [
+            { type: 'repsOnly', index: 0, reps: 10, completed: true, rpe: 8 },
+            { type: 'repsOnly', index: 1, reps: 7, completed: false, rpe: null },
+          ],
+        },
+        {
+          trackingType: 'duration',
+          exerciseId: 'ex:plank',
+          exerciseName: 'Plank',
+          muscleGroup: null,
+          restSeconds: 60,
+          notes: 'Squeeze the glutes',
+          sets: [
+            { type: 'duration', index: 0, durationSeconds: 45, completed: true, rpe: null },
+            { type: 'duration', index: 1, durationSeconds: 90, completed: true, rpe: 9 },
+          ],
+        },
       ],
       totalVolumeKg: 1150,
-      totalSets: 3,
+      totalSets: 6,
       personalRecords: [],
     },
   }),
@@ -84,11 +128,12 @@ export const someActivities = (): Activity[] => [
 ];
 
 /** `count` sets of `reps` at `weightKg`, with no target RPE. */
-const setsOf = (count: number, reps: number, weightKg: number): RoutineSet[] =>
-  Array.from({ length: count }, (_, index) => ({ index, reps, weightKg, targetRpe: null }));
+const setsOf = (count: number, reps: number, weightKg: number): WeightRepsSet[] =>
+  Array.from({ length: count }, (_, index) => ({ type: 'weightReps', index, reps, weightKg, targetRpe: null }));
 
 /** One item: bench press, three sets of eight at 60 kg, resting 90 s. */
-const anItem = (overrides: Partial<RoutineItem> = {}): RoutineItem => ({
+const anItem = (overrides: Partial<WeightRepsItem> = {}): WeightRepsItem => ({
+  trackingType: 'weightReps',
   id: 'rit_bench',
   exerciseId: 'ex:barbell-bench-press-medium-grip',
   exerciseName: 'Bench Press',
@@ -98,7 +143,7 @@ const anItem = (overrides: Partial<RoutineItem> = {}): RoutineItem => ({
   ...overrides,
 });
 
-/** A push day with two items. */
+/** A push day with four items: two loaded lifts, a pull-up in reps alone and a timed plank. */
 const aRoutine = (overrides: Partial<Routine> = {}): Routine => ({
   id: RoutineId.make('rtn_push'),
   name: 'Push Day',
@@ -112,6 +157,30 @@ const aRoutine = (overrides: Partial<Routine> = {}): Routine => ({
       restSeconds: 60,
       notes: 'Brace first',
     }),
+    {
+      trackingType: 'repsOnly',
+      id: 'rit_pullup',
+      exerciseId: 'ex:pullups',
+      exerciseName: 'Pull-up',
+      sets: [
+        { type: 'repsOnly', index: 0, reps: 10, targetRpe: null },
+        { type: 'repsOnly', index: 1, reps: 8, targetRpe: 8 },
+      ],
+      restSeconds: 90,
+      notes: null,
+    },
+    {
+      trackingType: 'duration',
+      id: 'rit_plank',
+      exerciseId: 'ex:plank',
+      exerciseName: 'Plank',
+      sets: [
+        { type: 'duration', index: 0, durationSeconds: 45, targetRpe: null },
+        { type: 'duration', index: 1, durationSeconds: 60, targetRpe: 9 },
+      ],
+      restSeconds: 60,
+      notes: 'Squeeze the glutes',
+    },
   ],
   createdAt: Date.UTC(2026, 8, 1, 9, 0, 0),
   updatedAt: Date.UTC(2026, 8, 20, 9, 0, 0),
@@ -134,11 +203,11 @@ export const someRoutines = (): Routine[] => [
         exerciseId: 'ex:barbell-squat',
         exerciseName: 'Squat, Back',
         sets: [
-          { index: 0, reps: 5, weightKg: 130, targetRpe: null },
-          { index: 1, reps: 5, weightKg: 137.5, targetRpe: null },
-          { index: 2, reps: 5, weightKg: 142.5, targetRpe: 8 },
-          { index: 3, reps: 5, weightKg: 142.5, targetRpe: 8 },
-          { index: 4, reps: 3, weightKg: 142.5, targetRpe: 9 },
+          { type: 'weightReps', index: 0, reps: 5, weightKg: 130, targetRpe: null },
+          { type: 'weightReps', index: 1, reps: 5, weightKg: 137.5, targetRpe: null },
+          { type: 'weightReps', index: 2, reps: 5, weightKg: 142.5, targetRpe: 8 },
+          { type: 'weightReps', index: 3, reps: 5, weightKg: 142.5, targetRpe: 8 },
+          { type: 'weightReps', index: 4, reps: 3, weightKg: 142.5, targetRpe: 9 },
         ],
         restSeconds: 180,
         notes: 'Belt on top sets',
@@ -172,6 +241,7 @@ export const anExercise = (overrides: Partial<Exercise> = {}): Exercise => ({
   primaryMuscles: ['Chest'],
   secondaryMuscles: ['Triceps'],
   equipment: ['Barbell'],
+  equipmentKeys: ['barbell'],
   imageUrl: 'assets/catalog/images/barbell-bench-press-medium-grip/0.webp',
   imageEndUrl: 'assets/catalog/images/barbell-bench-press-medium-grip/1.webp',
   thumbnailUrl: 'assets/catalog/images/barbell-bench-press-medium-grip/thumb.webp',

@@ -24,10 +24,11 @@ export const Stepper = memo(function Stepper({
   label,
   compact = false,
   decimal = false,
+  format,
 }: StepperProps) {
   const theme = useAppTheme();
   const typesDecimals = decimal || !Number.isInteger(step);
-  const field = useStepperField(value, onChange, { min, max, decimal: typesDecimals });
+  const field = useStepperField(value, onChange, { min, max, decimal: typesDecimals }, format);
   const { effects } = useStepperPress(field.state.value, field.effects.write, { min, max, step }, field.effects.take);
 
   const size = compact ? 32 : touchTarget - spacing.xs;

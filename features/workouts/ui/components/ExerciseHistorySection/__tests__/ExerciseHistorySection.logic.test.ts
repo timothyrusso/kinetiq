@@ -2,7 +2,17 @@ import { act, waitFor } from '@testing-library/react-native';
 import { routes } from '@/features/core/navigation';
 import { routerFake } from '@/features/core/testing';
 import { tr } from '@/features/core/translations';
-import { aCompletedWorkout, anEntry, aRecord, aSet, WORKOUT_TIME } from '@/features/workouts/__fixtures__/builders';
+import {
+  aCompletedWorkout,
+  aDurationEntry,
+  aDurationSet,
+  anEntry,
+  aRecord,
+  aRepsOnlyEntry,
+  aRepsOnlySet,
+  aSet,
+  WORKOUT_TIME,
+} from '@/features/workouts/__fixtures__/builders';
 import { recordHistory } from '@/features/workouts/di/__tests__/workoutsTestData';
 import { ActivityId } from '@/features/workouts/domain/schemas/ActivityId';
 import { renderWithWorkouts } from '@/features/workouts/facades/__tests__/renderWithWorkouts';
@@ -47,11 +57,59 @@ describe('useExerciseHistorySectionLogic', () => {
     const { result, done } = await renderHistory(2);
 
     expect(result.current.derived.showChart).toBe(true);
+    expect(result.current.derived.chartTitle).toBe(tr('exerciseDetail.heaviestWeight'));
     expect(result.current.derived.chartPoints.map(point => point.value)).toEqual([100, 105]);
     expect(result.current.derived.chartA11y).toBe(
       tr('exerciseDetail.weightChartA11y', { count: 2, first: '100 kg', last: '105 kg' }),
     );
     await done();
+  });
+
+  it('charts the longest set per session of a timed exercise, as m:ss', async () => {
+    const rendered = await renderWithWorkouts(useExerciseHistorySectionLogic, null as string | null);
+    await recordHistory(
+      rendered.runtime,
+      [45, 75].map((seconds, index) =>
+        aCompletedWorkout({
+          id: ActivityId.make(`plank-${index}`),
+          startedAt: WORKOUT_TIME + index * WEEK,
+          endedAt: WORKOUT_TIME + index * WEEK + 600_000,
+          entries: [aDurationEntry({ sets: [aDurationSet({ durationSeconds: seconds })] })],
+        }),
+      ),
+    );
+    await act(async () => rendered.rerender('ex:plank'));
+    await waitFor(() => expect(rendered.result.current.state.isLoading).toBe(false));
+
+    const { derived, effects } = rendered.result.current;
+    expect(derived.chartTitle).toBe(tr('tracking.longestSetChart'));
+    expect(derived.chartPoints.map(point => point.value)).toEqual([45, 75]);
+    expect(derived.chartA11y).toBe(tr('tracking.durationChartA11y', { count: 2, first: '0:45', last: '1:15' }));
+    expect(effects.formatChartValue(90)).toBe('1:30');
+    await rendered.done();
+  });
+
+  it('charts the most reps per session of a reps-only exercise', async () => {
+    const rendered = await renderWithWorkouts(useExerciseHistorySectionLogic, null as string | null);
+    await recordHistory(
+      rendered.runtime,
+      [10, 13].map((reps, index) =>
+        aCompletedWorkout({
+          id: ActivityId.make(`pullups-${index}`),
+          startedAt: WORKOUT_TIME + index * WEEK,
+          endedAt: WORKOUT_TIME + index * WEEK + 600_000,
+          entries: [aRepsOnlyEntry({ sets: [aRepsOnlySet({ reps })] })],
+        }),
+      ),
+    );
+    await act(async () => rendered.rerender('ex:pullups'));
+    await waitFor(() => expect(rendered.result.current.state.isLoading).toBe(false));
+
+    const { derived } = rendered.result.current;
+    expect(derived.chartTitle).toBe(tr('tracking.mostRepsChart'));
+    expect(derived.chartPoints.map(point => point.value)).toEqual([10, 13]);
+    expect(derived.chartA11y).toBe(tr('tracking.repsChartA11y', { count: 2, first: '10', last: '13' }));
+    await rendered.done();
   });
 
   it('draws no line for a single session', async () => {

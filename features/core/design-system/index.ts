@@ -45,8 +45,10 @@ export { NumberedSteps } from '@/features/core/design-system/display/NumberedSte
 export { RoutineRow } from '@/features/core/design-system/display/RoutineRow';
 export { RowButton } from '@/features/core/design-system/display/RowButton';
 export { SectionHeader } from '@/features/core/design-system/display/SectionHeader';
+export { DurationSetStepperRow } from '@/features/core/design-system/display/SetStepperRow/DurationSetStepperRow';
+export { RepsSetStepperRow } from '@/features/core/design-system/display/SetStepperRow/RepsSetStepperRow';
 export { SetStepperRow } from '@/features/core/design-system/display/SetStepperRow/SetStepperRow';
-export type { SetRpeKind } from '@/features/core/design-system/display/SetStepperRow/SetStepperRow.logic';
+export type { SetRpeKind } from '@/features/core/design-system/display/SetStepperRow/setStepperBase';
 export { StatTile } from '@/features/core/design-system/display/StatTile';
 export { SwipeToDelete } from '@/features/core/design-system/display/SwipeToDelete';
 export { TagRow } from '@/features/core/design-system/display/TagRow';

@@ -50,6 +50,22 @@ describe('useRoutineItemPageLogic on a saved routine', () => {
     await done();
   });
 
+  it('changes the saved item’s type, carrying its reps and dropping the weight', async () => {
+    const { result, read, done } = await renderSavedItem();
+
+    await act(async () => result.current.effects.setTrackingType('repsOnly'));
+
+    const expected = [0, 1, 2, 3].map(index => ({ type: 'repsOnly', index, reps: 6, targetRpe: null }));
+    await waitFor(() => expect(result.current.state.item?.trackingType).toBe('repsOnly'));
+    await waitFor(async () =>
+      expect((await read())?.routine.items.find(item => item.id === 'rit_press')).toMatchObject({
+        trackingType: 'repsOnly',
+        sets: expected,
+      }),
+    );
+    await done();
+  });
+
   it('removes the item from the saved routine and closes the sheet', async () => {
     const { result, read, done } = await renderSavedItem();
 
@@ -86,6 +102,18 @@ describe('useRoutineItemPageLogic on the builder’s draft', () => {
     await act(async () => result.current.page.effects.change(() => ({ sets: uniformSets(3, 5, 0) })));
 
     expect(result.current.draft.draft.items.find(item => item.id === itemId)?.sets).toEqual(uniformSets(3, 5, 0));
+    await done();
+  });
+
+  it('changes the draft row’s type, a timed one opening on 30 s', async () => {
+    const { result, itemId, done } = await renderDraftItem();
+
+    await act(async () => result.current.page.effects.setTrackingType('duration'));
+
+    expect(result.current.draft.draft.items.find(item => item.id === itemId)).toMatchObject({
+      trackingType: 'duration',
+      sets: [0, 1, 2].map(index => ({ type: 'duration', index, durationSeconds: 30, targetRpe: null })),
+    });
     await done();
   });
 

@@ -25,6 +25,7 @@ export function SessionExercisePage() {
           onAddSet={effects.addSet}
           onRemoveSet={effects.removeSet}
           onChangeEntry={effects.changeEntry}
+          onChangeType={effects.changeType}
         />
       ) : null}
     </FormSheet>

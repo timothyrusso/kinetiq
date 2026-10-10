@@ -283,7 +283,7 @@ describe('CatalogRepositoryLive.page', () => {
 
 describe('CatalogRepositoryLive.byId', () => {
   itEffect(
-    'returns the full row, its taxonomy named in the render language and its images as asset paths',
+    'returns the full row, its taxonomy named in the render language with its equipment keys, and its images as asset paths',
     Effect.gen(function* () {
       const repository = yield* seeded;
 
@@ -300,6 +300,7 @@ describe('CatalogRepositoryLive.byId', () => {
         primaryMuscles: ['Petto'],
         secondaryMuscles: ['Tricipiti', 'Spalle'],
         equipment: ['Bilanciere'],
+        equipmentKeys: ['barbell'],
         imageUrl: 'assets/catalog/images/barbell-bench-press/0.webp',
         imageEndUrl: 'assets/catalog/images/barbell-bench-press/1.webp',
         thumbnailUrl: 'assets/catalog/images/barbell-bench-press/thumb.webp',

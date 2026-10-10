@@ -6,7 +6,12 @@ import { useAppTheme } from '@/features/core/theme';
 export type { Segment, SegmentedControlProps } from '@/features/core/design-system/controls/SegmentedControl/types';
 
 /** Material 3's single-choice segmented button row. */
-export function SegmentedControl<T extends string>({ segments, value, onChange }: SegmentedControlProps<T>) {
+export function SegmentedControl<T extends string>({
+  segments,
+  value,
+  onChange,
+  disabled = false,
+}: SegmentedControlProps<T>) {
   const theme = useAppTheme();
   return (
     <Host
@@ -20,8 +25,9 @@ export function SegmentedControl<T extends string>({ segments, value, onChange }
           <SegmentedButton
             key={s.value}
             selected={s.value === value}
+            enabled={!disabled}
             onClick={() => {
-              if (s.value === value) return;
+              if (disabled || s.value === value) return;
               haptics.selection();
               onChange(s.value);
             }}

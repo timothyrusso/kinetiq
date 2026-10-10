@@ -1,15 +1,23 @@
 import { useCallback, useMemo } from 'react';
 import type { PressableStateCallbackType, StyleProp, ViewStyle } from 'react-native';
-import { type MetaItem, useStyles } from '@/features/core/design-system';
-import type { StrengthEntry } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
+import { type IconName, type MetaItem, useStyles } from '@/features/core/design-system';
+import type { StrengthEntry, TrackingType } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 import { createStyles } from '@/features/workouts/ui/components/ExerciseBlock/ExerciseBlock.style';
+
+/** The icon beside last time's value, the same one the exercise's summary uses for what it records. */
+const PREVIOUS_ICON: Record<TrackingType, IconName> = {
+  weightReps: 'dumbbell',
+  repsOnly: 'refresh',
+  duration: 'timer',
+};
 
 export interface ExerciseBlockInput {
   readonly entry: StrengthEntry;
   readonly entryIndex: number;
   /**
-   * Rendered verbatim. The caller decides between "Last time 82.5 kg × 5", "No previous sessions
-   * yet" and nothing, because only it knows whether the history read has answered.
+   * Rendered verbatim. The caller decides between "Last time 82.5 kg × 5" (or "12 reps", "1:30"),
+   * "No previous sessions yet" and nothing, because only it knows whether the history read has
+   * answered.
    */
   readonly previousLabel: string | null;
   /** When that was ("3w ago"), or `null` when there is no previous workout to date. */
@@ -38,14 +46,15 @@ export function useExerciseBlockLogic({
 }: ExerciseBlockInput) {
   const styles = useStyles(createStyles);
   const done = entry.sets.filter(set => set.completed).length;
+  const { trackingType } = entry;
   const previous = useMemo<MetaItem[]>(() => {
     if (previousLabel === null) return [];
     if (previousWhen === null) return [{ icon: 'info', label: previousLabel }];
     return [
-      { icon: 'dumbbell', label: previousLabel },
+      { icon: PREVIOUS_ICON[trackingType], label: previousLabel },
       { icon: 'calendar', label: previousWhen },
     ];
-  }, [previousLabel, previousWhen]);
+  }, [previousLabel, previousWhen, trackingType]);
   const headStyle = useCallback(
     ({ pressed }: PressableStateCallbackType): StyleProp<ViewStyle> => [
       styles.head,

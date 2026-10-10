@@ -2,37 +2,18 @@ import { sum } from '@/features/core/utils';
 import type { CompletedWorkout } from '@/features/workouts/domain/schemas/CompletedWorkoutSchema';
 import type { StrengthEntry, StrengthSet } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 import type { WorkoutSession } from '@/features/workouts/domain/schemas/WorkoutSessionSchema';
+import { withSets } from '@/features/workouts/domain/utils/trackingSets';
 
-function roundKg(value: number): number {
-  return Math.round(value * 2) / 2;
-}
-
-/**
- * Epley, to the half kilogram. Null for bodyweight work and past 15 reps, where the linear model
- * extrapolates rather than estimates.
- */
-export function estimatedOneRepMax(weightKg: number, reps: number): number | null {
-  if (weightKg <= 0 || reps <= 0) return null;
-  if (reps === 1) return roundKg(weightKg);
-  if (reps > 15) return null;
-  return roundKg(weightKg * (1 + reps / 30));
-}
-
-/** A completed set with its estimate refreshed; an open set is returned as it is. */
-export function withEstimated1rm(set: StrengthSet): StrengthSet {
-  if (!set.completed) return set;
-  return { ...set, estimated1rm: estimatedOneRepMax(set.weightKg, set.reps) };
-}
-
-export function setVolumeKg(set: Pick<StrengthSet, 'reps' | 'weightKg'>): number {
-  return Math.max(0, set.reps) * Math.max(0, set.weightKg);
+/** Reps times load, kilograms. Only a loaded set has volume: reps alone and time have none. */
+export function setVolumeKg(set: StrengthSet): number {
+  return set.type === 'weightReps' ? Math.max(0, set.reps) * Math.max(0, set.weightKg) : 0;
 }
 
 function entryVolumeKg(entry: Pick<StrengthEntry, 'sets'>): number {
   return sum(entry.sets.filter(set => set.completed).map(setVolumeKg));
 }
 
-/** Volume over the completed sets of every entry, rounded to the kilogram. */
+/** Volume over the completed loaded sets of every entry, rounded to the kilogram. */
 export function totalVolumeKg(entries: readonly StrengthEntry[]): number {
   return Math.round(sum(entries.map(entryVolumeKg)));
 }
@@ -71,7 +52,10 @@ export function sessionProgress(session: Pick<WorkoutSession, 'entries'>): Sessi
 
 /** An entry as history keeps it: without the routine item and set rows it was planned from. */
 function recordedEntry({ routineItemId: _item, ...entry }: StrengthEntry): StrengthEntry {
-  return { ...entry, sets: entry.sets.map(({ routineSetIndex: _row, ...set }) => set) };
+  return withSets(
+    entry,
+    entry.sets.map(({ routineSetIndex: _row, ...set }) => set),
+  );
 }
 
 /** The shape a finished session is recorded as. Its duration is the counted time, not the wall. */

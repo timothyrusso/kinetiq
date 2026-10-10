@@ -10,4 +10,6 @@ export type SegmentedControlProps<T extends string> = {
   segments: readonly Segment<T>[];
   value: T;
   onChange: (next: T) => void;
+  /** Shows the choice without letting it change; the caller says why beside it. */
+  disabled?: boolean;
 };
