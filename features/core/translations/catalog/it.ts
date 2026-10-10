@@ -79,7 +79,7 @@ export const it: Copy = {
   workout: {
     title: 'Allenamento',
     yourRoutines: 'Le tue schede',
-    newRoutine: 'Nuova scheda',
+    newRoutine: 'Crea scheda',
     paused: 'In pausa',
     exercise_one: '{count} esercizio',
     exercise_other: '{count} esercizi',
