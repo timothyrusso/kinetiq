@@ -76,7 +76,7 @@ export const en = {
   workout: {
     title: 'Workout',
     yourRoutines: 'Your routines',
-    newRoutine: 'New routine',
+    newRoutine: 'Create routine',
     paused: 'Paused',
     exercise_one: '{count} exercise',
     exercise_other: '{count} exercises',
