@@ -106,7 +106,7 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 }
 
 /**
- * The system appearance, read without a hook: `useColorScheme()` returns `null` until the native
+ * The native appearance (the app's theme once the settings have loaded, the OS's before), read without a hook: `useColorScheme()` returns `null` until the native
  * value arrives, and a boundary using it would flash. When the native module is the thing that is
  * missing, dark is the safe default: it is the app's launch theme.
  */

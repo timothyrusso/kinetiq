@@ -1,6 +1,8 @@
 import { act, renderHook } from '@testing-library/react-native';
+import { Appearance } from 'react-native';
 import { resetAllStores } from '@/features/core/state';
 import {
+  launchColorScheme,
   palette,
   setAppearancePreferences,
   statusBarStyle,
@@ -71,6 +73,39 @@ describe('useAppTheme', () => {
     await act(async () => setAppearancePreferences({ themePreference: 'dark', accentColor: 'kinetiq' }));
 
     expect(result.current.mode).toBe('dark');
+  });
+});
+
+describe('native appearance', () => {
+  it('pins the native scheme to a fixed preference and hands it back to the OS for system', () => {
+    const setColorScheme = jest.spyOn(Appearance, 'setColorScheme');
+
+    setAppearancePreferences({ themePreference: 'light', accentColor: 'kinetiq' });
+    setAppearancePreferences({ themePreference: 'system', accentColor: 'kinetiq' });
+
+    expect(setColorScheme.mock.calls).toEqual([['light'], ['unspecified']]);
+    setColorScheme.mockRestore();
+  });
+
+  it('leaves the native scheme alone when only the accent changes', () => {
+    setAppearancePreferences({ themePreference: 'dark', accentColor: 'kinetiq' });
+    const setColorScheme = jest.spyOn(Appearance, 'setColorScheme');
+
+    setAppearancePreferences({ themePreference: 'dark', accentColor: 'ocean' });
+
+    expect(setColorScheme).not.toHaveBeenCalled();
+    setColorScheme.mockRestore();
+  });
+
+  it('keeps the OS appearance from before the first override for the splash', () => {
+    const getColorScheme = jest.spyOn(Appearance, 'getColorScheme').mockReturnValue('dark');
+    const launch = launchColorScheme();
+
+    setAppearancePreferences({ themePreference: 'light', accentColor: 'kinetiq' });
+    getColorScheme.mockReturnValue('light');
+
+    expect(launchColorScheme()).toBe(launch);
+    getColorScheme.mockRestore();
   });
 });
 

@@ -10,6 +10,7 @@ export {
   type ThemeMode,
   type ThemePreference,
 } from '@/features/core/theme/appearance';
+export { launchColorScheme } from '@/features/core/theme/nativeAppearance';
 export { setAppearancePreferences } from '@/features/core/theme/state/appearanceStore';
 export { statusBarStyle, type Theme, themeFor, useAppTheme } from '@/features/core/theme/theme';
 export {

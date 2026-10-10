@@ -1,5 +1,6 @@
 import { createSelectors, createStore } from '@/features/core/state';
 import type { AppearancePreferences } from '@/features/core/theme/appearance';
+import { applyNativeColorScheme } from '@/features/core/theme/nativeAppearance';
 
 interface AppearanceState extends AppearancePreferences {
   readonly setAppearance: (preferences: AppearancePreferences) => void;
@@ -22,6 +23,9 @@ export function setAppearancePreferences(preferences: AppearancePreferences): vo
   const current = appearanceStore.getState();
   if (current.themePreference === preferences.themePreference && current.accentColor === preferences.accentColor) {
     return;
+  }
+  if (current.themePreference !== preferences.themePreference) {
+    applyNativeColorScheme(preferences.themePreference);
   }
   current.setAppearance(preferences);
 }
