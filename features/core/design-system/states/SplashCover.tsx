@@ -22,8 +22,9 @@
  * the same asset at the same size means the cross fade has nothing moving in it.
  */
 import { memo, useEffect } from 'react';
-import { Image, StyleSheet, useColorScheme } from 'react-native';
+import { Image, StyleSheet } from 'react-native';
 import Animated, { FadeOut } from 'react-native-reanimated';
+import { launchColorScheme } from '@/features/core/theme';
 
 /** Must match the `expo-splash-screen` plugin config in app.json. */
 const NATIVE_SPLASH = {
@@ -39,9 +40,9 @@ export const SplashCover = memo(function SplashCover({
   /** Called once, when the cover begins fading: the moment to hide the native splash. */
   onFadeStart?: () => void;
 }) {
-  // NOTE: `useColorScheme`, deliberately NOT the app's theme. This has to match what the OS drew.
-  const osScheme = useColorScheme();
-  const skin = osScheme === 'dark' ? NATIVE_SPLASH.dark : NATIVE_SPLASH.light;
+  // NOTE: the OS appearance at launch, deliberately NOT the app's theme nor `useColorScheme`, which
+  // follows the app's theme once it is applied natively. This has to match what the OS drew.
+  const skin = launchColorScheme() === 'dark' ? NATIVE_SPLASH.dark : NATIVE_SPLASH.light;
 
   useEffect(() => {
     // NOTE: After this view's first frame is presented, not merely committed: hiding the native

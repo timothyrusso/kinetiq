@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { useColorScheme } from 'react-native';
 import { useBootstrap } from '@/features/bootstrap/facades/useBootstrap';
 import { splash } from '@/features/bootstrap/ui/components/AppProviders/splash';
+import { launchColorScheme } from '@/features/core/theme';
 
 /**
  * Longest the splash may stay up before the launch says so. A real cold start is about 600 ms
@@ -29,10 +29,12 @@ function isStorageFailure(failure: unknown): boolean {
  * screen, the "still starting" state, the fatal state, or the app. No auto-recovery from a slow
  * start: past the deadline the launch screen offers a retry and a confirmed reset, because
  * rendering the app over a database that is not open would trade one dead screen for a dozen.
- * `useColorScheme` returns null on some Android emulator images, and dark is the safer guess.
+ * The OS appearance is the one at launch: the native splash was drawn in it, and once the settings
+ * load, the app's theme is applied natively and the live value reports that instead. It is null on
+ * some Android emulator images, and dark is the safer guess.
  */
 export function useAppProvidersLogic() {
-  const systemDark = useColorScheme() !== 'light';
+  const systemDark = launchColorScheme() !== 'light';
   const { phase, failure, start, retry: retryLaunch, restart: restartLaunch, markSlow } = useBootstrap();
   const readyAtMount = useRef(phase === 'ready');
 
