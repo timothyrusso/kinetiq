@@ -41,8 +41,8 @@ export function ExercisePickerList({
   removable: boolean;
   destination: PickDestination;
   /**
-   * Rows from the previous filter while the new one is read: dimmed, because they are about to be
-   * wrong, and inert, so a tap cannot add the wrong exercise.
+   * Rows from an earlier filter, from the first keystroke until the new read lands: dimmed, because
+   * they are about to be wrong, and inert, so a tap can neither add nor remove the wrong exercise.
    */
   dimmed: boolean;
   onSelect: (exerciseId: string) => void;

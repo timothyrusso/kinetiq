@@ -116,6 +116,35 @@ describe('usePickExercisePageLogic', () => {
     await done();
   });
 
+  it('ignores a tap on the old rows while a new search term settles', async () => {
+    const picked: Exercise[] = [];
+    const unpicked: string[] = [];
+    const { result, done } = await renderPicker(picked, { unpicked });
+    await waitFor(() => expect(result.current.state.rows).toHaveLength(50));
+
+    await act(async () => result.current.effects.setQuery('bench'));
+    expect(result.current.state.stale).toBe(true);
+    await act(async () => result.current.effects.select(SQUAT.id));
+    await act(async () => result.current.effects.select(BENCH.id));
+
+    expect(unpicked).toEqual([]);
+    expect(picked).toEqual([]);
+    await done();
+  });
+
+  it('takes taps again once the new rows land', async () => {
+    const picked: Exercise[] = [];
+    const { result, done } = await renderPicker(picked);
+    await waitFor(() => expect(result.current.state.rows).toHaveLength(50));
+
+    await act(async () => result.current.effects.setQuery('bench'));
+    await waitFor(() => expect(result.current.state.stale).toBe(false));
+    await act(async () => result.current.effects.select(BENCH.id));
+
+    expect(picked).toEqual([BENCH]);
+    await done();
+  });
+
   it('leaves an included row alone when the destination is add-only', async () => {
     const picked: Exercise[] = [];
     const { result, done } = await renderPicker(picked, { destination: 'workout' });
