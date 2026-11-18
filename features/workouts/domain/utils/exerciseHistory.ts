@@ -44,8 +44,6 @@ const estimateOf = (set: StrengthSet) =>
 function rollUpSession(entry: StrengthEntry): Rollup {
   const completed: StrengthSet[] = entry.sets.filter(set => set.completed);
   const estimates = completed.map(estimateOf).filter((value): value is number => value !== null);
-  // NOTE: a skipped exercise still counts as an encounter: it was planned and it happened, but
-  // it contributed nothing, so its numbers stay 0 and its estimate empty.
   return {
     trackingType: entry.trackingType,
     volumeKg: sum(completed.map(setVolumeKg)),
@@ -83,7 +81,9 @@ function bestOf(
 
 /**
  * What the user has done with `exerciseId`, from every recorded workout. The workouts are parsed
- * before they are matched, so an id that is a substring of another never matches it. Each best
+ * before they are matched, so an id that is a substring of another never matches it. A workout
+ * with no ticked set of it is left out, as the live workout's "last time" leaves it out: the
+ * exercise was planned, not done, and a row of zeros read as a result (#215). Each best
  * and each chart reads only the workouts tracked as its type: a loaded workout feeds the weight,
  * estimate, volume and rep bests and the weight line; a reps-only one the most reps; a timed one
  * the longest set.
@@ -92,7 +92,7 @@ export function summariseExerciseHistory(exerciseId: string, activities: readonl
   const sessions: ExercisePerformance[] = [];
   for (const activity of activities) {
     const entry = findEntry(activity, exerciseId);
-    if (!entry) continue;
+    if (!entry?.sets.some(set => set.completed)) continue;
     sessions.push({
       activityId: activity.id,
       performedAt: activity.startedAt,
