@@ -63,7 +63,7 @@ describe('summariseExerciseHistory', () => {
     expect(summariseExerciseHistory('ex:barbell-bench-press', [other]).sessionsCount).toBe(0);
   });
 
-  it('counts a skipped exercise as a workout with no load, left off the line', () => {
+  it('leaves out a workout where the exercise was skipped', () => {
     const skipped = anActivity({
       strength: {
         entries: [anEntry({ sets: [aSet({ completed: false })] })],
@@ -73,11 +73,17 @@ describe('summariseExerciseHistory', () => {
       },
     });
 
-    const history = summariseExerciseHistory('ex:barbell-bench-press', [skipped]);
+    expect(summariseExerciseHistory('ex:barbell-bench-press', [skipped])).toBe(EMPTY_EXERCISE_HISTORY);
+  });
 
-    expect(history.sessions[0]).toMatchObject({ completedSets: 0, topWeightKg: 0, estimated1rmKg: null });
-    expect(history.weightTrend).toEqual([]);
-    expect(history.bestWeightKg).toBeNull();
+  it('dates the last time from the last workout with a ticked set', () => {
+    const done = workoutOn('session-done', WORKOUT_TIME, anEntry());
+    const skipped = workoutOn('session-skipped', WORKOUT_TIME + DAY, anEntry({ sets: [aSet({ completed: false })] }));
+
+    const history = summariseExerciseHistory('ex:barbell-bench-press', [done, skipped]);
+
+    expect(history.sessions.map(session => session.activityId)).toEqual([ActivityId.make('session-done')]);
+    expect(history).toMatchObject({ sessionsCount: 1, lastPerformedAt: WORKOUT_TIME });
   });
 });
 

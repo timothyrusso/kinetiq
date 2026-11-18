@@ -49,7 +49,7 @@ export const StatTile = memo(function StatTile({
     >
       <MetricLabel label={label} />
       <View style={styles.valueRow}>
-        <Txt variant={NUMERAL[emphasis]} numberOfLines={1} style={tabular ? styles.tabular : undefined}>
+        <Txt variant={NUMERAL[emphasis]} numberOfLines={1} style={[styles.value, tabular && styles.tabular]}>
           {value}
         </Txt>
         {unit ? (
@@ -86,6 +86,8 @@ const NUMERAL = { hero: 'numeralLg', default: 'numeral', compact: 'numeralSm' } 
 const styles = StyleSheet.create({
   tile: { flex: 1, minWidth: 0, gap: spacing.xs },
   valueRow: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.xs },
+  // NOTE: without it a value wider than its tile overflowed and drew over the next tile (#216).
+  value: { flexShrink: 1 },
   trend: { flexDirection: 'row', alignItems: 'center', gap: spacing.xxs },
   tabular: { fontVariant: ['tabular-nums'] },
 });

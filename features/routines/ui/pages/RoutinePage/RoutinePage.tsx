@@ -95,10 +95,11 @@ export function RoutinePage({ launcher }: { launcher: WorkoutLauncher }) {
                 label={t('routine.plannedVolume')}
                 value={compactNumber(weightValue(derived.volumeKg, units))}
                 unit={weightUnit(units)}
+                emphasis="compact"
               />
             )}
-            <StatTile label={t('routine.estTime')} value={`~${derived.minutes}`} unit="min" />
-            <StatTile label={t('routine.trained')} value={`${routine.timesCompleted}×`} />
+            <StatTile label={t('routine.estTime')} value={`~${derived.minutes}`} unit="min" emphasis="compact" />
+            <StatTile label={t('routine.trained')} value={`${routine.timesCompleted}×`} emphasis="compact" />
           </View>
 
           {state.failed !== null ? (
