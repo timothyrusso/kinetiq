@@ -29,7 +29,7 @@ export function PickExercisePage(props: PickExercisePageProps) {
       lockedReason={effects.lockedReason}
       removable={derived.removable}
       destination={props.destination}
-      dimmed={state.isPlaceholder}
+      dimmed={state.stale}
       onSelect={effects.select}
       onInfo={effects.openDetail}
       header={

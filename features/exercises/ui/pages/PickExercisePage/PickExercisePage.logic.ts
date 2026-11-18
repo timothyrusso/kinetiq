@@ -85,9 +85,13 @@ export function usePickExercisePageLogic({
   );
 
   const { items, isPlaceholder, loadNextPage, refresh } = search;
+  // NOTE: the rows on screen belong to an earlier term from the first keystroke until the new read
+  // lands, not only while it is read: a tap in the debounce gap hit the old row under the finger, and
+  // on an included one that removed it (#207).
+  const stale = settling || isPlaceholder;
   const select = useCallback(
     (exerciseId: string) => {
-      if (isPlaceholder) return;
+      if (stale) return;
       if (isIncluded(exerciseId)) {
         if ((lockedReason?.(exerciseId) ?? null) === null) onUnpick?.(exerciseId);
         return;
@@ -95,7 +99,7 @@ export function usePickExercisePageLogic({
       const exercise = items.find(item => item.id === exerciseId);
       if (exercise !== undefined) onPick(exercise);
     },
-    [isIncluded, isPlaceholder, items, lockedReason, onPick, onUnpick],
+    [isIncluded, items, lockedReason, onPick, onUnpick, stale],
   );
   // NOTE: pushed over the sheet, which stays mounted under it, so back returns to the same search.
   const openDetail = useCallback((exerciseId: string) => router.push(routes.exerciseDetail(exerciseId, true)), []);
@@ -119,6 +123,7 @@ export function usePickExercisePageLogic({
       error: search.error,
       isLoading: search.isLoading,
       isPlaceholder,
+      stale,
       hasMore: search.hasMore,
       isFetchingNextPage: search.isFetchingNextPage,
       muscles: taxonomy.data?.muscles ?? [],
