@@ -32,6 +32,27 @@ describe('useSetRowLogic', () => {
     expect(result.current.derived.secondary?.a11y).toBe(tr('setRow.setWeight', { n: 3, weight: '220 lb' }));
   });
 
+  it('shows the weight in pounds under a pound label when the units are imperial', async () => {
+    const { result } = await renderRow({ units: 'imperial' });
+
+    expect(result.current.derived.secondary?.label).toBe(tr('setRow.weightIn', { unit: 'lb' }));
+    expect(result.current.derived.secondary?.value).toBe('220');
+  });
+
+  it('rounds an imperial weight to whole pounds, matching what it speaks', async () => {
+    const { result } = await renderRow({ set: aSet({ index: 2, weightKg: 82.5 }), units: 'imperial' });
+
+    expect(result.current.derived.secondary?.value).toBe('182');
+    expect(result.current.derived.secondary?.a11y).toBe(tr('setRow.setWeight', { n: 3, weight: '182 lb' }));
+  });
+
+  it('shows the weight in kilograms under a kilogram label when the units are metric', async () => {
+    const { result } = await renderRow({ set: aSet({ index: 2, weightKg: 82.5 }) });
+
+    expect(result.current.derived.secondary?.label).toBe(tr('setRow.weightIn', { unit: 'kg' }));
+    expect(result.current.derived.secondary?.value).toBe('82.5');
+  });
+
   it('shows a set with no load as bodyweight', async () => {
     const { result } = await renderRow({ set: aSet({ weightKg: 0 }) });
 
