@@ -2,7 +2,15 @@ import { useCallback, useMemo } from 'react';
 import type { PressableStateCallbackType, StyleProp, ViewStyle } from 'react-native';
 import { useStyles } from '@/features/core/design-system';
 import { useT } from '@/features/core/translations';
-import { formatTimer, formatWeight, trimNumber, type UnitSystem, weightUnit } from '@/features/core/utils';
+import {
+  formatTimer,
+  formatWeight,
+  trimNumber,
+  type UnitSystem,
+  weightDisplayValue,
+  weightStep,
+  weightUnit,
+} from '@/features/core/utils';
 import type { StrengthSet } from '@/features/workouts/domain/schemas/StrengthEntrySchema';
 import { createStyles } from '@/features/workouts/ui/components/SetRow/SetRow.style';
 
@@ -45,7 +53,10 @@ export function useSetRowLogic({ entryIndex, setIndex, set, units, isTarget, onO
           },
           secondary: {
             label: t('setRow.weightIn', { unit: weightUnit(units) }),
-            value: set.weightKg === 0 ? t('setRow.bodyweightShort') : trimNumber(set.weightKg),
+            value:
+              set.weightKg === 0
+                ? t('setRow.bodyweightShort')
+                : trimNumber(weightDisplayValue(set.weightKg, units, weightStep(units))),
             a11y: t('setRow.setWeight', { n, weight }),
           },
         };
